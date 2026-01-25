@@ -1,11 +1,13 @@
 # API de Análises para Sistema Kheprix
 
+#Define diretório temporário para evitar problemas com pathnames longos no Windows
 dir_temp <- "C:/temp"
 if (!dir.exists(dir_temp)) dir.create(dir_temp)
 Sys.setenv(TMPDIR = dir_temp)
 Sys.setenv(TEMP = dir_temp)
 Sys.setenv(TMP = dir_temp)
 
+#Inicialização de bibliotecas
 library(plumber)
 library(vegan)
 library(ggplot2)
@@ -40,10 +42,7 @@ salvar_grafico <- function(p) {
   return(html)
 }
 
-
-
-
-#Função radfit customizada
+#Função radfit customizada (evita uso da bilbioteca BiodiversityR)
 radfit_custom <- function(abundancias) {
   y <- sort(abundancias, decreasing = TRUE)
   x <- seq_along(y)
@@ -119,6 +118,7 @@ fitted.radfit_custom <- function(object, ...) {
   return(result)
 }
 
+#Filtro CORS para permitir requisições
 #' @filter cors
 cors <- function(req, res) {
   res$setHeader("Access-Control-Allow-Origin", "*")
@@ -787,6 +787,51 @@ function(req, res) {
   })
 }
 
+#' Pearson - Gráfico
+#' @post /analise/pearson_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    x <- as.numeric(dados$x)
+    y <- as.numeric(dados$y)
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "Variável X"
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Variável Y"
+    
+    teste <- cor.test(x, y, method = "pearson")
+    
+    df_plot <- data.frame(x = x, y = y)
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#3498DB", alpha = 0.7) +
+      geom_smooth(method = "lm", se = TRUE, color = "#E74C3C", fill = "#E74C3C", alpha = 0.2) +
+      labs(title = paste0("Correlação de Pearson: ", nome_y, " vs ", nome_x),
+           subtitle = paste0("r = ", round(teste$estimate, 3),
+                           " | p = ", ifelse(teste$p.value < 0.001, "< 0.001", round(teste$p.value, 3)),
+                           " | ", ifelse(teste$p.value < 0.05, "Significativo", "Não significativo")),
+           x = nome_x,
+           y = nome_y,
+           caption = ifelse(abs(teste$estimate) > 0.7, "Correlação forte",
+                          ifelse(abs(teste$estimate) > 0.4, "Correlação moderada", "Correlação fraca"))) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' ANOVA
 #' @post /analise/anova
 #' @serializer json
@@ -802,7 +847,6 @@ function(req, res) {
     modelo <- aov(valores ~ grupos)
     resultado <- summary(modelo)
     
-    # Médias por grupo
     medias <- aggregate(valores ~ grupos, FUN = mean)
     
     return(list(
@@ -906,6 +950,50 @@ function(req, res) {
   })
 }
 
+#' Spearman - Gráfico
+#' @post /analise/spearman_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    x <- as.numeric(dados$x)
+    y <- as.numeric(dados$y)
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "Variável X"
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Variável Y"
+    
+    teste <- cor.test(x, y, method = "spearman", exact = FALSE)
+    
+    df_plot <- data.frame(x = x, y = y)
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#9B59B6", alpha = 0.7) +
+      geom_smooth(method = "loess", se = TRUE, color = "#E74C3C", fill = "#E74C3C", alpha = 0.2) +
+      labs(title = paste0("Correlação de Spearman: ", nome_y, " vs ", nome_x),
+           subtitle = paste0("ρ = ", round(teste$estimate, 3),
+                           " | p = ", ifelse(teste$p.value < 0.001, "< 0.001", round(teste$p.value, 3)),
+                           " | ", ifelse(teste$p.value < 0.05, "Significativo", "Não significativo")),
+           x = nome_x,
+           y = nome_y,
+           caption = "Correlação de ranks - apropriada para dados não-normais") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' Kendall
 #' @post /analise/kendall
 #' @serializer json
@@ -931,6 +1019,50 @@ function(req, res) {
       nome_y = nome_y
     ))
   }, error = function(e) {
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' Kendall - Gráfico
+#' @post /analise/kendall_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    x <- as.numeric(dados$x)
+    y <- as.numeric(dados$y)
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "Variável X"
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Variável Y"
+    
+    teste <- cor.test(x, y, method = "kendall", exact = FALSE)
+    
+    df_plot <- data.frame(x = x, y = y)
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#27AE60", alpha = 0.7) +
+      geom_smooth(method = "loess", se = TRUE, color = "#E74C3C", fill = "#E74C3C", alpha = 0.2) +
+      labs(title = paste0("Correlação de Kendall: ", nome_y, " vs ", nome_x),
+           subtitle = paste0("τ = ", round(teste$estimate, 3),
+                           " | p = ", ifelse(teste$p.value < 0.001, "< 0.001", round(teste$p.value, 3)),
+                           " | ", ifelse(teste$p.value < 0.05, "Significativo", "Não significativo")),
+           x = nome_x,
+           y = nome_y,
+           caption = "Correlação de concordância - robusta a outliers") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1023,7 +1155,6 @@ function(req, res) {
     
     teste <- kruskal.test(valores ~ grupos)
     
-    # Medianas por grupo
     medianas <- aggregate(valores ~ grupos, FUN = median)
     
     return(list(
@@ -1206,7 +1337,7 @@ function(req, res) {
                 aes(x = CCA1 * 1.1, y = CCA2 * 1.1, label = label),
                 color = "#27AE60", fontface = "bold", size = 4) +
       labs(title = "Análise de Correspondência Canônica (CCA)",
-           subtitle = "Roxo: Sites | Vermelho: Espécies | Verde: Vetores Ambientais",
+           subtitle = "Roxo: Locais | Vermelho: Espécies | Verde: Vetores Ambientais",
            x = "CCA1", y = "CCA2") +
       theme_minimal()
     
@@ -1345,6 +1476,54 @@ function(req, res) {
   })
 }
 
+#' Jaccard - Gráfico (Heatmap) 
+#' @post /analise/jaccard_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    matriz <- as.matrix(dados$matriz)
+    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    dist_jaccard <- vegdist(matriz, method = "jaccard")
+    matriz_dist <- as.matrix(dist_jaccard)
+    rownames(matriz_dist) <- nomes_sites
+    colnames(matriz_dist) <- nomes_sites
+    
+    df_heatmap <- expand.grid(
+      Amostra1 = nomes_sites,
+      Amostra2 = nomes_sites
+    )
+    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      scale_fill_gradient2(low = "#27AE60", mid = "#F39C12", high = "#E74C3C",
+                          midpoint = 0.5, limits = c(0, 1)) +
+      labs(title = "Dissimilaridade de Jaccard",
+           subtitle = "Baseado em presença/ausência - 0 = idênticas, 1 = diferentes",
+           x = "", y = "") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' Bray-Curtis
 #' @post /analise/bray_curtis
 #' @serializer json
@@ -1368,6 +1547,54 @@ function(req, res) {
       nomes_amostras = nomes_sites
     ))
   }, error = function(e) {
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' Bray-Curtis - Gráfico (heatmap)
+#' @post /analise/bray_curtis_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    matriz <- as.matrix(dados$matriz)
+    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    dist_bray <- vegdist(matriz, method = "bray")
+    matriz_dist <- as.matrix(dist_bray)
+    rownames(matriz_dist) <- nomes_sites
+    colnames(matriz_dist) <- nomes_sites
+    
+    df_heatmap <- expand.grid(
+      Amostra1 = nomes_sites,
+      Amostra2 = nomes_sites
+    )
+    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      scale_fill_gradient2(low = "#3498DB", mid = "#F39C12", high = "#E74C3C",
+                          midpoint = 0.5, limits = c(0, 1)) +
+      labs(title = "Dissimilaridade de Bray-Curtis",
+           subtitle = "Baseado em abundâncias - 0 = idênticas, 1 = sem espécies compartilhadas",
+           x = "", y = "") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1401,6 +1628,54 @@ function(req, res) {
   })
 }
 
+#' Morisita-Horn - Gráfico (Heatmap)
+#' @post /analise/morisita_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    matriz <- as.matrix(dados$matriz)
+    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    dist_morisita <- vegdist(matriz, method = "horn")
+    matriz_dist <- as.matrix(dist_morisita)
+    rownames(matriz_dist) <- nomes_sites
+    colnames(matriz_dist) <- nomes_sites
+    
+    df_heatmap <- expand.grid(
+      Amostra1 = nomes_sites,
+      Amostra2 = nomes_sites
+    )
+    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      scale_fill_gradient2(low = "#9B59B6", mid = "#F39C12", high = "#E74C3C",
+                          midpoint = 0.5, limits = c(0, 1)) +
+      labs(title = "Dissimilaridade de Morisita-Horn",
+           subtitle = "Menos sensível a diferenças no tamanho amostral",
+           x = "", y = "") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' Sørensen-Dice
 #' @post /analise/sorensen
 #' @serializer json
@@ -1424,6 +1699,54 @@ function(req, res) {
       nomes_amostras = nomes_sites
     ))
   }, error = function(e) {
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' Sørensen-Dice - Gráfico (Heatmap)
+#' @post /analise/sorensen_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    matriz <- as.matrix(dados$matriz)
+    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    dist_sorensen <- vegdist(matriz > 0, method = "bray")
+    matriz_dist <- as.matrix(dist_sorensen)
+    rownames(matriz_dist) <- nomes_sites
+    colnames(matriz_dist) <- nomes_sites
+    
+    df_heatmap <- expand.grid(
+      Amostra1 = nomes_sites,
+      Amostra2 = nomes_sites
+    )
+    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      scale_fill_gradient2(low = "#E67E22", mid = "#F39C12", high = "#E74C3C",
+                          midpoint = 0.5, limits = c(0, 1)) +
+      labs(title = "Dissimilaridade de Sørensen-Dice",
+           subtitle = "Similar a Jaccard mas dá mais peso a espécies compartilhadas",
+           x = "", y = "") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1567,6 +1890,60 @@ function(req, res) {
   })
 }
 
+#' Gráfico do Modelo Gaussiano
+#' @post /analise/modelo_gaussiano_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    y <- as.numeric(dados$y)
+    x <- as.numeric(dados$x)
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Y"
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "X"
+    
+    modelo <- glm(y ~ x, family = gaussian())
+    
+    df_plot <- data.frame(
+      x = x,
+      y = y,
+      fitted = fitted(modelo),
+      residuals = residuals(modelo)
+    )
+    
+    r2 <- 1 - (deviance(modelo) / sum((y - mean(y))^2))
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#3498DB", alpha = 0.7) +
+      geom_line(aes(y = fitted), color = "#E74C3C", linewidth = 1.2) +
+      geom_ribbon(aes(ymin = fitted - sd(residuals), 
+                      ymax = fitted + sd(residuals)),
+                  alpha = 0.2, fill = "#E74C3C") +
+      labs(title = paste0("Modelo Gaussiano (GLM): ", nome_y, " ~ ", nome_x),
+           subtitle = paste0("AIC = ", round(AIC(modelo), 2), 
+                           " | R² = ", round(r2, 3),
+                           " | Deviance = ", round(deviance(modelo), 2)),
+           x = nome_x,
+           y = nome_y,
+           caption = "Linha vermelha = valores ajustados | Banda = ± 1 desvio padrão") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' Modelo Gamma
 #' @post /analise/modelo_gamma
 #' @serializer json
@@ -1592,6 +1969,54 @@ function(req, res) {
       interpretacao = "Apropriado para dados contínuos positivos com variância proporcional à média"
     ))
   }, error = function(e) {
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' Gráfico do Modelo Gamma
+#' @post /analise/modelo_gamma_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    y <- as.numeric(dados$y)
+    x <- as.numeric(dados$x)
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Y"
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "X"
+    
+    modelo <- glm(y ~ x, family = Gamma(link = "log"))
+    
+    df_plot <- data.frame(
+      x = x,
+      y = y,
+      fitted = fitted(modelo)
+    )
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#9B59B6", alpha = 0.7) +
+      geom_line(aes(y = fitted), color = "#E74C3C", linewidth = 1.2) +
+      labs(title = paste0("Modelo Gamma (GLM): ", nome_y, " ~ ", nome_x),
+           subtitle = paste0("AIC = ", round(AIC(modelo), 2), 
+                           " | Deviance = ", round(deviance(modelo), 2),
+                           " | Link = log"),
+           x = nome_x,
+           y = nome_y,
+           caption = "Apropriado para dados positivos contínuos") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1631,6 +2056,57 @@ function(req, res) {
   })
 }
 
+#' Gráfico do Modelo Poisson
+#' @post /analise/modelo_poisson_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    y <- as.integer(dados$y)
+    x <- as.numeric(dados$x)
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Y"
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "X"
+    
+    modelo <- glm(y ~ x, family = poisson())
+    sobredispersao <- deviance(modelo) / df.residual(modelo)
+    
+    df_plot <- data.frame(
+      x = x,
+      y = y,
+      fitted = fitted(modelo)
+    )
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#27AE60", alpha = 0.7) +
+      geom_line(aes(y = fitted), color = "#E74C3C", linewidth = 1.2) +
+      labs(title = paste0("Modelo Poisson (GLM): ", nome_y, " ~ ", nome_x),
+           subtitle = paste0("AIC = ", round(AIC(modelo), 2), 
+                           " | Sobredispersão = ", round(sobredispersao, 2),
+                           ifelse(sobredispersao > 1.5, "ALTA", "OK")),
+           x = nome_x,
+           y = nome_y,
+           caption = ifelse(sobredispersao > 1.5, 
+                          "Sobredispersão detectada - considere Binomial Negativa",
+                          "Modelo adequado para os dados")) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
 #' Modelo Binomial Negativa
 #' @post /analise/modelo_binomial_negativa
 #' @serializer json
@@ -1657,6 +2133,54 @@ function(req, res) {
       interpretacao = "Apropriado para dados de contagem com sobredispersão (variância > média)"
     ))
   }, error = function(e) {
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' Gráfico do Modelo Binomial Negativa
+#' @post /analise/modelo_binomial_grafico
+#' @serializer html
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    y <- as.integer(dados$y)
+    x <- as.numeric(dados$x)
+    nome_y <- if(!is.null(dados$nome_y)) dados$nome_y else "Y"
+    nome_x <- if(!is.null(dados$nome_x)) dados$nome_x else "X"
+    
+    modelo <- glm.nb(y ~ x)
+    
+    df_plot <- data.frame(
+      x = x,
+      y = y,
+      fitted = fitted(modelo)
+    )
+    
+    p <- ggplot(df_plot, aes(x = x, y = y)) +
+      geom_point(size = 3, color = "#E67E22", alpha = 0.7) +
+      geom_line(aes(y = fitted), color = "#E74C3C", linewidth = 1.2) +
+      labs(title = paste0("Modelo Binomial Negativa (GLM): ", nome_y, " ~ ", nome_x),
+           subtitle = paste0("AIC = ", round(AIC(modelo), 2), 
+                           " | θ = ", round(modelo$theta, 2),
+                           " | Deviance = ", round(deviance(modelo), 2)),
+           x = nome_x,
+           y = nome_y,
+           caption = "Apropriado para dados de contagem com sobredispersão") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
