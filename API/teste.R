@@ -85,6 +85,15 @@ matriz_abundancia_teste <- list(
   nomes_amostras = c("Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste")
 )
 
+matriz_acumulacao_teste <- list(
+  matriz = matrix(c(
+    5, 2, 3, 1, 0, 0,
+    5, 3, 3, 1, 1, 0,
+    5, 3, 4, 2, 1, 0,
+    5, 3, 4, 2, 1, 1
+  ), nrow = 4, byrow = TRUE)
+)
+
 dados_rda_teste <- list(
   especies = matrix(c(
     5, 2, 3,
@@ -142,6 +151,20 @@ dados_glm_teste <- list(
   nome_x = "Área_ha"
 )
 
+dados_glm_gamma_teste <- list(
+  y = c(2.5, 5.2, 3.8, 6.5, 1.3, 8.8, 4.7, 10.2),
+  x = c(10, 15, 12, 18, 8, 22, 11, 25),
+  nome_y = "Biomassa_kg",
+  nome_x = "Área_ha"
+)
+
+dados_ks_teste <- list(
+  amostra1 = c(12, 15, 14, 10, 13, 16, 11, 14, 15, 12),
+  amostra2 = c(18, 20, 19, 22, 21, 17, 19, 20, 18, 21),
+  nome_amostra1 = "Local_A",
+  nome_amostra2 = "Local_B"
+)
+
 # Execução de testes
 
 cat("\n")
@@ -192,6 +215,7 @@ testar_endpoint("/analise/spearman", dados_correlacao_teste, "Spearman")
 testar_endpoint("/analise/kendall", dados_correlacao_teste, "Kendall")
 testar_endpoint("/analise/shapiro", dados_normalidade_teste, "Shapiro-Wilk")
 testar_endpoint("/analise/kruskal", dados_anova_teste, "Kruskal-Wallis")
+testar_endpoint("/analise/ks", dados_ks_teste, "Kolmogorov-Smirnov")
 testar_endpoint("/analise/rda", dados_rda_teste, "RDA")
 testar_endpoint("/analise/cca", dados_rda_teste, "CCA")
 testar_endpoint("/analise/nmds", matriz_abundancia_teste, "nMDS")
@@ -204,6 +228,7 @@ testar_endpoint("/analise/modelo_gaussiano", dados_glm_teste, "Modelo Gaussiano"
 testar_endpoint("/analise/modelo_gamma", dados_glm_teste, "Modelo Gamma")
 testar_endpoint("/analise/modelo_poisson", dados_glm_teste, "Modelo Poisson")
 testar_endpoint("/analise/modelo_binomial_negativa", dados_glm_teste, "Modelo Binomial Negativa")
+testar_endpoint("/analise/michaelis_menten", matriz_acumulacao_teste, "Michaelis-Menten")
 
 cat("\n\n")
 cat("# Testes concluídos.                        #\n")

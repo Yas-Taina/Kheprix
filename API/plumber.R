@@ -1065,29 +1065,52 @@ function(req, res) {
     
     rda_result <- rda(especies ~ ., data = ambiente)
     
-    scores_sites <- tryCatch(
-      as.data.frame(scores(rda_result, display = "sites", choices = 1:2)),
-      error = function(e) as.data.frame(scores(rda_result)$sites[, 1:2])
-    )
-    scores_species <- tryCatch(
-      as.data.frame(scores(rda_result, display = "species", choices = 1:2)),
-      error = function(e) as.data.frame(scores(rda_result)$species[, 1:2])
-    )
-    scores_env <- tryCatch(
-      as.data.frame(scores(rda_result, display = "bp", choices = 1:2)),
-      error = function(e) {
-        bp <- scores(rda_result)$biplot
-        if(is.null(bp)) {
-          data.frame(RDA1 = numeric(0), RDA2 = numeric(0))
+    scores_sites <- tryCatch({
+      sc <- scores(rda_result, display = "sites", choices = 1:2)
+      if(is.matrix(sc)) {
+        as.data.frame(sc)
+      } else if(is.list(sc)) {
+        as.data.frame(sc$sites[, 1:2])
+      } else {
+        as.data.frame(scores(rda_result)$sites[, 1:2])
+      }
+    }, error = function(e) {
+      as.data.frame(scores(rda_result)$sites[, 1:2])
+    })
+    
+    scores_species <- tryCatch({
+      sc <- scores(rda_result, display = "species", choices = 1:2)
+      if(is.matrix(sc)) {
+        as.data.frame(sc)
+      } else if(is.list(sc)) {
+        as.data.frame(sc$species[, 1:2])
+      } else {
+        as.data.frame(scores(rda_result)$species[, 1:2])
+      }
+    }, error = function(e) {
+      as.data.frame(scores(rda_result)$species[, 1:2])
+    })
+    
+    scores_env <- tryCatch({
+      sc <- scores(rda_result, display = "bp", choices = 1:2)
+      if(is.matrix(sc) && nrow(sc) > 0) {
+        as.data.frame(sc)
+      } else {
+        bp <- rda_result$CCA$biplot
+        if(!is.null(bp) && nrow(bp) > 0) {
+          as.data.frame(bp[, 1:2, drop = FALSE])
         } else {
-          as.data.frame(bp[, 1:2])
+          data.frame(RDA1 = numeric(0), RDA2 = numeric(0))
         }
       }
-    )
+    }, error = function(e) {
+      data.frame(RDA1 = numeric(0), RDA2 = numeric(0))
+    })
     
     scores_sites$label <- rownames(scores_sites)
     scores_species$label <- rownames(scores_species)
-    if(nrow(scores_env) > 0) {
+    
+    if(nrow(scores_env) > 0 && !is.null(rownames(scores_env))) {
       scores_env$label <- rownames(scores_env)
     }
     
@@ -1108,12 +1131,12 @@ function(req, res) {
         geom_segment(data = scores_env, 
                      aes(x = 0, y = 0, xend = RDA1 * 0.8, yend = RDA2 * 0.8),
                      arrow = arrow(length = unit(0.2, "cm")), 
-                     color = "#27AE60", size = 1) +
+                     color = "#27AE60", linewidth = 1) +  
         geom_text(data = scores_env, aes(x = RDA1 * 0.9, y = RDA2 * 0.9, label = label),
                   color = "#27AE60", fontface = "bold", size = 3.5)
     }
     
-    grafico <- ggplotly(p)
+    grafico <- ggplotly(p, tooltip = c("text"))
     html <- salvar_grafico(grafico)
 
     if (!is.null(html)) {
@@ -1122,84 +1145,70 @@ function(req, res) {
       stop("Falha na geração do HTML.")
     }
   }, error = function(e) {
-    cat("Erro:", conditionMessage(e), "\n")
+    cat("Erro RDA:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
 }
 
 
-#' CCA (Canonical Correspondence Analysis)
+#' CCA (Canonical Correspondence Analysis) 
 #' @post /analise/cca
 #' @serializer html
 #' Dados aceitos: Matriz de abundâncias (amostras x espécies) e matriz ambiental (amostras x variáveis)
-#' Formato esperado: {"especies": [[5,2,3], [1,4,2]], "ambiente": [[12.5, 3.2], [15.1, 2.8]], 
+#' Formato esperado: {"abundancias": [[5,2,3], [1,4,2]], "ambiente": [[12.5, 3.2], [15.1, 2.8]], 
 #'                    "nomes_especies": ["Sp1", "Sp2", "Sp3"], "nomes_amostras": ["UA1", "UA2"],
 #'                    "nomes_variaveis_ambientais": ["Temperatura", "pH"]}
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    abundancias <- as.data.frame(dados$abundancias)
+    
+    matriz_bruta <- if(!is.null(dados$abundancias)) dados$abundancias else dados$especies
+    
+    if(is.null(matriz_bruta)) stop("Matriz de abundâncias não encontrada no JSON.")
+    
+    abundancias <- as.data.frame(matriz_bruta)
     ambiente <- as.data.frame(dados$ambiente)
     
     nomes_spp <- if(!is.null(dados$nomes_especies)) dados$nomes_especies else paste0("Sp", 1:ncol(abundancias))
     nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(abundancias))
     nomes_env <- if(!is.null(dados$nomes_variaveis_ambientais)) dados$nomes_variaveis_ambientais else paste0("Var", 1:ncol(ambiente))
     
-    colnames(abundancias) <- nomes_spp
-    rownames(abundancias) <- nomes_sites
-    colnames(ambiente) <- nomes_env
-    rownames(ambiente) <- nomes_sites
+    if(length(nomes_spp) == ncol(abundancias)) colnames(abundancias) <- nomes_spp
+    if(length(nomes_sites) == nrow(abundancias)) rownames(abundancias) <- nomes_sites
+    if(length(nomes_env) == ncol(ambiente)) colnames(ambiente) <- nomes_env
+    if(length(nomes_sites) == nrow(ambiente)) rownames(ambiente) <- nomes_sites
     
     cca_result <- cca(abundancias ~ ., data = ambiente)
     
-    scores_sites <- tryCatch(
-      as.data.frame(scores(cca_result, display = "sites", choices = 1:2)),
-      error = function(e) as.data.frame(scores(cca_result)$sites[, 1:2])
-    )
-    scores_species <- tryCatch(
-      as.data.frame(scores(cca_result, display = "species", choices = 1:2)),
-      error = function(e) as.data.frame(scores(cca_result)$species[, 1:2])
-    )
-    scores_env <- tryCatch(
-      as.data.frame(scores(cca_result, display = "bp", choices = 1:2)),
-      error = function(e) {
-        bp <- scores(cca_result)$biplot
-        if(is.null(bp)) {
-          data.frame(CCA1 = numeric(0), CCA2 = numeric(0))
-        } else {
-          as.data.frame(bp[, 1:2])
-        }
-      }
-    )
+    sc_sites <- as.data.frame(scores(cca_result, display = "sites", choices = 1:2))
+    sc_sites$label <- rownames(sc_sites)
     
-    scores_sites$label <- rownames(scores_sites)
-    scores_species$label <- rownames(scores_species)
-    if(nrow(scores_env) > 0) {
-      scores_env$label <- rownames(scores_env)
+    sc_species <- as.data.frame(scores(cca_result, display = "species", choices = 1:2))
+    sc_species$label <- rownames(sc_species)
+
+    bp_data <- as.data.frame(cca_result$CCA$biplot[, 1:2])
+    if(nrow(bp_data) > 0) {
+      bp_data$label <- rownames(bp_data)
     }
-    
     p <- ggplot() +
-      geom_point(data = scores_sites, aes(x = CCA1, y = CCA2, text = label), 
-                 color = "#9B59B6", size = 4, alpha = 0.7) +
-      geom_text(data = scores_species, aes(x = CCA1, y = CCA2, label = label), 
+      geom_point(data = sc_sites, 
+                 aes(x = CCA1, y = CCA2, text = label), 
+                 color = "#9B59B6", size = 3, alpha = 0.7) +
+      geom_text(data = sc_species, 
+                aes(x = CCA1, y = CCA2, label = label), 
                 color = "#E74C3C", fontface = "italic", size = 3) +
+      geom_segment(data = bp_data, 
+                   aes(x = 0, y = 0, xend = CCA1, yend = CCA2),
+                   arrow = arrow(length = unit(0.2, "cm")), 
+                   color = "#27AE60", linewidth = 0.8) +
+      geom_text(data = bp_data, 
+                aes(x = CCA1 * 1.1, y = CCA2 * 1.1, label = label),
+                color = "#27AE60", fontface = "bold", size = 4) +
       labs(title = "Análise de Correspondência Canônica (CCA)",
-           subtitle = "Roxo = Amostras | Vermelho = Espécies | Verde = Variáveis Ambientais",
+           subtitle = "Roxo: Sites | Vermelho: Espécies | Verde: Vetores Ambientais",
            x = "CCA1", y = "CCA2") +
-      theme_minimal() +
-      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-            plot.subtitle = element_text(hjust = 0.5, size = 10))
-    
-    if(nrow(scores_env) > 0) {
-      p <- p +
-        geom_segment(data = scores_env, 
-                     aes(x = 0, y = 0, xend = CCA1 * 0.8, yend = CCA2 * 0.8),
-                     arrow = arrow(length = unit(0.2, "cm")), 
-                     color = "#27AE60", size = 1) +
-        geom_text(data = scores_env, aes(x = CCA1 * 0.9, y = CCA2 * 0.9, label = label),
-                  color = "#27AE60", fontface = "bold", size = 3.5)
-    }
+      theme_minimal()
     
     grafico <- ggplotly(p)
     html <- salvar_grafico(grafico)
@@ -1215,6 +1224,7 @@ function(req, res) {
     return(list(error = paste("Erro:", e$message)))
   })
 }
+
 
 #' nMDS (Non-metric Multidimensional Scaling)
 #' @post /analise/nmds
