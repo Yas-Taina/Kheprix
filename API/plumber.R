@@ -1,5 +1,11 @@
 # API de Análises para Sistema Kheprix
 
+dir_temp <- "C:/temp"
+if (!dir.exists(dir_temp)) dir.create(dir_temp)
+Sys.setenv(TMPDIR = dir_temp)
+Sys.setenv(TEMP = dir_temp)
+Sys.setenv(TMP = dir_temp)
+
 library(plumber)
 library(vegan)
 library(ggplot2)
@@ -9,6 +15,33 @@ library(jsonlite)
 library(dplyr)
 library(tidyr)
 library(MASS)
+
+#Função para salvar gráficos em html
+salvar_grafico <- function(p) {
+  fig <- ggplotly(p)
+  json_txt <- plotly::plotly_json(fig, jsonedit = FALSE)
+  pj <- jsonlite::fromJSON(json_txt, simplifyVector = FALSE)
+  html <- paste0(
+    "<!DOCTYPE html>",
+    "<html>",
+    "<head>",
+    "<meta charset='utf-8'>",
+    "<meta name='viewport' content='width=device-width, initial-scale=1'>",
+    "<script src='https://cdn.plot.ly/plotly-2.24.1.min.js'></script>",
+    "</head>",
+    "<body style='margin:0;'>",
+    "<div id='grafico' style='width:100%;height:100%;'></div>",
+    "<script>",
+    "var fig = ", jsonlite::toJSON(pj, auto_unbox = TRUE), ";",
+    "Plotly.newPlot('grafico', fig.data, fig.layout, fig.config);",
+    "</script>",
+    "</body></html>"
+  )
+  return(html)
+}
+
+
+
 
 #Função radfit customizada
 radfit_custom <- function(abundancias) {
@@ -139,15 +172,16 @@ function(req, res) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
-    grafico <- plotly::ggplotly(p, tooltip = "text")
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
 
-    tmp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = tmp, selfcontained = TRUE)
-    html <- paste(readLines(tmp, warn = FALSE), collapse = "\n")
-    unlink(tmp)
-    return (html)
-
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -187,13 +221,16 @@ function(req, res) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
-    grafico <- ggplotly(p, tooltip = "text")
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -233,13 +270,16 @@ function(req, res) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
-    grafico <- ggplotly(p, tooltip = "text")
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -279,13 +319,16 @@ function(req, res) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
-    grafico <- ggplotly(p, tooltip = "text")
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -325,12 +368,15 @@ function(req, res) {
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
     grafico <- ggplotly(p)
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -816,12 +862,15 @@ function(req, res) {
       )
     
     grafico <- ggplotly(p)
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1064,13 +1113,16 @@ function(req, res) {
                   color = "#27AE60", fontface = "bold", size = 3.5)
     }
     
-    grafico <- ggplotly(p, tooltip = c("text"))
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1149,13 +1201,16 @@ function(req, res) {
                   color = "#27AE60", fontface = "bold", size = 3.5)
     }
     
-    grafico <- ggplotly(p, tooltip = c("text"))
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1191,13 +1246,16 @@ function(req, res) {
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
             plot.subtitle = element_text(hjust = 0.5, size = 10))
     
-    grafico <- ggplotly(p, tooltip = c("text"))
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1234,13 +1292,16 @@ function(req, res) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
-    grafico <- ggplotly(p, tooltip = c("text"))
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    grafico <- ggplotly(p)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
@@ -1633,12 +1694,15 @@ function(req, res) {
             plot.subtitle = element_text(hjust = 0.5))
     
     grafico <- ggplotly(p)
-    arquivo_temp <- tempfile(fileext = ".html")
-    saveWidget(grafico, file = arquivo_temp, selfcontained = TRUE)
-    html_str <- paste(readLines(arquivo_temp, warn = FALSE), collapse = "\n")
-    unlink(arquivo_temp)
-    return(html_str)
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
   }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
