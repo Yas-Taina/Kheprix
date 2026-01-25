@@ -48,24 +48,31 @@ radfit_custom <- function(abundancias) {
   x <- seq_along(y)
   log_y <- log(y)
   
-  # Modelo Log-Normal
   fit_lognormal <- tryCatch({
     nls(log_y ~ a - (x - b)^2 / (2 * c^2),
         start = list(a = max(log_y), b = 1, c = length(y)/2),
         control = nls.control(maxiter = 100, warnOnly = TRUE))
   }, error = function(e) NULL)
   
-  # Modelo Log-Serie
   fit_logseries <- tryCatch({
     N <- sum(y)
     S <- length(y)
-    alpha <- fisherfit(y, se = TRUE)$estimate
-    x_fisher <- N/(N + alpha)
-    predicted <- -alpha * log(1 - x_fisher) * x_fisher^x / x
-    list(fitted = predicted)
-  }, error = function(e) NULL)
+    fisher_result <- fisherfit(y, se = FALSE)
+    alpha <- fisher_result$estimate
+    x_param <- N / (N + alpha)
+    predicted <- sapply(x, function(rank) {
+      -alpha * log(1 - x_param) * (x_param^rank) / rank
+    })
+    if(all(is.finite(predicted)) && !all(predicted == 0)) {
+      list(fitted = predicted, alpha = alpha, x = x_param)
+    } else {
+      NULL
+    }
+  }, error = function(e) {
+    cat("Erro no ajuste log-serie:", conditionMessage(e), "\n")
+    NULL
+  })
   
-  # Modelo Geométrico
   fit_geometric <- tryCatch({
     k <- exp(-coef(lm(log_y ~ x))[2])
     a <- exp(coef(lm(log_y ~ x))[1])
@@ -73,7 +80,6 @@ radfit_custom <- function(abundancias) {
     list(fitted = predicted)
   }, error = function(e) NULL)
   
-  # Modelo Broken Stick
   fit_brokenstick <- tryCatch({
     S <- length(y)
     N <- sum(y)
@@ -102,15 +108,29 @@ fitted.radfit_custom <- function(object, ...) {
   result <- matrix(NA, nrow = n, ncol = 4)
   colnames(result) <- c("lognormal", "logseries", "geometric", "brokenstick")
   
+  # Log-normal
   if(!is.null(object$models$lognormal)) {
     result[, "lognormal"] <- exp(predict(object$models$lognormal))
   }
+  
+  # Log-series
   if(!is.null(object$models$logseries)) {
-    result[, "logseries"] <- object$models$logseries$fitted
+    if(is.list(object$models$logseries) && "fitted" %in% names(object$models$logseries)) {
+      fitted_vals <- object$models$logseries$fitted
+      if(length(fitted_vals) == n) {
+        result[, "logseries"] <- fitted_vals
+      } else {
+        cat("AVISO: Log-series tem tamanho errado:", length(fitted_vals), "vs", n, "\n")
+      }
+    }
   }
+  
+  # Geométrica
   if(!is.null(object$models$geometric)) {
     result[, "geometric"] <- object$models$geometric$fitted
   }
+  
+  # Vara Quebrada
   if(!is.null(object$models$brokenstick)) {
     result[, "brokenstick"] <- object$models$brokenstick$fitted
   }
@@ -207,7 +227,37 @@ function(req, res) {
       mutate(rank = row_number())
     
     pred_values <- fitted(fit)
-    df_ordenado$fitted <- pred_values[, "logseries"]
+    
+    logseries_fitted <- pred_values[, "logseries"]
+    
+    cat("Log-Serie fitted values:\n")
+    print(logseries_fitted)
+    cat("Any NA:", any(is.na(logseries_fitted)), "\n")
+    cat("Any Inf:", any(is.infinite(logseries_fitted)), "\n")
+    
+    if(all(is.na(logseries_fitted)) || all(is.infinite(logseries_fitted))) {
+      cat("Log-Serie falhou, usando método alternativo...\n")
+      
+      N <- sum(abundancias)
+      S <- length(abundancias[abundancias > 0])
+      
+      alpha_est <- tryCatch({
+        fisher_result <- fisherfit(abundancias, se = FALSE)
+        fisher_result$estimate
+      }, error = function(e) {
+        N / (N/S - 1)
+      })
+      
+      x <- N / (N + alpha_est)
+      
+      ranks <- 1:length(abundancias)
+      logseries_fitted <- -alpha_est * log(1 - x) * (x^ranks) / ranks
+      
+      cat("Valores alternativos gerados:\n")
+      print(logseries_fitted)
+    }
+    
+    df_ordenado$fitted <- logseries_fitted
     
     p <- ggplot(df_ordenado, aes(x = rank, y = abundance)) +
       geom_point(aes(text = paste("Espécie:", especie, "<br>Abundância:", abundance)), 
@@ -222,6 +272,7 @@ function(req, res) {
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
     
     grafico <- ggplotly(p)
+
     html <- salvar_grafico(grafico)
 
     if (!is.null(html)) {
