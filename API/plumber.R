@@ -138,6 +138,84 @@ fitted.radfit_custom <- function(object, ...) {
   return(result)
 }
 
+#Função para criar Matriz Presença Ausência
+criar_matriz_pa <- function(abundancias_por_amostra, nomes_especies = NULL, nomes_amostras = NULL) {
+  if (is.matrix(abundancias_por_amostra)) {
+    matriz <- abundancias_por_amostra
+  } else if (is.list(abundancias_por_amostra)) {
+    matriz <- do.call(rbind, abundancias_por_amostra)
+  } else {
+
+    matriz <- as.matrix(abundancias_por_amostra)
+  }
+  
+  matriz_pa <- ifelse(matriz > 0, 1, 0)
+  if (!is.null(nomes_especies)) {
+    colnames(matriz_pa) <- nomes_especies
+  } else {
+    colnames(matriz_pa) <- paste0("Sp", 1:ncol(matriz_pa))
+  }
+  
+  if (!is.null(nomes_amostras)) {
+    rownames(matriz_pa) <- nomes_amostras
+  } else {
+    rownames(matriz_pa) <- paste0("Amostra", 1:nrow(matriz_pa))
+  }
+  
+  return(matriz_pa)
+}
+
+
+#Função para criar Matriz de Abundância
+criar_matriz_abundancia <- function(abundancias_por_amostra, nomes_especies = NULL, nomes_amostras = NULL) {
+  if (is.matrix(abundancias_por_amostra)) {
+    matriz <- abundancias_por_amostra
+  } else if (is.list(abundancias_por_amostra)) {
+    matriz <- do.call(rbind, abundancias_por_amostra)
+  } else {
+    matriz <- as.matrix(abundancias_por_amostra)
+  }
+  
+  if (!is.null(nomes_especies)) {
+    colnames(matriz) <- nomes_especies
+  } else {
+    colnames(matriz) <- paste0("Sp", 1:ncol(matriz))
+  }
+  
+  if (!is.null(nomes_amostras)) {
+    rownames(matriz) <- nomes_amostras
+  } else {
+    rownames(matriz) <- paste0("Amostra", 1:nrow(matriz))
+  }
+  
+  return(matriz)
+}
+
+#Função para criar Matriz de Váriaveis ambientais
+criar_matriz_ambiental <- function(variaveis_por_amostra, nomes_variaveis = NULL, nomes_amostras = NULL) {
+  if (is.matrix(variaveis_por_amostra)) {
+    matriz <- variaveis_por_amostra
+  } else if (is.list(variaveis_por_amostra)) {
+    matriz <- do.call(rbind, variaveis_por_amostra)
+  } else {
+    matriz <- as.matrix(variaveis_por_amostra)
+  }
+  
+  if (!is.null(nomes_variaveis)) {
+    colnames(matriz) <- nomes_variaveis
+  } else {
+    colnames(matriz) <- paste0("Var", 1:ncol(matriz))
+  }
+  
+  if (!is.null(nomes_amostras)) {
+    rownames(matriz) <- nomes_amostras
+  } else {
+    rownames(matriz) <- paste0("Amostra", 1:nrow(matriz))
+  }
+  
+  return(matriz)
+}
+
 #Filtro CORS para permitir requisições
 #' @filter cors
 cors <- function(req, res) {
@@ -527,18 +605,27 @@ function(req, res) {
 #' Chao 2
 #' @post /analise/chao2
 #' @serializer json
-#' Dados aceitos: Matriz de presença/ausência (amostras x espécies), nomes opcionais
-#' Formato esperado: {"matriz": [[1,0,1,0], [1,1,0,0]], "nomes_especies": ["Sp1", "Sp2", ...], "nomes_amostras": ["UA1", "UA2", ...]}
+#' Dados aceitos: Lista de abundâncias por amostra 
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
     
-    S_obs <- ncol(matriz)
-    Q1 <- sum(colSums(matriz) == 1)
-    Q2 <- sum(colSums(matriz) == 2)
-    m <- nrow(matriz)
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
+    S_obs <- ncol(matriz_pa)
+    Q1 <- sum(colSums(matriz_pa) == 1)
+    Q2 <- sum(colSums(matriz_pa) == 2)
+    m <- nrow(matriz_pa)
+
     if (Q2 > 0) {
       chao2 <- S_obs + ((m - 1) / m) * (Q1^2 / (2 * Q2))
     } else {
@@ -609,18 +696,27 @@ function(req, res) {
   })
 }
 
-#' ICE (Incidence-based Coverage Estimator)
+#' ICE (Incidence Coverage Estimator)
 #' @post /analise/ice
 #' @serializer json
-#' Dados aceitos: Matriz de presença/ausência (amostras x espécies)
-#' Formato esperado: {"matriz": [[1,0,1,0], [1,1,0,0], [0,1,1,1]]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
     
-    S_obs <- ncol(matriz)
-    freq <- colSums(matriz)
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
+    
+     S_obs <- ncol(matriz_pa)
+    freq <- colSums(matriz_pa)
     S_infreq <- sum(freq <= 10)
     S_freq <- sum(freq > 10)
     
@@ -1223,102 +1319,91 @@ function(req, res) {
   })
 }
 
-#' RDA (Redundancy Analysis)
+#' RDA (Análise de Redundância)
 #' @post /analise/rda
 #' @serializer html
-#' Dados aceitos: Matriz de espécies (amostras x espécies) e matriz ambiental (amostras x variáveis)
-#' Formato esperado: {"especies": [[5,2,3], [1,4,2]], "ambiente": [[12.5, 3.2], [15.1, 2.8]], 
-#'                    "nomes_especies": ["Sp1", "Sp2", "Sp3"], "nomes_amostras": ["UA1", "UA2"],
-#'                    "nomes_variaveis_ambientais": ["Temperatura", "pH"]}
+#' Dados aceitos: Lista de abundâncias por amostra + lista de variáveis ambientais por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3], [1,4,2], [3,1,5], [2,3,1]],
+#'   "variaveis_por_amostra": [[12.5,3.2,15.2], [15.1,2.8,18.3], [10.3,4.5,12.1], [18.2,2.1,20.5]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea"],
+#'   "nomes_amostras": ["Área_1", "Área_2", "Área_3", "Área_4"],
+#'   "nomes_variaveis_ambientais": ["Temperatura_°C", "pH_Solo", "Umidade_%"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    especies <- as.data.frame(dados$especies)
-    ambiente <- as.data.frame(dados$ambiente)
     
-    nomes_spp <- if(!is.null(dados$nomes_especies)) dados$nomes_especies else paste0("Sp", 1:ncol(especies))
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(especies))
-    nomes_env <- if(!is.null(dados$nomes_variaveis_ambientais)) dados$nomes_variaveis_ambientais else paste0("Var", 1:ncol(ambiente))
+    matriz_especies <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
-    colnames(especies) <- nomes_spp
-    rownames(especies) <- nomes_sites
-    colnames(ambiente) <- nomes_env
-    rownames(ambiente) <- nomes_sites
+    matriz_ambiente <- criar_matriz_ambiental(
+      dados$variaveis_por_amostra,
+      dados$nomes_variaveis_ambientais,
+      dados$nomes_amostras
+    )
     
-    rda_result <- rda(especies ~ ., data = ambiente)
+    rda_result <- rda(matriz_especies ~ ., data = as.data.frame(matriz_ambiente))
     
-    scores_sites <- tryCatch({
-      sc <- scores(rda_result, display = "sites", choices = 1:2)
-      if(is.matrix(sc)) {
-        as.data.frame(sc)
-      } else if(is.list(sc)) {
-        as.data.frame(sc$sites[, 1:2])
-      } else {
-        as.data.frame(scores(rda_result)$sites[, 1:2])
-      }
-    }, error = function(e) {
-      as.data.frame(scores(rda_result)$sites[, 1:2])
-    })
+    var_explicada <- RsquareAdj(rda_result)
     
-    scores_species <- tryCatch({
-      sc <- scores(rda_result, display = "species", choices = 1:2)
-      if(is.matrix(sc)) {
-        as.data.frame(sc)
-      } else if(is.list(sc)) {
-        as.data.frame(sc$species[, 1:2])
-      } else {
-        as.data.frame(scores(rda_result)$species[, 1:2])
-      }
-    }, error = function(e) {
-      as.data.frame(scores(rda_result)$species[, 1:2])
-    })
+    site_scores <- scores(rda_result, display = "sites", choices = 1:2)
+    species_scores <- scores(rda_result, display = "species", choices = 1:2)
+    biplot_scores <- scores(rda_result, display = "bp", choices = 1:2)
     
-    scores_env <- tryCatch({
-      sc <- scores(rda_result, display = "bp", choices = 1:2)
-      if(is.matrix(sc) && nrow(sc) > 0) {
-        as.data.frame(sc)
-      } else {
-        bp <- rda_result$CCA$biplot
-        if(!is.null(bp) && nrow(bp) > 0) {
-          as.data.frame(bp[, 1:2, drop = FALSE])
-        } else {
-          data.frame(RDA1 = numeric(0), RDA2 = numeric(0))
-        }
-      }
-    }, error = function(e) {
-      data.frame(RDA1 = numeric(0), RDA2 = numeric(0))
-    })
+    df_sites <- data.frame(
+      RDA1 = site_scores[, 1],
+      RDA2 = site_scores[, 2],
+      Site = rownames(site_scores),
+      Tipo = "Amostra"
+    )
     
-    scores_sites$label <- rownames(scores_sites)
-    scores_species$label <- rownames(scores_species)
+    df_especies <- data.frame(
+      RDA1 = species_scores[, 1],
+      RDA2 = species_scores[, 2],
+      Site = rownames(species_scores),
+      Tipo = "Espécie"
+    )
     
-    if(nrow(scores_env) > 0 && !is.null(rownames(scores_env))) {
-      scores_env$label <- rownames(scores_env)
-    }
+    df_biplot <- data.frame(
+      RDA1 = biplot_scores[, 1],
+      RDA2 = biplot_scores[, 2],
+      Variavel = rownames(biplot_scores)
+    )
     
     p <- ggplot() +
-      geom_point(data = scores_sites, aes(x = RDA1, y = RDA2, text = label), 
-                 color = "#3498DB", size = 4, alpha = 0.7) +
-      geom_text(data = scores_species, aes(x = RDA1, y = RDA2, label = label), 
-                color = "#E74C3C", fontface = "italic", size = 3) +
+      geom_point(data = df_sites, aes(x = RDA1, y = RDA2, text = paste("Amostra:", Site)),
+                 size = 4, color = "#3498DB", alpha = 0.7) +
+      geom_text(data = df_sites, aes(x = RDA1, y = RDA2, label = Site),
+                vjust = -1, size = 3, color = "#2C3E50") +
+      geom_point(data = df_especies, aes(x = RDA1, y = RDA2, text = paste("Espécie:", Site)),
+                 size = 3, color = "#E74C3C", alpha = 0.7) +
+      geom_text(data = df_especies, aes(x = RDA1, y = RDA2, label = Site),
+                vjust = -1, size = 2.5, color = "#C0392B") +
+      geom_segment(data = df_biplot, 
+                   aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+                   arrow = arrow(length = unit(0.3, "cm")),
+                   color = "#27AE60", linewidth = 1) +
+      geom_text(data = df_biplot, aes(x = RDA1, y = RDA2, label = Variavel),
+                vjust = -0.5, size = 3.5, color = "#27AE60", fontface = "bold") +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
       labs(title = "Análise de Redundância (RDA)",
-           subtitle = "Azul = Amostras | Vermelho = Espécies | Verde = Variáveis Ambientais",
-           x = "RDA1", y = "RDA2") +
+           subtitle = paste0("R² ajustado = ", round(var_explicada$adj.r.squared, 3),
+                           " | ", ncol(matriz_ambiente), " variáveis ambientais | ",
+                           "Variância explicada: ", 
+                           round(100 * rda_result$CCA$tot.chi / rda_result$tot.chi, 1), "%"),
+           x = paste0("RDA1 (", round(100 * summary(eigenvals(rda_result, model = "constrained"))[2, 1], 1), "%)"),
+           y = paste0("RDA2 (", round(100 * summary(eigenvals(rda_result, model = "constrained"))[2, 2], 1), "%)"),
+           caption = "Azul = Amostras | Vermelho = Espécies | Verde = Variáveis Ambientais") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
             plot.subtitle = element_text(hjust = 0.5, size = 10))
     
-    if(nrow(scores_env) > 0) {
-      p <- p +
-        geom_segment(data = scores_env, 
-                     aes(x = 0, y = 0, xend = RDA1 * 0.8, yend = RDA2 * 0.8),
-                     arrow = arrow(length = unit(0.2, "cm")), 
-                     color = "#27AE60", linewidth = 1) +  
-        geom_text(data = scores_env, aes(x = RDA1 * 0.9, y = RDA2 * 0.9, label = label),
-                  color = "#27AE60", fontface = "bold", size = 3.5)
-    }
-    
-    grafico <- ggplotly(p, tooltip = c("text"))
+    grafico <- ggplotly(p, tooltip = "text")
     html <- salvar_grafico(grafico)
 
     if (!is.null(html)) {
@@ -1327,118 +1412,98 @@ function(req, res) {
       stop("Falha na geração do HTML.")
     }
   }, error = function(e) {
-    cat("Erro RDA:", conditionMessage(e), "\n")
+    cat("Erro:", conditionMessage(e), "\n")
     res$status <- 500
     return(list(error = paste("Erro:", e$message)))
   })
 }
 
 
-#' CCA (Canonical Correspondence Analysis) 
+#' CCA (Análise de Correspondência Canônica) 
 #' @post /analise/cca
 #' @serializer html
-#' Dados aceitos: Matriz de abundâncias (amostras x espécies) e matriz ambiental (amostras x variáveis)
-#' Formato esperado: {"abundancias": [[5,2,3], [1,4,2]], "ambiente": [[12.5, 3.2], [15.1, 2.8]], 
-#'                    "nomes_especies": ["Sp1", "Sp2", "Sp3"], "nomes_amostras": ["UA1", "UA2"],
-#'                    "nomes_variaveis_ambientais": ["Temperatura", "pH"]}
+#' Dados aceitos: Lista de abundâncias por amostra + lista de variáveis ambientais por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3], [1,4,2], [3,1,5], [2,3,1]],
+#'   "variaveis_por_amostra": [[12.5,3.2,15.2], [15.1,2.8,18.3], [10.3,4.5,12.1], [18.2,2.1,20.5]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea"],
+#'   "nomes_amostras": ["Área_1", "Área_2", "Área_3", "Área_4"],
+#'   "nomes_variaveis_ambientais": ["Temperatura_°C", "pH_Solo", "Umidade_%"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
     
-    matriz_bruta <- if(!is.null(dados$abundancias)) dados$abundancias else dados$especies
+    matriz_especies <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
-    if(is.null(matriz_bruta)) stop("Matriz de abundâncias não encontrada no JSON.")
+    matriz_ambiente <- criar_matriz_ambiental(
+      dados$variaveis_por_amostra,
+      dados$nomes_variaveis_ambientais,
+      dados$nomes_amostras
+    )
     
-    abundancias <- as.data.frame(matriz_bruta)
-    ambiente <- as.data.frame(dados$ambiente)
+    cca_result <- cca(matriz_especies ~ ., data = as.data.frame(matriz_ambiente))
     
-    nomes_spp <- if(!is.null(dados$nomes_especies)) dados$nomes_especies else paste0("Sp", 1:ncol(abundancias))
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(abundancias))
-    nomes_env <- if(!is.null(dados$nomes_variaveis_ambientais)) dados$nomes_variaveis_ambientais else paste0("Var", 1:ncol(ambiente))
+    site_scores <- scores(cca_result, display = "sites", choices = 1:2)
+    species_scores <- scores(cca_result, display = "species", choices = 1:2)
+    biplot_scores <- scores(cca_result, display = "bp", choices = 1:2)
     
-    if(length(nomes_spp) == ncol(abundancias)) colnames(abundancias) <- nomes_spp
-    if(length(nomes_sites) == nrow(abundancias)) rownames(abundancias) <- nomes_sites
-    if(length(nomes_env) == ncol(ambiente)) colnames(ambiente) <- nomes_env
-    if(length(nomes_sites) == nrow(ambiente)) rownames(ambiente) <- nomes_sites
+    total_inercia <- cca_result$tot.chi
+    inercia_explicada <- cca_result$CCA$tot.chi
     
-    cca_result <- cca(abundancias ~ ., data = ambiente)
+    df_sites <- data.frame(
+      CCA1 = site_scores[, 1],
+      CCA2 = site_scores[, 2],
+      Site = rownames(site_scores),
+      Tipo = "Amostra"
+    )
     
-    sc_sites <- as.data.frame(scores(cca_result, display = "sites", choices = 1:2))
-    sc_sites$label <- rownames(sc_sites)
+    df_especies <- data.frame(
+      CCA1 = species_scores[, 1],
+      CCA2 = species_scores[, 2],
+      Site = rownames(species_scores),
+      Tipo = "Espécie"
+    )
     
-    sc_species <- as.data.frame(scores(cca_result, display = "species", choices = 1:2))
-    sc_species$label <- rownames(sc_species)
-
-    bp_data <- as.data.frame(cca_result$CCA$biplot[, 1:2])
-    if(nrow(bp_data) > 0) {
-      bp_data$label <- rownames(bp_data)
-    }
+    df_biplot <- data.frame(
+      CCA1 = biplot_scores[, 1],
+      CCA2 = biplot_scores[, 2],
+      Variavel = rownames(biplot_scores)
+    )
+    
     p <- ggplot() +
-      geom_point(data = sc_sites, 
-                 aes(x = CCA1, y = CCA2, text = label), 
-                 color = "#9B59B6", size = 3, alpha = 0.7) +
-      geom_text(data = sc_species, 
-                aes(x = CCA1, y = CCA2, label = label), 
-                color = "#E74C3C", fontface = "italic", size = 3) +
-      geom_segment(data = bp_data, 
+      geom_point(data = df_sites, aes(x = CCA1, y = CCA2, text = paste("Amostra:", Site)),
+                 size = 4, color = "#9B59B6", alpha = 0.7) +
+      geom_text(data = df_sites, aes(x = CCA1, y = CCA2, label = Site),
+                vjust = -1, size = 3, color = "#6C3483") +
+      geom_point(data = df_especies, aes(x = CCA1, y = CCA2, text = paste("Espécie:", Site)),
+                 size = 3, color = "#E67E22", alpha = 0.7) +
+      geom_text(data = df_especies, aes(x = CCA1, y = CCA2, label = Site),
+                vjust = -1, size = 2.5, color = "#CA6F1E") +
+      geom_segment(data = df_biplot, 
                    aes(x = 0, y = 0, xend = CCA1, yend = CCA2),
-                   arrow = arrow(length = unit(0.2, "cm")), 
-                   color = "#27AE60", linewidth = 0.8) +
-      geom_text(data = bp_data, 
-                aes(x = CCA1 * 1.1, y = CCA2 * 1.1, label = label),
-                color = "#27AE60", fontface = "bold", size = 4) +
+                   arrow = arrow(length = unit(0.3, "cm")),
+                   color = "#16A085", linewidth = 1) +
+      geom_text(data = df_biplot, aes(x = CCA1, y = CCA2, label = Variavel),
+                vjust = -0.5, size = 3.5, color = "#16A085", fontface = "bold") +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
       labs(title = "Análise de Correspondência Canônica (CCA)",
-           subtitle = "Roxo: Locais | Vermelho: Espécies | Verde: Vetores Ambientais",
-           x = "CCA1", y = "CCA2") +
-      theme_minimal()
-    
-    grafico <- ggplotly(p)
-    html <- salvar_grafico(grafico)
-
-    if (!is.null(html)) {
-      return(html)
-    } else {
-      stop("Falha na geração do HTML.")
-    }
-  }, error = function(e) {
-    cat("Erro:", conditionMessage(e), "\n")
-    res$status <- 500
-    return(list(error = paste("Erro:", e$message)))
-  })
-}
-
-
-#' nMDS (Non-metric Multidimensional Scaling)
-#' @post /analise/nmds
-#' @serializer html
-#' Dados aceitos: Matriz de comunidade (amostras x espécies com abundâncias)
-#' Formato esperado: {"matriz": [[5,2,3,1], [1,4,2,0], [3,1,5,2]], "nomes_amostras": ["UA1", "UA2", "UA3"]}
-function(req, res) {
-  tryCatch({
-    dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
-    
-    set.seed(123) 
-    nmds_result <- metaMDS(matriz, distance = "bray", k = 2, trymax = 50, trace = FALSE)
-    
-    scores_df <- as.data.frame(scores(nmds_result, display = "sites"))
-    scores_df$label <- nomes_sites
-    
-    p <- ggplot(scores_df, aes(x = NMDS1, y = NMDS2, text = label)) +
-      geom_point(size = 4, color = "#E67E22", alpha = 0.7) +
-      geom_text(aes(label = label), vjust = -1, size = 3.5, fontface = "bold") +
-      labs(title = "Escalonamento Multidimensional Não-Métrico (nMDS)",
-           subtitle = paste0("Stress = ", round(nmds_result$stress, 3), 
-                           " | ", ifelse(nmds_result$stress < 0.1, "Excelente ajuste",
-                                        ifelse(nmds_result$stress < 0.2, "Bom ajuste", "Ajuste razoável"))),
-           x = "NMDS1", y = "NMDS2",
-           caption = "Baseado em dissimilaridade de Bray-Curtis") +
+           subtitle = paste0(ncol(matriz_ambiente), " variáveis ambientais | ",
+                           "Inércia explicada: ", 
+                           round(100 * inercia_explicada / total_inercia, 1), "%"),
+           x = paste0("CCA1 (", round(100 * summary(eigenvals(cca_result, model = "constrained"))[2, 1], 1), "%)"),
+           y = paste0("CCA2 (", round(100 * summary(eigenvals(cca_result, model = "constrained"))[2, 2], 1), "%)"),
+           caption = "Roxo = Amostras | Laranja = Espécies | Verde-azulado = Variáveis Ambientais") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
             plot.subtitle = element_text(hjust = 0.5, size = 10))
     
-    grafico <- ggplotly(p)
+    grafico <- ggplotly(p, tooltip = "text")
     html <- salvar_grafico(grafico)
 
     if (!is.null(html)) {
@@ -1453,38 +1518,148 @@ function(req, res) {
   })
 }
 
-#' PCA (Principal Component Analysis)
-#' @post /analise/pca
+#' nMDS (Escalonamento Multidimensional Não-Métrico)
+#' @post /analise/nmds
 #' @serializer html
-#' Dados aceitos: Matriz de dados numéricos (amostras x variáveis)
-#' Formato esperado: {"matriz": [[5.1,3.5,1.4], [4.9,3.0,1.4]], "nomes_amostras": ["A1", "A2"], "nomes_variaveis": ["Var1", "Var2", "Var3"]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.data.frame(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("Amostra", 1:nrow(matriz))
-    nomes_vars <- if(!is.null(dados$nomes_variaveis)) dados$nomes_variaveis else paste0("Var", 1:ncol(matriz))
     
-    colnames(matriz) <- nomes_vars
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
-    pca_result <- prcomp(matriz, scale. = TRUE)
+    nmds_result <- metaMDS(matriz, k = 2, trymax = 100, autotransform = FALSE)
     
-    scores_df <- as.data.frame(pca_result$x[, 1:2])
-    scores_df$label <- nomes_sites
-    var_exp <- summary(pca_result)$importance[2, ]
+    site_scores <- scores(nmds_result, display = "sites")
     
-    p <- ggplot(scores_df, aes(x = PC1, y = PC2, text = label)) +
-      geom_point(size = 4, color = "#27AE60", alpha = 0.7) +
-      geom_text(aes(label = label), vjust = -1, size = 3.5, fontface = "bold") +
-      labs(title = "Análise de Componentes Principais (PCA)",
-           x = paste0("PC1 (", round(var_exp[1]*100, 1), "% da variância)"),
-           y = paste0("PC2 (", round(var_exp[2]*100, 1), "% da variância)"),
-           caption = paste0("Variância total explicada: ", 
-                           round(sum(var_exp[1:2])*100, 1), "%")) +
+    df_sites <- data.frame(
+      NMDS1 = site_scores[, 1],
+      NMDS2 = site_scores[, 2],
+      Site = rownames(site_scores)
+    )
+    
+    stress_quality <- ifelse(nmds_result$stress < 0.05, "Excelente (< 0.05)",
+                      ifelse(nmds_result$stress < 0.1, "Boa (< 0.1)",
+                      ifelse(nmds_result$stress < 0.2, "Utilizável (< 0.2)",
+                      "Pobre (≥ 0.2)")))
+    
+    stress_color <- ifelse(nmds_result$stress < 0.05, "#27AE60",
+                    ifelse(nmds_result$stress < 0.1, "#F39C12",
+                    ifelse(nmds_result$stress < 0.2, "#E67E22", "#E74C3C")))
+    
+    p <- ggplot(df_sites, aes(x = NMDS1, y = NMDS2)) +
+      geom_point(aes(text = paste("Amostra:", Site, 
+                                  "<br>NMDS1:", round(NMDS1, 3),
+                                  "<br>NMDS2:", round(NMDS2, 3))),
+                 size = 5, color = "#3498DB", alpha = 0.7) +
+      geom_text(aes(label = Site), vjust = -1.2, size = 3.5, color = "#2C3E50", fontface = "bold") +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      labs(title = "nMDS (Escalonamento Multidimensional Não-Métrico)",
+           subtitle = paste0("Stress = ", round(nmds_result$stress, 3), 
+                           " | Qualidade: ", stress_quality,
+                           " | ", ncol(matriz), " espécies | ",
+                           nrow(matriz), " amostras"),
+           x = "NMDS1",
+           y = "NMDS2",
+           caption = paste0("Convergido: ", ifelse(nmds_result$converged, "Sim ✓", "Não ✗"),
+                          " | Iterações: ", nmds_result$tries)) +
       theme_minimal() +
-      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10, color = stress_color))
     
-    grafico <- ggplotly(p)
+    grafico <- ggplotly(p, tooltip = "text")
+    html <- salvar_grafico(grafico)
+
+    if (!is.null(html)) {
+      return(html)
+    } else {
+      stop("Falha na geração do HTML.")
+    }
+  }, error = function(e) {
+    cat("Erro:", conditionMessage(e), "\n")
+    res$status <- 500
+    return(list(error = paste("Erro:", e$message)))
+  })
+}
+
+#' PCA (Análise de Componentes Principais) 
+#' @post /analise/pca
+#' @serializer html
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
+function(req, res) {
+  tryCatch({
+    dados <- fromJSON(req$postBody)
+    
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
+    
+    pca_result <- rda(matriz)
+    
+    var_explicada <- summary(eigenvals(pca_result))
+    
+    site_scores <- scores(pca_result, display = "sites", choices = 1:2)
+    species_scores <- scores(pca_result, display = "species", choices = 1:2)
+    
+    df_sites <- data.frame(
+      PC1 = site_scores[, 1],
+      PC2 = site_scores[, 2],
+      Site = rownames(site_scores)
+    )
+    
+    df_especies <- data.frame(
+      PC1 = species_scores[, 1],
+      PC2 = species_scores[, 2],
+      Especie = rownames(species_scores)
+    )
+    
+    p <- ggplot() +
+      geom_point(data = df_sites, 
+                 aes(x = PC1, y = PC2, text = paste("Amostra:", Site,
+                                                    "<br>PC1:", round(PC1, 3),
+                                                    "<br>PC2:", round(PC2, 3))),
+                 size = 5, color = "#3498DB", alpha = 0.7) +
+      geom_text(data = df_sites, aes(x = PC1, y = PC2, label = Site),
+                vjust = -1.2, size = 3.5, color = "#2C3E50", fontface = "bold") +
+      geom_segment(data = df_especies,
+                   aes(x = 0, y = 0, xend = PC1, yend = PC2,
+                       text = paste("Espécie:", Especie)),
+                   arrow = arrow(length = unit(0.25, "cm")),
+                   color = "#E74C3C", alpha = 0.6, linewidth = 0.8) +
+      geom_text(data = df_especies, aes(x = PC1, y = PC2, label = Especie),
+                vjust = -0.5, size = 2.8, color = "#C0392B", fontface = "italic") +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.5) +
+      labs(title = "PCA (Análise de Componentes Principais)",
+           subtitle = paste0("Variância acumulada (PC1+PC2): ", 
+                           round(100 * sum(var_explicada[2, 1:2]), 1), "% | ",
+                           ncol(matriz), " espécies | ",
+                           nrow(matriz), " amostras"),
+           x = paste0("PC1 (", round(100 * var_explicada[2, 1], 1), "%)"),
+           y = paste0("PC2 (", round(100 * var_explicada[2, 2], 1), "%)"),
+           caption = "Azul = Amostras | Vermelho = Espécies (vetores)") +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+            plot.subtitle = element_text(hjust = 0.5, size = 10))
+    
+    grafico <- ggplotly(p, tooltip = "text")
     html <- salvar_grafico(grafico)
 
     if (!is.null(html)) {
@@ -1502,24 +1677,32 @@ function(req, res) {
 #' Jaccard
 #' @post /analise/jaccard
 #' @serializer json
-#' Dados aceitos: Matriz de presença/ausência (amostras x espécies) + labels
-#' Formato esperado: {"matriz": [[1,0,1,0], [1,1,0,0]], "nomes_amostras": ["UA1", "UA2"]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
     
-    dist_jaccard <- vegdist(matriz, method = "jaccard")
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
+    
+    dist_jaccard <- vegdist(matriz_pa, method = "jaccard")
     matriz_dist <- as.matrix(dist_jaccard)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
     return(list(
-      matriz_dissimilaridade = round(matriz_dist, 4),
+      matriz_distancia = matriz_dist,
+      nomes_amostras = rownames(matriz_dist),
+      numero_amostras = nrow(matriz_pa),
+      numero_especies = ncol(matriz_pa),
       metodo = "Jaccard",
-      interpretacao = "Baseado em presença/ausência - varia de 0 (idênticas) a 1 (completamente diferentes)",
-      nomes_amostras = nomes_sites
+      interpretacao = "Valores próximos de 0 = maior similaridade | Valores próximos de 1 = menor similaridade"
     ))
   }, error = function(e) {
     res$status <- 500
@@ -1527,37 +1710,41 @@ function(req, res) {
   })
 }
 
-#' Jaccard - Gráfico (Heatmap) 
+#' Jaccard (Gráfico)
 #' @post /analise/jaccard_grafico
 #' @serializer html
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
     
-    dist_jaccard <- vegdist(matriz, method = "jaccard")
-    matriz_dist <- as.matrix(dist_jaccard)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
-    
-    df_heatmap <- expand.grid(
-      Amostra1 = nomes_sites,
-      Amostra2 = nomes_sites
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
     )
-    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
     
-    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+    dist_jaccard <- vegdist(matriz_pa, method = "jaccard")
+    matriz_dist <- as.matrix(dist_jaccard)
+    df_heatmap <- as.data.frame(matriz_dist) %>%
+      mutate(Amostra1 = rownames(.)) %>%
+      pivot_longer(cols = -Amostra1, names_to = "Amostra2", values_to = "Distancia")
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Distancia)) +
       geom_tile(color = "white") +
-      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      geom_text(aes(label = round(Distancia, 2)), color = "black", size = 3) +
       scale_fill_gradient2(low = "#27AE60", mid = "#F39C12", high = "#E74C3C",
-                          midpoint = 0.5, limits = c(0, 1)) +
-      labs(title = "Dissimilaridade de Jaccard",
-           subtitle = "Baseado em presença/ausência - 0 = idênticas, 1 = diferentes",
+                          midpoint = 0.5, limit = c(0, 1),
+                          name = "Distância\nJaccard") +
+      labs(title = "Matriz de Distância de Jaccard (Presença-Ausência)",
            x = "", y = "") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-            plot.subtitle = element_text(hjust = 0.5, size = 10),
             axis.text.x = element_text(angle = 45, hjust = 1))
     
     grafico <- ggplotly(p)
@@ -1575,27 +1762,36 @@ function(req, res) {
   })
 }
 
+
 #' Bray-Curtis
 #' @post /analise/bray_curtis
 #' @serializer json
-#' Dados aceitos: Matriz de abundâncias (amostras x espécies) + labels
-#' Formato esperado: {"matriz": [[5,2,3], [1,4,2]], "nomes_amostras": ["UA1", "UA2"]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
     dist_bray <- vegdist(matriz, method = "bray")
     matriz_dist <- as.matrix(dist_bray)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
     return(list(
-      matriz_dissimilaridade = round(matriz_dist, 4),
+      matriz_distancia = matriz_dist,
+      nomes_amostras = rownames(matriz_dist),
+      numero_amostras = nrow(matriz),
+      numero_especies = ncol(matriz),
       metodo = "Bray-Curtis",
-      interpretacao = "Baseado em abundâncias - varia de 0 (idênticas) a 1 (sem espécies compartilhadas)",
-      nomes_amostras = nomes_sites
+      interpretacao = "Valores próximos de 0 = maior similaridade | Valores próximos de 1 = menor similaridade"
     ))
   }, error = function(e) {
     res$status <- 500
@@ -1603,37 +1799,42 @@ function(req, res) {
   })
 }
 
-#' Bray-Curtis - Gráfico (heatmap)
+#' Bray-Curtis (Gráfico)
 #' @post /analise/bray_curtis_grafico
 #' @serializer html
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
     dist_bray <- vegdist(matriz, method = "bray")
     matriz_dist <- as.matrix(dist_bray)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
-    df_heatmap <- expand.grid(
-      Amostra1 = nomes_sites,
-      Amostra2 = nomes_sites
-    )
-    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    df_heatmap <- as.data.frame(matriz_dist) %>%
+      mutate(Amostra1 = rownames(.)) %>%
+      pivot_longer(cols = -Amostra1, names_to = "Amostra2", values_to = "Distancia")
     
-    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Distancia)) +
       geom_tile(color = "white") +
-      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      geom_text(aes(label = round(Distancia, 2)), color = "black", size = 3) +
       scale_fill_gradient2(low = "#3498DB", mid = "#F39C12", high = "#E74C3C",
-                          midpoint = 0.5, limits = c(0, 1)) +
-      labs(title = "Dissimilaridade de Bray-Curtis",
-           subtitle = "Baseado em abundâncias - 0 = idênticas, 1 = sem espécies compartilhadas",
+                          midpoint = 0.5, limit = c(0, 1),
+                          name = "Distância\nBray-Curtis") +
+      labs(title = "Matriz de Dissimilaridade de Bray-Curtis (Abundância)",
            x = "", y = "") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-            plot.subtitle = element_text(hjust = 0.5, size = 10),
             axis.text.x = element_text(angle = 45, hjust = 1))
     
     grafico <- ggplotly(p)
@@ -1654,24 +1855,32 @@ function(req, res) {
 #' Morisita-Horn
 #' @post /analise/morisita
 #' @serializer json
-#' Dados aceitos: Matriz de abundâncias (amostras x espécies) + labels
-#' Formato esperado: {"matriz": [[5,2,3], [1,4,2]], "nomes_amostras": ["UA1", "UA2"]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
     dist_morisita <- vegdist(matriz, method = "horn")
     matriz_dist <- as.matrix(dist_morisita)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
     return(list(
-      matriz_dissimilaridade = round(matriz_dist, 4),
+      matriz_distancia = matriz_dist,
+      nomes_amostras = rownames(matriz_dist),
+      numero_amostras = nrow(matriz),
+      numero_especies = ncol(matriz),
       metodo = "Morisita-Horn",
-      interpretacao = "Menos sensível a diferenças no tamanho amostral e riqueza",
-      nomes_amostras = nomes_sites
+      interpretacao = "Valores próximos de 0 = maior similaridade | Valores próximos de 1 = menor similaridade"
     ))
   }, error = function(e) {
     res$status <- 500
@@ -1679,37 +1888,42 @@ function(req, res) {
   })
 }
 
-#' Morisita-Horn - Gráfico (Heatmap)
+#' Morisita-Horn (Gráfico)
 #' @post /analise/morisita_grafico
 #' @serializer html
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[5,2,3,1], [1,4,2,0], [3,1,5,2], [2,3,1,4]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+#'   "nomes_amostras": ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
+    
+    matriz <- criar_matriz_abundancia(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
     
     dist_morisita <- vegdist(matriz, method = "horn")
     matriz_dist <- as.matrix(dist_morisita)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
-    df_heatmap <- expand.grid(
-      Amostra1 = nomes_sites,
-      Amostra2 = nomes_sites
-    )
-    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
+    df_heatmap <- as.data.frame(matriz_dist) %>%
+      mutate(Amostra1 = rownames(.)) %>%
+      pivot_longer(cols = -Amostra1, names_to = "Amostra2", values_to = "Distancia")
     
-    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Distancia)) +
       geom_tile(color = "white") +
-      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
+      geom_text(aes(label = round(Distancia, 2)), color = "black", size = 3) +
       scale_fill_gradient2(low = "#9B59B6", mid = "#F39C12", high = "#E74C3C",
-                          midpoint = 0.5, limits = c(0, 1)) +
-      labs(title = "Dissimilaridade de Morisita-Horn",
-           subtitle = "Menos sensível a diferenças no tamanho amostral",
+                          midpoint = 0.5, limit = c(0, 1),
+                          name = "Distância\nMorisita-Horn") +
+      labs(title = "Matriz de Dissimilaridade de Morisita-Horn (Abundância)",
            x = "", y = "") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-            plot.subtitle = element_text(hjust = 0.5, size = 10),
             axis.text.x = element_text(angle = 45, hjust = 1))
     
     grafico <- ggplotly(p)
@@ -1730,24 +1944,32 @@ function(req, res) {
 #' Sørensen-Dice
 #' @post /analise/sorensen
 #' @serializer json
-#' Dados aceitos: Matriz de presença/ausência (amostras x espécies) + labels
-#' Formato esperado: {"matriz": [[1,0,1,0], [1,1,0,0]], "nomes_amostras": ["UA1", "UA2"]}
+#' Dados aceitos: Lista de abundâncias por amostra
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
     
-    dist_sorensen <- vegdist(matriz > 0, method = "bray")
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
+    )
+    
+    dist_sorensen <- vegdist(matriz_pa, method = "bray", binary = TRUE)
     matriz_dist <- as.matrix(dist_sorensen)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
     
     return(list(
-      matriz_dissimilaridade = round(matriz_dist, 4),
+      matriz_distancia = matriz_dist,
+      nomes_amostras = rownames(matriz_dist),
+      numero_amostras = nrow(matriz_pa),
+      numero_especies = ncol(matriz_pa),
       metodo = "Sørensen-Dice",
-      interpretacao = "Similar a Jaccard mas dá mais peso a espécies compartilhadas",
-      nomes_amostras = nomes_sites
+      interpretacao = "Valores próximos de 0 = maior similaridade | Valores próximos de 1 = menor similaridade"
     ))
   }, error = function(e) {
     res$status <- 500
@@ -1755,37 +1977,42 @@ function(req, res) {
   })
 }
 
-#' Sørensen-Dice - Gráfico (Heatmap)
+#' Sørensen-Dice (Gráfico)
 #' @post /analise/sorensen_grafico
 #' @serializer html
+#' Dados aceitos: Lista de abundâncias por amostra 
+#' Formato esperado: {
+#'   "abundancias_por_amostra": [[1,0,1,0,1], [1,1,0,0,1], [0,1,1,1,0], [1,0,1,1,1]],
+#'   "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"],
+#'   "nomes_amostras": ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+#' }
 function(req, res) {
   tryCatch({
     dados <- fromJSON(req$postBody)
-    matriz <- as.matrix(dados$matriz)
-    nomes_sites <- if(!is.null(dados$nomes_amostras)) dados$nomes_amostras else paste0("UA", 1:nrow(matriz))
     
-    dist_sorensen <- vegdist(matriz > 0, method = "bray")
-    matriz_dist <- as.matrix(dist_sorensen)
-    rownames(matriz_dist) <- nomes_sites
-    colnames(matriz_dist) <- nomes_sites
-    
-    df_heatmap <- expand.grid(
-      Amostra1 = nomes_sites,
-      Amostra2 = nomes_sites
+    matriz_pa <- criar_matriz_pa(
+      dados$abundancias_por_amostra,
+      dados$nomes_especies,
+      dados$nomes_amostras
     )
-    df_heatmap$Dissimilaridade <- as.vector(matriz_dist)
     
-    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Dissimilaridade)) +
+    dist_sorensen <- vegdist(matriz_pa, method = "bray", binary = TRUE)
+    matriz_dist <- as.matrix(dist_sorensen)
+    
+    df_heatmap <- as.data.frame(matriz_dist) %>%
+      mutate(Amostra1 = rownames(.)) %>%
+      pivot_longer(cols = -Amostra1, names_to = "Amostra2", values_to = "Distancia")
+    
+    p <- ggplot(df_heatmap, aes(x = Amostra1, y = Amostra2, fill = Distancia)) +
       geom_tile(color = "white") +
-      geom_text(aes(label = round(Dissimilaridade, 2)), color = "black", size = 3) +
-      scale_fill_gradient2(low = "#E67E22", mid = "#F39C12", high = "#E74C3C",
-                          midpoint = 0.5, limits = c(0, 1)) +
-      labs(title = "Dissimilaridade de Sørensen-Dice",
-           subtitle = "Similar a Jaccard mas dá mais peso a espécies compartilhadas",
+      geom_text(aes(label = round(Distancia, 2)), color = "black", size = 3) +
+      scale_fill_gradient2(low = "#27AE60", mid = "#F39C12", high = "#E74C3C",
+                          midpoint = 0.5, limit = c(0, 1),
+                          name = "Distância\nSørensen") +
+      labs(title = "Matriz de Distância de Sørensen-Dice (Presença-Ausência)",
            x = "", y = "") +
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-            plot.subtitle = element_text(hjust = 0.5, size = 10),
             axis.text.x = element_text(angle = 45, hjust = 1))
     
     grafico <- ggplotly(p)
@@ -1802,6 +2029,7 @@ function(req, res) {
     return(list(error = paste("Erro:", e$message)))
   })
 }
+
 
 #' Brillouin
 #' @post /analise/brillouin

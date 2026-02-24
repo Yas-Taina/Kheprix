@@ -1,0 +1,260 @@
+**Termos Básicos de Coleta de Dados
+
+>Abundância: Quantidade de indivíduos de uma espécie, no total
+- Exemplo: Se você contou 45 abelhas da espécie Apis mellifera em um registro, e 15 em outro, a abundância é 60
+
+>Amostra/Unidade Amostral: Um local onde você a coleta foi feita. Nosso modelo já cadastra Unidades Amostrais 
+
+>Presença: A espécie foi encontrada (mesmo que só 1 indivíduo)
+
+>Ausência A espécie não foi encontrada
+
+>Variável Ambiental: As váriaveis cadastradas pelo usuário, representam uma característica do ambiente que foram medidas
+- Exemplos: Temperatura (°C), pH do solo, Umidade (%), Altitude (m)
+- Note que se os dados não especificarem o uso de variaveis *ambientais*, quaisquer dados numéricos se aplicam.
+
+**TIPOS DE DADOS UTILIZADOS NA API
+
+>Vetor de Abundância por Espécie
+
+- O que é? Uma lista com a quantidade total de indivíduos de cada espécie
+
+Por exemplo, imagine a seguinte soma de individuos cadastrados em um estudo:
+- Apis mellifera: 45 indivíduos
+- Bombus terrestris: 23 indivíduos
+- Xylocopa violacea: 12 indivíduos
+
+- Modelo:
+{
+  "abundancias": [45, 23, 12],
+  "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea"]
+}
+
+- Usado em:
+Modelos de abundância (Log-Normal, Log-Serie, Geométrica, Vara Quebrada)
+Índices de diversidade (Shannon, Simpson, Margalef, Pielou, etc.)
+Estimadores de riqueza (Jackknife, Chao1, Bootstrap, ACE)
+Rarefação
+McNaughton
+
+-Note que a abundância deve somar todos os individuos encontrados dentro dos filtros selecionados, não usar cada registro de ocorrencia por si só
+
+>Lista de Abundâncias por Amostra
+
+- O que é? Várias listas, cada uma representando as abundâncias em um local/momento diferente
+
+Por exemplo, imagine que umusuario está cadastrando abelhas por jardim
+Ele visitou 3 jardins diferentes e contou 4 espécies de abelhas em cada um:
+
+Jardim Norte:
+- Apis mellifera: 5 indivíduos
+- Bombus terrestris: 2 indivíduos
+- Xylocopa violacea: 3 indivíduos
+- Megachile rotundata: 1 indivíduo
+
+Jardim Sul:
+- Apis mellifera: 1 indivíduo
+- Bombus terrestris: 4 indivíduos
+- Xylocopa violacea: 2 indivíduos
+- Megachile rotundata: 0 indivíduos (não encontrada)
+
+Jardim Leste:
+- Apis mellifera: 3 indivíduos
+- Bombus terrestris: 1 indivíduo
+- Xylocopa violacea: 5 indivíduos
+- Megachile rotundata: 2 indivíduos
+
+- Modelo:
+{
+  "abundancias_por_amostra": [
+    [5, 2, 3, 1],  
+    [1, 4, 2, 0], 
+    [3, 1, 5, 2]   
+  ],
+  "nomes_especies": ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"],
+  "nomes_amostras": ["Jardim_Norte", "Jardim_Sul", "Jardim_Leste"]
+}
+
+Importante: Cada linha representa UM local, cada coluna representa UMA espécie. Os números devem estar na mesma ordem das espécies.
+
+- Usado em:
+Índices de similaridade (Jaccard, Sørensen, Bray-Curtis, Morisita)
+Análises multivariadas (nMDS, PCA)
+Estimadores baseados em incidência (Chao2, ICE)
+
+>  Lista de Variáveis Ambientais por Amostra
+
+- O que é? Medições de características do ambiente em cada local
+
+Por exemplo, imagine que nos mesmos 3 jardins, o usuario mediu temperatura, pH do solo e umidade:
+
+Jardim Norte:
+- Temperatura: 12.5°C
+- pH: 3.2
+- Umidade: 65.5%
+
+Jardim Sul:
+- Temperatura: 15.1°C
+- pH: 2.8
+- Umidade: 72.3%
+
+Jardim Leste:
+- Temperatura: 10.3°C
+- pH: 4.5
+- Umidade: 58.1%
+
+- Modelo:
+{
+  "variaveis_por_amostra": [
+    [12.5, 3.2, 65.5],  
+    [15.1, 2.8, 72.3],
+    [10.3, 4.5, 58.1]
+  ],
+  "nomes_variaveis_ambientais": ["Temperatura_°C", "pH_Solo", "Umidade_%"],
+  "nomes_amostras": ["Jardim_Norte", "Jardim_Sul", "Jardim_Leste"]
+}
+
+Importante:
+- Cada linha = um local
+- Cada coluna = uma variável ambiental
+
+- Usado em:
+RDA (Análise de Redundância)
+CCA (Análise de Correspondência Canônica)
+
+- As variaveis usadas irão depender das escolhas do usuário em relação à unidades amostrais
+
+> Dois Vetores de Valores Numéricos (X e Y)
+
+- O que é? Duas listas de números que você quer relacionar
+
+Exemplo:
+Foi medida a temperatura em 10 locais diferentes e contadas quantas espécies encontraram em cada:
+
+| Local | Temperatura (°C) | Número de Espécies |
+|-------|------------------|---------------------|
+| 1     | 15               | 2                   |
+| 2     | 18               | 4                   |
+| 3     | 20               | 6                   |
+| 4     | 22               | 7                   |
+| 5     | 25               | 10                  |
+
+
+- Modelo
+{
+  "x": [15, 18, 20, 22, 25],
+  "y": [2, 4, 6, 7, 10],
+  "nome_x": "Temperatura_°C",
+  "nome_y": "Número_de_Espécies"
+}
+
+- Usado em:
+Correlações (Pearson, Spearman, Kendall)
+Regressão Linear
+Modelos GLM (Gaussiano, Poisson, Binomial Negativa, Gamma)
+
+- ATENÇÃO: A lista de valores não precisa necessáriamente estar relacionada a uma unidade amostral. É possivel utilizar registros por unidade, data, variaveis dos registros de ocorrencia, etc. O importante é ter uma padronização: Não é possivel ter um array separado por data e outro por local.
+- Todos os valores numericos podem ser usados, não apenas váriaveis ambientais. 
+Por exemplo, qtde de espécies, de individuos de uma espécie, etc
+
+> Dois Grupos de Valores
+
+- O que é? Duas listas de números que você quer comparar
+
+- Exemplo:
+Foram contadas espécies em uma área preservada e em uma área degradada:
+
+Área Preservada: 12, 15, 14, 10, 13, 16 espécies (em 6 pontos diferentes)
+Área Degradada: 5, 6, 4, 7, 5, 6 espécies (em 6 pontos diferentes)
+
+- Modelo
+{
+  "grupo1": [12, 15, 14, 10, 13, 16],
+  "grupo2": [5, 6, 4, 7, 5, 6],
+  "nome_grupo1": "Área_Preservada",
+  "nome_grupo2": "Área_Degradada"
+}
+
+- Usado em:
+Teste T
+Teste de Kolmogorov-Smirnov
+
+-Assim como no item anterior, prestar atenção na padronização
+
+> Múltiplos Grupos de Valores
+
+- *O que é? Vários grupos de números que você quer comparar
+
+Exemplo:
+Foram contadas espécies em 3 tipos de habitat diferentes:
+
+Floresta: 12, 15, 14, 18 espécies
+Cerrado: 20, 19, 22, 21 espécies
+Pastagem: 10, 11, 13, 12 espécies
+
+- Modelo:
+{
+  "valores": [12, 15, 14, 18, 20, 19, 22, 21, 10, 11, 13, 12],
+  "grupos": ["Floresta", "Floresta", "Floresta", "Floresta", 
+             "Cerrado", "Cerrado", "Cerrado", "Cerrado",
+             "Pastagem", "Pastagem", "Pastagem", "Pastagem"],
+  "nome_variavel": "Número_de_Espécies"
+}
+
+- Importante: O vetor "valores" contém TODOS os valores, e o vetor "grupos" diz a qual grupo cada valor pertence.
+
+- Usado em:
+ANOVA
+Kruskal-Wallis
+
+> Um Vetor de Valores
+
+- O que é? Uma lista de números que você quer analisars
+
+- Exemplo prático:
+Você contou a abundância total em 20 locais e quer saber se os dados seguem distribuição normal:
+
+Abundâncias: 95, 102, 98, 105, 93, 110, 88, 115, 92, 108, 97, 103, 99, 106, 91, 112, 94, 107, 100, 104
+
+- Modelo
+{
+  "dados": [95, 102, 98, 105, 93, 110, 88, 115, 92, 108, 97, 103, 99, 106, 91, 112, 94, 107, 100, 104],
+  "nome_variavel": "Abundância_Total"
+}
+
+- Usado em:
+Teste de Shapiro-Wilk (normalidade)
+
+> Matriz de Acumulação
+
+- O que é? Uma matriz onde você registrou o que encontrou em cada visita
+
+- Exemplo:
+Você visitou um parque 6 vezes e anotou quais espécies viu em cada visita:
+
+| Visita | Sp1 | Sp2 | Sp3 | Sp4 | Sp5 | Sp6 |
+|--------|-----|-----|-----|-----|-----|-----|
+| 1      | 5   | 2   | 3   | 1   | 0   | 0   |
+| 2      | 5   | 3   | 3   | 1   | 1   | 0   |
+| 3      | 5   | 3   | 4   | 2   | 1   | 0   |
+| 4      | 5   | 3   | 4   | 2   | 1   | 1   |
+
+- Modelo
+{
+  "matriz": [
+    [5, 2, 3, 1, 0, 0],
+    [5, 3, 3, 1, 1, 0],
+    [5, 3, 4, 2, 1, 0],
+    [5, 3, 4, 2, 1, 1]
+  ]
+}
+
+- Usado em:
+Michaelis-Menten (curva de acumulação)
+
+- Traduzindo para o nosso contexto, o "Parque" seria uma unidade amostral e cada "Visita" seria um evento de amostragem
+
+**Filtros
+Para todos os tipos de dados, fornecer filtro por data
+Para tipos de dados que não utilizam unidade amostral, fornecer filtro por area (latitude e longitude minimas e maximas) e nivel de estudo (Campanha, Unidade, Evento)
+Para tipos de dados que usam unidades amostrais, fornecer a opção de selecionar todas as amostras do estudo ou somente amostras da campanha

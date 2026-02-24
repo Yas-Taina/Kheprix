@@ -61,55 +61,78 @@ abundancias_teste <- list(
   nomes_especies = nomes_especies_exemplo
 )
 
-matriz_pa_teste <- list(
-  matriz = matrix(c(
-    1, 0, 1, 0, 1,
-    1, 1, 0, 0, 1,
-    0, 1, 1, 1, 0,
-    1, 0, 1, 1, 1
-  ), nrow = 4, byrow = TRUE),
+dados_rda_cca_teste <- list(
+
+  abundancias_por_amostra = list(
+    c(5, 2, 3),    
+    c(1, 4, 2),   
+    c(3, 1, 5),    
+    c(2, 3, 1)     
+  ),
+
+  variaveis_por_amostra = list(
+    c(12.5, 3.2, 65.5),    
+    c(15.1, 2.8, 72.3),   
+    c(10.3, 4.5, 58.1),  
+    c(18.2, 2.1, 80.5)    
+  ),
+  nomes_especies = c("Apis mellifera", "Bombus terrestris", "Xylocopa violacea"),
+  nomes_amostras = c("Área_1", "Área_2", "Área_3", "Área_4"),
+  nomes_variaveis_ambientais = c("Temperatura_°C", "pH_Solo", "Umidade_%")
+)
+
+dados_rda_5vars_teste <- list(
+  abundancias_por_amostra = list(
+    c(5, 2, 3, 1),
+    c(1, 4, 2, 3),
+    c(3, 1, 5, 2),
+    c(2, 3, 1, 4)
+  ),
+  variaveis_por_amostra = list(
+    c(12.5, 3.2, 65.5, 150.2, 25.8),   
+    c(15.1, 2.8, 72.3, 180.5, 30.1),
+    c(10.3, 4.5, 58.1, 120.8, 20.5),
+    c(18.2, 2.1, 80.5, 200.3, 35.2)
+  ),
+  nomes_especies = c("Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"),
+  nomes_amostras = c("Local_A", "Local_B", "Local_C", "Local_D"),
+  nomes_variaveis_ambientais = c("Temperatura_°C", "pH_Solo", "Umidade_%", "Altitude_m", "Cobertura_Vegetal_%")
+)
+
+dados_pa_teste <- list(
+  abundancias_por_amostra = list(
+    c(1, 0, 1, 0, 1),
+    c(1, 1, 0, 0, 1),
+    c(0, 1, 1, 1, 0),
+    c(1, 0, 1, 1, 1)
+  ),
   nomes_especies = c("Apis mellifera", "Bombus terrestris", "Xylocopa violacea", 
                      "Megachile rotundata", "Osmia bicornis"),
   nomes_amostras = c("Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2")
 )
 
-matriz_abundancia_teste <- list(
-  matriz = matrix(c(
-    5, 2, 3, 1,
-    1, 4, 2, 0,
-    3, 1, 5, 2,
-    2, 3, 1, 4
-  ), nrow = 4, byrow = TRUE),
+dados_abundancia_teste <- list(
+  abundancias_por_amostra = list(
+    c(5, 2, 3, 1),
+    c(1, 4, 2, 0),
+    c(3, 1, 5, 2),
+    c(2, 3, 1, 4)
+  ),
   nomes_especies = c("Apis mellifera", "Bombus terrestris", 
                      "Xylocopa violacea", "Megachile rotundata"),
   nomes_amostras = c("Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste")
 )
 
-matriz_acumulacao_teste <- list(
-  matriz = matrix(c(
-    5, 2, 3, 1, 0, 0,
-    5, 3, 3, 1, 1, 0,
-    5, 3, 4, 2, 1, 0,
-    5, 3, 4, 2, 1, 1
-  ), nrow = 4, byrow = TRUE)
-)
-
-dados_rda_teste <- list(
-  especies = matrix(c(
-    5, 2, 3,
-    1, 4, 2,
-    3, 1, 5,
-    2, 3, 1
-  ), nrow = 4, byrow = TRUE),
-  ambiente = matrix(c(
-    12.5, 3.2,
-    15.1, 2.8,
-    10.3, 4.5,
-    18.2, 2.1
-  ), nrow = 4, byrow = TRUE),
-  nomes_especies = c("Apis mellifera", "Bombus terrestris", "Xylocopa violacea"),
-  nomes_amostras = c("Área_1", "Área_2", "Área_3", "Área_4"),
-  nomes_variaveis_ambientais = c("Temperatura_°C", "pH_Solo")
+dados_nmds_pca_teste <- list(
+  abundancias_por_amostra = list(
+    c(5, 2, 3, 1),
+    c(1, 4, 2, 0),
+    c(3, 1, 5, 2),
+    c(2, 3, 1, 4)
+  ),
+  nomes_especies = c("Apis mellifera", "Bombus terrestris", 
+                     "Xylocopa violacea", "Megachile rotundata"),
+  nomes_amostras = c("Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste")
 )
 
 dados_grupos_teste <- list(
@@ -165,6 +188,15 @@ dados_ks_teste <- list(
   nome_amostra2 = "Local_B"
 )
 
+matriz_acumulacao_teste <- list(
+  matriz = matrix(c(
+    5, 2, 3, 1, 0, 0,
+    5, 3, 3, 1, 1, 0,
+    5, 3, 4, 2, 1, 0,
+    5, 3, 4, 2, 1, 1
+  ), nrow = 4, byrow = TRUE)
+)
+
 # Execução de testes
 
 cat("\n")
@@ -204,12 +236,12 @@ testar_endpoint("/analise/macintosh", abundancias_teste, "MacIntosh")
 testar_endpoint("/analise/hurlbert", abundancias_teste, "Hurlbert's PIE")
 testar_endpoint("/analise/bootstrap", abundancias_teste, "Bootstrap")
 testar_endpoint("/analise/ace", abundancias_teste, "ACE")
-testar_endpoint("/analise/chao2", matriz_pa_teste, "Chao 2")
-testar_endpoint("/analise/ice", matriz_pa_teste, "ICE")
-testar_endpoint("/analise/jaccard", matriz_pa_teste, "Jaccard")
-testar_endpoint("/analise/jaccard_grafico", matriz_pa_teste, "Jaccard (Gráfico)")
-testar_endpoint("/analise/sorensen", matriz_pa_teste, "Sørensen-Dice")
-testar_endpoint("/analise/sorensen_grafico", matriz_pa_teste, "Sørensen-Dice (Gráfico)")
+testar_endpoint("/analise/chao2", dados_pa_teste, "Chao 2")
+testar_endpoint("/analise/ice", dados_pa_teste, "ICE")
+testar_endpoint("/analise/jaccard", dados_pa_teste, "Jaccard")
+testar_endpoint("/analise/jaccard_grafico", dados_pa_teste, "Jaccard (Gráfico)")
+testar_endpoint("/analise/sorensen", dados_pa_teste, "Sørensen-Dice")
+testar_endpoint("/analise/sorensen_grafico", dados_pa_teste, "Sørensen-Dice (Gráfico)")
 testar_endpoint("/analise/mcnaughton", dados_mcnaughton_teste, "McNaughton")
 testar_endpoint("/analise/teste_t", dados_grupos_teste, "Teste T")
 testar_endpoint("/analise/pearson", dados_correlacao_teste, "Correlação de Pearson")
@@ -223,14 +255,16 @@ testar_endpoint("/analise/shapiro", dados_normalidade_teste, "Shapiro-Wilk")
 testar_endpoint("/analise/kruskal", dados_anova_teste, "Kruskal-Wallis")
 testar_endpoint("/analise/anova", dados_anova_teste, "ANOVA")
 testar_endpoint("/analise/ks", dados_ks_teste, "Kolmogorov-Smirnov")
-testar_endpoint("/analise/rda", dados_rda_teste, "RDA")
-testar_endpoint("/analise/cca", dados_rda_teste, "CCA")
-testar_endpoint("/analise/nmds", matriz_abundancia_teste, "nMDS")
-testar_endpoint("/analise/pca", matriz_abundancia_teste, "PCA")
-testar_endpoint("/analise/bray_curtis", matriz_abundancia_teste, "Bray-Curtis")
-testar_endpoint("/analise/bray_curtis_grafico", matriz_abundancia_teste, "Bray-Curtis (Gráfico)")
-testar_endpoint("/analise/morisita", matriz_abundancia_teste, "Morisita-Horn")
-testar_endpoint("/analise/morisita_grafico", matriz_abundancia_teste, "Morisita-Horn (Gráfico)")
+testar_endpoint("/analise/rda", dados_rda_cca_teste, "RDA com 3 variáveis ambientais (Gráfico)")
+testar_endpoint("/analise/rda", dados_rda_5vars_teste, "RDA com 5 variáveis ambientais (Gráfico)")
+testar_endpoint("/analise/cca", dados_rda_cca_teste, "CCA com 3 variáveis ambientais (Gráfico)")
+testar_endpoint("/analise/cca", dados_rda_5vars_teste, "CCA com 5 variáveis ambientais (Gráfico)")
+testar_endpoint("/analise/nmds", dados_nmds_pca_teste, "nMDS (Gráfico)")
+testar_endpoint("/analise/pca", dados_nmds_pca_teste, "PCA (Gráfico)")
+testar_endpoint("/analise/bray_curtis", dados_abundancia_teste, "Bray-Curtis")
+testar_endpoint("/analise/bray_curtis_grafico", dados_abundancia_teste, "Bray-Curtis (Gráfico)")
+testar_endpoint("/analise/morisita", dados_abundancia_teste, "Morisita-Horn")
+testar_endpoint("/analise/morisita_grafico", dados_abundancia_teste, "Morisita-Horn (Gráfico)")
 testar_endpoint("/analise/modelo_gaussiano", dados_glm_teste, "Modelo Gaussiano")
 testar_endpoint("/analise/modelo_gaussiano_grafico", dados_glm_teste, "Modelo Gaussiano (Gráfico)")
 testar_endpoint("/analise/modelo_gamma", dados_glm_teste, "Modelo Gamma")
