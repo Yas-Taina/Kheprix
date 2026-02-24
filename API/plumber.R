@@ -54,10 +54,18 @@ radfit_custom <- function(abundancias) {
         control = nls.control(maxiter = 100, warnOnly = TRUE))
   }, error = function(e) NULL)
   
+
+  if (!is.null(fit_lognormal)) {
+    if (!fit_lognormal$convInfo$isConv) {
+      warning("Modelo log-normal não convergiu.")
+      fit_lognormal <- NULL
+    }
+  }
+
   fit_logseries <- tryCatch({
     N <- sum(y)
     S <- length(y)
-    fisher_result <- fisherfit(y, se = FALSE)
+    fisher_result <- fisherfit(y)
     alpha <- fisher_result$estimate
     x_param <- N / (N + alpha)
     predicted <- sapply(x, function(rank) {
@@ -314,7 +322,7 @@ function(req, res) {
       S <- length(abundancias[abundancias > 0])
       
       alpha_est <- tryCatch({
-        fisher_result <- fisherfit(abundancias, se = FALSE)
+        fisher_result <- fisherfit(abundancias)
         fisher_result$estimate
       }, error = function(e) {
         N / (N/S - 1)

@@ -56,7 +56,7 @@ cat("Carregando API...\n")
 tryCatch({
   api <- plumb("plumber.R")
   
-  cat("\n✓ API carregada com sucesso!\n\n")
+  cat("\nAPI carregada com sucesso!\n\n")
 
   cat("Iniciando servidor na porta 8000...\n")
   cat("==============================================\n")
@@ -67,7 +67,7 @@ tryCatch({
   api$run(port = 8000, host = "0.0.0.0", swagger = TRUE)
   
 }, error = function(e) {
-  cat("\n❌ ERRO ao carregar a API:\n")
+  cat("\nERRO ao carregar a API:\n")
   cat(e$message, "\n\n")
   stop("Falha ao iniciar API")
 })
