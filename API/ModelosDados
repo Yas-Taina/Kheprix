@@ -38,6 +38,7 @@ Rarefação
 McNaughton
 
 -Note que a abundância deve somar todos os individuos encontrados dentro dos filtros selecionados, não usar cada registro de ocorrencia por si só
+-Remover espécies ausentes (não usar 0)
 
 >Lista de Abundâncias por Amostra
 
@@ -257,4 +258,5 @@ Michaelis-Menten (curva de acumulação)
 **Filtros
 Para todos os tipos de dados, fornecer filtro por data
 Para tipos de dados que não utilizam unidade amostral, fornecer filtro por area (latitude e longitude minimas e maximas) e nivel de estudo (Campanha, Unidade, Evento)
+
 Para tipos de dados que usam unidades amostrais, fornecer a opção de selecionar todas as amostras do estudo ou somente amostras da campanha
