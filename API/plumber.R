@@ -308,14 +308,8 @@ function(req, res) {
     
     logseries_fitted <- pred_values[, "logseries"]
     
-    cat("Log-Serie fitted values:\n")
-    print(logseries_fitted)
-    cat("Any NA:", any(is.na(logseries_fitted)), "\n")
-    cat("Any Inf:", any(is.infinite(logseries_fitted)), "\n")
-    
-    if(all(is.na(logseries_fitted)) || all(is.infinite(logseries_fitted))) {
-      cat("Log-Serie falhou, usando método alternativo...\n")
-      
+    #Método alternativo para gerar ajuste em caso de falha
+    if(all(is.na(logseries_fitted)) || all(is.infinite(logseries_fitted))) {   
       N <- sum(abundancias)
       S <- length(abundancias[abundancias > 0])
       
@@ -330,9 +324,6 @@ function(req, res) {
       
       ranks <- 1:length(abundancias)
       logseries_fitted <- -alpha_est * log(1 - x) * (x^ranks) / ranks
-      
-      cat("Valores alternativos gerados:\n")
-      print(logseries_fitted)
     }
     
     df_ordenado$fitted <- logseries_fitted

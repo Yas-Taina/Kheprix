@@ -18,7 +18,7 @@ testar_endpoint <- function(endpoint, dados, nome_teste) {
     )
     
     if (status_code(resposta) == 200) {
-      cat("✓ SUCESSO - Status:", status_code(resposta), "\n")
+      cat("SUCESSO - Status:", status_code(resposta), "\n")
       
       content_type <- headers(resposta)$`content-type`
       
@@ -36,7 +36,7 @@ testar_endpoint <- function(endpoint, dados, nome_teste) {
       print(content(resposta))
     }
   }, error = function(e) {
-    cat("✗ ERRO DE CONEXÃO:", e$message, "\n")
+    cat("ERRO DE CONEXÃO:", e$message, "\n")
   })
 }
 
@@ -276,4 +276,4 @@ testar_endpoint("/analise/modelo_gamma_grafico", dados_glm_gamma_teste, "Modelo 
 testar_endpoint("/analise/michaelis_menten", matriz_acumulacao_teste, "Michaelis-Menten")
 
 cat("\n\n")
-cat("# Testes concluídos.                        #\n")
+cat("Testes concluídos.                        \n")
