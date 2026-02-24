@@ -48,19 +48,23 @@ radfit_custom <- function(abundancias) {
   x <- seq_along(y)
   log_y <- log(y)
   
-  fit_lognormal <- tryCatch({
-    nls(log_y ~ a - (x - b)^2 / (2 * c^2),
-        start = list(a = max(log_y), b = 1, c = length(y)/2),
-        control = nls.control(maxiter = 100, warnOnly = TRUE))
+ fit_lognormal <- tryCatch({
+  fit_tmp <- nls(log_y ~ a - (x - b)^2 / (2 * c^2),
+      start = list(a = max(log_y), b = 1, c = length(y)/2),
+      control = nls.control(maxiter = 100, warnOnly = TRUE))
+  if (isTRUE(fit_tmp$convInfo$isConv)) fit_tmp else NULL
   }, error = function(e) NULL)
-  
 
-  if (!is.null(fit_lognormal)) {
-    if (!fit_lognormal$convInfo$isConv) {
-      warning("Modelo log-normal não convergiu.")
-      fit_lognormal <- NULL
+  if (is.null(fit_lognormal)) {
+    a_est <- max(log_y)
+    b_est <- which.max(log_y)
+    c_est <- sd(log_y) * length(y) / 4
+    predicted_ln <- exp(a_est - (x - b_est)^2 / (2 * c_est^2))
+    if (all(is.finite(predicted_ln)) && !all(predicted_ln == 0)) {
+      fit_lognormal <- list(fitted = predicted_ln)
     }
   }
+
 
   fit_logseries <- tryCatch({
     N <- sum(y)
@@ -117,8 +121,12 @@ fitted.radfit_custom <- function(object, ...) {
   colnames(result) <- c("lognormal", "logseries", "geometric", "brokenstick")
   
   # Log-normal
-  if(!is.null(object$models$lognormal)) {
-    result[, "lognormal"] <- exp(predict(object$models$lognormal))
+  if (!is.null(object$models$lognormal)) {
+    if (is.list(object$models$lognormal) && "fitted" %in% names(object$models$lognormal)) {
+      result[, "lognormal"] <- object$models$lognormal$fitted
+    } else {
+      result[, "lognormal"] <- exp(predict(object$models$lognormal))
+    }
   }
   
   # Log-series
