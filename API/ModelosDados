@@ -3,7 +3,7 @@
 >Abundância: Quantidade de indivíduos de uma espécie, no total
 - Exemplo: Se você contou 45 abelhas da espécie Apis mellifera em um registro, e 15 em outro, a abundância é 60
 
->Amostra/Unidade Amostral: Um local onde você a coleta foi feita. Nosso modelo já cadastra Unidades Amostrais 
+>Amostra/Unidade Amostral: Um local onde a coleta foi feita. Nosso modelo já cadastra Unidades Amostrais 
 
 >Presença: A espécie foi encontrada (mesmo que só 1 indivíduo)
 
@@ -11,7 +11,7 @@
 
 >Variável Ambiental: As váriaveis cadastradas pelo usuário, representam uma característica do ambiente que foram medidas
 - Exemplos: Temperatura (°C), pH do solo, Umidade (%), Altitude (m)
-- Note que se os dados não especificarem o uso de variaveis *ambientais*, quaisquer dados numéricos se aplicam.
+- Note que se os modelos não especificarem o uso especificamente de variaveis *ambientais*, quaisquer variáveis numéricas (como qtde de especies ou de indivíduos da espécie) podem ser usadas.
 
 **TIPOS DE DADOS UTILIZADOS NA API
 
@@ -39,12 +39,13 @@ McNaughton
 
 -Note que a abundância deve somar todos os individuos encontrados dentro dos filtros selecionados, não usar cada registro de ocorrencia por si só
 -Remover espécies ausentes (não usar 0)
+-Note que alguns endpoints nao aceitam o nome das espécies, somente o vetor numérico da abundância.
 
 >Lista de Abundâncias por Amostra
 
 - O que é? Várias listas, cada uma representando as abundâncias em um local/momento diferente
 
-Por exemplo, imagine que umusuario está cadastrando abelhas por jardim
+Por exemplo, imagine que um usuario está cadastrando abelhas por jardim
 Ele visitou 3 jardins diferentes e contou 4 espécies de abelhas em cada um:
 
 Jardim Norte:
@@ -77,6 +78,7 @@ Jardim Leste:
 }
 
 Importante: Cada linha representa UM local, cada coluna representa UMA espécie. Os números devem estar na mesma ordem das espécies.
+- Não remover especies ausentes. É necessario que todas as unidades amostrais tenham a mesma quantidade de especies: caso uma especie tenha sido encontrada em um lugar, mas não no outro, é necessário completar com 0
 
 - Usado em:
 Índices de similaridade (Jaccard, Sørensen, Bray-Curtis, Morisita)
@@ -124,6 +126,7 @@ RDA (Análise de Redundância)
 CCA (Análise de Correspondência Canônica)
 
 - As variaveis usadas irão depender das escolhas do usuário em relação à unidades amostrais
+- Note que alguns endpoints pedem tanto variaveis ambientais quanto a abundância (cheque o formato esperado nos endpoints)
 
 > Dois Vetores de Valores Numéricos (X e Y)
 
@@ -184,7 +187,7 @@ Teste de Kolmogorov-Smirnov
 
 > Múltiplos Grupos de Valores
 
-- *O que é? Vários grupos de números que você quer comparar
+- O que é? Vários grupos de números que você quer comparar
 
 Exemplo:
 Foram contadas espécies em 3 tipos de habitat diferentes:
@@ -258,5 +261,5 @@ Michaelis-Menten (curva de acumulação)
 **Filtros
 Para todos os tipos de dados, fornecer filtro por data
 Para tipos de dados que não utilizam unidade amostral, fornecer filtro por area (latitude e longitude minimas e maximas) e nivel de estudo (Campanha, Unidade, Evento)
-
 Para tipos de dados que usam unidades amostrais, fornecer a opção de selecionar todas as amostras do estudo ou somente amostras da campanha
+
