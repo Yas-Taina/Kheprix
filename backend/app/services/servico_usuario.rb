@@ -1,20 +1,17 @@
 # frozen_string_literal: true
 
 class ServicoUsuario
-  USUARIOS = [
-    {
-      id: 1,
-      nome: "Mateus",
-      email: "mateus@exemplo.com",
-      senha_hash: BCrypt::Password.create("senha123")
-    }
-  ].freeze
-
   def buscar_por_email(email)
-    USUARIOS.find { |u| u[:email] == email }
+    Usuario.find_by(email: email&.downcase&.strip)
   end
 
   def buscar_por_id(id)
-    USUARIOS.find { |u| u[:id] == id }
+    Usuario.find_by(id: id)
+  end
+
+  def cadastrar(nome:, email:, senha:)
+    usuario = Usuario.new(nome: nome, email: email, password: senha)
+    usuario.save
+    usuario
   end
 end
