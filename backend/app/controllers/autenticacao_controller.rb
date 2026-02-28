@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
 class AutenticacaoController < ApplicationController
-  before_action :autenticar_requisicao!, only: %i[me]
-
   def login
-    parametros = params.expect(autenticacao: [ :email, :senha ])
-    token = ServicoAutenticacao.new.autenticar(email: parametros[:email], senha: parametros[:senha])
+    dto = LoginDto.new(params)
+
+    unless dto.valid?
+      render json: { erros: dto.errors.full_messages }, status: :unprocessable_entity
+      return
+    end
+
+    token = ServicoAutenticacao.new.autenticar(email: dto.email, senha: dto.senha)
 
     if token
       render json: { token: token }, status: :ok
     else
       render json: { erro: "Email ou senha inválidos" }, status: :unauthorized
     end
-  end
-
-  def me
-    render json: { usuario: usuario_atual }, status: :ok
   end
 end
