@@ -1,11 +1,11 @@
 info:
-  name: Autocadastro
+  name: Solicitar Redefinicao
   type: http
-  seq: 2
+  seq: 3
 
 http:
   method: post
-  url: http://localhost:3000/usuarios/autocadastro
+  url: http://localhost:3000/autenticacao/solicitar_redefinicao
   headers:
     - name: Content-Type
       value: application/json
@@ -13,9 +13,7 @@ http:
     type: json
     data: |-
       {
-        "nome": "Mateus",
-        "email": "mateusdevitata@gmail.com",
-        "senha": "senha123"
+        "email": "mateusdevitata@gmail.com"
       }
   auth: inherit
 

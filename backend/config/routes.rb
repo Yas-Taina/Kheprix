@@ -6,6 +6,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   post "autenticacao/login", to: "autenticacao#login"
+  post "autenticacao/solicitar_redefinicao", to: "autenticacao#solicitar_redefinicao"
+  post "autenticacao/redefinir_senha", to: "autenticacao#redefinir_senha"
 
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
 end
