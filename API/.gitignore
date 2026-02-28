@@ -1,0 +1,29 @@
+# R packages directory
+r_packages/
+
+# R history
+.Rhistory
+.Rapp.history
+
+# RStudio
+.Rproj.user/
+.Rproj
+
+# R environment files
+.Renviron
+.Rdata
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+tmp/

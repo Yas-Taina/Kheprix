@@ -1,6 +1,14 @@
 # Script de Inicialização da API de Análises do sistema Kheprix
 # Execute com: Rscript inicializacao.R
 
+# Configurar biblioteca local para evitar problemas de permissão
+lib_dir <- file.path(getwd(), "r_packages")
+if (!dir.exists(lib_dir)) {
+  dir.create(lib_dir, recursive = TRUE)
+  cat("Diretório de pacotes criado:", lib_dir, "\n")
+}
+.libPaths(c(lib_dir, .libPaths()))
+
 # Lista de pacotes necessários
 pacotes <- c(
   "plumber",
@@ -15,12 +23,13 @@ pacotes <- c(
 )
 
 cat("Verificando e instalando pacotes necessários...\n")
+cat("Biblioteca de pacotes:", lib_dir, "\n\n")
 
 # Instalar pacotes faltantes
 instalar <- pacotes[!(pacotes %in% installed.packages()[, "Package"])]
 if(length(instalar)) {
   cat("Instalando:", paste(instalar, collapse = ", "), "\n")
-  install.packages(instalar, repos = "https://cloud.r-project.org")
+  install.packages(instalar, repos = "https://cloud.r-project.org", lib = lib_dir)
 }
 
 cat("\nCarregando pacotes...\n")
