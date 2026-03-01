@@ -1,0 +1,26 @@
+info:
+  name: Autocadastro
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: http://localhost:3000/usuarios/autocadastro
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "Christian",
+        "email": "chrisnotads2020@gmail.com",
+        "senha": "senha123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

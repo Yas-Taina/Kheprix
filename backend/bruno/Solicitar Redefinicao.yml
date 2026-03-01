@@ -1,0 +1,24 @@
+info:
+  name: Solicitar Redefinicao
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: http://localhost:3000/autenticacao/solicitar_redefinicao
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "chrisnotads2020@gmail.com"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
