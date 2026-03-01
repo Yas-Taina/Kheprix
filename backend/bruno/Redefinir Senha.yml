@@ -1,0 +1,25 @@
+info:
+  name: Redefinir Senha
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: http://localhost:3000/autenticacao/redefinir_senha
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "token": "<token_do_email>",
+        "nova_senha": "nova_senha123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

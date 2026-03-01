@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:17
+    container_name: kheprix_oltp_database_container
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kheprix_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kheprix_password}
+      POSTGRES_DB: ${POSTGRES_DB:-kheprix_oltp_db}
+    ports:
+      - "5410:5432"
+    volumes:
+      - kheprix_oltp_data:/var/lib/postgresql/data
+    networks:
+      - kheprix_network
+
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kheprix_web_container
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "-c", "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"]
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: development
+      RAILS_LOG_TO_STDOUT: "true"
+      RAILS_MAX_THREADS: 5
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-kheprix_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kheprix_password}
+      POSTGRES_DB: ${POSTGRES_DB:-kheprix_oltp_db}
+      FRONTEND_URL: ${FRONTEND_URL}
+      REDEFINICAO_SENHA_CAMINHO: ${REDEFINICAO_SENHA_CAMINHO}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_DOMAIN: ${SMTP_DOMAIN}
+      SMTP_AUTH: ${SMTP_AUTH}
+      SMTP_STARTTLS: ${SMTP_STARTTLS}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE}
+    volumes:
+      - ./backend:/rails
+    depends_on:
+      db:
+        condition: service_started
+    networks:
+      - kheprix_network
+
+volumes:
+  kheprix_oltp_data:
+
+networks:
+  kheprix_network:
+    driver: bridge
