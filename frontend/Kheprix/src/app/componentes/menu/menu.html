@@ -1,1 +1,37 @@
-<p>menu works!</p>
+<nav>
+<div class="navbar">
+    <button class="menu-btn" (click)="toggleMenu()">
+        <span [class.open]="isOpen"></span>
+        <span [class.open]="isOpen"></span>
+        <span [class.open]="isOpen"></span>
+    </button>
+    <img class="navbarimg" src="/img/icon1_bege.png" alt="Icone">
+
+     <button class="logoutbutton">
+        <fa-icon [icon]="faUser" class="btnIcon"></fa-icon>
+    </button>
+</div>
+</nav>
+
+<ul class="menu-links" [class.open]="isOpen">
+    <li>
+        <img class="imgmenu" src="/img/decor1_verde.png" alt="Imagem Decorativa">
+        <a (click)="toggleMenu()">Registro Rápido de Ocorrência</a>
+        <hr>
+    </li>
+    <li>
+        <img class="imgmenu" src="/img/decor2_verde.png" alt="Imagem Decorativa">
+        <a (click)="toggleMenu()">Visualizar Estudos</a>
+        <hr>
+    </li>
+    <li>
+        <img class="imgmenu" src="/img/decor3_verde.png" alt="Imagem Decorativa">
+        <a (click)="toggleMenu()">Cadastrar Novo Estudo</a>
+        <hr>
+    </li>
+    <li>
+        <img class="imgmenu" src="/img/decor4_verde.png" alt="Imagem Decorativa">
+        <a (click)="toggleMenu()">Convites de Colaboração</a>
+        <hr>
+    </li>
+</ul>

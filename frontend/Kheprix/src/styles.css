@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+/*---Declaração de cores---*/
+:root{
+    --verdeclaro: #bec5a4;
+    --verdeescuro: #8a8e75;
+    --cremeclaro: #f1ead8;
+}
+
+/*---Componenentes do site---*/
+html,
+body {
+  margin: 0;
+  max-width: 100vw;
+  overflow-x: hidden;
+  text-align: center;
+  align-items: center;
+  vertical-align: middle;
+}
+
+main{
+    min-height: 90vh;
+    height: 90vh;
+}
+
+header,
+main,
+footer {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+footer{
+    background-color: var(--verdeescuro);
+    color: var(--cremeclaro);
+    margin: 0;
+}
