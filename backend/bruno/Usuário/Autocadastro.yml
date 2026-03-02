@@ -1,11 +1,11 @@
 info:
-  name: Login
+  name: Autocadastro
   type: http
   seq: 1
 
 http:
   method: post
-  url: http://localhost:3000/autenticacao/login
+  url: http://localhost:3000/usuarios/autocadastro
   headers:
     - name: Content-Type
       value: application/json
@@ -13,6 +13,7 @@ http:
     type: json
     data: |-
       {
+        "nome": "Christian",
         "email": "chrisnotads2020@gmail.com",
         "senha": "senha123"
       }
