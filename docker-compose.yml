@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: kheprix_web_container
     restart: unless-stopped
-    entrypoint: ["/bin/bash", "-c", "rm -f tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"]
+    entrypoint: ["/bin/bash", "-c", "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"]
     ports:
       - "3000:3000"
     environment:
@@ -46,22 +46,6 @@ services:
     depends_on:
       db:
         condition: service_started
-    networks:
-      - kheprix_network
-
-  frontend:
-    build:
-      context: ./frontend/Kheprix
-      dockerfile: Dockerfile
-    container_name: kheprix_frontend_container
-    restart: unless-stopped
-    ports:
-      - "4200:4200"
-    volumes:
-      - ./frontend/Kheprix:/app
-      - /app/node_modules
-    depends_on:
-      - web
     networks:
       - kheprix_network
 
