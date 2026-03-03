@@ -1,7 +1,7 @@
 info:
   name: Redefinir Senha
   type: http
-  seq: 4
+  seq: 5
 
 http:
   method: post
@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "token": "<token_do_email>",
-        "nova_senha": "nova_senha123"
+        "token": "eyJfcmFpbHMiOnsiZGF0YSI6MiwiZXhwIjoiMjAyNi0wMy0wM1QwMTowMjo1Ny45NTdaIiwicHVyIjoidXN1YXJpby9yZWRlZmluaWNhb19zZW5oYSJ9fQ--8c8c5adf424c77e0ebf26c5b1cf71e553495ebd8cfde1a2e2363571a9abbbebe",
+        "nova_senha": "senha123"
       }
   auth: inherit
 

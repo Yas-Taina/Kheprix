@@ -31,6 +31,23 @@ class AutenticacaoController < ApplicationController
     render json: { mensagem: "Se o email existir, enviaremos instruções para redefinição de senha" }, status: :ok
   end
 
+  def validar_token_redefinicao
+    dto = ValidarTokenRedefinicaoDto.new(params)
+
+    unless dto.valid?
+      render json: { erros: dto.errors.full_messages }, status: :unprocessable_entity
+      return
+    end
+
+    usuario = ServicoAutenticacao.new.validar_token_redefinicao(token: dto.token)
+
+    if usuario
+      render json: { valido: true }, status: :ok
+    else
+      render json: { erro: "Token inválido ou expirado" }, status: :unauthorized
+    end
+  end
+
   def redefinir_senha
     dto = RedefinirSenhaDto.new(params)
 

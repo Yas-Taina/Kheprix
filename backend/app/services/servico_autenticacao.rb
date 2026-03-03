@@ -25,8 +25,12 @@ class ServicoAutenticacao
     UsuarioMailer.redefinicao_senha(usuario: usuario, token: token).deliver_later
   end
 
+  def validar_token_redefinicao(token:)
+    Usuario.find_signed(token, purpose: :redefinicao_senha)
+  end
+
   def redefinir_senha(token:, nova_senha:)
-    usuario = Usuario.find_signed(token, purpose: :redefinicao_senha)
+    usuario = validar_token_redefinicao(token: token)
     return unless usuario
 
     usuario.update(password: nova_senha)
