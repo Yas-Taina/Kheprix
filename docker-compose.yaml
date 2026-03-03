@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:17
+    container_name: kheprix_oltp_database_container
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-kheprix_oltp_db}
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-root} -d ${POSTGRES_DB:-kheprix_oltp_db}"]
+    #   interval: 2s
+    #   timeout: 5s
+    #   retries: 10
+    ports:
+      - "5410:5432"
+    volumes:
+      - kheprix_oltp_data:/var/lib/postgresql/data
+    networks:
+      - kheprix_network
+
+volumes:
+  kheprix_oltp_data:
+
+networks:
+  kheprix_network:
