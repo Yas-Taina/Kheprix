@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_28_170225) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "colaboradores", id: false, force: :cascade do |t|
+    t.integer "estudo_id", null: false
+    t.integer "usuario_id", null: false
+    t.integer "perfil", default: 0, null: false
+    t.index ["estudo_id", "usuario_id"], name: "index_colaboradores_on_estudo_id_and_usuario_id", unique: true
+  end
+
+  create_table "estudos", id: :serial, force: :cascade do |t|
+    t.string "nome", null: false
+    t.text "observacoes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "usuarios", id: :serial, force: :cascade do |t|
     t.string "nome", null: false
@@ -22,4 +36,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_28_170225) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_usuarios_on_email", unique: true
   end
+
+  create_table "variaveis", force: :cascade do |t|
+    t.bigint "estudo_id", null: false
+    t.string "nome", limit: 100, null: false
+    t.string "metrica", limit: 50
+    t.integer "nivel_aplicacao", null: false
+    t.integer "tipo_dado", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["estudo_id", "nome"], name: "index_variaveis_on_estudo_id_and_nome", unique: true
+    t.index ["estudo_id"], name: "index_variaveis_on_estudo_id"
+  end
+
+  add_foreign_key "colaboradores", "estudos"
+  add_foreign_key "colaboradores", "usuarios"
+  add_foreign_key "variaveis", "estudos"
 end
