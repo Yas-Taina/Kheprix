@@ -1,0 +1,29 @@
+info:
+  name: Cadastrar Estudo
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: http://localhost:3000/estudos
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "Estudo Teste",
+        "observacoes": "Observações do estudo",
+        "variaveis": [
+          {"nome": "Temperatura", "metrica": "°C", "nivel_aplicacao": "evento", "tipo_dado": "number"},
+          {"nome": "Umidade", "metrica": "%", "nivel_aplicacao": "evento", "tipo_dado": "number"}
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

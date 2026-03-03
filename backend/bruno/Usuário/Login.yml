@@ -1,11 +1,11 @@
 info:
-  name: Autocadastro
+  name: Login
   type: http
   seq: 2
 
 http:
   method: post
-  url: http://localhost:3000/usuarios/autocadastro
+  url: http://localhost:3000/autenticacao/login
   headers:
     - name: Content-Type
       value: application/json
@@ -13,11 +13,21 @@ http:
     type: json
     data: |-
       {
-        "nome": "Christian",
         "email": "chrisnotads2020@gmail.com",
         "senha": "senha123"
       }
   auth: inherit
+
+runtime:
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.token
+        method: jsonq
+      variable:
+        name: token
+        scope: runtime
 
 settings:
   encodeUrl: false
