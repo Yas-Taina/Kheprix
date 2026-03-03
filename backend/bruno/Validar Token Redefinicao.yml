@@ -1,0 +1,24 @@
+info:
+  name: Validar Token Redefinicao
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: http://localhost:3000/autenticacao/validar_token_redefinicao
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "token": "eyJfcmFpbHMiOnsiZGF0YSI6MiwiZXhwIjoiMjAyNi0wMy0wM1QwMTowMjo1Ny45NTdaIiwicHVyIjoidXN1YXJpby9yZWRlZmluaWNhb19zZW5oYSJ9fQ--8c8c5adf424c77e0ebf26c5b1cf71e553495ebd8cfde1a2e2363571a9abbbebe"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
