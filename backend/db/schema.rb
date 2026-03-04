@@ -39,6 +39,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_04_120001) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "especies", id: :serial, force: :cascade do |t|
+    t.string "foto"
+    t.string "classe", limit: 100
+    t.string "genero", limit: 100
+    t.string "nome_popular"
+    t.string "nome_cientifico"
+    t.string "status_conservacao", limit: 100
+    t.boolean "nativa_da_regiao", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "projetos", id: :serial, force: :cascade do |t|
+    t.string "nome", null: false
+    t.text "descricao"
+    t.boolean "ativo", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ativo"], name: "index_projetos_on_ativo"
+  end
+
   create_table "usuarios", id: :serial, force: :cascade do |t|
     t.string "nome", null: false
     t.string "email", null: false
