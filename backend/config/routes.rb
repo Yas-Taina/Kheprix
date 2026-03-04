@@ -13,4 +13,6 @@ Rails.application.routes.draw do
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
 
   resources :estudos
+  resources :projetos, only: %i[index show create update destroy]
+  resources :especies, only: %i[index show create update destroy]
 end
