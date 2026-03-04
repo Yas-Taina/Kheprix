@@ -10,4 +10,7 @@ Rails.application.routes.draw do
   post "autenticacao/redefinir_senha", to: "autenticacao#redefinir_senha"
 
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
+
+  resources :projetos, only: %i[index show create update destroy]
+  resources :especies, only: %i[index show create update destroy]
 end
