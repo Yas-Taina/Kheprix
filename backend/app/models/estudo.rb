@@ -4,6 +4,7 @@ class Estudo < ApplicationRecord
   has_many :colaboradores, dependent: :destroy
   has_many :usuarios, through: :colaboradores
   has_many :variaveis, dependent: :destroy
+  has_many :campanhas, dependent: :destroy
 
   validates :nome, presence: true
 

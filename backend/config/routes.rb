@@ -12,5 +12,7 @@ Rails.application.routes.draw do
 
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
 
-  resources :estudos
+  resources :estudos do
+    resources :campanhas
+  end
 end

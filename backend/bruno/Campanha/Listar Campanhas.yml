@@ -1,0 +1,18 @@
+info:
+  name: Listar Campanhas
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/1/campanhas
+  headers:
+    - name: Content-Type
+      value: application/json
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
