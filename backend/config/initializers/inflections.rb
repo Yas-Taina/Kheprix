@@ -18,4 +18,5 @@
 ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular "perfil", "perfis"
   inflect.irregular "variavel", "variaveis"
+  inflect.irregular "valor_variavel", "valores_variaveis"
 end
