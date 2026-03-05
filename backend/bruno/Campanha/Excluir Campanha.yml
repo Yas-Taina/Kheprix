@@ -1,0 +1,18 @@
+info:
+  name: Excluir Campanha
+  type: http
+  seq: 5
+
+http:
+  method: delete
+  url: http://localhost:3000/estudos/1/campanhas/1
+  headers:
+    - name: Content-Type
+      value: application/json
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
