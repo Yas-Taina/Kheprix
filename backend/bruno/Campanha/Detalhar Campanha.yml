@@ -5,11 +5,18 @@ info:
 
 http:
   method: get
-  url: http://localhost:3000/estudos/1/campanhas/1
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id
   headers:
     - name: Content-Type
       value: application/json
   auth: inherit
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: campanha_id
+      value: "1"
+      type: path
 
 settings:
   encodeUrl: false

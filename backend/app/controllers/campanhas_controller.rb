@@ -3,6 +3,8 @@
 class CampanhasController < ApplicationController
   before_action :autenticar_requisicao!
   before_action :definir_estudo
+  before_action :autorizar_acesso_estudo!
+  before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
   before_action :definir_campanha, only: %i[show update destroy]
 
   def index
@@ -77,6 +79,20 @@ class CampanhasController < ApplicationController
     @estudo = Estudo.find(params[:estudo_id])
   rescue ActiveRecord::RecordNotFound
     render json: { erro: "Estudo não encontrado" }, status: :not_found
+  end
+
+  def autorizar_acesso_estudo!
+    colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)
+    unless colaborador
+      render json: { erro: "Acesso negado a este estudo" }, status: :forbidden
+    end
+  end
+
+  def autorizar_proprietario_estudo!
+    colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)
+    unless colaborador&.proprietario?
+      render json: { erro: "Apenas proprietários podem realizar esta ação" }, status: :forbidden
+    end
   end
 
   def definir_campanha
