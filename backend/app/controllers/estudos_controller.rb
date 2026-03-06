@@ -4,7 +4,15 @@ class EstudosController < ApplicationController
   before_action :autenticar_requisicao!
 
   def index
-    render json: { erro: "Não implementado" }, status: :not_implemented
+    dto = PesquisarEstudoDto.new(params)
+
+    unless dto.valid?
+      render json: { erros: dto.errors.full_messages }, status: :unprocessable_entity
+      return
+    end
+
+    estudos = servico.pesquisar(usuario: usuario_atual, filtros: dto)
+    render json: estudos, status: :ok
   end
 
   def show
@@ -33,7 +41,18 @@ class EstudosController < ApplicationController
   end
 
   def destroy
-    render json: { erro: "Não implementado" }, status: :not_implemented
+    resultado = servico.deletar(id: params[:id], usuario: usuario_atual)
+
+    case resultado
+    when :ok
+      head :no_content
+    when :descadastrado
+      render json: { mensagem: "Você foi descadastrado do estudo" }, status: :ok
+    when :nao_encontrado
+      render json: { erro: "Estudo não encontrado" }, status: :not_found
+    when :nao_autorizado
+      render json: { erro: "Permissão negada" }, status: :forbidden
+    end
   end
 
   private
