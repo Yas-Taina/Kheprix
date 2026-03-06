@@ -18,7 +18,8 @@ body {
 
 main{
     min-height: 90vh;
-    height: 90vh;
+    padding-top: 8rem;
+
 }
 
 header,
