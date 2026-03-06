@@ -1,0 +1,59 @@
+<div>
+    <div>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div>
+                <label for="email" class="form-label">E-mail</label>
+                <input
+                    id="email"
+                    type="email"
+                    formControlName="email"
+                    class="form-control"
+                    maxlength="100"
+                    [class.is-invalid]="
+                        loginForm.get('email')?.invalid &&
+                        (loginForm.get('email')?.touched || loginForm.get('email')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="loginForm.get('email')?.invalid && (loginForm.get('email')?.touched || loginForm.get('email')?.dirty)">
+                    <div *ngIf="loginForm.get('email')?.errors?.['required']">
+                        E-mail é obrigatório.
+                    </div>
+                    <div *ngIf="loginForm.get('email')?.errors?.['email']">
+                        Insira um formato válido.
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="senha" class="form-label">Senha</label>
+                <input
+                    id="senha"
+                    type="password"
+                    formControlName="senha"
+                    class="form-control"
+                    minlength="6"
+                    maxlength="20"
+                    [class.is-invalid]="
+                        loginForm.get('senha')?.invalid &&
+                        (loginForm.get('senha')?.touched || loginForm.get('senha')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="loginForm.get('senha')?.invalid && (loginForm.get('senha')?.touched || loginForm.get('senha')?.dirty)">
+                    <div *ngIf="loginForm.get('senha')?.errors?.['required']">
+                        Senha é obrigatória.
+                    </div>
+                    <div *ngIf="loginForm.get('senha')?.errors?.['minlength']">
+                        Mínimo de 6 caracteres.
+                    </div>
+                </div>
+            </div>
+            <a>Esqueci minha senha</a>
+            <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid">Confirmar</button>
+        </form>
+    </div>
+    <div>
+        <h2>Login</h2>
+        <img src="/img/icon_marrom.png" alt="Logo">
+        <p>Faça seu login para ter acesso ao sistema</p>
+        <p>Não tem uma conta? Faça seu cadastro aqui</p>
+    </div>
+</div>

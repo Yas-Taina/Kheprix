@@ -1,0 +1,105 @@
+<div>
+    <div>
+        <form [formGroup]="cadastroForm" (ngSubmit)="onSubmit()">
+            <div>
+                <label for="nome" class="form-label">Nome</label>
+                <input
+                    id="nome"
+                    type="text"
+                    formControlName="nome"
+                    class="form-control"
+                    maxlength="100"
+                    [class.is-invalid]="
+                        cadastroForm.get('nome')?.invalid &&
+                        (cadastroForm.get('nome')?.touched || cadastroForm.get('nome')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="cadastroForm.get('nome')?.invalid && (cadastroForm.get('nome')?.touched || cadastroForm.get('nome')?.dirty)">
+                    <div *ngIf="cadastroForm.get('nome')?.errors?.['required']">
+                        Nome é obrigatório.
+                    </div>
+                    <div *ngIf="cadastroForm.get('nome')?.errors?.['minlength']">
+                        Mínimo de 2 caracteres.
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="email" class="form-label">E-mail</label>
+                <input
+                    id="email"
+                    type="email"
+                    formControlName="email"
+                    class="form-control"
+                    maxlength="100"
+                    [class.is-invalid]="
+                        cadastroForm.get('email')?.invalid &&
+                        (cadastroForm.get('email')?.touched || cadastroForm.get('email')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="cadastroForm.get('email')?.invalid && (cadastroForm.get('email')?.touched || cadastroForm.get('email')?.dirty)">
+                    <div *ngIf="cadastroForm.get('email')?.errors?.['required']">
+                        E-mail é obrigatório.
+                    </div>
+                    <div *ngIf="cadastroForm.get('email')?.errors?.['email']">
+                        Insira um formato válido.
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="senha" class="form-label">Senha</label>
+                <input
+                    id="senha"
+                    type="password"
+                    formControlName="senha"
+                    class="form-control"
+                    minlength="6"
+                    maxlength="20"
+                    [class.is-invalid]="
+                        cadastroForm.get('senha')?.invalid &&
+                        (cadastroForm.get('senha')?.touched || cadastroForm.get('senha')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="cadastroForm.get('senha')?.invalid && (cadastroForm.get('senha')?.touched || cadastroForm.get('senha')?.dirty)">
+                    <div *ngIf="cadastroForm.get('senha')?.errors?.['required']">
+                        Insira uma senha
+                    </div>
+                    <div *ngIf="cadastroForm.get('senha')?.errors?.['minlength']">
+                        A senha deve ter pelo menos 6 digitos
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="confirmarsenha" class="form-label">Confirme a Senha</label>
+                <input
+                    id="confirmarsenha"
+                    type="password"
+                    formControlName="confirmarsenha"
+                    class="form-control"
+                    minlength="6"
+                    maxlength="20"
+                    [class.is-invalid]="
+                        cadastroForm.get('confirmarsenha')?.invalid &&
+                        (cadastroForm.get('confirmarsenha')?.touched || cadastroForm.get('confirmarsenha')?.dirty)
+                    "
+                />
+                <div class="invalid-feedback" *ngIf="cadastroForm.get('confirmarsenha')?.invalid && (cadastroForm.get('confirmarsenha')?.touched || cadastroForm.get('confirmarsenha')?.dirty)">
+                    <div *ngIf="cadastroForm.get('confirmarsenha')?.errors?.['required']">
+                        Confirme sua senha
+                    </div>
+                    <div *ngIf="cadastroForm.get('confirmarsenha')?.errors?.['minlength']">
+                        A senha deve ter pelo menos 6 digitos
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Cadastrar
+            </button>
+        </form>
+    </div>
+    <div>
+        <h2>Cadastre-se</h2>
+        <img src="/img/icon_marrom.png" alt="Logo">
+        <p>Faça seu cadastro gratuitamente para ter acesso ao sistema</p>
+        <p>Já tem um cadastro? Faça seu login aqui</p>
+    </div>
+</div>

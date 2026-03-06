@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { Home } from './autenticacao/home/home';
-import { Login } from './autenticacao/login/login';
-import { Cadastro } from './autenticacao/cadastro/cadastro';
-import { Recuperarsenha } from './autenticacao/recuperarsenha/recuperarsenha';
+import { Home } from './pages/autenticacao/home/home';
+import { Login } from './pages/autenticacao/login/login';
+import { Cadastro } from './pages/autenticacao/cadastro/cadastro';
+import { Recuperarsenha } from './pages/autenticacao/recuperarsenha/recuperarsenha';
 
 export const routes: Routes = [
     //Rotas publicas
