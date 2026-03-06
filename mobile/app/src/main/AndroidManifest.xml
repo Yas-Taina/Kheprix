@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kheprix">
         <activity
+            android:name=".activities.auth.CadastroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.auth.LoginActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
