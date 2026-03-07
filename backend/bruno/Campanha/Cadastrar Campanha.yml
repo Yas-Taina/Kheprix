@@ -9,6 +9,10 @@ http:
   headers:
     - name: Content-Type
       value: application/json
+  params:
+    - name: estudo_id
+      value: "7"
+      type: path
   body:
     type: json
     data: |-
@@ -18,14 +22,11 @@ http:
         "data_fim": "2026-03-15",
         "descricao": "Campanha de coleta no período de verão",
         "valores_variaveis": [
-          {"variavel_id": 1, "valor": "25.5"}
+          {"variavel_id": 1, "valor": "25.5"},
+          {"variavel_id": 2, "valor": "55.3"}
         ]
       }
   auth: inherit
-  params:
-    - name: estudo_id
-      value: "1"
-      type: path
 
 settings:
   encodeUrl: false
