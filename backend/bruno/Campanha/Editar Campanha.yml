@@ -9,6 +9,13 @@ http:
   headers:
     - name: Content-Type
       value: application/json
+  params:
+    - name: estudo_id
+      value: "7"
+      type: path
+    - name: campanha_id
+      value: "1"
+      type: path
   body:
     type: json
     data: |-
@@ -22,13 +29,6 @@ http:
         ]
       }
   auth: inherit
-  params:
-    - name: estudo_id
-      value: "1"
-      type: path
-    - name: campanha_id
-      value: "1"
-      type: path
 
 settings:
   encodeUrl: false

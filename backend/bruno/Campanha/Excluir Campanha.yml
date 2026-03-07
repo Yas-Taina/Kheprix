@@ -9,14 +9,14 @@ http:
   headers:
     - name: Content-Type
       value: application/json
-  auth: inherit
   params:
     - name: estudo_id
-      value: "1"
+      value: "7"
       type: path
     - name: campanha_id
       value: "1"
       type: path
+  auth: inherit
 
 settings:
   encodeUrl: false
