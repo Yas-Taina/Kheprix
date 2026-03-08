@@ -5,11 +5,15 @@ class EditarCampanhaDto
 
   attr_accessor :nome, :data_inicio, :data_fim, :descricao, :valores_variaveis
 
+  CAMPOS_OBRIGATORIOS = %i[nome data_inicio data_fim descricao valores_variaveis].freeze
+
   validates :nome, presence: true
   validates :data_inicio, presence: true
+  validate :campos_informados
   validate :valores_variaveis_validos
 
   def initialize(params = {})
+    @chaves_informadas = params.respond_to?(:keys) ? params.keys.map(&:to_sym) : []
     @nome = params[:nome]
     @data_inicio = params[:data_inicio]
     @data_fim = params[:data_fim]
@@ -18,6 +22,14 @@ class EditarCampanhaDto
   end
 
   private
+
+  def campos_informados
+    CAMPOS_OBRIGATORIOS.each do |campo|
+      unless @chaves_informadas.include?(campo)
+        errors.add(campo, "deve ser informado")
+      end
+    end
+  end
 
   def valores_variaveis_validos
     return if valores_variaveis.blank?

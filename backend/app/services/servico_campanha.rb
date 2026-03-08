@@ -33,8 +33,10 @@ class ServicoCampanha
         data_fim: data_fim,
         descricao: descricao,
       )
-      campanha.valores_variaveis.destroy_all
-      criar_valores_variaveis(campanha, valores_variaveis)
+      unless valores_variaveis.nil?
+        campanha.valores_variaveis.destroy_all
+        criar_valores_variaveis(campanha, valores_variaveis)
+      end
       campanha
     end
   rescue ActiveRecord::RecordInvalid => e
