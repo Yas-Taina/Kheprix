@@ -13,6 +13,20 @@ services:
     networks:
       - kheprix_network
 
+  db_dw:
+    image: postgres:17
+    container_name: kheprix_dw_container
+    environment:
+      POSTGRES_USER: ${POSTGRES_DW_USER:-kheprix_user}
+      POSTGRES_PASSWORD: ${POSTGRES_DW_PASSWORD:-kheprix_password}
+      POSTGRES_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - kheprix_dw_data:/var/lib/postgresql/data
+    networks:
+      - kheprix_network
+
   web:
     build:
       context: ./backend
@@ -31,6 +45,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-kheprix_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kheprix_password}
       POSTGRES_DB: ${POSTGRES_DB:-kheprix_oltp_db}
+      POSTGRES_DW_HOST: db_dw
+      POSTGRES_DW_PORT: 5432
+      POSTGRES_DW_USER: ${POSTGRES_DW_USER:-kheprix_user}
+      POSTGRES_DW_PASSWORD: ${POSTGRES_DW_PASSWORD:-kheprix_password}
+      POSTGRES_DW_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
       FRONTEND_URL: ${FRONTEND_URL}
       REDEFINICAO_SENHA_CAMINHO: ${REDEFINICAO_SENHA_CAMINHO}
       SMTP_HOST: ${SMTP_HOST}
@@ -45,6 +64,8 @@ services:
       - ./backend:/rails
     depends_on:
       db:
+        condition: service_started
+      db_dw:
         condition: service_started
     networks:
       - kheprix_network
@@ -65,8 +86,18 @@ services:
     networks:
       - kheprix_network
 
+  adminer:
+    image: adminer
+    container_name: kheprix_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - kheprix_network
+
 volumes:
   kheprix_oltp_data:
+  kheprix_dw_data:
 
 networks:
   kheprix_network:
