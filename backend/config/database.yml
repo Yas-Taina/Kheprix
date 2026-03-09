@@ -22,8 +22,19 @@ default: &default
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 development:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "kheprix_oltp_db" } %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB") { "kheprix_oltp_db" } %>
+    host: <%= ENV.fetch("POSTGRES_HOST") { "db" } %> # "db" é o nome no docker-compose
+
+  dw:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DW_DB") { "kheprix_dw_db" } %>
+    username: <%= ENV.fetch("POSTGRES_DW_USER") { "kheprix_dw_user" } %>
+    password: <%= ENV.fetch("POSTGRES_DW_PASSWORD") { "senha_analitica" } %>
+    host: <%= ENV.fetch("POSTGRES_DW_HOST") { "db_dw" } %> # "db_dw" é o nome no docker-compose
+    port: 5432
+    migrations_paths: db/dw_migrate
 
 
 # As with config/credentials.yml, you never want to store sensitive information,
