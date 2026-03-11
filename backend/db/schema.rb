@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_04_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "campanhas", force: :cascade do |t|
+    t.bigint "estudo_id", null: false
+    t.string "nome", limit: 255, null: false
+    t.date "data_inicio", null: false
+    t.date "data_fim"
+    t.text "descricao"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["estudo_id"], name: "index_campanhas_on_estudo_id"
+  end
 
   create_table "colaboradores", id: false, force: :cascade do |t|
     t.integer "estudo_id", null: false
@@ -37,6 +48,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
     t.index ["email"], name: "index_usuarios_on_email", unique: true
   end
 
+  create_table "valores_variaveis", force: :cascade do |t|
+    t.bigint "variavel_id", null: false
+    t.integer "id_nivel_aplicacao", null: false
+    t.text "valor", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["variavel_id"], name: "index_valores_variaveis_on_variavel_id"
+  end
+
   create_table "variaveis", force: :cascade do |t|
     t.bigint "estudo_id", null: false
     t.string "nome", limit: 100, null: false
@@ -49,7 +69,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
     t.index ["estudo_id"], name: "index_variaveis_on_estudo_id"
   end
 
+  add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
+  add_foreign_key "valores_variaveis", "variaveis", column: "variavel_id"
   add_foreign_key "variaveis", "estudos"
 end
