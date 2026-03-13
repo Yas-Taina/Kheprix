@@ -1,40 +1,27 @@
 # frozen_string_literal: true
 
 class ServicoEspecie
-  # Listar todas as espécies ordenadas
-  def listar
-    Especie.ordenadas
+  # Listar espécies de um estudo, com filtros opcionais
+  def listar(estudo_id:, filtros:)
+    especies = Especie.do_estudo(estudo_id)
+    especies = especies.por_nome_popular(filtros.nome_popular) if filtros.nome_popular.present?
+    especies = especies.por_nome_cientifico(filtros.nome_cientifico) if filtros.nome_cientifico.present?
+    especies.ordenadas
   end
 
-  # Buscar por ID — retorna nil se não encontrar
-  def buscar_por_id(id)
-    Especie.find_by(id: id)
+  # Buscar por ID dentro de um estudo — retorna nil se não encontrar
+  def buscar_por_id(estudo_id:, id:)
+    Especie.do_estudo(estudo_id).find_by(id: id)
   end
 
   # Criar uma nova espécie
-  def criar(foto:, classe:, genero:, nome_popular:, nome_cientifico:, status_conservacao:, nativa_da_regiao:)
-    Especie.create(
-      foto: foto,
-      classe: classe,
-      genero: genero,
-      nome_popular: nome_popular,
-      nome_cientifico: nome_cientifico,
-      status_conservacao: status_conservacao,
-      nativa_da_regiao: nativa_da_regiao,
-    )
+  def criar(estudo_id:, atributos:)
+    Especie.create(atributos.merge(estudo_id: estudo_id))
   end
 
   # Atualizar uma espécie existente
-  def atualizar(especie:, foto:, classe:, genero:, nome_popular:, nome_cientifico:, status_conservacao:, nativa_da_regiao:)
-    especie.update(
-      foto: foto,
-      classe: classe,
-      genero: genero,
-      nome_popular: nome_popular,
-      nome_cientifico: nome_cientifico,
-      status_conservacao: status_conservacao,
-      nativa_da_regiao: nativa_da_regiao,
-    )
+  def atualizar(especie:, atributos:)
+    especie.update(atributos)
     especie
   end
 

@@ -3,8 +3,7 @@
 class CriaTabelaEspecie < ActiveRecord::Migration[8.0]
   def change
     create_table :especies, id: :integer do |t|
-      # FK — descomentar quando a tabela estudos existir
-      # t.integer :estudo_id, null: false
+      t.integer :estudo_id, null: false
 
       t.string :foto                                          # URL da foto (opcional)
       t.string :classe, limit: 100                            # Classe taxonômica (opcional)
@@ -17,10 +16,7 @@ class CriaTabelaEspecie < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Índice composto único — descomentar quando a tabela estudos existir
-    # add_index :especies, %i[estudo_id nome_cientifico], unique: true
-
-    # FK — descomentar quando a tabela estudos existir
-    # add_foreign_key :especies, :estudos
+    add_index :especies, %i[estudo_id nome_cientifico], unique: true
+    add_foreign_key :especies, :estudos
   end
 end
