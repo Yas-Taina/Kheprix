@@ -3,21 +3,23 @@
 class AtualizarEspecieDto
   include ActiveModel::API
 
-  attr_accessor :foto,
-                :classe,
-                :genero,
-                :nome_popular,
-                :nome_cientifico,
-                :status_conservacao,
-                :nativa_da_regiao
+  CAMPOS = %i[foto classe genero nome_popular nome_cientifico status_conservacao nativa_da_regiao].freeze
+
+  attr_accessor(*CAMPOS)
 
   def initialize(params = {})
-    @foto = params[:foto]
-    @classe = params[:classe]
-    @genero = params[:genero]
-    @nome_popular = params[:nome_popular]
-    @nome_cientifico = params[:nome_cientifico]
-    @status_conservacao = params[:status_conservacao]
-    @nativa_da_regiao = params[:nativa_da_regiao]
+    @chaves_informadas = []
+    CAMPOS.each do |campo|
+      if params.key?(campo)
+        @chaves_informadas << campo
+        instance_variable_set(:"@#{campo}", params[campo])
+      end
+    end
+  end
+
+  def atributos
+    @chaves_informadas.each_with_object({}) do |campo, hash|
+      hash[campo] = send(campo)
+    end
   end
 end
