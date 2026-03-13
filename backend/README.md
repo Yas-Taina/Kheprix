@@ -23,6 +23,11 @@ Variáveis disponíveis:
 | `POSTGRES_DB` | Nome do banco | `kheprix_oltp_db` |
 | `POSTGRES_HOST` | Host do banco | `localhost` |
 | `POSTGRES_PORT` | Porta do banco | `5410` |
+| `POSTGRES_DW_USER` | Usuário do DW | `user` |
+| `POSTGRES_DW_PASSWORD` | Senha do DW | `tcc_kheprix_2026` |
+| `POSTGRES_DW_DB` | Nome do banco DW | `kheprix_dw_db` |
+| `POSTGRES_DW_HOST` | Host do banco DW | `db_dw` |
+| `POSTGRES_DW_PORT` | Porta do banco DW | `5432` |
 | `SMTP_HOST` | Host do servidor SMTP | `smtp.gmail.com` |
 | `SMTP_PORT` | Porta SMTP | `587` |
 | `SMTP_USER` | Usuário SMTP | `seu_email@gmail.com` |
