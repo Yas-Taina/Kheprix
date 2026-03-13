@@ -14,8 +14,6 @@ Rails.application.routes.draw do
 
   resources :estudos do
     resources :campanhas
+    resources :especies, only: %i[index show create update destroy]
   end
-
-  resources :projetos, only: %i[index show create update destroy]
-  resources :especies, only: %i[index show create update destroy]
 end
