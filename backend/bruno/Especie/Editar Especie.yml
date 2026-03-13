@@ -1,0 +1,32 @@
+info:
+  name: Editar Especie
+  type: http
+  seq: 4
+
+http:
+  method: patch
+  url: http://localhost:3000/estudos/:estudo_id/especies/:especie_id
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: especie_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "nome_popular": "Onça-pintada (atualizado)",
+        "status_conservacao": "Em perigo"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
