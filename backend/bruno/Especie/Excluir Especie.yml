@@ -1,0 +1,25 @@
+info:
+  name: Excluir Especie
+  type: http
+  seq: 5
+
+http:
+  method: delete
+  url: http://localhost:3000/estudos/:estudo_id/especies/:especie_id
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: especie_id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
