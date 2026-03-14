@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "nome": "Joao",
-        "email": "joao_albertop@hotmail.com",
+        "email": "chrisnotads2020@gmail.com",
         "senha": "senha123"
       }
   auth: inherit
