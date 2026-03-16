@@ -67,6 +67,15 @@ rails server
 
 O servidor estará disponível em `http://localhost:3000`.
 
+### 5. Popular Banco de Dados (Seed)
+
+Para popular o banco Transacional (OLTP) com dados de teste (10 usuários, 5 estudos e 1000 registros de coletas distribuídos ao longo dos últimos 12 meses para os testes de ETL do Airflow), execute na raiz do projeto:
+
+```bash
+docker-compose exec web bundle exec rails db:seed
+```
+*(Este script possui uma trava de segurança e roda apenas no banco transacional, rejeitando execução acidental contra o DW).*
+
 ## Comandos úteis
 
 ```bash
