@@ -1,0 +1,26 @@
+info:
+  name: Criar Evento de Amostragem
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: http://localhost:3000/evento_amostragens
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "horario_inicio": "2026-03-10T08:00:00.000Z",
+        "horario_fim": "2026-03-10T12:00:00.000Z",
+        "esforco_real": "4 horas de observação direta"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
