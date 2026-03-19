@@ -1,2 +1,11 @@
 /.env
 /API/r_packages/
+
+# Airflow
+airflow/logs/
+airflow/config/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class

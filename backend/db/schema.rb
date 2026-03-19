@@ -32,6 +32,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
     t.index ["estudo_id", "usuario_id"], name: "index_colaboradores_on_estudo_id_and_usuario_id", unique: true
   end
 
+  create_table "especies", id: :serial, force: :cascade do |t|
+    t.integer "estudo_id", null: false
+    t.string "foto"
+    t.string "classe", limit: 100
+    t.string "genero", limit: 100
+    t.string "nome_popular"
+    t.string "nome_cientifico"
+    t.string "status_conservacao", limit: 100
+    t.boolean "nativa_da_regiao", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["estudo_id", "nome_cientifico"], name: "index_especies_on_estudo_id_and_nome_cientifico", unique: true
+  end
+
   create_table "estudos", id: :serial, force: :cascade do |t|
     t.string "nome", null: false
     t.text "observacoes"
@@ -85,6 +99,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
   add_foreign_key "unidades_amostrais", "campanhas"
+  add_foreign_key "especies", "estudos"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
 end
