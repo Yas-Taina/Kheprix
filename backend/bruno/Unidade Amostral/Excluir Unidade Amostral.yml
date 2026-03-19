@@ -1,11 +1,11 @@
 info:
-  name: Detalhar Campanha
+  name: Excluir Unidade Amostral
   type: http
-  seq: 3
+  seq: 5
 
 http:
-  method: get
-  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id
+  method: delete
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:id
   headers:
     - name: Content-Type
       value: application/json
@@ -14,6 +14,9 @@ http:
       value: "1"
       type: path
     - name: campanha_id
+      value: "1"
+      type: path
+    - name: id
       value: "1"
       type: path
   auth: inherit
