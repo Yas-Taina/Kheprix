@@ -2,6 +2,7 @@
 
 class Campanha < ApplicationRecord
   belongs_to :estudo
+  has_many :unidades_amostrais, class_name: "UnidadeAmostral", dependent: :destroy
   has_many :valores_variaveis, foreign_key: :id_nivel_aplicacao, dependent: :destroy
 
   validates :nome, presence: true

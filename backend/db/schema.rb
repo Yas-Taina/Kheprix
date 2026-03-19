@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_04_120001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_04_120001) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "unidades_amostrais", force: :cascade do |t|
+    t.bigint "campanha_id", null: false
+    t.decimal "latitude", precision: 10, scale: 8, null: false
+    t.decimal "longitude", precision: 11, scale: 8, null: false
+    t.decimal "raio", precision: 10, scale: 2
+    t.text "metodo_coleta"
+    t.text "esforco_amostral"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
+  end
+
   create_table "usuarios", id: :serial, force: :cascade do |t|
     t.string "nome", null: false
     t.string "email", null: false
@@ -86,6 +98,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_04_120001) do
   add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
+  add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "especies", "estudos"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
