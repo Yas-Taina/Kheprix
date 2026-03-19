@@ -25,6 +25,16 @@ Todas as rotas são prefixadas com `/api/v1`.
 | POST /estudos | nome(string), observacoes(string, opcional), variaveis(array[ { nome(string), nivel_aplicacao(string), tipo_dado(string), metrica(string, opcional) } ]) | id(int), nome(string), observacoes(string), created_at(datetime) |
 | DELETE /estudos/:id | — | 204 No Content |
 
+## Espécies (autenticado, proprietário para escrita)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /estudos/:estudo_id/especies | nome_popular(string, opcional), nome_cientifico(string, opcional) | array[ id(int), estudo_id(int), foto(string), classe(string), genero(string), nome_popular(string), nome_cientifico(string), status_conservacao(string), nativa_da_regiao(boolean), created_at(datetime) ] |
+| GET /estudos/:estudo_id/especies/:id | — | id(int), estudo_id(int), foto(string), classe(string), genero(string), nome_popular(string), nome_cientifico(string), status_conservacao(string), nativa_da_regiao(boolean), created_at(datetime) |
+| POST /estudos/:estudo_id/especies | nome_cientifico(string), nome_popular(string, opcional), foto(string, opcional), classe(string, opcional), genero(string, opcional), status_conservacao(string, opcional), nativa_da_regiao(boolean, opcional) | id(int), estudo_id(int), foto(string), classe(string), genero(string), nome_popular(string), nome_cientifico(string), status_conservacao(string), nativa_da_regiao(boolean), created_at(datetime) |
+| PATCH /estudos/:estudo_id/especies/:id | nome_cientifico(string), nome_popular(string), foto(string), classe(string), genero(string), status_conservacao(string), nativa_da_regiao(boolean) | id(int), estudo_id(int), foto(string), classe(string), genero(string), nome_popular(string), nome_cientifico(string), status_conservacao(string), nativa_da_regiao(boolean), created_at(datetime) |
+| DELETE /estudos/:estudo_id/especies/:id | — | 204 No Content |
+
 ## Campanhas (autenticado, proprietário para escrita)
 
 | Rota | Dados enviados | Dados recebidos |
