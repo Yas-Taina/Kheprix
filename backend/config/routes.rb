@@ -16,4 +16,6 @@ Rails.application.routes.draw do
     resources :campanhas
     resources :especies, only: %i[index show create update destroy]
   end
+
+  resources : evento_amostragem, only: %i[index show create update destroy]
 end
