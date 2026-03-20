@@ -1,6 +1,6 @@
 <div>
     <div>
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
             <div>
                 <label for="email" class="form-label">E-mail</label>
                 <input
