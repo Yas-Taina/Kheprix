@@ -1,1 +1,92 @@
-<p>recuperarsenha works!</p>
+  <div class="auth-card">
+    <ng-container *ngIf="etapa === 'email'">
+      <h1 class="auth-title">Recuperar senha</h1>
+      <p class="auth-sub">Informe seu e-mail e enviaremos um token de verificação.</p>
+
+      <form [formGroup]="emailForm" (ngSubmit)="enviarEmail()" novalidate>
+
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" formControlName="email" placeholder="voce@dominio.com" />
+          <span class="field-error"
+            *ngIf="emailForm.get('email')?.invalid && emailForm.get('email')?.touched">
+            E-mail inválido.
+          </span>
+        </div>
+
+        <p class="auth-error" *ngIf="error">{{ error }}</p>
+
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          {{ loading ? 'Enviando…' : 'Enviar token' }}
+        </button>
+
+        <div class="auth-links">
+          <a routerLink="/login">Voltar ao login</a>
+        </div>
+
+      </form>
+    </ng-container>
+
+    <ng-container *ngIf="etapa === 'token'">
+      <h1 class="auth-title">Verificar token</h1>
+      <p class="auth-sub">Insira o token recebido por e-mail para continuar.</p>
+
+      <form [formGroup]="tokenForm" (ngSubmit)="validarToken()" novalidate>
+
+        <div class="field">
+          <label for="token">Token</label>
+          <input id="token" type="text" formControlName="token" placeholder="Cole o token aqui" />
+          <span class="field-error"
+            *ngIf="tokenForm.get('token')?.invalid && tokenForm.get('token')?.touched">
+            Token obrigatório.
+          </span>
+        </div>
+
+        <p class="auth-error" *ngIf="error">{{ error }}</p>
+
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          {{ loading ? 'Validando…' : 'Continuar' }}
+        </button>
+
+        <div class="auth-links">
+          <a routerLink="/login">Voltar ao login</a>
+        </div>
+
+      </form>
+    </ng-container>
+
+    <ng-container *ngIf="etapa === 'nova-senha'">
+      <h1 class="auth-title">Nova senha</h1>
+      <p class="auth-sub">Escolha uma senha forte para sua conta.</p>
+
+      <form [formGroup]="senhaForm" (ngSubmit)="redefinirSenha()" novalidate>
+
+        <div class="field">
+          <label for="nova_senha">Nova senha</label>
+          <input id="nova_senha" type="password" formControlName="nova_senha" placeholder="Mínimo 8 caracteres" />
+          <span class="field-error"
+            *ngIf="senhaForm.get('nova_senha')?.invalid && senhaForm.get('nova_senha')?.touched">
+            Mínimo de 8 caracteres.
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="confirmar_senha">Confirmar nova senha</label>
+          <input id="confirmar_senha" type="password" formControlName="confirmar_senha" placeholder="Repita a senha" />
+          <span class="field-error"
+            *ngIf="senhaForm.errors?.['senhasDivergentes'] && senhaForm.get('confirmar_senha')?.touched">
+            As senhas não coincidem.
+          </span>
+        </div>
+
+        <p class="auth-error" *ngIf="error">{{ error }}</p>
+        <p class="auth-sucesso" *ngIf="sucesso">{{ sucesso }}</p>
+
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          {{ loading ? 'Alterando…' : 'Alterar senha' }}
+        </button>
+
+      </form>
+    </ng-container>
+
+  </div>
