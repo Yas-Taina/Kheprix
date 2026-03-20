@@ -42,5 +42,15 @@ Todas as rotas são prefixadas com `/api/v1`.
 | GET /estudos/:estudo_id/campanhas | — | array[ id(int), nome(string), data_inicio(date), data_fim(date), descricao(string), created_at(datetime), updated_at(datetime) ] |
 | GET /estudos/:estudo_id/campanhas/:id | — | id(int), nome(string), data_inicio(date), data_fim(date), descricao(string), created_at(datetime), updated_at(datetime) |
 | POST /estudos/:estudo_id/campanhas | nome(string), data_inicio(date), data_fim(date, opcional), descricao(string, opcional), valores_variaveis(array[ { variavel_id(int), valor(string) } ], opcional) | id(int), nome(string), data_inicio(date), data_fim(date), descricao(string), created_at(datetime), updated_at(datetime) |
-| PUT /estudos/:estudo_id/campanhas/:id | nome(string), data_inicio(date), data_fim(date), descricao(string), valores_variaveis(array[ { variavel_id(int), valor(string) } ]) | id(int), nome(string), data_inicio(date), data_fim(date), descricao(string), created_at(datetime), updated_at(datetime) |
+| PATCH /estudos/:estudo_id/campanhas/:id | nome(string), data_inicio(date), data_fim(date), descricao(string), valores_variaveis(array[ { variavel_id(int), valor(string) } ]) | id(int), nome(string), data_inicio(date), data_fim(date), descricao(string), created_at(datetime), updated_at(datetime) |
 | DELETE /estudos/:estudo_id/campanhas/:id | — | 204 No Content |
+
+## Unidades Amostrais (autenticado, proprietário para escrita)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais | — | array[ id(int), campanha_id(int), latitude(decimal), longitude(decimal), raio(decimal), metodo_coleta(string), esforco_amostral(string), created_at(datetime), updated_at(datetime) ] |
+| GET /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:id | — | id(int), campanha_id(int), latitude(decimal), longitude(decimal), raio(decimal), metodo_coleta(string), esforco_amostral(string), created_at(datetime), updated_at(datetime) |
+| POST /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais | latitude(decimal), longitude(decimal), raio(decimal, opcional), metodo_coleta(string, opcional), esforco_amostral(string, opcional) | id(int), campanha_id(int), latitude(decimal), longitude(decimal), raio(decimal), metodo_coleta(string), esforco_amostral(string), created_at(datetime), updated_at(datetime) |
+| PATCH /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:id | latitude(decimal), longitude(decimal), raio(decimal, opcional), metodo_coleta(string, opcional), esforco_amostral(string, opcional) | id(int), campanha_id(int), latitude(decimal), longitude(decimal), raio(decimal), metodo_coleta(string), esforco_amostral(string), created_at(datetime), updated_at(datetime) |
+| DELETE /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:id | — | 204 No Content |

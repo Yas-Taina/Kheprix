@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+class EditarUnidadeAmostralDto
+  include ActiveModel::API
+
+  attr_accessor :latitude, :longitude, :raio, :metodo_coleta, :esforco_amostral
+
+  validates :latitude, presence: true
+  validates :longitude, presence: true
+
+  def initialize(params = {})
+    @latitude = params[:latitude]
+    @longitude = params[:longitude]
+    @raio = params[:raio]
+    @metodo_coleta = params[:metodo_coleta]
+    @esforco_amostral = params[:esforco_amostral]
+  end
+end
