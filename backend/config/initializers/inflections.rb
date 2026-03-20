@@ -20,4 +20,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular "variavel", "variaveis"
   inflect.irregular "valor_variavel", "valores_variaveis"
   inflect.irregular "especie", "especies"
+  inflect.irregular "evento_amostragem", "eventos_amostragem"
 end

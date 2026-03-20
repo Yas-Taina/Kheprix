@@ -1,4 +1,6 @@
 class EventoAmostragem < ApplicationRecord
+  belongs_to :unidade_amostral
+
   validates :horario_inicio, presence: true
   validates :horario_fim_apos_inicio, presence: true
 
@@ -6,24 +8,25 @@ class EventoAmostragem < ApplicationRecord
 
   def as_json(options = {})
     super(
-        only: %i[
-          id
-          horario_inicio
-          horario_fim
-          esforco_real
-          created_at
-        ],
-        **options,
+      only: %i[
+        id
+        unidade_amostral_id
+        horario_inicio
+        horario_fim
+        esforco_real
+        created_at
+      ],
+      **options,
     )
   end
 
-    private
+  private
 
   def horario_fim_apos_inicio
-    return if horario_fim.blank? || horario_inicio.blan?
+    return if horario_fim.blank? || horario_inicio.blank?
 
     if horario_fim <= horario_inicio
-        errors.add(:horario_fim, "deve ser posterior ao horário de início")
+      errors.add(:horario_fim, "deve ser posterior ao horário de início")
     end
   end
 end

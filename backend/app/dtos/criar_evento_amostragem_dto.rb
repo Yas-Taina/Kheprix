@@ -1,7 +1,7 @@
 class CriarEventoAmostragemDto
   include ActiveModel::API 
 
-  attr_reader :horario_inicio, :horario_fim, :esforco_real
+  attr_accessor :horario_inicio, :horario_fim, :esforco_real
 
     validates :horario_inicio, presence: true
 

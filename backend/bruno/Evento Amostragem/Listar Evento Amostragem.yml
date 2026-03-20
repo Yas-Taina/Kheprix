@@ -1,0 +1,28 @@
+info:
+  name: Listar Eventos de Amostragem
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: campanha_id
+      value: "1"
+      type: path
+    - name: unidade_amostral_id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
