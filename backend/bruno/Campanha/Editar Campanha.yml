@@ -4,7 +4,7 @@ info:
   seq: 4
 
 http:
-  method: put
+  method: patch
   url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id
   headers:
     - name: Content-Type
