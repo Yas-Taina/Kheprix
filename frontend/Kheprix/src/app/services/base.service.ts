@@ -1,66 +1,68 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable } from "rxjs";
+import { inject } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment'
 
-@Injectable({
-  providedIn: "root",
-})
-export class BaseService {
-  protected apiUrl = "http://localhost:3000";
-  protected headers = new HttpHeaders({ "Content-Type": "application/json" });
+export abstract class BaseService {
+  protected readonly http = inject(HttpClient);
+  protected readonly baseUrl = `${environment.apiUrl}/api/v1`;
 
-  protected loading$ = new BehaviorSubject<boolean>(false);
-  
-  constructor(protected http: HttpClient) {}
+  private readonly TOKEN_KEY = 'auth_token';
 
-  getLoadingState(): Observable<boolean> {
-    return this.loading$.asObservable();
+  protected getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  protected setLoading(value: boolean): void {
-    this.loading$.next(value);
+  saveToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
   }
 
-  protected validateString(value: any, fieldName: string): boolean {
-    if (!value || typeof value !== "string" || value.trim().length === 0) {
-      return false;
-    }
-    return true;
+  removeToken(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
   }
 
-  protected validateNumber(value: any, fieldName: string, allowZero = false): boolean {
-    if (typeof value !== "number" || isNaN(value)) {
-      return false;
-    }
-    if (!allowZero && value <= 0) {
-      return false;
-    }
-    if (allowZero && value < 0) {
-      return false;
-    }
-    return true;
-  }
-
-  protected validateEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  protected validateCPF(cpf: string): boolean {
-    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-    return cpfRegex.test(cpf);
+  isAuthenticated(): boolean {
+    return !!this.getToken();
   }
 
   protected getAuthHeaders(): HttpHeaders {
-    try {
-      const json = localStorage.getItem('dac_token');
-      if (!json) return this.headers;
-      const session = JSON.parse(json) as any;
-      const token = session?.access_token;
-      if (!token) return this.headers;
-      return this.headers.set('Authorization', `Bearer ${token}`);
-    } catch (err) {
-      return this.headers;
+    const token = this.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    });
+  }
+
+  protected get<T>(path: string, params?: Record<string, string>): Observable<T> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, value);
+        }
+      });
     }
+    return this.http.get<T>(`${this.baseUrl}${path}`, {
+      headers: this.getAuthHeaders(),
+      params: httpParams,
+    });
+  }
+
+  protected post<T>(path: string, body: unknown): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}${path}`, body, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  protected patch<T>(path: string, body: unknown): Observable<T> {
+    return this.http.patch<T>(`${this.baseUrl}${path}`, body, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  protected delete<T>(path: string): Observable<T> {
+    return this.http.delete<T>(`${this.baseUrl}${path}`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }
