@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_16_230750) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
     t.text "observacoes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
+    t.bigint "unidade_amostral_id", null: false
+    t.datetime "horario_inicio", null: false
+    t.datetime "horario_fim", null: false
+    t.text "esforco_real", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["unidade_amostral_id"], name: "index_eventos_amostragem_on_unidade_amostral_id"
   end
 
   create_table "unidades_amostrais", force: :cascade do |t|
@@ -98,8 +108,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
   add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
-  add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "especies", "estudos"
+  add_foreign_key "eventos_amostragem", "unidades_amostrais", column: "unidade_amostral_id"
+  add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
 end

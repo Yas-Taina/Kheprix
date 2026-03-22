@@ -2,7 +2,7 @@ class EventoAmostragem < ApplicationRecord
   belongs_to :unidade_amostral
 
   validates :horario_inicio, presence: true
-  validates :horario_fim_apos_inicio, presence: true
+  validate :horario_fim_apos_inicio
 
   scope :ordenados, -> { order(horario_inicio: :desc) }
 
