@@ -20,6 +20,25 @@ class Convite < ApplicationRecord
     case campos
     when :lista
       super(only: %i[id email_convidado status data_expiracao created_at], **options)
+    when :recebido
+      {
+        id: id,
+        estudo_id: estudo_id,
+        nome_estudo: estudo.nome,
+        nome_remetente: proprietario_envio.nome,
+        status: status,
+        data_expiracao: data_expiracao,
+        created_at: created_at
+      }
+    when :publico
+      {
+        id: id,
+        estudo_id: estudo_id,
+        nome_estudo: estudo.nome,
+        email_convidado: email_convidado,
+        status: status,
+        data_expiracao: data_expiracao
+      }
     else
       super(only: %i[id estudo_id email_convidado token status data_expiracao created_at], **options)
     end

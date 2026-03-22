@@ -21,4 +21,9 @@ Rails.application.routes.draw do
     resources :colaboradores, only: %i[index update destroy]
     resources :convites, only: %i[index create destroy]
   end
+
+  get "convites", to: "gerenciar_convites#index", as: :convites_recebidos
+  get "convites/:token", to: "gerenciar_convites#show", as: :convite_por_token
+  post "convites/:token/aceitar", to: "gerenciar_convites#aceitar", as: :aceitar_convite
+  post "convites/:token/recusar", to: "gerenciar_convites#recusar", as: :recusar_convite
 end
