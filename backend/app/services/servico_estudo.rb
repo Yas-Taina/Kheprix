@@ -37,12 +37,21 @@ class ServicoEstudo
 
   def cadastrar(nome:, observacoes:, usuario:, variaveis:)
     ActiveRecord::Base.transaction do
-      estudo = Estudo.create!(nome: nome, observacoes: observacoes)
+      estudo = Estudo.create!(nome: nome, observacoes: observacoes, codigo: gerar_codigo_unico)
       Colaborador.create!(estudo: estudo, usuario: usuario, perfil: :proprietario)
       ServicoVariavel.new.criar_em_lote(estudo: estudo, variaveis_params: variaveis)
       estudo
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  end
+
+  private
+
+  def gerar_codigo_unico
+    loop do
+      codigo = SecureRandom.alphanumeric(8).upcase
+      break codigo unless Estudo.exists?(codigo: codigo)
+    end
   end
 end
