@@ -5,6 +5,7 @@ class UnidadeAmostral < ApplicationRecord
 
   belongs_to :campanha
 
+  validates :nome, presence: true
   validates :latitude, presence: true
   validates :longitude, presence: true
 

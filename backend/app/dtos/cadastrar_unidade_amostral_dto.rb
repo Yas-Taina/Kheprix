@@ -5,6 +5,7 @@ class CadastrarUnidadeAmostralDto
 
   attr_accessor :nome, :latitude, :longitude, :raio, :metodo_coleta, :esforco_amostral
 
+  validates :nome, presence: true
   validates :latitude, presence: true
   validates :longitude, presence: true
 
