@@ -5,7 +5,7 @@ class AlterarPerfilColaboradorDto
 
   attr_accessor :perfil
 
-  PERFIS_VALIDOS = %w[colaborador proprietario visualizador].freeze
+  PERFIS_VALIDOS = %w[colaborador proprietario].freeze
 
   validates :perfil, presence: true, inclusion: { in: PERFIS_VALIDOS }
 

@@ -6,10 +6,6 @@ class ServicoCodigoAcesso
     estudo
   end
 
-  def remover(estudo:)
-    estudo.update!(codigo: nil, senha_autocadastro: nil)
-  end
-
   def ingressar(codigo:, senha:, usuario:)
     estudo = Estudo.find_by(codigo: codigo)
 

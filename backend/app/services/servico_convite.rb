@@ -7,6 +7,11 @@ class ServicoConvite
       return { erro: "Este email já possui um convite pendente para este estudo", status: :unprocessable_entity }
     end
 
+    usuario_existente = Usuario.find_by(email: email_convidado)
+    if usuario_existente && Colaborador.exists?(estudo_id: estudo.id, usuario_id: usuario_existente.id)
+      return { erro: "Este usuário já é colaborador deste estudo", status: :unprocessable_entity }
+    end
+
     convite = Convite.new(
       estudo: estudo,
       proprietario_envio: proprietario,

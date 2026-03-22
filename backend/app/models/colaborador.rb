@@ -7,7 +7,7 @@ class Colaborador < ApplicationRecord
   belongs_to :estudo
   belongs_to :usuario
 
-  enum :perfil, { colaborador: 0, proprietario: 1, visualizador: 2 }
+  enum :perfil, { colaborador: 0, proprietario: 1 }
 
   def as_json(options = {})
     {

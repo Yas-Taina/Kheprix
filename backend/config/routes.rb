@@ -22,7 +22,7 @@ Rails.application.routes.draw do
     resources :especies, only: %i[index show create update destroy]
     resources :colaboradores, only: %i[index update destroy]
     resources :convites, only: %i[index create destroy]
-    resource :codigo_acesso, only: %i[show update destroy], controller: "codigo_acesso"
+    resource :codigo_acesso, only: %i[show update], controller: "codigo_acesso"
   end
 
   get "convites", to: "gerenciar_convites#index", as: :convites_recebidos

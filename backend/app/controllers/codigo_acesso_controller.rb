@@ -21,11 +21,6 @@ class CodigoAcessoController < ApplicationController
     render json: resposta_codigo, status: :ok
   end
 
-  def destroy
-    servico.remover(estudo: @estudo)
-    head :no_content
-  end
-
   private
 
   def servico
