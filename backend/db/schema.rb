@@ -62,7 +62,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_000000) do
     t.text "esforco_amostral"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "nome"
+    t.string "nome", null: false
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
   end
 
