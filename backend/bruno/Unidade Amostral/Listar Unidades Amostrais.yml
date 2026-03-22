@@ -11,10 +11,10 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "6"
       type: path
     - name: campanha_id
-      value: "1"
+      value: "6"
       type: path
   auth: inherit
 
