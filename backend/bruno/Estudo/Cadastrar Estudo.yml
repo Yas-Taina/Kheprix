@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "nome": "Estudo Teste",
+        "nome": "Estudo Teste 1",
         "observacoes": "Observações do estudo",
         "variaveis": [
           {"nome": "Temperatura", "metrica": "°C", "nivel_aplicacao": "evento", "tipo_dado": "number"},
