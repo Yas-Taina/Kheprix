@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_22_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,6 +62,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
     t.text "esforco_amostral"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "nome"
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
   end
 
@@ -98,8 +99,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_14_120000) do
   add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
-  add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "especies", "estudos"
+  add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
 end
