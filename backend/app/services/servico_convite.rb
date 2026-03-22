@@ -2,6 +2,10 @@
 
 class ServicoConvite
   def criar(estudo:, proprietario:, email_convidado:)
+    if proprietario.email == email_convidado
+      return { erro: "Não é possível enviar convite para si mesmo", status: :unprocessable_entity }
+    end
+
     convite_existente = Convite.find_by(estudo_id: estudo.id, email_convidado: email_convidado, status: :pendente)
     if convite_existente
       return { erro: "Este email já possui um convite pendente para este estudo", status: :unprocessable_entity }

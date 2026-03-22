@@ -24,7 +24,11 @@ class ServicoEstudo
 
     colaborador = Colaborador.find_by(estudo_id: estudo.id, usuario_id: usuario.id)
     return :nao_encontrado unless colaborador
-    return :nao_autorizado unless colaborador.proprietario?
+
+    unless colaborador.proprietario?
+      colaborador.destroy!
+      return :descadastrado
+    end
 
     if estudo.colaboradores.where(perfil: :proprietario).count > 1
       colaborador.destroy!
