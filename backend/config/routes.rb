@@ -19,5 +19,6 @@ Rails.application.routes.draw do
     resources :campanhas
     resources :especies, only: %i[index show create update destroy]
     resources :colaboradores, only: %i[index update destroy]
+    resources :convites, only: %i[index create destroy]
   end
 end
