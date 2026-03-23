@@ -1,0 +1,22 @@
+info:
+  name: Aceitar Convite
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: http://localhost:3000/convites/:token/aceitar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: token
+      value: "<token_do_convite>"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

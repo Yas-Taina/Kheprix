@@ -1,0 +1,22 @@
+info:
+  name: Ver Codigo Acesso
+  type: http
+  seq: 2
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/:estudo_id/codigo_acesso
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

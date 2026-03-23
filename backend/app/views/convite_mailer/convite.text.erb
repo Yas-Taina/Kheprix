@@ -1,0 +1,11 @@
+Olá!
+
+<%= @nome_remetente %> convidou você para participar do estudo "<%= @nome_estudo %>".
+
+Acesse o link abaixo para visualizar e responder ao convite:
+
+<%= @link %>
+
+Este convite expira em <%= l(@convite.data_expiracao, format: :short) %>.
+
+Se você não esperava este convite, ignore este email.

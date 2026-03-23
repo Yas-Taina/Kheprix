@@ -32,6 +32,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.index ["estudo_id", "usuario_id"], name: "index_colaboradores_on_estudo_id_and_usuario_id", unique: true
   end
 
+  create_table "convites", force: :cascade do |t|
+    t.bigint "estudo_id", null: false
+    t.bigint "proprietario_envio_id", null: false
+    t.string "email_convidado", null: false
+    t.string "token", null: false
+    t.datetime "data_expiracao"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["estudo_id"], name: "index_convites_on_estudo_id"
+    t.index ["proprietario_envio_id"], name: "index_convites_on_proprietario_envio_id"
+    t.index ["token"], name: "index_convites_on_token", unique: true
+  end
+
   create_table "especies", id: :serial, force: :cascade do |t|
     t.integer "estudo_id", null: false
     t.string "foto"
@@ -52,6 +66,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.text "observacoes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "codigo"
+    t.string "senha_autocadastro"
+    t.index ["codigo"], name: "index_estudos_on_codigo", unique: true
   end
 
   create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
@@ -110,6 +127,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
   add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
+  add_foreign_key "convites", "estudos"
+  add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
   add_foreign_key "especies", "estudos"
   add_foreign_key "eventos_amostragem", "unidades_amostrais", column: "unidade_amostral_id"
   add_foreign_key "unidades_amostrais", "campanhas"
