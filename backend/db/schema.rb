@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_22_145005) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -50,14 +50,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_145005) do
     t.integer "estudo_id", null: false
     t.string "foto"
     t.string "classe", limit: 100
+    t.string "ordem", limit: 100
+    t.string "familia", limit: 100
     t.string "genero", limit: 100
+    t.string "especie", limit: 100
     t.string "nome_popular"
-    t.string "nome_cientifico"
     t.string "status_conservacao", limit: 100
-    t.boolean "nativa_da_regiao", default: false
+    t.boolean "endemismo", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["estudo_id", "nome_cientifico"], name: "index_especies_on_estudo_id_and_nome_cientifico", unique: true
   end
 
   create_table "estudos", id: :serial, force: :cascade do |t|
@@ -70,6 +71,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_145005) do
     t.index ["codigo"], name: "index_estudos_on_codigo", unique: true
   end
 
+  create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
+    t.bigint "unidade_amostral_id", null: false
+    t.datetime "horario_inicio", null: false
+    t.datetime "horario_fim", null: false
+    t.text "esforco_real", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["unidade_amostral_id"], name: "index_eventos_amostragem_on_unidade_amostral_id"
+  end
+
   create_table "unidades_amostrais", force: :cascade do |t|
     t.bigint "campanha_id", null: false
     t.decimal "latitude", precision: 10, scale: 8, null: false
@@ -79,6 +90,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_145005) do
     t.text "esforco_amostral"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "nome", null: false
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
   end
 
@@ -118,6 +130,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_145005) do
   add_foreign_key "convites", "estudos"
   add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
   add_foreign_key "especies", "estudos"
+  add_foreign_key "eventos_amostragem", "unidades_amostrais", column: "unidade_amostral_id"
   add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"

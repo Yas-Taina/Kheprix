@@ -11,15 +11,16 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "6"
       type: path
     - name: campanha_id
-      value: "1"
+      value: "6"
       type: path
   body:
     type: json
     data: |-
       {
+        "nome": "UA-01",
         "latitude": "-23.55052",
         "longitude": "-46.63331",
         "raio": 50.0,

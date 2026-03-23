@@ -9,9 +9,10 @@ class ServicoUnidadeAmostral
     UnidadeAmostral.find(id)
   end
 
-  def cadastrar(campanha:, latitude:, longitude:, raio:, metodo_coleta:, esforco_amostral:)
+  def cadastrar(campanha:, nome:, latitude:, longitude:, raio:, metodo_coleta:, esforco_amostral:)
     UnidadeAmostral.create(
       campanha: campanha,
+      nome: nome,
       latitude: latitude,
       longitude: longitude,
       raio: raio,
@@ -20,8 +21,9 @@ class ServicoUnidadeAmostral
     )
   end
 
-  def atualizar(unidade:, latitude:, longitude:, raio:, metodo_coleta:, esforco_amostral:)
+  def atualizar(unidade:, nome:, latitude:, longitude:, raio:, metodo_coleta:, esforco_amostral:)
     unidade.update(
+      nome: nome,
       latitude: latitude,
       longitude: longitude,
       raio: raio,

@@ -1,0 +1,39 @@
+info:
+  name: Atualizar Evento de Amostragem
+  type: http
+  seq: 4
+
+http:
+  method: patch
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:id
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: campanha_id
+      value: "1"
+      type: path
+    - name: unidade_amostral_id
+      value: "1"
+      type: path
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "horario_inicio": "2026-03-10T07:30:00.000Z",
+        "horario_fim": "2026-03-10T11:30:00.000Z",
+        "esforco_real": "4 horas de observação direta com binóculos"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

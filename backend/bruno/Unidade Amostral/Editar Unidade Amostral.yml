@@ -11,10 +11,10 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "6"
       type: path
     - name: campanha_id
-      value: "1"
+      value: "6"
       type: path
     - name: id
       value: "1"
@@ -23,6 +23,7 @@ http:
     type: json
     data: |-
       {
+        "nome":"UA-01 Atualizada",
         "latitude": "-23.55100",
         "longitude": "-46.63400",
         "raio": 75.0,

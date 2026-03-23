@@ -3,12 +3,14 @@
 class CadastrarUnidadeAmostralDto
   include ActiveModel::API
 
-  attr_accessor :latitude, :longitude, :raio, :metodo_coleta, :esforco_amostral
+  attr_accessor :nome, :latitude, :longitude, :raio, :metodo_coleta, :esforco_amostral
 
+  validates :nome, presence: true
   validates :latitude, presence: true
   validates :longitude, presence: true
 
   def initialize(params = {})
+    @nome = params[:nome]
     @latitude = params[:latitude]
     @longitude = params[:longitude]
     @raio = params[:raio]
