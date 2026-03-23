@@ -1,11 +1,11 @@
 info:
-  name: Editar Especie
+  name: Listar Eventos de Amostragem
   type: http
-  seq: 4
+  seq: 1
 
 http:
-  method: patch
-  url: http://localhost:3000/estudos/:estudo_id/especies/:especie_id
+  method: get
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem
   headers:
     - name: Content-Type
       value: application/json
@@ -13,16 +13,12 @@ http:
     - name: estudo_id
       value: "1"
       type: path
-    - name: especie_id
+    - name: campanha_id
       value: "1"
       type: path
-  body:
-    type: json
-    data: |-
-      {
-        "nome_popular": "Formiga-cortadeira(atualizada)",
-        "status_conservacao": "Em perigo"
-      }
+    - name: unidade_amostral_id
+      value: "1"
+      type: path
   auth: inherit
 
 settings:

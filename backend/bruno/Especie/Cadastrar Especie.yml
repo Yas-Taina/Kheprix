@@ -17,12 +17,14 @@ http:
     type: json
     data: |-
       {
-        "nome_cientifico": "Panthera onca",
-        "nome_popular": "Onça-pintada",
-        "classe": "Mammalia",
-        "genero": "Panthera",
-        "status_conservacao": "Vulnerável",
-        "nativa_da_regiao": true
+        "classe": "Insecta",
+        "ordem": "Hymenoptera",
+        "familia": "Formicidae",
+        "genero": "Atta",
+        "especie": "laevigata",
+        "nome_popular": "Formiga-cortadeira",
+        "status_conservacao": "Pouco preocupante",
+        "endemismo": true
       }
   auth: inherit
 

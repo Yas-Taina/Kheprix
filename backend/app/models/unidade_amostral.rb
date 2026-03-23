@@ -4,6 +4,7 @@ class UnidadeAmostral < ApplicationRecord
   self.table_name = "unidades_amostrais"
 
   belongs_to :campanha
+  has_many :eventos_amostragem, dependent: :destroy
 
   validates :nome, presence: true
   validates :latitude, presence: true
