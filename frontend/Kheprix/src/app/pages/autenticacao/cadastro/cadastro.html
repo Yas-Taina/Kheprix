@@ -1,6 +1,6 @@
 <div>
     <div>
-        <form [formGroup]="cadastroForm" (ngSubmit)="onSubmit()">
+        <form [formGroup]="cadastroForm" (ngSubmit)="onSubmit()" novalidate>
             <div>
                 <label for="nome" class="form-label">Nome</label>
                 <input
