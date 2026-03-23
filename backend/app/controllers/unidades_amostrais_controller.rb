@@ -5,7 +5,7 @@ class UnidadesAmostraisController < ApplicationController
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
   before_action :definir_campanha
-  before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
+  before_action :autorizar_proprietario_estudo!, only: %i[destroy]
   before_action :definir_unidade, only: %i[show update destroy]
 
   def index
@@ -27,6 +27,7 @@ class UnidadesAmostraisController < ApplicationController
 
     unidade = servico.cadastrar(
       campanha: @campanha,
+      nome: dto.nome,
       latitude: dto.latitude,
       longitude: dto.longitude,
       raio: dto.raio,
@@ -51,6 +52,7 @@ class UnidadesAmostraisController < ApplicationController
 
     unidade = servico.atualizar(
       unidade: @unidade,
+      nome: dto.nome,
       latitude: dto.latitude,
       longitude: dto.longitude,
       raio: dto.raio,
