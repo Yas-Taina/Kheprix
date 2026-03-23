@@ -36,14 +36,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_16_230750) do
     t.integer "estudo_id", null: false
     t.string "foto"
     t.string "classe", limit: 100
+    t.string "ordem", limit: 100
+    t.string "familia", limit: 100
     t.string "genero", limit: 100
+    t.string "especie", limit: 100
     t.string "nome_popular"
-    t.string "nome_cientifico"
     t.string "status_conservacao", limit: 100
-    t.boolean "nativa_da_regiao", default: false
+    t.boolean "endemismo", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["estudo_id", "nome_cientifico"], name: "index_especies_on_estudo_id_and_nome_cientifico", unique: true
   end
 
   create_table "estudos", id: :serial, force: :cascade do |t|

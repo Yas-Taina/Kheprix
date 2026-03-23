@@ -63,9 +63,8 @@ estudos.each do |estudo|
     especies_geradas << Especie.create!(
       estudo_id: estudo.id,
       nome_popular: "Inseto Teste #{i}-#{estudo.id}",
-      nome_cientifico: "Insecta brasiliensis var #{i}-#{estudo.id}",
       classe: "Insecta",
-      nativa_da_regiao: true
+      endemismo: true
     )
   end
 
