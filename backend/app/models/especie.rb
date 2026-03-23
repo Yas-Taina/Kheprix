@@ -7,15 +7,12 @@ class Especie < ApplicationRecord
 
   # 2. Validações (regras de negócio)
   validates :estudo_id, presence: true
-  validates :nome_cientifico, uniqueness: { scope: :estudo_id }
-
   # 3. Scopes
   scope :ordenadas, -> { order(:nome_popular) }
   scope :do_estudo, ->(estudo_id) { where(estudo_id: estudo_id) }
   scope :por_nome_popular, ->(nome) { where("nome_popular ILIKE ?", "%#{nome}%") }
-  scope :por_nome_cientifico, ->(nome) { where("nome_cientifico ILIKE ?", "%#{nome}%") }
 
-  # 4. Serialização
+  # 5. Serialização
   def as_json(options = {})
     super(
       only: %i[
@@ -23,14 +20,17 @@ class Especie < ApplicationRecord
         estudo_id
         foto
         classe
+        ordem
+        familia
         genero
+        especie
         nome_popular
-        nome_cientifico
         status_conservacao
-        nativa_da_regiao
+        endemismo
         created_at
       ],
       **options,
     )
   end
+
 end

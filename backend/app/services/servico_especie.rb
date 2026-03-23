@@ -5,8 +5,7 @@ class ServicoEspecie
   def listar(estudo_id:, filtros:)
     especies = Especie.do_estudo(estudo_id)
     especies = especies.por_nome_popular(filtros.nome_popular) if filtros.nome_popular.present?
-    especies = especies.por_nome_cientifico(filtros.nome_cientifico) if filtros.nome_cientifico.present?
-    especies.ordenadas
+especies.ordenadas
   end
 
   # Buscar por ID dentro de um estudo — retorna nil se não encontrar

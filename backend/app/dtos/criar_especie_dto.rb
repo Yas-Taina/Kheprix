@@ -3,11 +3,9 @@
 class CriarEspecieDto
   include ActiveModel::API
 
-  CAMPOS = %i[foto classe genero nome_popular nome_cientifico status_conservacao nativa_da_regiao].freeze
+  CAMPOS = %i[foto classe ordem familia genero especie nome_popular status_conservacao endemismo].freeze
 
   attr_accessor(*CAMPOS)
-
-  validates :nome_cientifico, presence: true
 
   def initialize(params = {})
     CAMPOS.each do |campo|
