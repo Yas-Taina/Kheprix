@@ -17,10 +17,6 @@ http:
       value: ""
       type: query
       enabled: false
-    - name: nome_cientifico
-      value: ""
-      type: query
-      enabled: false
   auth: inherit
 
 settings:

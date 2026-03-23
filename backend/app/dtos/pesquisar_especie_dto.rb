@@ -3,10 +3,9 @@
 class PesquisarEspecieDto
   include ActiveModel::API
 
-  attr_accessor :nome_popular, :nome_cientifico
+  attr_accessor :nome_popular
 
   def initialize(params = {})
     @nome_popular = params[:nome_popular]
-    @nome_cientifico = params[:nome_cientifico]
   end
 end

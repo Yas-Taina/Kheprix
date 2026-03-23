@@ -20,7 +20,7 @@ http:
     type: json
     data: |-
       {
-        "nome_popular": "Onça-pintada (atualizado)",
+        "nome_popular": "Formiga-cortadeira(atualizada)",
         "status_conservacao": "Em perigo"
       }
   auth: inherit

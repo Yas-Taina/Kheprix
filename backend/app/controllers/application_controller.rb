@@ -2,4 +2,5 @@
 
 class ApplicationController < ActionController::API
   include AutenticavelJwt
+  wrap_parameters false
 end
