@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_16_230750) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_16_230750) do
     t.text "esforco_amostral"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "nome", null: false
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
   end
 
