@@ -4,6 +4,7 @@
 # Airflow
 airflow/logs/
 airflow/config/
+airflow/documentation/
 
 # Python cache
 __pycache__/
