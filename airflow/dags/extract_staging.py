@@ -30,9 +30,6 @@ TABLES_TO_EXTRACT = {
 }
 
 def prepare_staging_schema(**kwargs):
-    """(Migrado para o backend/Rails) Agora esta task funciona apenas como um Sensor de Partida"""
-    logging.info("Schema Staging agora é regido pelas migrations nativas do Rails (backend/db/dw_migrate).")
-    logging.info("Validado e pronto para disparar a Extração OLTP -> DW!")
     logging.info("Tabelas na camada de Staging garantidas de existir.")
 
 
@@ -78,7 +75,6 @@ def extract_and_load_table(table_name, load_strategy, **kwargs):
             
         logging.info(f"{table_name}: CSV copiado ({lines-1} registros). Transportando para DW...")
         
-        # Mapear EXATAMENTE as colunas de origem para o COPY não esbarrar na nova coluna 'ingestao_at'
         col_records = source_hook.get_records(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' ORDER BY ordinal_position;")
         col_list = [r[0] for r in col_records]
         cols_sql = "(" + ", ".join(col_list) + ")"
@@ -147,7 +143,7 @@ with DAG(
         task_prepare_staging >> extract_task
 
     
-    # Espaçadores no código para quando formos adicionar as ETAPAS 2 e 3 (Transformation/Loading para Dimensions)
+    # Espaçadores no código para quando adicionarmos as ETAPAS 2 e 3 (Transformation/Loading para Dimensions)
     def start_transformation(**kwargs):
         logging.info("Fim da camada STAGING. Início do Data Cleansing e DW (Dimensões/Fatos)...")
 
