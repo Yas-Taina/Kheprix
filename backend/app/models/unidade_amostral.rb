@@ -9,6 +9,7 @@ class UnidadeAmostral < ApplicationRecord
   validates :nome, presence: true
   validates :latitude, presence: true
   validates :longitude, presence: true
+  validates :raio, numericality: { greater_than: 0, allow_nil: true }
 
   scope :recentes, -> { order(updated_at: :desc) }
 
