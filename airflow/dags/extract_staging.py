@@ -96,8 +96,17 @@ def extract_and_load_table(table_name, load_strategy, **kwargs):
                 with open(tmp_file.name, 'r', encoding='utf-8') as f_csv:
                     cur.copy_expert(f"COPY {temp_table} {cols_sql} FROM STDIN WITH CSV HEADER;", f_csv)
                 
-                cur.execute(f"DELETE FROM staging.{table_name} WHERE id IN (SELECT id FROM {temp_table});")
-                cur.execute(f"INSERT INTO staging.{table_name} {cols_sql} SELECT {', '.join(col_list)} FROM {temp_table};")
+                # Monta a query ON CONFLICT DO UPDATE dinâmica (Upsert moderno do Postgres)
+                # Garante alta performance por não rodar o comando DELETE e sim somente atualizar a linha caso o id já exista
+                update_set = ", ".join([f"{col} = EXCLUDED.{col}" for col in col_list if col != 'id'])
+                
+                upsert_sql = f"""
+                    INSERT INTO staging.{table_name} {cols_sql}
+                    SELECT {', '.join(col_list)} FROM {temp_table}
+                    ON CONFLICT (id) DO UPDATE SET {update_set};
+                """
+                
+                cur.execute(upsert_sql)
                 cur.execute(f"DROP TABLE {temp_table};")
                 conn.commit()
             except Exception as e:
