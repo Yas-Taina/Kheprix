@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_24_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.text "descricao"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_campanhas_on_deleted_at"
     t.index ["estudo_id"], name: "index_campanhas_on_estudo_id"
   end
 
@@ -59,6 +61,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.boolean "endemismo", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_especies_on_deleted_at"
   end
 
   create_table "estudos", id: :serial, force: :cascade do |t|
@@ -68,7 +72,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.datetime "updated_at", null: false
     t.string "codigo"
     t.string "senha_autocadastro"
-    t.index ["codigo"], name: "index_estudos_on_codigo", unique: true
+    t.datetime "deleted_at"
+    t.index ["codigo"], name: "index_estudos_on_codigo", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["deleted_at"], name: "index_estudos_on_deleted_at"
   end
 
   create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
@@ -78,6 +84,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.text "esforco_real", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_eventos_amostragem_on_deleted_at"
     t.index ["unidade_amostral_id"], name: "index_eventos_amostragem_on_unidade_amostral_id"
   end
 
@@ -91,7 +99,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "nome", null: false
+    t.datetime "deleted_at"
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
+    t.index ["deleted_at"], name: "index_unidades_amostrais_on_deleted_at"
   end
 
   create_table "usuarios", id: :serial, force: :cascade do |t|
@@ -109,6 +119,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.text "valor", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_valores_variaveis_on_deleted_at"
     t.index ["variavel_id"], name: "index_valores_variaveis_on_variavel_id"
   end
 
@@ -120,7 +132,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.integer "tipo_dado", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["estudo_id", "nome"], name: "index_variaveis_on_estudo_id_and_nome", unique: true
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_variaveis_on_deleted_at"
+    t.index ["estudo_id", "nome"], name: "index_variaveis_on_estudo_id_and_nome", unique: true, where: "(deleted_at IS NULL)"
     t.index ["estudo_id"], name: "index_variaveis_on_estudo_id"
   end
 
@@ -130,7 +144,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
   add_foreign_key "convites", "estudos"
   add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
   add_foreign_key "especies", "estudos"
-  add_foreign_key "eventos_amostragem", "unidades_amostrais", column: "unidade_amostral_id"
+  add_foreign_key "eventos_amostragem", "unidades_amostrais"
   add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"

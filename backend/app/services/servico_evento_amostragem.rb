@@ -28,6 +28,6 @@ class ServicoEventoAmostragem
   end
 
   def excluir(evento:)
-    evento.destroy
+    evento.soft_delete
   end
 end

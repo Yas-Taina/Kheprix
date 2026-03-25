@@ -26,6 +26,6 @@ especies.ordenadas
 
   # Excluir uma espécie
   def destruir(especie)
-    especie.destroy
+    especie.soft_delete
   end
 end

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class UnidadeAmostral < ApplicationRecord
+  include SoftDeletavel
+
   self.table_name = "unidades_amostrais"
 
   belongs_to :campanha

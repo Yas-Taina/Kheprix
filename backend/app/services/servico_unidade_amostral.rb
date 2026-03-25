@@ -34,6 +34,8 @@ class ServicoUnidadeAmostral
   end
 
   def excluir(unidade:)
-    unidade.destroy
+    unidade.eventos_amostragem.update_all(deleted_at: Time.zone.now)
+
+    unidade.soft_delete
   end
 end
