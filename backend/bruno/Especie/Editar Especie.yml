@@ -11,17 +11,24 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "6"
       type: path
     - name: especie_id
-      value: "1"
+      value: "18"
       type: path
   body:
     type: json
-    data: |-
+    data: |
       {
-        "nome_popular": "Formiga-cortadeira(atualizada)",
-        "status_conservacao": "Em perigo"
+        "classe": "Mammalia",
+        "ordem": "Carnivora",
+        "familia": "Felidae",
+        "genero": "Panthera",
+        "especie": "Panthera onca",
+        "nome_popular": "Onça-pintada",
+        "status_conservacao": "Vulnerável",
+        "endemismo": false,
+        "foto": "https://exemplo.com/foto.jpg"
       }
   auth: inherit
 

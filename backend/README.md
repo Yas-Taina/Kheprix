@@ -47,10 +47,16 @@ Suba o PostgreSQL via Docker Compose (na raiz do projeto):
 docker compose up -d
 ```
 
-Crie e migre o banco:
+Crie e migre o banco transacional (OLTP):
 
 ```bash
 rails db:create db:migrate
+```
+
+E em seguida, migre a estrutura de *Data Warehouse* e *Staging*:
+
+```bash
+rails db:migrate:dw
 ```
 
 ### 3. Dependências
