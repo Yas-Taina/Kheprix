@@ -16,8 +16,10 @@ http:
         "nome": "Estudo Teste 1",
         "observacoes": "Observações do estudo",
         "variaveis": [
-          {"nome": "Temperatura", "metrica": "°C", "nivel_aplicacao": "evento", "tipo_dado": "number"},
-          {"nome": "Umidade", "metrica": "%", "nivel_aplicacao": "evento", "tipo_dado": "number"}
+          {"nome": "Responsavel", "nivel_aplicacao": "campanha", "tipo_dado": "string"},
+          {"nome": "Tipo Solo", "nivel_aplicacao": "unidade", "tipo_dado": "string"},
+          {"nome": "Temperatura", "metrica": "graus C", "nivel_aplicacao": "evento", "tipo_dado": "number"},
+          {"nome": "Comportamento", "nivel_aplicacao": "registro", "tipo_dado": "string"}
         ]
       }
   auth: inherit
