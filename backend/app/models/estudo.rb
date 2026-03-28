@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Estudo < ApplicationRecord
+  include SoftDeletavel
+
   has_many :colaboradores, class_name: "Colaborador", dependent: :destroy
   has_many :usuarios, through: :colaboradores
   has_many :variaveis, dependent: :destroy

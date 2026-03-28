@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Especie < ApplicationRecord
+  include SoftDeletavel
+
   # 1. Associações
   belongs_to :estudo
   # has_many :registro_ocorrencias, dependent: :destroy  # Descomentar quando RegistroOcorrencia existir
@@ -32,5 +34,4 @@ class Especie < ApplicationRecord
       **options,
     )
   end
-
 end

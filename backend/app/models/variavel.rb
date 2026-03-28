@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Variavel < ApplicationRecord
+  include SoftDeletavel
+
   self.table_name = "variaveis"
 
   belongs_to :estudo
