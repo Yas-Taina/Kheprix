@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_24_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -92,6 +92,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
     t.datetime "updated_at", null: false
     t.string "nome", null: false
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
+    t.check_constraint "raio IS NULL OR raio > 0::numeric", name: "raio_deve_ser_positivo"
   end
 
   create_table "usuarios", id: :serial, force: :cascade do |t|
@@ -130,7 +131,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_22_222550) do
   add_foreign_key "convites", "estudos"
   add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
   add_foreign_key "especies", "estudos"
-  add_foreign_key "eventos_amostragem", "unidades_amostrais", column: "unidade_amostral_id"
+  add_foreign_key "eventos_amostragem", "unidades_amostrais"
   add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
