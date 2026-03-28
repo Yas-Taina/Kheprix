@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_24_130000) do
     t.datetime "deleted_at"
     t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
     t.index ["deleted_at"], name: "index_unidades_amostrais_on_deleted_at"
+    t.check_constraint "raio IS NULL OR raio > 0::numeric", name: "raio_deve_ser_positivo"
   end
 
   create_table "usuarios", id: :serial, force: :cascade do |t|

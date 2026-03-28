@@ -14,4 +14,10 @@ class Variavel < ApplicationRecord
   validates :nome, presence: true
   validates :nivel_aplicacao, presence: true
   validates :tipo_dado, presence: true
+
+  scope :por_nivel, ->(nivel) { where(nivel_aplicacao: nivel) }
+
+  def as_json(options = {})
+    super(only: %i[id nome metrica nivel_aplicacao tipo_dado created_at updated_at], **options)
+  end
 end
