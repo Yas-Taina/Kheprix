@@ -44,7 +44,16 @@ class ServicoCampanha
   end
 
   def excluir(campanha:)
-    campanha.destroy
+    agora = Time.zone.now
+
+    campanha.unidades_amostrais.each do |ua|
+      ua.eventos_amostragem.update_all(deleted_at: agora)
+    end
+    campanha.unidades_amostrais.update_all(deleted_at: agora)
+
+    campanha.valores_variaveis.update_all(deleted_at: agora)
+
+    campanha.soft_delete
   end
 
   private

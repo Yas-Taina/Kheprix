@@ -34,7 +34,7 @@ class ServicoEstudo
       colaborador.destroy!
       :descadastrado
     else
-      estudo.destroy!
+      soft_delete_estudo(estudo)
       :ok
     end
   end
@@ -51,6 +51,34 @@ class ServicoEstudo
   end
 
   private
+
+  def soft_delete_estudo(estudo)
+    agora = Time.zone.now
+
+    estudo.campanhas.each do |c|
+      soft_delete_campanha(c, agora)
+    end
+
+    estudo.especies.update_all(deleted_at: agora)
+
+    estudo.variaveis.each do |v|
+      v.valores_variaveis.update_all(deleted_at: agora)
+    end
+    estudo.variaveis.update_all(deleted_at: agora)
+
+    estudo.update_columns(deleted_at: agora)
+  end
+
+  def soft_delete_campanha(campanha, agora)
+    campanha.unidades_amostrais.each do |ua|
+      ua.eventos_amostragem.update_all(deleted_at: agora)
+    end
+    campanha.unidades_amostrais.update_all(deleted_at: agora)
+
+    campanha.valores_variaveis.update_all(deleted_at: agora)
+
+    campanha.update_columns(deleted_at: agora)
+  end
 
   def gerar_codigo_unico
     loop do

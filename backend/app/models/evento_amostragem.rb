@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class EventoAmostragem < ApplicationRecord
+  include SoftDeletavel
+
   belongs_to :unidade_amostral
 
   validates :horario_inicio, presence: true
