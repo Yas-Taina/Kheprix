@@ -22,4 +22,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular "especie", "especies"
   inflect.irregular "evento_amostragem", "eventos_amostragem"
   inflect.irregular "unidade_amostral", "unidades_amostrais"
+  inflect.irregular "nivel_aplicacao", "nivel_aplicacoes"
 end
