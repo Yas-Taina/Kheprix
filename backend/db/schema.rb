@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_24_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_30_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -89,6 +89,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_24_130000) do
     t.index ["unidade_amostral_id"], name: "index_eventos_amostragem_on_unidade_amostral_id"
   end
 
+  create_table "registro_ocorrencias", id: :serial, force: :cascade do |t|
+    t.bigint "evento_amostragem_id", null: false
+    t.bigint "especie_id", null: false
+    t.date "data", null: false
+    t.time "hora", null: false
+    t.decimal "latitude", precision: 10, scale: 8, null: false
+    t.decimal "longitude", precision: 11, scale: 8, null: false
+    t.integer "qtde_individuos"
+    t.string "foto"
+    t.boolean "ausencia_especie", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["data", "hora"], name: "index_registro_ocorrencias_on_data_and_hora"
+    t.index ["deleted_at"], name: "index_registro_ocorrencias_on_deleted_at"
+    t.index ["especie_id"], name: "index_registro_ocorrencias_on_especie_id"
+    t.index ["evento_amostragem_id"], name: "index_registro_ocorrencias_on_evento_amostragem_id"
+  end
+
   create_table "unidades_amostrais", force: :cascade do |t|
     t.bigint "campanha_id", null: false
     t.decimal "latitude", precision: 10, scale: 8, null: false
@@ -146,6 +165,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_24_130000) do
   add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
   add_foreign_key "especies", "estudos"
   add_foreign_key "eventos_amostragem", "unidades_amostrais"
+  add_foreign_key "registro_ocorrencias", "especies"
+  add_foreign_key "registro_ocorrencias", "eventos_amostragem"
   add_foreign_key "unidades_amostrais", "campanhas"
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
