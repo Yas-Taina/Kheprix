@@ -1,0 +1,9 @@
+.photo-placeholder {
+  background: var(--color-border);
+}
+.loading-msg {
+  color: var(--color-text-light);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  padding: 24px 0;
+}

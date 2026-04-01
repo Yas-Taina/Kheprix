@@ -1,67 +1,53 @@
-import { inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment'
 
-export abstract class BaseService {
-  protected readonly http = inject(HttpClient);
-  protected readonly baseUrl = `${environment.apiUrl}/api/v1`;
+@Injectable({
+  providedIn: 'root',
+})
+export class BaseService {
+  protected readonly apiUrl = 'http://localhost:3000';
 
-  private readonly TOKEN_KEY = 'auth_token';
-
-  protected getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  saveToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-  }
-
-  removeToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
+  constructor(protected http: HttpClient) {}
 
   protected getAuthHeaders(): HttpHeaders {
-    const token = this.getToken();
+    const token = localStorage.getItem('auth_token');
     return new HttpHeaders({
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     });
   }
 
-  protected get<T>(path: string, params?: Record<string, string>): Observable<T> {
+  protected get<T>(endpoint: string, params?: Record<string, string | undefined>): Observable<T> {
     let httpParams = new HttpParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null) {
           httpParams = httpParams.set(key, value);
         }
       });
     }
-    return this.http.get<T>(`${this.baseUrl}${path}`, {
+
+    return this.http.get<T>(`${this.apiUrl}${endpoint}`, {
       headers: this.getAuthHeaders(),
       params: httpParams,
     });
   }
 
-  protected post<T>(path: string, body: unknown): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}${path}`, body, {
+  protected post<T>(endpoint: string, body: unknown = {}): Observable<T> {
+    return this.http.post<T>(`${this.apiUrl}${endpoint}`, body, {
       headers: this.getAuthHeaders(),
     });
   }
 
-  protected patch<T>(path: string, body: unknown): Observable<T> {
-    return this.http.patch<T>(`${this.baseUrl}${path}`, body, {
+  protected patch<T>(endpoint: string, body: unknown = {}): Observable<T> {
+    return this.http.patch<T>(`${this.apiUrl}${endpoint}`, body, {
       headers: this.getAuthHeaders(),
     });
   }
 
-  protected delete<T>(path: string): Observable<T> {
-    return this.http.delete<T>(`${this.baseUrl}${path}`, {
+  protected delete<T>(endpoint: string): Observable<T> {
+    return this.http.delete<T>(`${this.apiUrl}${endpoint}`, {
       headers: this.getAuthHeaders(),
     });
   }

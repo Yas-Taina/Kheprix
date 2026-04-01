@@ -1,6 +1,7 @@
 export interface UnidadeAmostral {
   id: number;
   campanha_id: number;
+  nome: string;
   latitude: number;
   longitude: number;
   raio: number;
@@ -10,7 +11,8 @@ export interface UnidadeAmostral {
   updated_at: string;
 }
 
-export interface CriarUnidadeAmostralRequest {
+export interface CriarUnidadeAmostralPayload {
+  nome: string;
   latitude: number;
   longitude: number;
   raio?: number;
@@ -18,7 +20,8 @@ export interface CriarUnidadeAmostralRequest {
   esforco_amostral?: string;
 }
 
-export interface AtualizarUnidadeAmostralRequest {
+export interface AtualizarUnidadeAmostralPayload {
+  nome: string;
   latitude: number;
   longitude: number;
   raio?: number;

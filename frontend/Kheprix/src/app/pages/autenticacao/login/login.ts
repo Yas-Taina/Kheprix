@@ -1,39 +1,34 @@
-import { Component, inject } from "@angular/core";
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { RouterModule, Router, RouterLink } from "@angular/router";
-import { CommonModule } from "@angular/common";
-import { NgxMaskDirective } from "ngx-mask";
-import { AuthService } from "../../../services/auth.service";
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AutenticacaoService } from '../../../services/autenticacao.service';
 
 @Component({
   selector: 'app-login',
-  imports: [RouterModule, RouterLink, CommonModule, ReactiveFormsModule, NgxMaskDirective],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrls: ['./login.css'],
 })
 export class Login {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  email = '';
+  senha = '';
+  erro = '';
+  carregando = false;
 
-  loading = false;
-  error = '';
+  constructor(private auth: AutenticacaoService, private router: Router) {}
 
-  form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    senha: ['', Validators.required],
-  });
-
-  submit(): void {
-    if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
-    this.authService.login(this.form.getRawValue() as any).subscribe({
+  confirmar() {
+    if (!this.email || !this.senha) { this.erro = 'Preencha todos os campos.'; return; }
+    this.carregando = true;
+    this.erro = '';
+    this.auth.login({ email: this.email, senha: this.senha }).subscribe({
       next: () => this.router.navigate(['/estudos']),
-      error: (err) => {
-        this.error = err?.error?.mensagem ?? 'Erro ao fazer login.';
-        this.loading = false;
-      },
+      error: () => { this.erro = 'E-mail ou senha incorretos.'; this.carregando = false; },
     });
   }
+
+  irParaCadastro()         { this.router.navigate(['/cadastro']); }
+  irParaRecuperacao()      { this.router.navigate(['/recuperar-senha']); }
 }

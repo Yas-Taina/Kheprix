@@ -1,4 +1,4 @@
-export interface LoginRequest {
+export interface LoginPayload {
   email: string;
   senha: string;
 }
@@ -7,15 +7,15 @@ export interface LoginResponse {
   token: string;
 }
 
-export interface SolicitarRedefinicaoRequest {
+export interface SolicitarRedefinicaoPayload {
   email: string;
 }
 
-export interface SolicitarRedefinicaoResponse {
+export interface MensagemResponse {
   mensagem: string;
 }
 
-export interface ValidarTokenRedefinicaoRequest {
+export interface ValidarTokenRedefinicaoPayload {
   token: string;
 }
 
@@ -23,22 +23,18 @@ export interface ValidarTokenRedefinicaoResponse {
   valido: boolean;
 }
 
-export interface RedefinirSenhaRequest {
+export interface RedefinirSenhaPayload {
   token: string;
   nova_senha: string;
 }
 
-export interface RedefinirSenhaResponse {
-  mensagem: string;
-}
-
-export interface AutocadastroRequest {
+export interface AutocadastroPayload {
   nome: string;
   email: string;
   senha: string;
 }
 
-export interface AutocadastroResponse {
+export interface UsuarioCadastradoResponse {
   id: number;
   nome: string;
   email: string;

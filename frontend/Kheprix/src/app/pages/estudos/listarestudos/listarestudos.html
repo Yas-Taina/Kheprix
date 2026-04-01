@@ -1,1 +1,69 @@
-<p>listarestudos works!</p>
+<div class="page-container">
+
+  <div class="page-header">
+    <h1>E s t u d o s</h1>
+    <div class="divider">❧</div>
+  </div>
+
+  <!-- Ações -->
+  <div class="actions-row">
+    <button class="badge-btn" (click)="novoEstudo()">
+      Adicionar Estudo <span class="plus">+</span>
+    </button>
+    <button class="back-btn" (click)="voltar()">&#9664;</button>
+  </div>
+
+  <!-- Busca -->
+  <div class="search-row">
+    <span class="search-label" style="width:auto">Buscar por:</span>
+    <br>
+    <select class="field-input search-select" [(ngModel)]="campoBusca">
+      <option value="nome">Nome do Estudo</option>
+    </select>
+    <input class="field-input search-input" [(ngModel)]="busca" (ngModelChange)="pesquisar()" placeholder="Digite sua busca..." />
+    <button class="icon-btn primary" title="Buscar">&#128269;</button>
+    <button class="icon-btn primary" title="Filtrar">&#9927;</button>
+  </div>
+
+  <!-- Tabela -->
+  <div *ngIf="carregando" class="loading-msg">Carregando...</div>
+  <div *ngIf="erro" class="error-msg">{{ erro }}</div>
+
+  <table class="kheprix-table" *ngIf="!carregando">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Data de Criação</th>
+        <th>Última Alteração</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let e of filtrados" (click)="abrirEstudo(e)">
+        <td>{{ e.nome }}</td>
+        <td>{{ formatData(e.created_at) }}</td>
+        <td>{{ formatData(e.updated_at) }}</td>
+        <td class="actions-cell">
+
+          <button
+            *ngIf="isProprietario(e)"
+            class="icon-btn primary"
+            title="Colaboradores"
+            (click)="irColaboradores(e, $event)">
+            &#128101;
+          </button>
+
+          <button
+            class="icon-btn danger"
+            title="Deletar"
+            (click)="deletar(e, $event)">
+            &#128465;
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="toast" *ngIf="toast">{{ toast }}</div>
