@@ -1,22 +1,72 @@
-<div>
-<h1>Kheprix</h1>
-<img src="/img/icon_verde.png" alt="Icone">
-<button>Login</button>
-<button>Cadastro</button>
-</div>
-<div>
-    <img src="/img/abelhas.jpg" alt="Abelhas">
-    <div><p>Texto placeholder</p></div>
-</div>
-<div>
-    <div><p>Texto placeholder</p></div>
-    <img src="/img/insetos1.jpg" alt="Insetos">
-</div>
-<div>
-    <div>
-        <img src="/img/insetos2.jpg" alt="Insetos">
+<div class="home-wrapper">
+
+  <!-- ── HERO ── -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="brand-title">KHEPRIX</h1>
+
+      <div class="hero-beetle">
+        <div class="beetle-placeholder">[ imagem besouro aqui ]</div>
+      </div>
+
+      <div class="hero-buttons">
+        <button class="btn-hero" (click)="goLogin()">Login</button>
+        <button class="btn-hero" (click)="goCadastro()">Cadastro</button>
+      </div>
     </div>
-    <div>
-        <p>Texto placeholder</p>
+  </section>
+
+  <!-- ── DESCRIÇÃO com imagem de fundo ── -->
+  <section class="desc-section">
+    <div class="desc-overlay">
+      <p class="desc-text">
+        KHEPRIX é um sistema para gestão de estudos de biodiversidade,
+        permitindo cadastrar espécies, organizar campanhas de coleta
+        e analisar dados de amostragem em campo.
+      </p>
     </div>
+
+  </section>
+
+  <!-- ── PERSONALIZAR ESTUDO ── -->
+  <section class="feature-section feature-left">
+    <div class="feature-text">
+      <h2 class="feature-title">PERSONALIZE<br>SEU ESTUDO</h2>
+      <p class="feature-body">
+        Crie estudos com variáveis personalizadas por nível — campanha,
+        unidade amostral, evento ou registro. Adapte a coleta à sua metodologia.
+      </p>
+    </div>
+    <div class="feature-image">
+
+      <div class="img-placeholder">[ imagem aqui ]</div>
+    </div>
+  </section>
+
+  <!-- ── CADASTRE ESPÉCIES ── -->
+  <section class="feature-section feature-right">
+    <div class="feature-image">
+
+      <div class="img-placeholder">[ imagem aqui ]</div>
+    </div>
+    <div class="feature-text">
+      <h2 class="feature-title">CADASTRE ESPÉCIES<br>DE INTERESSE</h2>
+      <p class="feature-body">
+        Registre espécies com taxonomia completa, status de conservação,
+        endemismo e foto. Compartilhe com colaboradores do seu estudo.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── ANALISE OS RESULTADOS ── -->
+  <section class="feature-section feature-center">
+    <div class="feature-text feature-text--center">
+      <h2 class="feature-title">ANALISE OS RESULTADOS</h2>
+      <p class="feature-body">
+        Acompanhe eventos de amostragem, esforço real aplicado e dados
+        coletados por campanha. Tenha uma visão estruturada de toda a coleta.
+      </p>
+    </div>
+  </section>
+
 </div>

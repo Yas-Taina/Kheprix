@@ -1,0 +1,60 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h2>{{ nomeCampanha }}</h2>
+    <h1>U<span class="sc">nidades</span> A<span class="sc">mostrais</span></h1>
+    <div class="divider">❧</div>
+  </div>
+
+  <div class="actions-row">
+    <div class="actions-right">
+      <button class="badge-btn secondary-badge" (click)="unidadeDetalhe = null">
+        Visualizar Detalhes <span class="eye-icon">&#128065;</span>
+      </button>
+      <button class="badge-btn" (click)="novaUnidade()">
+        Adicionar Unidade <span class="plus">+</span>
+      </button>
+    </div>
+    <button class="back-btn" (click)="voltar()">&#9664;</button>
+  </div>
+
+  <!-- Painel de detalhe inline -->
+  <div class="detail-panel" *ngIf="unidadeDetalhe">
+    <div class="detalhe-grid">
+      <div><span class="field-label">ID</span><span class="field-value">{{ unidadeDetalhe.id }}</span></div>
+      <div><span class="field-label">Nome</span><span class="field-value">{{ unidadeDetalhe.nome }}</span></div>
+      <div><span class="field-label">Latitude</span><span class="field-value">{{ formatCoord(unidadeDetalhe.latitude) }}</span></div>
+      <div><span class="field-label">Longitude</span><span class="field-value">{{ formatCoord(unidadeDetalhe.longitude) }}</span></div>
+      <div><span class="field-label">Raio</span><span class="field-value">{{ unidadeDetalhe.raio ? unidadeDetalhe.raio + 'm' : '—' }}</span></div>
+      <div><span class="field-label">Método de Coleta</span><span class="field-value">{{ unidadeDetalhe.metodo_coleta || '—' }}</span></div>
+      <div><span class="field-label">Esforço Amostral</span><span class="field-value">{{ unidadeDetalhe.esforco_amostral || '—' }}</span></div>
+    </div>
+  </div>
+
+  <div *ngIf="carregando" class="loading-msg">Carregando...</div>
+  <div *ngIf="erro" class="error-msg">{{ erro }}</div>
+
+  <table class="kheprix-table" *ngIf="!carregando">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Posição</th>
+        <th>Área (Raio)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of unidades" (click)="abrirEventos(u)">
+        <td>{{ u.id }}</td>
+        <td>{{ formatCoord(u.latitude) }}, {{ formatCoord(u.longitude) }}</td>
+        <td>{{ u.raio ? u.raio + 'm' : '—' }}</td>
+        <td class="actions-cell">
+          <button class="icon-btn danger" (click)="deletar(u, $event)" title="Deletar">&#128465;</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="toast" *ngIf="toast">{{ toast }}</div>

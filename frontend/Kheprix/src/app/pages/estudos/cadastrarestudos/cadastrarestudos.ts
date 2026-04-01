@@ -1,77 +1,73 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormArray,
-  Validators,
-} from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { EstudosService } from '../../../services/estudos.service';
 
-const NIVEIS_APLICACAO = ['campanha', 'unidade', 'evento', 'registro'] as const;
-const TIPOS_DADO = ['qualitativo', 'quantitativo', 'data'] as const;
+interface VariavelForm {
+  nome: string;
+  nivel_aplicacao: string;
+  tipo_dado: string;
+  metrica: string;
+}
 
 @Component({
-  selector: 'app-cadastrarestudos',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  selector: 'app-novo-estudo',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './cadastrarestudos.html',
-  styleUrl: './cadastrarestudos.css',
+  styleUrls: ['./cadastrarestudos.css'],
 })
-export class Cadastrarestudos implements OnInit {
- private fb = inject(FormBuilder);
-  private estudosService = inject(EstudosService);
-  private router = inject(Router);
- 
-  readonly niveisAplicacao = NIVEIS_APLICACAO;
-  readonly tiposDado = TIPOS_DADO;
- 
-  loading = false;
-  error = '';
- 
-  form = this.fb.group({
-    nome: ['', Validators.required],
-    observacoes: [''],
-    variaveis: this.fb.array([]),
-  });
- 
-  get variaveis(): FormArray {
-    return this.form.get('variaveis') as FormArray;
+export class CadastrarEstudo {
+  nome = '';
+  observacoes = '';
+  variaveis: VariavelForm[] = [this.novaVariavel()];
+  erro = '';
+  carregando = false;
+
+  niveisAplicacao = ['campanha', 'unidade', 'evento', 'registro'];
+  tiposDado = ['numerico', 'tipado', 'data'];
+
+  constructor(private estudosService: EstudosService, private router: Router) {}
+
+  novaVariavel(): VariavelForm {
+    return { nome: '', nivel_aplicacao: 'unidade', tipo_dado: 'numerico', metrica: '' };
   }
- 
-  ngOnInit(): void {
-    this.adicionarVariavel(); 
+
+  adicionarVariavel() { this.variaveis.push(this.novaVariavel()); }
+
+  removerVariavel(i: number) {
+    if (this.variaveis.length > 1) this.variaveis.splice(i, 1);
   }
- 
-  criarVariavelGroup() {
-    return this.fb.group({
-      nome: ['', Validators.required],
-      nivel_aplicacao: ['', Validators.required],
-      tipo_dado: ['', Validators.required],
-      metrica: [''],
-    });
-  }
- 
-  adicionarVariavel(): void {
-    this.variaveis.push(this.criarVariavelGroup());
-  }
- 
-  removerVariavel(index: number): void {
-    if (this.variaveis.length > 1) {
-      this.variaveis.removeAt(index);
-    }
-  }
- 
-  submit(): void {
-    if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
-    this.estudosService.criar(this.form.getRawValue() as any).subscribe({
+
+  confirmar() {
+    if (!this.nome) { this.erro = 'Informe o nome do estudo.'; return; }
+    const varFiltradas = this.variaveis.filter(v => v.nome.trim());
+    if (varFiltradas.length === 0) { this.erro = 'Adicione ao menos uma variável.'; return; }
+    this.carregando = true;
+    this.erro = '';
+    this.estudosService.criar({
+      nome: this.nome,
+      observacoes: this.observacoes || undefined,
+      variaveis: varFiltradas.map(v => ({
+        nome: v.nome,
+        nivel_aplicacao: v.nivel_aplicacao,
+        tipo_dado: v.tipo_dado,
+        metrica: v.metrica || undefined,
+      })),
+    }).subscribe({
       next: () => this.router.navigate(['/estudos']),
-      error: (err) => {
-        this.error = err?.error?.mensagem ?? 'Erro ao salvar estudo.';
-        this.loading = false;
-      },
+      error: () => { this.erro = 'Erro ao criar estudo.'; this.carregando = false; },
     });
+  }
+
+  voltar() { this.router.navigate(['/estudos']); }
+
+  labelNivel(n: string) {
+    const map: Record<string,string> = {
+      campanha: 'Campanha', unidade: 'Unidade Amostral',
+      evento: 'Evento', registro: 'Registro',
+    };
+    return map[n] || n;
   }
 }

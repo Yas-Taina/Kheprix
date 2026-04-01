@@ -13,7 +13,7 @@ export interface Campanha {
   updated_at: string;
 }
 
-export interface CriarCampanhaRequest {
+export interface CriarCampanhaPayload {
   nome: string;
   data_inicio: string;
   data_fim?: string;
@@ -21,10 +21,10 @@ export interface CriarCampanhaRequest {
   valores_variaveis?: ValorVariavel[];
 }
 
-export interface AtualizarCampanhaRequest {
+export interface AtualizarCampanhaPayload {
   nome: string;
   data_inicio: string;
   data_fim: string;
   descricao: string;
-  valores_variaveis: ValorVariavel[];
+  valores_variaveis?: ValorVariavel[];
 }

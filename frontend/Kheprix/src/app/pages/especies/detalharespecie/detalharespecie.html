@@ -1,1 +1,78 @@
-<p>detalharespecie works!</p>
+<div class="page-container" *ngIf="especie">
+
+  <div class="page-header">
+    <h1>{{ especie.nome_popular || (especie.genero + ' ' + especie.especie) }}</h1>
+    <div class="divider">❧</div>
+  </div>
+
+  <div class="actions-row" style="justify-content:flex-end">
+    <button class="back-btn" (click)="voltar()">&#9664;</button>
+  </div>
+
+  <!-- Foto + nomes principais -->
+  <div class="detalhe-top">
+    <div class="detalhe-foto">
+      <img
+        *ngIf="especie.foto"
+        [src]="especie.foto"
+        [alt]="especie.nome_popular"
+        class="foto-grande"
+      />
+      <div *ngIf="!especie.foto" class="foto-grande foto-placeholder-grande">[ foto ]</div>
+    </div>
+
+    <div class="detalhe-nomes">
+      <div class="detalhe-field">
+        <span class="field-label">Nome Científico</span>
+        <span class="nome-cientifico">{{ especie.genero }} {{ especie.especie }}</span>
+      </div>
+      <div class="detalhe-field" style="margin-top:16px">
+        <span class="field-label">Nome Popular</span>
+        <span class="field-value">{{ especie.nome_popular || '—' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Taxonomia -->
+  <div class="taxonomia-row">
+    <div>
+      <span class="field-label">Classe</span>
+      <span class="field-value">{{ especie.classe }}</span>
+    </div>
+    <div>
+      <span class="field-label">Ordem</span>
+      <span class="field-value">{{ especie.ordem }}</span>
+    </div>
+    <div>
+      <span class="field-label">Família</span>
+      <span class="field-value">{{ especie.familia }}</span>
+    </div>
+  </div>
+
+  <!-- Status de conservação -->
+  <div class="detalhe-field" style="margin-top:20px">
+    <span class="field-label">Status de Conservação</span>
+    <div class="status-line">
+      <span class="status-dot" [class]="statusDotClass(especie.status_conservacao)"></span>
+      <span class="field-value">{{ especie.status_conservacao || '—' }}</span>
+    </div>
+  </div>
+
+  <!-- Endemismo -->
+  <div class="endemismo-text" *ngIf="especie.endemismo">
+    A espécie é nativa da região de estudo
+  </div>
+
+  <!-- Ações -->
+  <div class="detalhe-acoes">
+    <button class="icon-btn primary" title="Editar" (click)="editar()">&#9999;</button>
+    <button class="icon-btn danger" title="Deletar" (click)="deletar()">&#128465;</button>
+  </div>
+
+</div>
+
+<div class="page-container" *ngIf="carregando">
+  <p class="loading-msg">Carregando...</p>
+</div>
+
+<div class="toast" *ngIf="toast">{{ toast }}</div>
