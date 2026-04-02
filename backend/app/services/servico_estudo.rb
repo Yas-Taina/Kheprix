@@ -59,6 +59,9 @@ class ServicoEstudo
       soft_delete_campanha(c, agora)
     end
 
+    estudo.especies.each do |e|
+      e.registro_ocorrencias.update_all(deleted_at: agora)
+    end
     estudo.especies.update_all(deleted_at: agora)
 
     estudo.variaveis.each do |v|
@@ -71,6 +74,9 @@ class ServicoEstudo
 
   def soft_delete_campanha(campanha, agora)
     campanha.unidades_amostrais.each do |ua|
+      ua.eventos_amostragem.each do |ea|
+        ea.registro_ocorrencias.update_all(deleted_at: agora)
+      end
       ua.eventos_amostragem.update_all(deleted_at: agora)
     end
     campanha.unidades_amostrais.update_all(deleted_at: agora)

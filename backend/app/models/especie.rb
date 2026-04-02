@@ -5,7 +5,7 @@ class Especie < ApplicationRecord
 
   # 1. Associações
   belongs_to :estudo
-  has_many :registro_ocorrencias, dependent: :destroy
+  has_many :registro_ocorrencias
 
   # 2. Validações (regras de negócio)
   validates :estudo_id, presence: true

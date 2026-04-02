@@ -34,7 +34,12 @@ class ServicoUnidadeAmostral
   end
 
   def excluir(unidade:)
-    unidade.eventos_amostragem.update_all(deleted_at: Time.zone.now)
+    agora = Time.zone.now
+
+    unidade.eventos_amostragem.each do |ea|
+      ea.registro_ocorrencias.update_all(deleted_at: agora)
+    end
+    unidade.eventos_amostragem.update_all(deleted_at: agora)
 
     unidade.soft_delete
   end

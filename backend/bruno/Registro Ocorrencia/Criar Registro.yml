@@ -30,7 +30,7 @@ http:
         "data": "2026-03-25",
         "hora": "08:30:00",
         "latitude": -23.55052,
-        "longitude": -46.63331,
+        "longitude": -146.63331,
         "qtde_individuos": 3,
         "foto": null,
         "ausencia_especie": false

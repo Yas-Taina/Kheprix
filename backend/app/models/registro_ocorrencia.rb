@@ -14,8 +14,8 @@ class RegistroOcorrencia < ApplicationRecord
   validates :especie_id, presence: true
   validates :data, presence: true
   validates :hora, presence: true
-  validates :latitude, presence: true
-  validates :longitude, presence: true
+  validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
+  validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
   # 3. Scopes
   scope :do_evento, ->(evento_id) { where(evento_amostragem_id: evento_id) }
