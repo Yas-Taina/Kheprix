@@ -30,7 +30,6 @@ class RegistroOcorrencia < ApplicationRecord
         evento_amostragem_id
         especie_id
         data
-        hora
         latitude
         longitude
         qtde_individuos
@@ -39,6 +38,6 @@ class RegistroOcorrencia < ApplicationRecord
         created_at
       ],
       **options,
-    )
+    ).merge("hora" => hora&.strftime("%H:%M:%S"))
   end
 end

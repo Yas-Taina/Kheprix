@@ -31,7 +31,7 @@ class CriarRegistroOcorrenciaDto
       longitude:,
       qtde_individuos:,
       foto:,
-      ausencia_especie:
-    }
+      ausencia_especie:,
+    }.compact
   end
 end
