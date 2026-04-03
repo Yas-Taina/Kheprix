@@ -7,7 +7,7 @@ class CriarEspecieDto
 
   attr_accessor(*CAMPOS)
 
-  validates :classe, :ordem, :familia, :genero, :especie, presence: { message: "não pode ficar em branco" }
+  validates :classe, :ordem, :familia, :genero, :especie, presence: true
   validates :endemismo, inclusion: { in: [true, false], message: "deve ser verdadeiro ou falso" }
 
   def initialize(params = {})

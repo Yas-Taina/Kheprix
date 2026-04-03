@@ -26,6 +26,7 @@ especies.ordenadas
 
   # Excluir uma espécie
   def destruir(especie)
+    especie.registro_ocorrencias.update_all(deleted_at: Time.zone.now)
     especie.soft_delete
   end
 end

@@ -22,7 +22,7 @@ http:
       {
         "nome": "UA-01",
         "latitude": "-23.55052",
-        "longitude": "-46.63331",
+        "longitude": "146.63331",
         "raio": 50.0,
         "metodo_coleta": "Armadilha fotográfica",
         "esforco_amostral": "30 dias de exposição"

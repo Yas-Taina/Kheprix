@@ -4,6 +4,7 @@ class EventoAmostragem < ApplicationRecord
   include SoftDeletavel
 
   belongs_to :unidade_amostral
+  has_many :registro_ocorrencias
 
   validates :horario_inicio, presence: true
   validate :horario_fim_apos_inicio

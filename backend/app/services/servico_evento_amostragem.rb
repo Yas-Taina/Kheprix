@@ -28,6 +28,7 @@ class ServicoEventoAmostragem
   end
 
   def excluir(evento:)
+    evento.registro_ocorrencias.update_all(deleted_at: Time.zone.now)
     evento.soft_delete
   end
 end
