@@ -17,6 +17,12 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 |------|----------------|-----------------|
 | POST /usuarios/autocadastro | nome(string), email(string), senha(string) | id(int), nome(string), email(string), created_at(datetime) |
 
+## Dashboard (autenticado)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /dashboard | — | id(int), nome(string), updated_at(datetime), data_inicio(date), total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int) |
+
 ## Estudos (autenticado)
 
 | Rota | Dados enviados | Dados recebidos |
