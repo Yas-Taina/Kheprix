@@ -47,6 +47,9 @@ class ServicoCampanha
     agora = Time.zone.now
 
     campanha.unidades_amostrais.each do |ua|
+      ua.eventos_amostragem.each do |ea|
+        ea.registro_ocorrencias.update_all(deleted_at: agora)
+      end
       ua.eventos_amostragem.update_all(deleted_at: agora)
     end
     campanha.unidades_amostrais.update_all(deleted_at: agora)

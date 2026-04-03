@@ -17,10 +17,11 @@ Rails.application.routes.draw do
   resources :estudos do
     resources :campanhas do
       resources :unidades_amostrais, only: %i[index show create update destroy] do
-        resources :eventos_amostragem, only: %i[index show create update destroy]
+        resources :eventos_amostragem, only: %i[index show create update destroy] do
+          resources :registro_ocorrencias, only: %i[index show create update destroy]
+        end
       end
     end
-    resources :campanhas
     resources :variaveis, only: %i[index]
     resources :especies, only: %i[index show create update destroy]
     resources :colaboradores, only: %i[index update destroy]
