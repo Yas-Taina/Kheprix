@@ -12,6 +12,7 @@ class AtualizarRegistroOcorrenciaDto
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
   def initialize(params = {})
+    @chaves_informadas = []
     @especie_id = params[:especie_id]
     @data = params[:data]
     @hora = params[:hora]
@@ -20,18 +21,20 @@ class AtualizarRegistroOcorrenciaDto
     @qtde_individuos = params[:qtde_individuos]
     @foto = params[:foto]
     @ausencia_especie = params[:ausencia_especie]
+    @chaves_informadas << :foto if params.key?(:foto)
   end
 
   def atributos
-    {
+    hash = {
       especie_id:,
       data:,
       hora:,
       latitude:,
       longitude:,
       qtde_individuos:,
-      foto:,
-      ausencia_especie:,
+      ausencia_especie:
     }.compact
+    hash[:foto] = foto if @chaves_informadas.include?(:foto)
+    hash
   end
 end
