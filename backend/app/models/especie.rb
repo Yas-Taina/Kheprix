@@ -14,7 +14,7 @@ class Especie < ApplicationRecord
   scope :do_estudo, ->(estudo_id) { where(estudo_id: estudo_id) }
   scope :por_nome_popular, ->(nome) { where("nome_popular ILIKE ?", "%#{nome}%") }
 
-  # 5. Serialização
+  # 4. Serialização
   def as_json(options = {})
     super(
       only: %i[
@@ -32,6 +32,8 @@ class Especie < ApplicationRecord
         created_at
       ],
       **options,
-    )
+    ).merge(
+      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil
+      )
   end
 end

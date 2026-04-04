@@ -38,6 +38,9 @@ class RegistroOcorrencia < ApplicationRecord
         created_at
       ],
       **options,
-    ).merge("hora" => hora&.strftime("%H:%M:%S"))
+    ).merge(
+      "hora" => hora&.strftime("%H:%M:%S"),
+      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil
+    )
   end
 end

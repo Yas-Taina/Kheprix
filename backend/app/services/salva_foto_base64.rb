@@ -12,6 +12,10 @@ module SalvaFotoBase64
       extensao = "png"
     end
 
+    if encoded.length * 3 / 4 > 20_971_520
+      raise FotoExcedeTamanhoMaximo, "A foto não pode exceder 20 MB."
+    end
+
     dados = Base64.decode64(encoded)
     nome_arquivo = "#{SecureRandom.uuid}.#{extensao}"
     diretorio = Rails.root.join("storage", "fotos", "estudos", estudo_id.to_s, tipo)

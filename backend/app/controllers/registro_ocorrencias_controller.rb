@@ -8,6 +8,8 @@ class RegistroOcorrenciasController < ApplicationController
   before_action :definir_unidade_amostral
   before_action :definir_evento_amostragem
   before_action :carregar_registro, only: %i[show update destroy]
+  
+  rescue_from FotoExcedeTamanhoMaximo, with: :foto_excede_tamanho_maximo
 
   def index
     registros = servico.listar(evento_id: @evento_amostragem.id)
@@ -100,5 +102,9 @@ class RegistroOcorrenciasController < ApplicationController
     unless @registro
       render json: { erro: "Registro de ocorrência não encontrado" }, status: :not_found
     end
+  end
+
+  def foto_excede_tamanho_maximo(exception)
+    render json: { erro: exception.message }, status: :unprocessable_entity 
   end
 end
