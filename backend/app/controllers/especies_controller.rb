@@ -7,8 +7,6 @@ class EspeciesController < ApplicationController
   before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
   before_action :carregar_especie, only: %i[show update destroy]
 
-  rescue_from FotoExcedeTamanhoMaximo, with: :foto_excede_tamanho_maximo
-
   # GET /estudos/:estudo_id/especies
   def index
     dto = PesquisarEspecieDto.new(params)
@@ -94,10 +92,6 @@ class EspeciesController < ApplicationController
 
     unless @especie
       render json: { erro: "Espécie não encontrada" }, status: :not_found
-    end\
-  end
-
-  def foto_excede_tamanho_maximo(exception)
-    render json: { erro: exception.message }, status: :unprocessable_entity 
+    end
   end
 end

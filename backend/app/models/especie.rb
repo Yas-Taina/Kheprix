@@ -20,7 +20,6 @@ class Especie < ApplicationRecord
       only: %i[
         id
         estudo_id
-        foto
         classe
         ordem
         familia
@@ -33,7 +32,7 @@ class Especie < ApplicationRecord
       ],
       **options,
     ).merge(
-      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil
-      )
+      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil,
+    )
   end
 end

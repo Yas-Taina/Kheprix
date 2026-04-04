@@ -33,7 +33,6 @@ class RegistroOcorrencia < ApplicationRecord
         latitude
         longitude
         qtde_individuos
-        foto
         ausencia_especie
         created_at
       ],
