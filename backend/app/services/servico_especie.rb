@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ServicoEspecie
+  include SalvaFotoBase64
+
   # Listar espécies de um estudo, com filtros opcionais
   def listar(estudo_id:, filtros:)
     especies = Especie.do_estudo(estudo_id)
@@ -15,11 +17,23 @@ especies.ordenadas
 
   # Criar uma nova espécie
   def criar(estudo_id:, atributos:)
+    foto_base64 = atributos.delete(:foto)
+    atributos[:foto] = salvar_foto_base64(foto_base64, estudo_id: estudo_id, tipo: "especies") if foto_base64.present?
     Especie.create(atributos.merge(estudo_id: estudo_id))
   end
 
   # Atualizar uma espécie existente
   def atualizar(especie:, atributos:)
+    if atributos.key?(:foto)
+      foto_base64 = atributos.delete(:foto)
+      if foto_base64.present?
+        remover_foto(especie.foto)
+        atributos[:foto] = salvar_foto_base64(foto_base64, estudo_id: especie.estudo_id, tipo: "especies")
+      else
+        remover_foto(especie.foto)
+        atributos[:foto] = nil
+      end
+    end
     especie.update(atributos)
     especie
   end

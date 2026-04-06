@@ -26,7 +26,7 @@ class RegistroOcorrenciasController < ApplicationController
       return
     end
 
-    registro = servico.criar(evento_id: @evento_amostragem.id, atributos: dto.atributos)
+    registro = servico.criar(evento_id: @evento_amostragem.id, estudo_id: @estudo.id, atributos: dto.atributos)
 
     if registro.persisted?
       render json: registro, status: :created
@@ -43,7 +43,7 @@ class RegistroOcorrenciasController < ApplicationController
       return
     end
 
-    registro = servico.atualizar(registro: @registro, atributos: dto.atributos)
+    registro = servico.atualizar(registro: @registro, estudo_id: @estudo.id, atributos: dto.atributos)
 
     if registro.errors.empty?
       render json: registro, status: :ok
