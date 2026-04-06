@@ -17,6 +17,12 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 |------|----------------|-----------------|
 | POST /usuarios/autocadastro | nome(string), email(string), senha(string) | id(int), nome(string), email(string), created_at(datetime) |
 
+## Dashboard (autenticado)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /dashboard | — | id(int), nome(string), updated_at(datetime), data_inicio(date), total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int) |
+
 ## Estudos (autenticado)
 
 | Rota | Dados enviados | Dados recebidos |
@@ -146,3 +152,8 @@ data:image/webp;base64,UklGRugGAABXRUJQVlA4WAoAAAAIAAAATwAATwAAVlA4IOYFAAAQGQCdA
 iVBORw0KGgoAAAANSUhEUg...
 ```
 Neste caso o sistema assume extensão `.png` por padrão.
+## Exportação de Dados (autenticado)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /estudos/:id/exportar_dados | agrupamento(string, opcional: registro_ocorrencia\|evento_amostragem\|unidade_amostral\|campanha\|especie, default: registro_ocorrencia), formato(string, opcional: csv, default: csv) | 200 arquivo CSV (Content-Type: text/csv). 422 agrupamento inválido. 403 não é colaborador do estudo. |

@@ -14,7 +14,10 @@ Rails.application.routes.draw do
 
   post "estudos/ingressar", to: "autocadastro_estudo#create"
 
+  get "dashboard", to: "dashboard#index"
+
   resources :estudos do
+    get "exportar_dados", on: :member, to: "exportar_dados#exportar_dados"
     resources :campanhas do
       resources :unidades_amostrais, only: %i[index show create update destroy] do
         resources :eventos_amostragem, only: %i[index show create update destroy] do
