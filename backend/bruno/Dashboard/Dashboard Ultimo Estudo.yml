@@ -1,0 +1,11 @@
+info:
+  name: Dashboard Ultimo Estudo
+  type: http
+  seq: 1
+
+request:
+  method: GET
+  url: http://localhost:3000/dashboard
+  auth: inherit
+  headers:
+    Content-Type: application/json
