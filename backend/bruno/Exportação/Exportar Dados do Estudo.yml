@@ -1,0 +1,45 @@
+info:
+  name: Exportar Dados do Estudo
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/:id/exportar_dados
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: id
+      value: "1"
+      type: path
+    - name: agrupamento
+      value: registro_ocorrencia
+      type: query
+      enabled: true
+    - name: agrupamento
+      value: evento_amostragem
+      type: query
+      enabled: false
+    - name: agrupamento
+      value: unidade_amostral
+      type: query
+      enabled: false
+    - name: agrupamento
+      value: campanha
+      type: query
+      enabled: false
+    - name: agrupamento
+      value: especie
+      type: query
+      enabled: false
+    - name: formato
+      value: csv
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -124,3 +124,9 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 | POST /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias | especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int, opcional), foto(string, opcional), ausencia_especie(boolean, opcional) | id(int), evento_amostragem_id(int), especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int), foto(string), ausencia_especie(boolean), created_at(datetime) |
 | PATCH /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | especie_id(int, opcional), data(date, opcional), hora(time, opcional), latitude(decimal, opcional), longitude(decimal, opcional), qtde_individuos(int, opcional), foto(string, opcional), ausencia_especie(boolean, opcional) | id(int), evento_amostragem_id(int), especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int), foto(string), ausencia_especie(boolean), created_at(datetime) |
 | DELETE /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | — | 204 No Content |
+
+## Exportação de Dados (autenticado)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /estudos/:id/exportar_dados | agrupamento(string, opcional: registro_ocorrencia\|evento_amostragem\|unidade_amostral\|campanha\|especie, default: registro_ocorrencia), formato(string, opcional: csv, default: csv) | 200 arquivo CSV (Content-Type: text/csv). 422 agrupamento inválido. 403 não é colaborador do estudo. |
