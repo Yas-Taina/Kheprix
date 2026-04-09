@@ -1,0 +1,25 @@
+info:
+  name: Autocadastro em Estudo
+  type: http
+  seq: 5
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/ingressar
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "codigo": "3S8R7E50",
+        "senha_autocadastro": "Admin123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

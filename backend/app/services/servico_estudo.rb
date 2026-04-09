@@ -1,14 +1,95 @@
 # frozen_string_literal: true
 
 class ServicoEstudo
+  def pesquisar(usuario:, filtros:)
+    estudos = Estudo.por_usuario(usuario)
+    estudos = estudos.por_nome(filtros.nome) if filtros.nome.present?
+    estudos = estudos.criado_a_partir_de(filtros.criado_a_partir_de) if filtros.criado_a_partir_de.present?
+    estudos = estudos.criado_ate(filtros.criado_ate) if filtros.criado_ate.present?
+    estudos = estudos.atualizado_a_partir_de(filtros.atualizado_a_partir_de) if filtros.atualizado_a_partir_de.present?
+    estudos = estudos.atualizado_ate(filtros.atualizado_ate) if filtros.atualizado_ate.present?
+
+    estudos = estudos
+      .select("estudos.*, colaboradores.perfil AS perfil_colaborador")
+      .order(updated_at: :desc)
+
+    estudos.map do |estudo|
+      estudo.as_json.merge("perfil" => Colaborador.perfis.key(estudo.perfil_colaborador))
+    end
+  end
+
+  def deletar(id:, usuario:)
+    estudo = Estudo.find_by(id: id)
+    return :nao_encontrado unless estudo
+
+    colaborador = Colaborador.find_by(estudo_id: estudo.id, usuario_id: usuario.id)
+    return :nao_encontrado unless colaborador
+
+    unless colaborador.proprietario?
+      colaborador.destroy!
+      return :descadastrado
+    end
+
+    if estudo.colaboradores.where(perfil: :proprietario).count > 1
+      colaborador.destroy!
+      :descadastrado
+    else
+      soft_delete_estudo(estudo)
+      :ok
+    end
+  end
+
   def cadastrar(nome:, observacoes:, usuario:, variaveis:)
     ActiveRecord::Base.transaction do
-      estudo = Estudo.create!(nome: nome, observacoes: observacoes)
+      estudo = Estudo.create!(nome: nome, observacoes: observacoes, codigo: gerar_codigo_unico)
       Colaborador.create!(estudo: estudo, usuario: usuario, perfil: :proprietario)
       ServicoVariavel.new.criar_em_lote(estudo: estudo, variaveis_params: variaveis)
       estudo
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  end
+
+  private
+
+  def soft_delete_estudo(estudo)
+    agora = Time.zone.now
+
+    estudo.campanhas.each do |c|
+      soft_delete_campanha(c, agora)
+    end
+
+    estudo.especies.each do |e|
+      e.registro_ocorrencias.update_all(deleted_at: agora)
+    end
+    estudo.especies.update_all(deleted_at: agora)
+
+    estudo.variaveis.each do |v|
+      v.valores_variaveis.update_all(deleted_at: agora)
+    end
+    estudo.variaveis.update_all(deleted_at: agora)
+
+    estudo.update_columns(deleted_at: agora)
+  end
+
+  def soft_delete_campanha(campanha, agora)
+    campanha.unidades_amostrais.each do |ua|
+      ua.eventos_amostragem.each do |ea|
+        ea.registro_ocorrencias.update_all(deleted_at: agora)
+      end
+      ua.eventos_amostragem.update_all(deleted_at: agora)
+    end
+    campanha.unidades_amostrais.update_all(deleted_at: agora)
+
+    campanha.valores_variaveis.update_all(deleted_at: agora)
+
+    campanha.update_columns(deleted_at: agora)
+  end
+
+  def gerar_codigo_unico
+    loop do
+      codigo = SecureRandom.alphanumeric(8).upcase
+      break codigo unless Estudo.exists?(codigo: codigo)
+    end
   end
 end

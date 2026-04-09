@@ -1,0 +1,25 @@
+info:
+  name: Exibir Foto
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/fotos/estudos/:estudo_id/:tipo/:arquivo
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: tipo
+      value: "especies"
+      type: path
+    - name: arquivo
+      value: "exemplo.png"
+      type: path
+  auth: none
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

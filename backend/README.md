@@ -23,6 +23,11 @@ Variáveis disponíveis:
 | `POSTGRES_DB` | Nome do banco | `kheprix_oltp_db` |
 | `POSTGRES_HOST` | Host do banco | `localhost` |
 | `POSTGRES_PORT` | Porta do banco | `5410` |
+| `POSTGRES_DW_USER` | Usuário do DW | `user` |
+| `POSTGRES_DW_PASSWORD` | Senha do DW | `tcc_kheprix_2026` |
+| `POSTGRES_DW_DB` | Nome do banco DW | `kheprix_dw_db` |
+| `POSTGRES_DW_HOST` | Host do banco DW | `db_dw` |
+| `POSTGRES_DW_PORT` | Porta do banco DW | `5432` |
 | `SMTP_HOST` | Host do servidor SMTP | `smtp.gmail.com` |
 | `SMTP_PORT` | Porta SMTP | `587` |
 | `SMTP_USER` | Usuário SMTP | `seu_email@gmail.com` |
@@ -42,10 +47,16 @@ Suba o PostgreSQL via Docker Compose (na raiz do projeto):
 docker compose up -d
 ```
 
-Crie e migre o banco:
+Crie e migre o banco transacional (OLTP):
 
 ```bash
 rails db:create db:migrate
+```
+
+E em seguida, migre a estrutura de *Data Warehouse* e *Staging*:
+
+```bash
+rails db:migrate:dw
 ```
 
 ### 3. Dependências
@@ -61,6 +72,15 @@ rails server
 ```
 
 O servidor estará disponível em `http://localhost:3000`.
+
+### 5. Popular Banco de Dados (Seed)
+
+Para popular o banco Transacional (OLTP) com dados de teste (10 usuários, 5 estudos e 1000 registros de coletas distribuídos ao longo dos últimos 12 meses para os testes de ETL do Airflow), execute na raiz do projeto:
+
+```bash
+docker-compose exec web bundle exec rails db:seed
+```
+*(Este script possui uma trava de segurança e roda apenas no banco transacional, rejeitando execução acidental contra o DW).*
 
 ## Comandos úteis
 

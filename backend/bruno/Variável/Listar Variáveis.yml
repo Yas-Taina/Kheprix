@@ -1,0 +1,25 @@
+info:
+  name: Listar Variáveis
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/:estudo_id/variaveis
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "6"
+      type: path
+    - name: nivel_aplicacao
+      value: campanha
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
