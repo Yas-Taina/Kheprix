@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    nav_drawer_header.xml — Cabeçalho do Navigation Drawer.
+    Exibe logo + nome do app + e-mail do usuário logado.
+    O e-mail é preenchido dinamicamente via BaseDrawerActivity se necessário.
+
+    SUBSTITUIR:
+    - @drawable/ic_placeholder_beetle → @drawable/kheprix_logo_header
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#A8B89A"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="24dp">
+
+    <!-- Logo -->
+    <ImageView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_placeholder_beetle"
+        android:scaleType="fitCenter"
+        android:alpha="0.8"
+        android:contentDescription="Kheprix"/>
+
+    <!-- Nome do app -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="KHEPRIX"
+        android:textSize="20sp"
+        android:textColor="#4A5240"
+        android:fontFamily="serif"
+        android:letterSpacing="0.2"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Subtítulo / e-mail do usuário (opcional) -->
+    <TextView
+        android:id="@+id/tvDrawerEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="usuário@email.com"
+        android:textSize="12sp"
+        android:textColor="#6B7A5E"
+        android:fontFamily="monospace"
+        android:layout_marginTop="4dp"/>
+
+</LinearLayout>

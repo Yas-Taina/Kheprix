@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- activity_eventos.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#EDE9DE">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent" android:layout_height="96dp"
+        android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
+        <ImageView android:id="@+id/ivMenuLateral" android:layout_width="52dp" android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:clickable="true" android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Menu"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView android:layout_width="80dp" android:layout_height="80dp"
+            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7" android:contentDescription="Kheprix" android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView android:id="@+id/ivPerfil" android:layout_width="52dp" android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:clickable="true" android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Perfil"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="32dp">
+
+            <TextView android:id="@+id/tvUnidadeNome"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Nome da Unidade" android:textSize="18sp" android:textColor="#4A5240"
+                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="16dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Eventos de Amostragem" android:textSize="26sp" android:textColor="#4A5240"
+                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="4dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#9AAB8A"
+                android:layout_marginTop="8dp" android:layout_marginBottom="12dp" android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+
+            <Button android:id="@+id/btnAdicionarEvento"
+                android:layout_width="wrap_content" android:layout_height="48dp"
+                android:text="Adicionar Evento  ⊕" android:textColor="#FFFFFF" android:fontFamily="serif"
+                android:backgroundTint="#6B7A5E" android:layout_gravity="center_horizontal"/>
+            <Button android:id="@+id/btnVisualizarDetalhes"
+                android:layout_width="wrap_content" android:layout_height="48dp"
+                android:text="Visualizar Detalhes  👁" android:textColor="#FFFFFF" android:fontFamily="serif"
+                android:backgroundTint="#7A8A6E" android:layout_gravity="center_horizontal" android:layout_marginTop="8dp"/>
+
+            <!-- Card detalhes Unidade -->
+            <androidx.cardview.widget.CardView android:id="@+id/cardDetalhesUnidade"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:visibility="gone" android:layout_marginTop="8dp"
+                app:cardBackgroundColor="#EDE9DE" app:cardElevation="2dp" app:cardCornerRadius="8dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Nome:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheNome" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Latitude:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheLat" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Longitude:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheLon" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Raio:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheRaio" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Método:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheMetodo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Esforço:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheEsforco" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="8dp"/>
+                    <Button android:id="@+id/btnEditarUnidade"
+                        android:layout_width="wrap_content" android:layout_height="40dp"
+                        android:text="✏ Editar Unidade" android:textColor="#FFFFFF"
+                        android:backgroundTint="#6B7A5E" android:textSize="13sp" android:layout_gravity="end"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvEventos"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

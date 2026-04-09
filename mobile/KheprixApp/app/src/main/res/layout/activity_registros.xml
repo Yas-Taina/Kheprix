@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- activity_registros.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#EDE9DE">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent" android:layout_height="96dp"
+        android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
+        <ImageView android:id="@+id/ivMenuLateral" android:layout_width="52dp" android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:clickable="true" android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Menu"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView android:layout_width="80dp" android:layout_height="80dp"
+            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7" android:contentDescription="Kheprix" android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView android:id="@+id/ivPerfil" android:layout_width="52dp" android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:clickable="true" android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Perfil"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="32dp">
+
+            <TextView android:id="@+id/tvEventoNome"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Nome do Evento" android:textSize="18sp" android:textColor="#4A5240"
+                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="16dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Registros de Ocorrência" android:textSize="26sp" android:textColor="#4A5240"
+                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="4dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#9AAB8A"
+                android:layout_marginTop="8dp" android:layout_marginBottom="12dp" android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+
+            <!-- Botões com filtro -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <Button android:id="@+id/btnAdicionarRegistro"
+                    android:layout_width="wrap_content" android:layout_height="48dp"
+                    android:text="Adicionar Registro  ⊕" android:textColor="#FFFFFF" android:fontFamily="serif"
+                    android:backgroundTint="#6B7A5E" android:layout_marginEnd="8dp"/>
+                <!-- Funil de filtro — SUBSTITUIR: @drawable/ic_filter (#B88A8A) -->
+                <ImageView android:id="@+id/btnFiltrar"
+                    android:layout_width="36dp" android:layout_height="36dp"
+                    android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                    android:contentDescription="Filtrar" android:clickable="true" android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"/>
+            </LinearLayout>
+
+            <Button android:id="@+id/btnVisualizarDetalhes"
+                android:layout_width="wrap_content" android:layout_height="48dp"
+                android:text="Visualizar Detalhes  👁" android:textColor="#FFFFFF" android:fontFamily="serif"
+                android:backgroundTint="#7A8A6E" android:layout_gravity="start" android:layout_marginTop="8dp"/>
+
+            <!-- Card inline detalhes do Evento -->
+            <androidx.cardview.widget.CardView android:id="@+id/cardDetalhesEvento"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:visibility="gone" android:layout_marginTop="8dp"
+                app:cardBackgroundColor="#EDE9DE" app:cardElevation="2dp" app:cardCornerRadius="8dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Início:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheInicio" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Fim:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheFim" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Esforço real:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
+                    <TextView android:id="@+id/tvDetalheEsforco" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="8dp"/>
+                    <Button android:id="@+id/btnEditarEvento"
+                        android:layout_width="wrap_content" android:layout_height="40dp"
+                        android:text="✏ Editar Evento" android:textColor="#FFFFFF"
+                        android:backgroundTint="#6B7A5E" android:textSize="13sp" android:layout_gravity="end"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvRegistros"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

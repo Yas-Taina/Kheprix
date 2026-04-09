@@ -1,35 +1,44 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseService } from './base.service';
+import { HttpClient } from '@angular/common/http';
 import {
   Especie,
-  ListarEspeciesParams,
-  CriarEspecieRequest,
-  AtualizarEspecieRequest,
-} from './models/especie.model';
+  CriarEspeciePayload,
+  AtualizarEspeciePayload,
+} from './modelos/especie.model';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class EspeciesService extends BaseService {
-
-  listar(estudoId: number, params?: ListarEspeciesParams): Observable<Especie[]> {
-    const queryParams: Record<string, string> = {};
-    if (params?.nome_popular) queryParams['nome_popular'] = params.nome_popular;
-    if (params?.nome_cientifico) queryParams['nome_cientifico'] = params.nome_cientifico;
-    return this.get<Especie[]>(`/estudos/${estudoId}/especies`, queryParams);
+  constructor(http: HttpClient) {
+    super(http);
   }
 
+  // GET /estudos/:estudo_id/especies
+  listar(estudoId: number, nomePopular?: string): Observable<Especie[]> {
+    return this.get<Especie[]>(`/estudos/${estudoId}/especies`, {
+      nome_popular: nomePopular,
+    });
+  }
+
+  // GET /estudos/:estudo_id/especies/:id
   buscarPorId(estudoId: number, id: number): Observable<Especie> {
     return this.get<Especie>(`/estudos/${estudoId}/especies/${id}`);
   }
 
-  criar(estudoId: number, body: CriarEspecieRequest): Observable<Especie> {
-    return this.post<Especie>(`/estudos/${estudoId}/especies`, body);
+  // POST /estudos/:estudo_id/especies
+  criar(estudoId: number, payload: CriarEspeciePayload): Observable<Especie> {
+    return this.post<Especie>(`/estudos/${estudoId}/especies`, payload);
   }
 
-  atualizar(estudoId: number, id: number, body: AtualizarEspecieRequest): Observable<Especie> {
-    return this.patch<Especie>(`/estudos/${estudoId}/especies/${id}`, body);
+  // PATCH /estudos/:estudo_id/especies/:id
+  atualizar(estudoId: number, id: number, payload: AtualizarEspeciePayload): Observable<Especie> {
+    return this.patch<Especie>(`/estudos/${estudoId}/especies/${id}`, payload);
   }
 
+  // DELETE /estudos/:estudo_id/especies/:id
   deletar(estudoId: number, id: number): Observable<void> {
     return this.delete<void>(`/estudos/${estudoId}/especies/${id}`);
   }
