@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_30_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "campanhas", force: :cascade do |t|
+    t.bigint "estudo_id", null: false
+    t.string "nome", limit: 255, null: false
+    t.date "data_inicio", null: false
+    t.date "data_fim"
+    t.text "descricao"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_campanhas_on_deleted_at"
+    t.index ["estudo_id"], name: "index_campanhas_on_estudo_id"
+  end
 
   create_table "colaboradores", id: false, force: :cascade do |t|
     t.integer "estudo_id", null: false
@@ -21,11 +34,94 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
     t.index ["estudo_id", "usuario_id"], name: "index_colaboradores_on_estudo_id_and_usuario_id", unique: true
   end
 
+  create_table "convites", force: :cascade do |t|
+    t.bigint "estudo_id", null: false
+    t.bigint "proprietario_envio_id", null: false
+    t.string "email_convidado", null: false
+    t.string "token", null: false
+    t.datetime "data_expiracao"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["estudo_id"], name: "index_convites_on_estudo_id"
+    t.index ["proprietario_envio_id"], name: "index_convites_on_proprietario_envio_id"
+    t.index ["token"], name: "index_convites_on_token", unique: true
+  end
+
+  create_table "especies", id: :serial, force: :cascade do |t|
+    t.integer "estudo_id", null: false
+    t.string "foto"
+    t.string "classe", limit: 100
+    t.string "ordem", limit: 100
+    t.string "familia", limit: 100
+    t.string "genero", limit: 100
+    t.string "especie", limit: 100
+    t.string "nome_popular"
+    t.string "status_conservacao", limit: 100
+    t.boolean "endemismo", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_especies_on_deleted_at"
+  end
+
   create_table "estudos", id: :serial, force: :cascade do |t|
     t.string "nome", null: false
     t.text "observacoes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "codigo"
+    t.string "senha_autocadastro"
+    t.datetime "deleted_at"
+    t.index ["codigo"], name: "index_estudos_on_codigo", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["deleted_at"], name: "index_estudos_on_deleted_at"
+  end
+
+  create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
+    t.bigint "unidade_amostral_id", null: false
+    t.datetime "horario_inicio", null: false
+    t.datetime "horario_fim", null: false
+    t.text "esforco_real", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_eventos_amostragem_on_deleted_at"
+    t.index ["unidade_amostral_id"], name: "index_eventos_amostragem_on_unidade_amostral_id"
+  end
+
+  create_table "registro_ocorrencias", id: :serial, force: :cascade do |t|
+    t.bigint "evento_amostragem_id", null: false
+    t.bigint "especie_id", null: false
+    t.date "data", null: false
+    t.time "hora", null: false
+    t.decimal "latitude", precision: 10, scale: 8, null: false
+    t.decimal "longitude", precision: 11, scale: 8, null: false
+    t.integer "qtde_individuos"
+    t.string "foto"
+    t.boolean "ausencia_especie", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["data", "hora"], name: "index_registro_ocorrencias_on_data_and_hora"
+    t.index ["deleted_at"], name: "index_registro_ocorrencias_on_deleted_at"
+    t.index ["especie_id"], name: "index_registro_ocorrencias_on_especie_id"
+    t.index ["evento_amostragem_id"], name: "index_registro_ocorrencias_on_evento_amostragem_id"
+  end
+
+  create_table "unidades_amostrais", force: :cascade do |t|
+    t.bigint "campanha_id", null: false
+    t.decimal "latitude", precision: 10, scale: 8, null: false
+    t.decimal "longitude", precision: 11, scale: 8, null: false
+    t.decimal "raio", precision: 10, scale: 2
+    t.text "metodo_coleta"
+    t.text "esforco_amostral"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "nome", null: false
+    t.datetime "deleted_at"
+    t.index ["campanha_id"], name: "index_unidades_amostrais_on_campanha_id"
+    t.index ["deleted_at"], name: "index_unidades_amostrais_on_deleted_at"
+    t.check_constraint "raio IS NULL OR raio > 0::numeric", name: "raio_deve_ser_positivo"
   end
 
   create_table "usuarios", id: :serial, force: :cascade do |t|
@@ -37,6 +133,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
     t.index ["email"], name: "index_usuarios_on_email", unique: true
   end
 
+  create_table "valores_variaveis", force: :cascade do |t|
+    t.bigint "variavel_id", null: false
+    t.integer "id_nivel_aplicacao", null: false
+    t.text "valor", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_valores_variaveis_on_deleted_at"
+    t.index ["variavel_id"], name: "index_valores_variaveis_on_variavel_id"
+  end
+
   create_table "variaveis", force: :cascade do |t|
     t.bigint "estudo_id", null: false
     t.string "nome", limit: 100, null: false
@@ -45,11 +152,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_01_180000) do
     t.integer "tipo_dado", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["estudo_id", "nome"], name: "index_variaveis_on_estudo_id_and_nome", unique: true
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_variaveis_on_deleted_at"
+    t.index ["estudo_id", "nome"], name: "index_variaveis_on_estudo_id_and_nome", unique: true, where: "(deleted_at IS NULL)"
     t.index ["estudo_id"], name: "index_variaveis_on_estudo_id"
   end
 
+  add_foreign_key "campanhas", "estudos"
   add_foreign_key "colaboradores", "estudos"
   add_foreign_key "colaboradores", "usuarios"
+  add_foreign_key "convites", "estudos"
+  add_foreign_key "convites", "usuarios", column: "proprietario_envio_id"
+  add_foreign_key "especies", "estudos"
+  add_foreign_key "eventos_amostragem", "unidades_amostrais"
+  add_foreign_key "registro_ocorrencias", "especies"
+  add_foreign_key "registro_ocorrencias", "eventos_amostragem"
+  add_foreign_key "unidades_amostrais", "campanhas"
+  add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
 end

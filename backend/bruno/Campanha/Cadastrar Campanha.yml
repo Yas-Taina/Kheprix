@@ -1,0 +1,35 @@
+info:
+  name: Cadastrar Campanha
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/campanhas
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "6"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "Campanha Verão 2026",
+        "data_inicio": "2026-01-15",
+        "data_fim": "2026-03-15",
+        "descricao": "Campanha de coleta no período de verão",
+        "valores_variaveis": [
+          {"variavel_id": 1, "valor": "25.5"},
+          {"variavel_id": 2, "valor": "55.3"}
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

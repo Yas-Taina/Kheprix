@@ -1,0 +1,37 @@
+info:
+  name: Editar Campanha
+  type: http
+  seq: 4
+
+http:
+  method: patch
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: campanha_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "Campanha Verão 2026 - Atualizada",
+        "data_inicio": "2026-01-20",
+        "data_fim": "2026-03-20",
+        "descricao": "Campanha atualizada",
+        "valores_variaveis": [
+          {"variavel_id": 1, "valor": "30.0"}
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

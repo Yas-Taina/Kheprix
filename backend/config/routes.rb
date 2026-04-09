@@ -12,5 +12,30 @@ Rails.application.routes.draw do
 
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
 
-  resources :estudos
+  post "estudos/ingressar", to: "autocadastro_estudo#create"
+
+  get "dashboard", to: "dashboard#index"
+
+  resources :estudos do
+    get "exportar_dados", on: :member, to: "exportar_dados#exportar_dados"
+    resources :campanhas do
+      resources :unidades_amostrais, only: %i[index show create update destroy] do
+        resources :eventos_amostragem, only: %i[index show create update destroy] do
+          resources :registro_ocorrencias, only: %i[index show create update destroy]
+        end
+      end
+    end
+    resources :variaveis, only: %i[index]
+    resources :especies, only: %i[index show create update destroy]
+    resources :colaboradores, only: %i[index update destroy]
+    resources :convites, only: %i[index create destroy]
+    resource :codigo_acesso, only: %i[show update], controller: "codigo_acesso"
+  end
+
+  get "convites", to: "gerenciar_convites#index", as: :convites_recebidos
+  get "convites/:token", to: "gerenciar_convites#show", as: :convite_por_token
+  post "convites/:token/aceitar", to: "gerenciar_convites#aceitar", as: :aceitar_convite
+  post "convites/:token/recusar", to: "gerenciar_convites#recusar", as: :recusar_convite
+
+  get "fotos/estudos/:estudo_id/:tipo/:arquivo", to: "fotos#show", as: :foto, constraints: { arquivo: /[^\/]+/ }
 end

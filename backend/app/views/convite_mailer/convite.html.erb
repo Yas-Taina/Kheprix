@@ -1,0 +1,11 @@
+<h2>Olá!</h2>
+
+<p><strong><%= @nome_remetente %></strong> convidou você para participar do estudo <strong><%= @nome_estudo %></strong>.</p>
+
+<p>Clique no link abaixo para visualizar e responder ao convite:</p>
+
+<p><a href="<%= @link %>">Ver convite</a></p>
+
+<p>Este convite expira em <%= l(@convite.data_expiracao, format: :short) %>.</p>
+
+<p>Se você não esperava este convite, ignore este email.</p>

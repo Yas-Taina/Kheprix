@@ -13,6 +13,20 @@ services:
     networks:
       - kheprix_network
 
+  db_dw:
+    image: postgres:17
+    container_name: kheprix_dw_container
+    environment:
+      POSTGRES_USER: ${POSTGRES_DW_USER:-kheprix_user}
+      POSTGRES_PASSWORD: ${POSTGRES_DW_PASSWORD:-kheprix_password}
+      POSTGRES_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - kheprix_dw_data:/var/lib/postgresql/data
+    networks:
+      - kheprix_network
+
   web:
     build:
       context: ./backend
@@ -31,6 +45,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-kheprix_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kheprix_password}
       POSTGRES_DB: ${POSTGRES_DB:-kheprix_oltp_db}
+      POSTGRES_DW_HOST: db_dw
+      POSTGRES_DW_PORT: 5432
+      POSTGRES_DW_USER: ${POSTGRES_DW_USER:-kheprix_user}
+      POSTGRES_DW_PASSWORD: ${POSTGRES_DW_PASSWORD:-kheprix_password}
+      POSTGRES_DW_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
       FRONTEND_URL: ${FRONTEND_URL}
       REDEFINICAO_SENHA_CAMINHO: ${REDEFINICAO_SENHA_CAMINHO}
       SMTP_HOST: ${SMTP_HOST}
@@ -43,8 +62,16 @@ services:
       EMAIL_REMETENTE: ${EMAIL_REMETENTE}
     volumes:
       - ./backend:/rails
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       db:
+        condition: service_started
+      db_dw:
         condition: service_started
     networks:
       - kheprix_network
@@ -65,8 +92,119 @@ services:
     networks:
       - kheprix_network
 
+  adminer:
+    image: adminer
+    container_name: kheprix_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - kheprix_network
+
+  airflow-db:
+    image: postgres:17
+    container_name: kheprix_airflow_db
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow_password
+      POSTGRES_DB: airflow_db
+    volumes:
+      - kheprix_airflow_db_data:/var/lib/postgresql/data
+    networks:
+      - kheprix_network
+
+  airflow-init:
+    image: apache/airflow:2.8.2
+    container_name: kheprix_airflow_init
+    depends_on:
+      - airflow-db
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow-db/airflow_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - _AIRFLOW_DB_UPGRADE=true
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+    command: version
+    networks:
+      - kheprix_network
+
+  airflow-webserver:
+    image: apache/airflow:2.8.2
+    container_name: kheprix_airflow_webserver
+    restart: always
+    depends_on:
+      airflow-db:
+        condition: service_started
+      airflow-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      db_dw:
+        condition: service_started
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow-db/airflow_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_CONN_DB_OLTP=${AIRFLOW_CONN_DB_OLTP}
+      - AIRFLOW_CONN_DB_DW=${AIRFLOW_CONN_DB_DW}
+      - AIRFLOW__WEBSERVER__AUTO_REFRESH_INTERVAL=2
+      - AIRFLOW__WEBSERVER__WORKERS=2
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/config:/opt/airflow/config
+    command: webserver
+    networks:
+      - kheprix_network
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.2
+    container_name: kheprix_airflow_scheduler
+    restart: always
+    depends_on:
+      airflow-db:
+        condition: service_started
+      airflow-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      db_dw:
+        condition: service_started
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow-db/airflow_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=5
+      - AIRFLOW_CONN_DB_OLTP=${AIRFLOW_CONN_DB_OLTP}
+      - AIRFLOW_CONN_DB_DW=${AIRFLOW_CONN_DB_DW}
+      - POSTGRES_USER=${POSTGRES_USER:-root}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-senha_local}
+      - POSTGRES_DB=${POSTGRES_DB:-kheprix_oltp_db}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DW_USER=${POSTGRES_DW_USER:-yasmin_admin}
+      - POSTGRES_DW_PASSWORD=${POSTGRES_DW_PASSWORD:-tcc_kheprix_2026}
+      - POSTGRES_DW_DB=${POSTGRES_DW_DB:-kheprix_dw_db}
+      - POSTGRES_DW_HOST=db_dw
+      - POSTGRES_DW_PORT=5432
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/config:/opt/airflow/config
+    command: scheduler
+    networks:
+      - kheprix_network
+
 volumes:
   kheprix_oltp_data:
+  kheprix_dw_data:
+  kheprix_airflow_db_data:
 
 networks:
   kheprix_network:

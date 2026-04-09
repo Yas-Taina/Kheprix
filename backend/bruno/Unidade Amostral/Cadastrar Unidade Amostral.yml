@@ -1,0 +1,36 @@
+info:
+  name: Cadastrar Unidade Amostral
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "6"
+      type: path
+    - name: campanha_id
+      value: "6"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "UA-01",
+        "latitude": "-23.55052",
+        "longitude": "146.63331",
+        "raio": 50.0,
+        "metodo_coleta": "Armadilha fotográfica",
+        "esforco_amostral": "30 dias de exposição"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

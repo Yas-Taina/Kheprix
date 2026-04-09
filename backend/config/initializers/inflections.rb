@@ -14,3 +14,14 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.irregular "perfil", "perfis"
+  inflect.irregular "variavel", "variaveis"
+  inflect.irregular "valor_variavel", "valores_variaveis"
+  inflect.irregular "especie", "especies"
+  inflect.irregular "evento_amostragem", "eventos_amostragem"
+  inflect.irregular "unidade_amostral", "unidades_amostrais"
+  inflect.irregular "nivel_aplicacao", "nivel_aplicacoes"
+  inflect.irregular "registro_ocorrencia", "registro_ocorrencias"
+end

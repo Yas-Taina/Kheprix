@@ -1,0 +1,36 @@
+info:
+  name: Criar Evento de Amostragem
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "6"
+      type: path
+    - name: campanha_id
+      value: "6"
+      type: path
+    - name: unidade_amostral_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "horario_inicio": "2026-03-10T08:00:00.000Z",
+        "horario_fim": "2026-03-10T12:00:00.000Z",
+        "esforco_real": "4 horas de observação direta"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

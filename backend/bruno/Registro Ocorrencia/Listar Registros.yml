@@ -1,0 +1,31 @@
+info:
+  name: Listar Registros
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: http://localhost:3000/estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "7"
+      type: path
+    - name: campanha_id
+      value: "7"
+      type: path
+    - name: unidade_amostral_id
+      value: "2"
+      type: path
+    - name: evento_amostragem_id
+      value: "2"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
