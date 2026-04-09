@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Layout: Novo Estudo / Editar Estudo
+    ════════════════════════════════════════════
+    PLACEHOLDERS:
+    - Header: mesmos ícones da EstudosActivity
+    - Ornamento decorativo: View simples até ter o SVG
+    - Spinners usam android spinner padrão; estilize via theme
+    ════════════════════════════════════════════
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#EDE9DE">
+
+    <!-- Header -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="#A8B89A"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <ImageView
+            android:id="@+id/ivBack"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle"
+            android:scaleType="fitCenter"
+            android:contentDescription="Voltar"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_placeholder_beetle"
+            android:scaleType="fitCenter"
+            android:alpha="0.7"
+            android:contentDescription="Kheprix"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_placeholder_beetle"
+            android:scaleType="fitCenter"
+            android:contentDescription="Perfil"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Conteúdo scrollável -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="100dp">
+
+            <!-- Título -->
+            <TextView
+                android:id="@+id/tvTitulo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Novo Estudo"
+                android:textSize="28sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="20dp"/>
+
+            <!-- Ornamento (SUBSTITUIR por ImageView com SVG decorativo) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#9AAB8A"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"/>
+
+            <!-- Label Nome -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nome do estudo:"
+                android:textSize="16sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"/>
+
+            <!-- Campo Nome -->
+            <EditText
+                android:id="@+id/etNomeEstudo"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_field_green"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#4A5240"
+                android:hint="Placeholder"
+                android:textCursorDrawable="@null"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Título seção variáveis + botão ⊕ -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/tvVariaveisTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Variáveis Estudadas"
+                    android:textSize="18sp"
+                    android:textColor="#6B7A5E"
+                    android:fontFamily="monospace"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+                <!-- Botão ⊕ adicionar variável -->
+                <TextView
+                    android:id="@+id/btnAdicionarVariavel"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:text="⊕"
+                    android:textSize="22sp"
+                    android:textColor="#6B7A5E"
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Container dinâmico de linhas de variável -->
+            <LinearLayout
+                android:id="@+id/layoutVariaveis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Observações -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Observações:"
+                android:textSize="16sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="16dp"/>
+
+            <EditText
+                android:id="@+id/etObservacoes"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@drawable/bg_field_green"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:textColor="#4A5240"
+                android:hint="Placeholder"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:layout_marginTop="4dp"/>
+
+            <!-- ProgressBar -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Botão Confirmar fixo na parte inferior -->
+    <Button
+        android:id="@+id/btnConfirmar"
+        android:layout_width="wrap_content"
+        android:layout_height="52dp"
+        android:text="Confirmar"
+        android:textColor="#FFFFFF"
+        android:fontFamily="serif"
+        android:backgroundTint="#6B7A5E"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>
