@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kheprix</string>
+
+    <!-- Auth -->
+    <string name="hint_email">Digite seu e-mail</string>
+    <string name="hint_senha">Digite sua senha</string>
+    <string name="hint_nome">Digite seu nome</string>
+    <string name="hint_token">Cole ou digite o token</string>
+    <string name="btn_confirmar">Confirmar</string>
+    <string name="btn_enviar_token">Enviar Token</string>
+    <string name="esqueci_senha">Esqueci minha senha</string>
+    <string name="link_cadastro">aqui.</string>
+
+    <!-- Navegação -->
+    <string name="nav_home">Início</string>
+    <string name="nav_estudos">Visualizar Estudos</string>
+    <string name="nav_registro_rapido">Registro Rápido</string>
+    <string name="nav_novo_estudo">Cadastrar Novo Estudo</string>
+    <string name="nav_convites">Convites de Colaboração</string>
+    <string name="nav_logout">Sair</string>
+
+    <!-- Offline -->
+    <string name="offline_title">VOCÊ ESTÁ OFFLINE</string>
+    <string name="offline_msg1">Registros serão salvos localmente</string>
+    <string name="offline_msg2">Você poderá realizar sincronização dos dados quando tiver acesso à rede de internet</string>
+    <string name="btn_continuar">Continuar</string>
+
+    <!-- Content Descriptions (acessibilidade) -->
+    <string name="cd_menu">Abrir menu lateral</string>
+    <string name="cd_perfil">Perfil do usuário</string>
+    <string name="cd_logo">Logo Kheprix</string>
+    <string name="cd_besouro">Ilustração do besouro</string>
+    <string name="cd_galeria">Selecionar da galeria</string>
+    <string name="cd_camera">Tirar foto</string>
+    <string name="cd_gps">Usar localização atual</string>
+    <string name="cd_calendario">Abrir calendário</string>
+    <string name="cd_deletar">Deletar</string>
+    <string name="cd_editar">Editar</string>
+    <string name="cd_qr_scan">Escanear QR Code</string>
+</resources>

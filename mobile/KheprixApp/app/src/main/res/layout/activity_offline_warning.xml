@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_offline_warning.xml
+    Pop-up/dialog de aviso offline. A Activity deve ter:
+      android:theme="@style/Theme.AppCompat.Dialog.Alert"
+      ou window.setBackgroundDrawableResource(android.R.color.transparent)
+    para ter aparência de dialog flutuante sobre a tela anterior.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#33000000">
+
+    <androidx.cardview.widget.CardView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="32dp" android:layout_marginEnd="32dp"
+        app:cardBackgroundColor="#EDE9DE"
+        app:cardElevation="8dp"
+        app:cardCornerRadius="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="24dp" android:paddingEnd="24dp"
+            android:paddingTop="32dp" android:paddingBottom="28dp">
+
+            <!-- Título "VOCÊ ESTÁ OFFLINE" -->
+            <TextView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="VOCÊ ESTÁ OFFLINE"
+                android:textSize="24sp" android:textColor="#4A5240"
+                android:fontFamily="serif" android:letterSpacing="0.1"
+                android:gravity="center" android:textStyle="bold"/>
+
+            <!-- Ornamento -->
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="#9AAB8A"
+                android:layout_marginTop="12dp" android:layout_marginBottom="16dp"
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+
+            <!-- Mensagem principal -->
+            <TextView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Registros serão salvos localmente"
+                android:textSize="17sp" android:textColor="#4A5240"
+                android:fontFamily="monospace" android:gravity="center"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Mensagem secundária -->
+            <TextView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Você poderá realizar sincronização dos dados quando tiver acesso à rede de internet"
+                android:textSize="14sp" android:textColor="#6B7A5E"
+                android:fontFamily="monospace" android:gravity="center"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Botão Continuar -->
+            <Button android:id="@+id/btnContinuar"
+                android:layout_width="wrap_content" android:layout_height="52dp"
+                android:text="Continuar"
+                android:textColor="#FFFFFF" android:fontFamily="serif"
+                android:backgroundTint="#6B7A5E"
+                android:layout_gravity="center_horizontal"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</FrameLayout>
