@@ -157,3 +157,9 @@ Neste caso o sistema assume extensão `.png` por padrão.
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
 | GET /estudos/:id/exportar_dados | agrupamento(string, opcional: registro_ocorrencia\|evento_amostragem\|unidade_amostral\|campanha\|especie, default: registro_ocorrencia), formato(string, opcional: csv, default: csv) | 200 arquivo CSV (Content-Type: text/csv). 422 agrupamento inválido. 403 não é colaborador do estudo. |
+
+## Análises (autenticado)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), filtro_data_inicio(string date, opcional), filtro_data_fim(string date, opcional), filtro_campanhas(array int, opcional), escopo_amostras(string: "estudo"\|"campanha", opcional), filtro_area(object: lat_min, lat_max, lon_min, lon_max, opcional), nivel_estudo(string: "campanha"\|"unidade_amostral"\|"evento_amostragem", opcional), agrupar_por(string, opcional), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null) }. 422: chave inválida ou dados insuficientes. 403: não é colaborador do estudo. 404: estudo não encontrado. |

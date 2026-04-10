@@ -1,0 +1,30 @@
+info:
+  name: Executar Análise Lognormal
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "lognormal",
+        "filtro_data_inicio": "2025-01-01",
+        "filtro_data_fim": "2025-12-31"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
