@@ -35,6 +35,7 @@ class UnidadesAmostraisController < ApplicationController
       raio: dto.raio,
       metodo_coleta: dto.metodo_coleta,
       esforco_amostral: dto.esforco_amostral,
+      valores_variaveis: dto.valores_variaveis,
     )
 
     if unidade.persisted?
@@ -60,6 +61,7 @@ class UnidadesAmostraisController < ApplicationController
       raio: dto.raio,
       metodo_coleta: dto.metodo_coleta,
       esforco_amostral: dto.esforco_amostral,
+      valores_variaveis: dto.valores_variaveis,
     )
 
     if unidade.errors.empty?

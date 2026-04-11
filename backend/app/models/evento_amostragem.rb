@@ -5,6 +5,7 @@ class EventoAmostragem < ApplicationRecord
 
   belongs_to :unidade_amostral
   has_many :registro_ocorrencias
+  has_many :valores_variaveis, foreign_key: :id_nivel_aplicacao, dependent: :destroy
 
   validates :horario_inicio, presence: true
   validate :horario_fim_apos_inicio

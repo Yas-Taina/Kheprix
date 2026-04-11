@@ -25,7 +25,10 @@ http:
         "longitude": "146.63331",
         "raio": 50.0,
         "metodo_coleta": "Armadilha fotográfica",
-        "esforco_amostral": "30 dias de exposição"
+        "esforco_amostral": "30 dias de exposição",
+      "valores_variaveis": [
+        { "variavel_id": 1, "valor": "850" }
+      ]
       }
   auth: inherit
 

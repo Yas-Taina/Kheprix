@@ -7,6 +7,7 @@ class UnidadeAmostral < ApplicationRecord
 
   belongs_to :campanha
   has_many :eventos_amostragem, dependent: :destroy
+  has_many :valores_variaveis, foreign_key: :id_nivel_aplicacao, dependent: :destroy
 
   validates :nome, presence: true
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }

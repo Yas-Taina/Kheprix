@@ -25,7 +25,10 @@ http:
       {
         "horario_inicio": "2026-03-10T08:00:00.000Z",
         "horario_fim": "2026-03-10T12:00:00.000Z",
-        "esforco_real": "4 horas de observação direta"
+        "esforco_real": "4 horas de observação direta",
+      "valores_variaveis": [
+        { "variavel_id": 1, "valor": "25.3" }
+      ]
       }
   auth: inherit
 

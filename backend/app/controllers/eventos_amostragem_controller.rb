@@ -33,6 +33,7 @@ class EventosAmostragemController < ApplicationController
       horario_inicio: dto.horario_inicio,
       horario_fim: dto.horario_fim,
       esforco_real: dto.esforco_real,
+      valores_variaveis: dto.valores_variaveis,
     )
 
     if evento.persisted?
@@ -55,6 +56,7 @@ class EventosAmostragemController < ApplicationController
       horario_inicio: dto.horario_inicio,
       horario_fim: dto.horario_fim,
       esforco_real: dto.esforco_real,
+      valores_variaveis: dto.valores_variaveis,
     )
 
     if evento.errors.empty?
