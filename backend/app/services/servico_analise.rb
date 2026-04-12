@@ -13,6 +13,8 @@ class ServicoAnalise
 
     return { erro: "Não foi possível montar os dados para a análise. Verifique se existem dados suficientes no estudo." } unless dados
 
+    dados = adaptar_campos(analise[:chave], dados)
+
     cliente = ClienteApiR.new
     valor = nil
     grafico = nil
@@ -37,5 +39,23 @@ class ServicoAnalise
       valor: valor,
       grafico: grafico
     }
+  end
+
+  private
+
+  # A API R usa nomes de campos diferentes para algumas análises.
+  # Ex: KS espera amostra1/amostra2 em vez de grupo1/grupo2.
+  def adaptar_campos(chave, dados)
+    case chave
+    when "ks"
+      {
+        amostra1: dados[:grupo1],
+        amostra2: dados[:grupo2],
+        nome_amostra1: dados[:nome_grupo1],
+        nome_amostra2: dados[:nome_grupo2]
+      }.compact
+    else
+      dados
+    end
   end
 end

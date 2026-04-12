@@ -90,23 +90,33 @@ class ServicoDadosAnalise
     variavel_ids = params[:variavel_ids]
     return nil if variavel_ids.blank?
 
-    variaveis = Variavel.where(id: variavel_ids, estudo_id: estudo_id)
-    return nil if variaveis.empty?
-
     fatos = base_fatos_dw(estudo_id: estudo_id, params: params)
       .joins(evento: :unidade_amostral)
 
-    unidades_ids = fatos.select("DISTINCT dim_unidade_amostral.id_unidade")
-      .pluck("dim_unidade_amostral.id_unidade").sort
+    unidades_ids = fatos.distinct.pluck("dim_unidade_amostral.id_unidade").sort
 
-    variaveis_por_amostra = unidades_ids.map do |unidade_id|
-      variaveis.map do |variavel|
-        valor = ValorVariavel.find_by(variavel_id: variavel.id, id_nivel_aplicacao: unidade_id)
-        valor&.valor&.to_f || 0.0
-      end
+    # Para cada unidade, pegar UM registro representativo (todos têm os mesmos valores de variável)
+    registro_por_unidade = {}
+    unidades_ids.each do |unidade_id|
+      registro_por_unidade[unidade_id] = fatos
+        .where(dim_unidade_amostral: { id_unidade: unidade_id })
+        .pick(:id_registro)
     end
 
-    nomes_variaveis_ambientais = variaveis.map(&:nome)
+    nomes_variaveis_ambientais = variavel_ids.map do |var_id|
+      Dw::DimVariavelRegistro
+        .where(id_registro: registro_por_unidade.values.compact, id_variavel: var_id)
+        .pick(:nome_variavel) || "Variável #{var_id}"
+    end
+
+    variaveis_por_amostra = unidades_ids.map do |unidade_id|
+      reg_id = registro_por_unidade[unidade_id]
+      variavel_ids.map do |var_id|
+        Dw::DimVariavelRegistro
+          .where(id_registro: reg_id, id_variavel: var_id)
+          .pick(:valor_numerico)&.to_f || 0.0
+      end
+    end
 
     dados_abundancia.merge(
       variaveis_por_amostra: variaveis_por_amostra,
@@ -114,23 +124,28 @@ class ServicoDadosAnalise
     )
   end
 
-  # ==================== OLTP: Dois Vetores ====================
+  # ==================== DW: Dois Vetores ====================
 
   def montar_dois_vetores(estudo_id:, params:)
-    variavel_x = Variavel.find_by(id: params[:variavel_x_id], estudo_id: estudo_id)
-    variavel_y = Variavel.find_by(id: params[:variavel_y_id], estudo_id: estudo_id)
-    return nil unless variavel_x && variavel_y
+    variavel_x_id = params[:variavel_x_id]
+    variavel_y_id = params[:variavel_y_id]
+    return nil if variavel_x_id.blank? || variavel_y_id.blank?
 
-    valores_x = ValorVariavel.where(variavel_id: variavel_x.id)
-      .joins(:variavel).where(variaveis: { estudo_id: estudo_id })
-    valores_y = ValorVariavel.where(variavel_id: variavel_y.id)
-      .joins(:variavel).where(variaveis: { estudo_id: estudo_id })
+    fatos = base_fatos_dw(estudo_id: estudo_id, params: params)
+      .joins(evento: :unidade_amostral)
 
-    valores_x = filtrar_valores_variaveis(valores_x, params: params, estudo_id: estudo_id)
-    valores_y = filtrar_valores_variaveis(valores_y, params: params, estudo_id: estudo_id)
+    unidades_ids = fatos.distinct.pluck("dim_unidade_amostral.id_unidade").sort
 
-    hash_x = valores_x.pluck(:id_nivel_aplicacao, :valor).to_h
-    hash_y = valores_y.pluck(:id_nivel_aplicacao, :valor).to_h
+    hash_x = {}
+    hash_y = {}
+
+    unidades_ids.each do |unidade_id|
+      reg_id = fatos.where(dim_unidade_amostral: { id_unidade: unidade_id }).pick(:id_registro)
+      val_x = Dw::DimVariavelRegistro.where(id_registro: reg_id, id_variavel: variavel_x_id).pick(:valor_numerico)
+      val_y = Dw::DimVariavelRegistro.where(id_registro: reg_id, id_variavel: variavel_y_id).pick(:valor_numerico)
+      hash_x[unidade_id] = val_x if val_x
+      hash_y[unidade_id] = val_y if val_y
+    end
 
     ids_comuns = hash_x.keys & hash_y.keys
     return nil if ids_comuns.empty?
@@ -138,23 +153,30 @@ class ServicoDadosAnalise
     x = ids_comuns.map { |id| hash_x[id].to_f }
     y = ids_comuns.map { |id| hash_y[id].to_f }
 
-    { x: x, y: y, nome_x: variavel_x.nome, nome_y: variavel_y.nome }
+    nome_x = Dw::DimVariavelRegistro.where(id_variavel: variavel_x_id).pick(:nome_variavel) || "Variável X"
+    nome_y = Dw::DimVariavelRegistro.where(id_variavel: variavel_y_id).pick(:nome_variavel) || "Variável Y"
+
+    { x: x, y: y, nome_x: nome_x, nome_y: nome_y }
   end
 
-  # ==================== OLTP: Dois Grupos ====================
+  # ==================== DW: Dois Grupos ====================
 
   def montar_dois_grupos(estudo_id:, params:)
-    variavel = Variavel.find_by(id: params[:variavel_id], estudo_id: estudo_id)
-    return nil unless variavel
+    variavel_id = params[:variavel_id]
+    return nil if variavel_id.blank?
 
     grupo1_ids = params[:grupo1_ids]
     grupo2_ids = params[:grupo2_ids]
     return nil if grupo1_ids.blank? || grupo2_ids.blank?
 
-    valores_g1 = ValorVariavel.where(variavel_id: variavel.id, id_nivel_aplicacao: grupo1_ids)
-      .pluck(:valor).map(&:to_f)
-    valores_g2 = ValorVariavel.where(variavel_id: variavel.id, id_nivel_aplicacao: grupo2_ids)
-      .pluck(:valor).map(&:to_f)
+    valores_g1 = valores_variavel_por_unidade(
+      estudo_id: estudo_id, params: params,
+      variavel_id: variavel_id, unidade_ids: grupo1_ids,
+    )
+    valores_g2 = valores_variavel_por_unidade(
+      estudo_id: estudo_id, params: params,
+      variavel_id: variavel_id, unidade_ids: grupo2_ids,
+    )
 
     return nil if valores_g1.empty? || valores_g2.empty?
 
@@ -166,50 +188,94 @@ class ServicoDadosAnalise
     }
   end
 
-  # ==================== OLTP: Múltiplos Grupos ====================
+  # ==================== DW: Múltiplos Grupos ====================
 
   def montar_multiplos_grupos(estudo_id:, params:)
-    variavel = Variavel.find_by(id: params[:variavel_id], estudo_id: estudo_id)
-    return nil unless variavel
+    variavel_id = params[:variavel_id]
+    return nil if variavel_id.blank?
 
     agrupar_por = params[:agrupar_por] || "unidade_amostral"
 
-    ids_por_grupo = obter_ids_por_grupo(estudo_id: estudo_id, agrupar_por: agrupar_por, params: params)
-    return nil if ids_por_grupo.empty?
+    fatos = base_fatos_dw(estudo_id: estudo_id, params: params)
+      .joins(evento: { unidade_amostral: :campanha })
+
+    grupo_col, grupo_label = case agrupar_por
+    when "campanha"
+      [ "dim_campanha.id_campanha", ->(id) {
+        Dw::DimCampanha.find_by(id_campanha: id)&.data_inicio.to_s
+      } ]
+    when "unidade_amostral"
+      [ "dim_unidade_amostral.id_unidade", ->(id) {
+        ua = Dw::DimUnidadeAmostral.find_by(id_unidade: id)
+        ua&.metodo_coleta || "Unidade #{id}"
+      } ]
+    when "evento_amostragem"
+      [ "dim_evento_amostragem.id_evento", ->(id) { "Evento #{id}" } ]
+    else
+      return nil
+    end
+
+    # Para cada grupo, coletar unidades únicas com um registro representativo por unidade
+    pares = fatos.pluck(Arel.sql(grupo_col), Arel.sql("dim_unidade_amostral.id_unidade"), :id_registro)
+    grupos_unicos = pares.map(&:first).uniq
+
+    return nil if grupos_unicos.empty?
+
+    unidades_por_grupo = {}
+    pares.each do |grupo_id, unidade_id, reg_id|
+      unidades_por_grupo[grupo_id] ||= {}
+      unidades_por_grupo[grupo_id][unidade_id] ||= reg_id
+    end
 
     valores = []
     grupos = []
+    nome_variavel = nil
 
-    ids_por_grupo.each do |nome_grupo, ids|
-      vals = ValorVariavel.where(variavel_id: variavel.id, id_nivel_aplicacao: ids)
-        .pluck(:valor).map(&:to_f)
+    unidades_por_grupo.each do |grupo_id, unidades_reg|
+      nome_grupo = grupo_label.call(grupo_id)
+      unidades_reg.each do |_unidade_id, reg_id|
+        var = Dw::DimVariavelRegistro
+          .find_by(id_registro: reg_id, id_variavel: variavel_id)
 
-      vals.each do |v|
-        valores << v
+        next unless var&.valor_numerico
+
+        nome_variavel ||= var.nome_variavel
+        valores << var.valor_numerico.to_f
         grupos << nome_grupo
       end
     end
 
     return nil if valores.empty?
 
-    { valores: valores, grupos: grupos, nome_variavel: variavel.nome }
+    { valores: valores, grupos: grupos, nome_variavel: nome_variavel || "Variável" }
   end
 
-  # ==================== OLTP: Vetor Único ====================
+  # ==================== DW: Vetor Único ====================
 
   def montar_vetor_unico(estudo_id:, params:)
-    variavel = Variavel.find_by(id: params[:variavel_id], estudo_id: estudo_id)
-    return nil unless variavel
+    variavel_id = params[:variavel_id]
+    return nil if variavel_id.blank?
 
-    valores = ValorVariavel.where(variavel_id: variavel.id)
-      .joins(:variavel).where(variaveis: { estudo_id: estudo_id })
+    fatos = base_fatos_dw(estudo_id: estudo_id, params: params)
+      .joins(evento: :unidade_amostral)
 
-    valores = filtrar_valores_variaveis(valores, params: params, estudo_id: estudo_id)
+    unidades_ids = fatos.distinct.pluck("dim_unidade_amostral.id_unidade").sort
 
-    dados = valores.pluck(:valor).map(&:to_f)
+    dados = []
+    nome_variavel = nil
+
+    unidades_ids.each do |unidade_id|
+      reg_id = fatos.where(dim_unidade_amostral: { id_unidade: unidade_id }).pick(:id_registro)
+      var = Dw::DimVariavelRegistro.find_by(id_registro: reg_id, id_variavel: variavel_id)
+      next unless var&.valor_numerico
+
+      nome_variavel ||= var.nome_variavel
+      dados << var.valor_numerico.to_f
+    end
+
     return nil if dados.empty?
 
-    { dados: dados, nome_variavel: variavel.nome }
+    { dados: dados, nome_variavel: nome_variavel || "Variável" }
   end
 
   # ==================== DW: Matriz de Acumulação ====================
@@ -266,46 +332,18 @@ class ServicoDadosAnalise
     fatos
   end
 
-  def filtrar_valores_variaveis(valores, params:, estudo_id:)
-    return valores unless params[:filtro_campanhas].present?
+  def valores_variavel_por_unidade(estudo_id:, params:, variavel_id:, unidade_ids:)
+    fatos = base_fatos_dw(estudo_id: estudo_id, params: params)
+      .joins(evento: :unidade_amostral)
+      .where(dim_unidade_amostral: { id_unidade: unidade_ids })
 
-    nivel_ids = ids_do_escopo_estudo(estudo_id: estudo_id, params: params)
-    valores.where(id_nivel_aplicacao: nivel_ids) if nivel_ids.present?
-    valores
-  end
+    unidades = fatos.distinct.pluck("dim_unidade_amostral.id_unidade")
 
-  def ids_do_escopo_estudo(estudo_id:, params:)
-    campanhas = Campanha.where(estudo_id: estudo_id)
-    campanhas = campanhas.where(id: params[:filtro_campanhas]) if params[:filtro_campanhas].present?
-
-    unidades = UnidadeAmostral.where(campanha_id: campanhas.select(:id))
-    eventos = EventoAmostragem.where(unidade_amostral_id: unidades.select(:id))
-
-    campanhas.pluck(:id) + unidades.pluck(:id) + eventos.pluck(:id)
-  end
-
-  def obter_ids_por_grupo(estudo_id:, agrupar_por:, params:)
-    campanhas = Campanha.where(estudo_id: estudo_id)
-    campanhas = campanhas.where(id: params[:filtro_campanhas]) if params[:filtro_campanhas].present?
-
-    case agrupar_por
-    when "campanha"
-      campanhas.each_with_object({}) do |c, hash|
-        hash[c.nome] = [ c.id ]
-      end
-    when "unidade_amostral"
-      unidades = UnidadeAmostral.where(campanha_id: campanhas.select(:id))
-      unidades.each_with_object({}) do |u, hash|
-        hash[u.nome] = [ u.id ]
-      end
-    when "evento_amostragem"
-      unidades = UnidadeAmostral.where(campanha_id: campanhas.select(:id))
-      eventos = EventoAmostragem.where(unidade_amostral_id: unidades.select(:id))
-      eventos.each_with_object({}) do |e, hash|
-        hash["Evento #{e.id}"] = [ e.id ]
-      end
-    else
-      {}
+    unidades.filter_map do |unidade_id|
+      reg_id = fatos.where(dim_unidade_amostral: { id_unidade: unidade_id }).pick(:id_registro)
+      Dw::DimVariavelRegistro
+        .where(id_registro: reg_id, id_variavel: variavel_id)
+        .pick(:valor_numerico)&.to_f
     end
   end
 
