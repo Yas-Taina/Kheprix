@@ -1,133 +1,148 @@
 # frozen_string_literal: true
 
-# Trava de Segurança: Garantir que o seed rode Apenas no OLTP (primary)
+# Trava de Segurança
 current_db = ActiveRecord::Base.connection_db_config.name.to_s
-if current_db.include?("dw") || current_db.include?("datawarehouse")
-  puts "🚫 Operação cancelada: Este seed foi projetado apenas para o banco Transacional (OLTP)."
-  puts "Banco atual detectado: #{current_db}"
+if current_db.include?("dw")
+  puts "🚫 Erro: Seed não pode rodar no DW."
   exit
 end
 
-puts "🌱 Iniciando o povoamento do banco de dados OLTP (Transacional)..."
+puts "🌱 Iniciando Seed Hierárquico Completo (Simulação de Dados Ecológicos realistas)..."
 
-# Limpeza opcional (cuidado em PRD, mas útil em dev)
+# 1. Limpeza
 puts "Limpando registros antigos..."
 ValorVariavel.delete_all
 Variavel.delete_all
+RegistroOcorrencia.delete_all
+EventoAmostragem.delete_all
+UnidadeAmostral.delete_all
 Especie.delete_all
 Campanha.delete_all
 Colaborador.delete_all
 Estudo.delete_all
 Usuario.delete_all
 
-# 1. Criar 10 Usuários
-puts "Criando 10 Usuários..."
-usuarios = []
-10.times do |i|
-  usuarios << Usuario.create!(
-    nome: "Pesquisador #{i + 1}",
-    email: "pesquisador#{i + 1}@kheprix.com",
-    password: "senha_segura_123", # Password_digest será gerado pelo has_secure_password se o modelo tiver
-    password_confirmation: "senha_segura_123"
+# --- DADOS DE APOIO ---
+FASES_LUA = ["Nova", "Crescente", "Cheia", "Minguante"]
+TIPOS_MATA = ["Primária", "Secundária (Capoeira)", "Mata de Galeria", "Várzea"]
+METODOS_COLETA = ["Armadilha Malaise", "Pitfall", "Rede Entomológica", "Guarda-chuva Entomológico"]
+
+# 2. Usuários
+puts "Criando 20 Usuários Genéricos..."
+NOMES_GENERICOS = [
+  "Dr. Ricardo Silva", "Dra. Helena Souza", "Msc. Roberto Oliveira", 
+  "Profa. Beatriz Costa", "Pesquisador João Santos", "Dra. Clarice Mendes",
+  "Msc. André Lima", "Bio. Patrícia Rocha", "Dr. Fernando Almeida",
+  "Pesquisadora Aline Ferreira", "Msc. Carlos Eduardo", "Dra. Sofia Martins",
+  "Dr. Lucas Pereira", "Bio. Renata Gomes", "Msc. Juliana Lopes",
+  "Dr. Marcos Vinícius", "Dra. Amanda Silva", "Pesquisador Igor Souza",
+  "Msc. Camila Diniz", "Bio. Bruno Santos"
+]
+
+usuarios_base = []
+NOMES_GENERICOS.each_with_index do |nome, i|
+  usuarios_base << Usuario.create!(
+    nome: nome, 
+    email: "pesquisador#{i + 1}@kheprix.com", 
+    password: "password123", 
+    password_confirmation: "password123"
   )
 end
 
-# 2. Criar 5 Estudos Iniciais
-puts "Criando 5 Estudos..."
-estudos = []
-5.times do |i|
-  estudos << Estudo.create!(
-    nome: "Monitoramento de Bioindicadores - Região #{('A'..'E').to_a[i]}",
-    observacoes: "Estudo longitudinal para avaliar a riqueza e abundância de insetos na região #{('A'..'E').to_a[i]}."
-  )
-end
+# 3. Estudos (5 cenários diferentes)
+puts "Criando Estudos e Variáveis..."
+CENARIOS = [
+  { nome: "Biodiversidade de Coleoptera no Cerrado", especie_base: "Besouro" },
+  { nome: "Monitoramento de Culicidae em Áreas Urbanas", especie_base: "Mosquito" },
+  { nome: "Fauna de Formicidae em Gradiente Altitudinal", especie_base: "Formiga" },
+  { nome: "Comunidade de Lepidoptera em Área de Reflorestamento", especie_base: "Borboleta" },
+  { nome: "Abundância de Diptera em Mata Atlântica", especie_base: "Mosca" }
+]
 
-# Vincular colaboradores aos estudos
-estudos.each do |estudo|
-  # Atribui 2 pesquisadores aleatórios para cada estudo
-  pesquisadores_estudo = usuarios.sample(2)
-  pesquisadores_estudo.each do |usuario|
-    Colaborador.create!(
-      estudo_id: estudo.id,
-      usuario_id: usuario.id,
-      perfil: [:colaborador, :proprietario].sample
-    )
-  end
-end
+EPITETOS = ["exemplaris", "secundus", "tertius"]
 
-# 3. Criar Espécies Base e Campanhas
-# Vamos criar algumas tabelas de contexto para receber os 1000 registros
-especies_geradas = []
-estudos.each do |estudo|
+CENARIOS.each do |cenario|
+  estudo = Estudo.create!(nome: cenario[:nome], observacoes: "Estudo acadêmico para TCC.")
+
+  # Atribui Colaboradores Aleatórios
+  equipe = usuarios_base.sample(3)
+  Colaborador.create!(estudo: estudo, usuario: equipe[0], perfil: :proprietario)
+  Colaborador.create!(estudo: estudo, usuario: equipe[1], perfil: :colaborador)
+  Colaborador.create!(estudo: estudo, usuario: equipe[2], perfil: :colaborador)
+
+  # --- DEFINIÇÃO DE VARIÁVEIS POR NÍVEL ---
+  var_campanha = Variavel.create!(estudo: estudo, nome: "Fase da Lua", metrica: "Nome", nivel_aplicacao: :campanha, tipo_dado: :string)
+  var_unidade = Variavel.create!(estudo: estudo, nome: "Tipo de Mata", metrica: "Nome", nivel_aplicacao: :unidade, tipo_dado: :string)
+  var_evento = Variavel.create!(estudo: estudo, nome: "Temperatura do Ar", metrica: "Celsius", nivel_aplicacao: :evento, tipo_dado: :number)
+  var_registro = Variavel.create!(estudo: estudo, nome: "Massa do Lote", metrica: "Gramas", nivel_aplicacao: :registro, tipo_dado: :number)
+
+  # Criar 3 espécies específicas para este estudo
+  especies = []
   3.times do |i|
-    especies_geradas << Especie.create!(
-      estudo_id: estudo.id,
-      nome_popular: "Inseto Teste #{i}-#{estudo.id}",
-      classe: "Insecta",
-      endemismo: true
+    especies << Especie.create!(
+      estudo: estudo,
+      nome_popular: "#{cenario[:especie_base]} #{i+1}",
+      genero: "#{cenario[:especie_base].first}#{i}",
+      especie: EPITETOS[i],
+      classe: "Insecta"
     )
   end
 
-  # Criar uma Campanha representativa para o estudo
-  Campanha.create!(
-    estudo_id: estudo.id,
-    nome: "Campanha Anual #{estudo.nome}",
-    data_inicio: 1.year.ago.to_date,
-    data_fim: Date.today,
-    descricao: "Coletas ao longo dos últimos 12 meses."
+  # --- HIERARQUIA DE COLETA ---
+  # 1 Campanha
+  campanha = Campanha.create!(
+    estudo: estudo, 
+    nome: "Campanha Principal - #{estudo.nome}", 
+    data_inicio: 6.months.ago, 
+    data_fim: Date.today
   )
-end
+  ValorVariavel.create!(variavel: var_campanha, id_nivel_aplicacao: campanha.id, valor: FASES_LUA.sample)
 
-# 4. Criar Variáveis (Medições)
-# Nível 0 = campanha, 1 = unidade, 2 = evento, 3 = registro. 
-# Usaremos :registro (3) e tipo :number (1) para simular abundância de espécimes coletados.
-variaveis = []
-estudos.each do |estudo|
-  variaveis << Variavel.create!(
-    estudo_id: estudo.id,
-    nome: "Abundância da Espécie",
-    metrica: "Indivíduos",
-    nivel_aplicacao: 3, # registro
-    tipo_dado: 1        # number
-  )
-end
-
-# 5. Gerar 1000 registros de "Coletas" / Valores Variáveis
-# Variando as datas ao longo dos últimos 12 meses (para testes temporais).
-puts "Gerando 1000 medições/coletas ao longo dos últimos 12 meses..."
-valores_inseridos = 0
-
-# Vamos dividir os 1000 registros proporcionalmente entre as variáveis dos estudos
-registros_por_variavel = 1000 / variaveis.size
-
-variaveis.each do |variavel|
-  estudo = variavel.estudo
-  especies_do_estudo = especies_geradas.select { |e| e.estudo_id == estudo.id }
-  
-  registros_por_variavel.times do
-    # Gera uma data aleatória nos últimos 365 dias
-    random_days_ago = rand(0..365)
-    random_date = random_days_ago.days.ago
-
-    # Simularemos a vinculação ao ID da espécie (id_nivel_aplicacao atua como FK polimórfica conceitual neste schema)
-    especie_alvo = especies_do_estudo.sample
-    
-    ValorVariavel.create!(
-      variavel_id: variavel.id,
-      id_nivel_aplicacao: especie_alvo.id,
-      valor: rand(1..50).to_s, # Simulando de 1 a 50 indivíduos encontrados
-      created_at: random_date,
-      updated_at: random_date
+  # 2 Unidades Amostrais
+  2.times do |u_idx|
+    unidade = UnidadeAmostral.create!(
+      campanha: campanha,
+      nome: "Ponto #{u_idx + 1}",
+      latitude: -23.5489 + (rand * 0.1),
+      longitude: -46.6388 + (rand * 0.1),
+      raio: 50.0,
+      metodo_coleta: METODOS_COLETA.sample
     )
-    valores_inseridos += 1
+    ValorVariavel.create!(variavel: var_unidade, id_nivel_aplicacao: unidade.id, valor: TIPOS_MATA.sample)
+
+    # 3 Eventos de Amostragem por Unidade
+    3.times do |e_idx|
+      evento = EventoAmostragem.create!(
+        unidade_amostral: unidade,
+        horario_inicio: (e_idx + 1).days.ago.change(hour: 8),
+        horario_fim: (e_idx + 1).days.ago.change(hour: 12),
+        esforco_real: "4 horas de coleta ativa"
+      )
+      ValorVariavel.create!(variavel: var_evento, id_nivel_aplicacao: evento.id, valor: rand(22.0..32.0).round(1).to_s)
+
+      # 5 Registros de Ocorrência por Evento
+      5.times do
+        especie = especies.sample
+        registro = RegistroOcorrencia.create!(
+          evento_amostragem: evento,
+          especie: especie,
+          data: evento.horario_inicio.to_date,
+          hora: evento.horario_inicio.strftime("%H:%M"),
+          latitude: unidade.latitude + (rand * 0.001),
+          longitude: unidade.longitude + (rand * 0.001),
+          qtde_individuos: rand(1..20),
+          ausencia_especie: false
+        )
+        # Valor de variável para o registro (Nível 3)
+        ValorVariavel.create!(variavel: var_registro, id_nivel_aplicacao: registro.id, valor: (rand * 50).round(2).to_s)
+      end
+    end
   end
 end
 
-puts "✅ Seed concluído com sucesso!"
-puts "📊 Resumo da Base (OLTP):"
-puts " - Usuários: #{Usuario.count}"
-puts " - Estudos: #{Estudo.count}"
-puts " - Espécies: #{Especie.count}"
-puts " - Campanhas: #{Campanha.count}"
-puts " - Variáveis: #{Variavel.count}"
-puts " - Medições (ValorVariavel): #{ValorVariavel.count}"
+puts "✅ Seed concluído!"
+puts "Estatísticas:"
+puts "- Usuários: #{Usuario.count}"
+puts "- Estudos: #{Estudo.count}"
+puts "- Registros de Ocorrência: #{RegistroOcorrencia.count}"
+puts "- Valores de Variáveis: #{ValorVariavel.count}"
