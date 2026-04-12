@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/values/colors.xml -->
+<resources>
+    <!-- ── Paleta Kheprix ─────────────────────────────────────────────── -->
+    <color name="kheprix_bg">#EDE9DE</color>           <!-- Fundo bege (tela inicial / home) -->
+    <color name="kheprix_bg_green">#A8B89A</color>     <!-- Fundo verde claro (header / formulários auth) -->
+    <color name="kheprix_field_bg">#B8C9AB</color>     <!-- Fundo de campos EditText -->
+    <color name="kheprix_green">#6B7A5E</color>        <!-- Verde musgo (botões primários) -->
+    <color name="kheprix_green_dark">#4A5240</color>   <!-- Texto principal / títulos -->
+    <color name="kheprix_green_mid">#7A8A6E</color>    <!-- Botões secundários (Visualizar Detalhes) -->
+    <color name="kheprix_green_light">#9AAB8A</color>  <!-- Ornamentos / divisores -->
+    <color name="kheprix_field_border">#7A9169</color> <!-- Borda de campos -->
+    <color name="kheprix_red">#B88A8A</color>          <!-- Lixeira / Recusar / botões destrutivos -->
+    <color name="kheprix_status_threatened">#B05050</color> <!-- Status "Ameaçada" -->
+    <color name="white">#FFFFFF</color>
+</resources>

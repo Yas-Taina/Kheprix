@@ -1,29 +1,34 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseService } from './base.service';
+import { HttpClient } from '@angular/common/http';
 import {
-  EstudoResumo,
-  ListarEstudosParams,
-  CriarEstudoRequest,
-  CriarEstudoResponse,
-} from './models/estudo.model';
+  EstudoListItem,
+  EstudoFiltros,
+  CriarEstudoPayload,
+  EstudoCriadoResponse,
+} from './modelos/estudo.model';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class EstudosService extends BaseService {
-
-  listar(params?: ListarEstudosParams): Observable<EstudoResumo[]> {
-    const queryParams: Record<string, string> = {};
-    if (params?.nome) queryParams['nome'] = params.nome;
-    if (params?.criado_a_partir_de) queryParams['criado_a_partir_de'] = params.criado_a_partir_de;
-    if (params?.criado_ate) queryParams['criado_ate'] = params.criado_ate;
-    return this.get<EstudoResumo[]>('/estudos', queryParams);
+  constructor(http: HttpClient) {
+    super(http);
   }
 
-  criar(body: CriarEstudoRequest): Observable<CriarEstudoResponse> {
-    return this.post<CriarEstudoResponse>('/estudos', body);
+  // GET /estudos
+  listar(filtros?: EstudoFiltros): Observable<EstudoListItem[]> {
+    return this.get<EstudoListItem[]>('/estudos', filtros as Record<string, string | undefined>);
   }
 
-  deletar(id: number): Observable<void> {
-    return this.delete<void>(`/estudos/${id}`);
+  // POST /estudos
+  criar(payload: CriarEstudoPayload): Observable<EstudoCriadoResponse> {
+    return this.post<EstudoCriadoResponse>('/estudos', payload);
+  }
+
+  // DELETE /estudos/:id
+  deletar(id: number): Observable<void | { mensagem: string }> {
+    return this.delete<void | { mensagem: string }>(`/estudos/${id}`);
   }
 }
