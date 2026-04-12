@@ -12,6 +12,12 @@ services:
       - kheprix_oltp_data:/var/lib/postgresql/data
     networks:
       - kheprix_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kheprix_user} -d ${POSTGRES_DB:-kheprix_oltp_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   db_dw:
     image: postgres:17
@@ -26,6 +32,12 @@ services:
       - kheprix_dw_data:/var/lib/postgresql/data
     networks:
       - kheprix_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DW_USER:-kheprix_user} -d ${POSTGRES_DW_DB:-kheprix_dw_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   web:
     build:
@@ -33,7 +45,7 @@ services:
       dockerfile: Dockerfile
     container_name: kheprix_web_container
     restart: unless-stopped
-    entrypoint: ["/bin/bash", "-c", "rm -f tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"]
+    entrypoint: [ "/bin/bash", "-c", "rm -f tmp/pids/server.pid && bundle exec rails db:migrate && bundle exec rails db:seed && bundle exec rails db:migrate:dw && bundle exec rails server -b 0.0.0.0 -p 3000" ]
     ports:
       - "3000:3000"
     environment:
@@ -63,34 +75,34 @@ services:
     volumes:
       - ./backend:/rails
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/up"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/up" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
       db_dw:
-        condition: service_started
+        condition: service_healthy
     networks:
       - kheprix_network
 
-  frontend:
-    build:
-      context: ./frontend/Kheprix
-      dockerfile: Dockerfile
-    container_name: kheprix_frontend_container
-    restart: unless-stopped
-    ports:
-      - "4200:4200"
-    volumes:
-      - ./frontend/Kheprix:/app
-      - /app/node_modules
-    depends_on:
-      - web
-    networks:
-      - kheprix_network
+  # frontend:
+  #   build:
+  #     context: ./frontend/Kheprix
+  #     dockerfile: Dockerfile
+  #   container_name: kheprix_frontend_container
+  #   restart: unless-stopped
+  #   ports:
+  #     - "4200:4200"
+  #   volumes:
+  #     - ./frontend/Kheprix:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - web
+  #   networks:
+  #     - kheprix_network
 
   adminer:
     image: adminer
@@ -158,6 +170,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/config:/opt/airflow/config
+      - ./airflow/sql:/opt/airflow/sql
     command: webserver
     networks:
       - kheprix_network
@@ -197,6 +210,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./airflow/config:/opt/airflow/config
+      - ./airflow/sql:/opt/airflow/sql
     command: scheduler
     networks:
       - kheprix_network
@@ -205,6 +219,7 @@ volumes:
   kheprix_oltp_data:
   kheprix_dw_data:
   kheprix_airflow_db_data:
+
 
 networks:
   kheprix_network:

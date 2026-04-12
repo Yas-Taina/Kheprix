@@ -35,6 +35,8 @@ development:
     host: <%= ENV.fetch("POSTGRES_DW_HOST") { "db_dw" } %> # "db_dw" é o nome no docker-compose
     port: 5432
     migrations_paths: db/dw_migrate
+    schema_search_path: public, staging
+    database_tasks: false
 
 
 # As with config/credentials.yml, you never want to store sensitive information,
