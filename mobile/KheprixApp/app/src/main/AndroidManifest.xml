@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.kheprix">
+
+    <!-- ── Permissões ──────────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 13+ usa READ_MEDIA_IMAGES em vez de READ_EXTERNAL_STORAGE -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:name=".KheprixApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Kheprix"
+        android:usesCleartextTraffic="true">
+
+        <!--
+            usesCleartextTraffic="true" permite HTTP para localhost em debug.
+            Em produção, remova esta flag e use HTTPS.
+        -->
+
+        <!-- FileProvider para câmera (fotos temporárias) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- ── SPLASH ───────────────────────────────────────────────── -->
+        <activity
+            android:name=".ui.SplashActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Kheprix.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ── BOAS-VINDAS ──────────────────────────────────────────── -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- ── AUTENTICAÇÃO ─────────────────────────────────────────── -->
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.CadastroActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.RecuperacaoSenhaActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── HOME ─────────────────────────────────────────────────── -->
+        <activity
+            android:name=".ui.HomeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- ── ESTUDOS ──────────────────────────────────────────────── -->
+        <activity android:name=".ui.EstudosActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.NovoEstudoActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.EstudoDetalheActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+
+        <!-- ── CAMPANHAS ─────────────────────────────────────────────── -->
+        <activity android:name=".ui.CampanhasActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.NovaCampanhaActivityV2"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── UNIDADES AMOSTRAIS ────────────────────────────────────── -->
+        <activity android:name=".ui.UnidadesActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.NovaUnidadeActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── EVENTOS ───────────────────────────────────────────────── -->
+        <activity android:name=".ui.EventosActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.NovoEventoActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── REGISTROS ─────────────────────────────────────────────── -->
+        <activity android:name=".ui.RegistrosActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.NovoRegistroActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.RegistroRapidoActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+
+        <!-- ── ESPÉCIES ──────────────────────────────────────────────── -->
+        <activity android:name=".ui.EspeciesActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.CadastroEspecieActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.EspecieDetalheActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+
+        <!-- ── COLABORADORES / CONVITES ──────────────────────────────── -->
+        <activity android:name=".ui.ColaboradoresActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.ConvitesActivity"
+            android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.AutocadastroEstudoActivity"
+            android:exported="false" android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── OFFLINE WARNING ───────────────────────────────────────── -->
+        <activity android:name=".ui.OfflineWarningActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Kheprix.Dialog"
+            android:screenOrientation="portrait" />
+
+        <!-- ── PERFIL ─────────────────────────────────────────────────── -->
+        <activity android:name=".ui.PerfilActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+    </application>
+</manifest>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema base do app (sem ActionBar) -->
+    <style name="Theme.Kheprix" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/kheprix_green</item>
+        <item name="colorPrimaryVariant">@color/kheprix_green_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/kheprix_red</item>
+        <item name="android:windowBackground">@color/kheprix_bg</item>
+        <item name="android:statusBarColor">@color/kheprix_bg_green</item>
+        <item name="android:navigationBarColor">@color/kheprix_bg</item>
+
+        <!-- Spinner estilo Kheprix -->
+        <item name="android:spinnerStyle">@style/KheprixSpinner</item>
+        <item name="spinnerStyle">@style/KheprixSpinner</item>
+    </style>
+
+    <!-- Tema da Splash (sem status bar) -->
+    <style name="Theme.Kheprix.Splash" parent="Theme.Kheprix">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@color/kheprix_bg</item>
+    </style>
+
+    <!-- Tema Dialog (para OfflineWarningActivity) -->
+    <style name="Theme.Kheprix.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="colorPrimary">@color/kheprix_green</item>
+    </style>
+
+    <!-- Spinner estilo Kheprix -->
+    <style name="KheprixSpinner" parent="Widget.AppCompat.Spinner">
+        <item name="android:background">@drawable/bg_field_green</item>
+        <item name="android:paddingStart">10dp</item>
+    </style>
+
+    <!-- Estilo de botão primário -->
+    <style name="KheprixButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:backgroundTint">@color/kheprix_green</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textSize">15sp</item>
+        <item name="cornerRadius">4dp</item>
+    </style>
+
+    <!-- Estilo de botão destrutivo (vermelho) -->
+    <style name="KheprixButtonDestructive" parent="KheprixButton">
+        <item name="android:backgroundTint">@color/kheprix_red</item>
+    </style>
+
+
+    <!-- Estilo dos itens do Navigation Drawer -->
+    <style name="KheprixNavItem" parent="@android:style/TextAppearance.Medium">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/kheprix_green_dark</item>
+    </style>
+
+</resources>

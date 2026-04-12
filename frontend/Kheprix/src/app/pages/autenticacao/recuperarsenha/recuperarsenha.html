@@ -1,92 +1,76 @@
-  <div class="auth-card">
-    <ng-container *ngIf="etapa === 'email'">
-      <h1 class="auth-title">Recuperar senha</h1>
-      <p class="auth-sub">Informe seu e-mail e enviaremos um token de verificação.</p>
+<div class="auth-page">
 
-      <form [formGroup]="emailForm" (ngSubmit)="enviarEmail()" novalidate>
+  <div class="auth-form-col">
 
-        <div class="field">
-          <label for="email">E-mail</label>
-          <input id="email" type="email" formControlName="email" placeholder="voce@dominio.com" />
-          <span class="field-error"
-            *ngIf="emailForm.get('email')?.invalid && emailForm.get('email')?.touched">
-            E-mail inválido.
-          </span>
-        </div>
-
-        <p class="auth-error" *ngIf="error">{{ error }}</p>
-
-        <button type="submit" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Enviando…' : 'Enviar token' }}
-        </button>
-
-        <div class="auth-links">
-          <a routerLink="/login">Voltar ao login</a>
-        </div>
-
-      </form>
+    <!-- ETAPA 1: solicitar token -->
+    <ng-container *ngIf="!tokenEnviado">
+      <div class="form-group">
+        <label class="field-label">E-mail:</label>
+        <input class="field-input" type="email" [(ngModel)]="email" />
+      </div>
+      <button class="btn-primary btn-confirmar" style="margin-bottom:20px" (click)="enviarToken()" [disabled]="carregando">
+        {{ carregando ? 'Aguarde...' : 'Enviar Token' }}
+      </button>
+      <div class="form-group" style="opacity:0.4; pointer-events:none;">
+        <label class="field-label">Token:</label>
+        <input class="field-input" disabled />
+      </div>
+      <button class="btn-primary btn-confirmar" disabled>Confirmar</button>
     </ng-container>
 
-    <ng-container *ngIf="etapa === 'token'">
-      <h1 class="auth-title">Verificar token</h1>
-      <p class="auth-sub">Insira o token recebido por e-mail para continuar.</p>
-
-      <form [formGroup]="tokenForm" (ngSubmit)="validarToken()" novalidate>
-
-        <div class="field">
-          <label for="token">Token</label>
-          <input id="token" type="text" formControlName="token" placeholder="Cole o token aqui" />
-          <span class="field-error"
-            *ngIf="tokenForm.get('token')?.invalid && tokenForm.get('token')?.touched">
-            Token obrigatório.
-          </span>
-        </div>
-
-        <p class="auth-error" *ngIf="error">{{ error }}</p>
-
-        <button type="submit" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Validando…' : 'Continuar' }}
-        </button>
-
-        <div class="auth-links">
-          <a routerLink="/login">Voltar ao login</a>
-        </div>
-
-      </form>
+    <!-- ETAPA 2: validar token -->
+    <ng-container *ngIf="tokenEnviado && !tokenValido">
+      <div class="form-group">
+        <label class="field-label">E-mail:</label>
+        <input class="field-input" type="email" [(ngModel)]="email" disabled />
+      </div>
+      <div style="margin-bottom:20px;">
+        <span class="sucesso-msg">Token enviado para o seu e-mail.</span>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Token:</label>
+        <input class="field-input" type="text" [(ngModel)]="token" />
+      </div>
+      <div class="error-msg" *ngIf="erro">{{ erro }}</div>
+      <button class="btn-primary btn-confirmar" (click)="confirmarToken()" [disabled]="carregando">
+        {{ carregando ? 'Validando...' : 'Confirmar' }}
+      </button>
     </ng-container>
 
-    <ng-container *ngIf="etapa === 'nova-senha'">
-      <h1 class="auth-title">Nova senha</h1>
-      <p class="auth-sub">Escolha uma senha forte para sua conta.</p>
-
-      <form [formGroup]="senhaForm" (ngSubmit)="redefinirSenha()" novalidate>
-
-        <div class="field">
-          <label for="nova_senha">Nova senha</label>
-          <input id="nova_senha" type="password" formControlName="nova_senha" placeholder="Mínimo 8 caracteres" />
-          <span class="field-error"
-            *ngIf="senhaForm.get('nova_senha')?.invalid && senhaForm.get('nova_senha')?.touched">
-            Mínimo de 8 caracteres.
-          </span>
-        </div>
-
-        <div class="field">
-          <label for="confirmar_senha">Confirmar nova senha</label>
-          <input id="confirmar_senha" type="password" formControlName="confirmar_senha" placeholder="Repita a senha" />
-          <span class="field-error"
-            *ngIf="senhaForm.errors?.['senhasDivergentes'] && senhaForm.get('confirmar_senha')?.touched">
-            As senhas não coincidem.
-          </span>
-        </div>
-
-        <p class="auth-error" *ngIf="error">{{ error }}</p>
-        <p class="auth-sucesso" *ngIf="sucesso">{{ sucesso }}</p>
-
-        <button type="submit" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Alterando…' : 'Alterar senha' }}
-        </button>
-
-      </form>
+    <!-- ETAPA 3: nova senha -->
+    <ng-container *ngIf="tokenValido">
+      <div class="form-group">
+        <label class="field-label">Nova senha:</label>
+        <input class="field-input" type="password" [(ngModel)]="novaSenha" />
+      </div>
+      <div class="form-group">
+        <label class="field-label">Confirme a senha:</label>
+        <input class="field-input" type="password" [(ngModel)]="confirmarSenha" />
+      </div>
+      <div class="error-msg"  *ngIf="erro">{{ erro }}</div>
+      <div class="sucesso-msg" *ngIf="sucesso">{{ sucesso }}</div>
+      <button class="btn-primary btn-confirmar" (click)="redefinirSenha()" [disabled]="carregando">
+        {{ carregando ? 'Salvando...' : 'Confirmar' }}
+      </button>
     </ng-container>
 
   </div>
+
+  <div class="auth-deco-col">
+    <h2 class="auth-title" style="font-size:38px; letter-spacing:0.2em;">
+      {{ tokenValido ? 'RECUPERAÇÃO DE SENHA' : 'RECUPERAÇÃO DE SENHA' }}
+    </h2>
+    <div class="deco-beetle">[ imagem besouro aqui ]</div>
+    <div class="deco-lines">
+      <span class="deco-line"></span>
+      <span class="deco-line"></span>
+    </div>
+    <p class="auth-subtitle" *ngIf="!tokenValido">
+      Informe seu email e aguarde o envio do token de confirmação. Então, informe o token para prosseguir.
+    </p>
+    <p class="auth-subtitle" *ngIf="tokenValido">
+      Insira uma nova senha e confirme sua escolha
+    </p>
+  </div>
+
+</div>

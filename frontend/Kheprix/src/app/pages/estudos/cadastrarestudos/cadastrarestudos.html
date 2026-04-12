@@ -1,105 +1,68 @@
-    <!-- To do: ajustar ordem dos formularios -->
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
- 
+<div class="page-container">
 
-      <fieldset class="fieldset">
-        <legend>Dados gerais</legend>
- 
-        <div class="field">
-          <label for="nome">Nome do estudo *</label>
-          <input id="nome" type="text" formControlName="nome" placeholder="Ex.: Monitoramento de anfíbios" />
-          <span class="field-error" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
-            Nome obrigatório.
-          </span>
-        </div>
- 
-        <div class="field">
-          <label for="observacoes">Observações</label>
-          <textarea id="observacoes" formControlName="observacoes" rows="3"
-            placeholder="Informações adicionais sobre o estudo…"></textarea>
-        </div>
-      </fieldset>
- 
-      <fieldset class="fieldset">
-        <legend>Variáveis</legend>
- 
-        <div formArrayName="variaveis">
-          <div
-            *ngFor="let variavel of variaveis.controls; let i = index"
-            [formGroupName]="i"
-            class="variavel-card">
- 
-            <div class="variavel-header">
-              <span class="variavel-label">Variável {{ i + 1 }}</span>
-              <button
-                type="button"
-                class="btn-remove"
-                (click)="removerVariavel(i)"
-                [disabled]="variaveis.length === 1"
-                title="Remover variável">
-                ✕
-              </button>
-            </div>
- 
-            <div class="fields-grid">
- 
-              <div class="field">
-                <label [for]="'var-nome-' + i">Nome *</label>
-                <input [id]="'var-nome-' + i" type="text" formControlName="nome"
-                  placeholder="Ex.: Temperatura" />
-                <span class="field-error"
-                  *ngIf="variavel.get('nome')?.invalid && variavel.get('nome')?.touched">
-                  Nome obrigatório.
-                </span>
-              </div>
- 
-              <div class="field">
-                <label [for]="'var-nivel-' + i">Nível de aplicação *</label>
-                <select [id]="'var-nivel-' + i" formControlName="nivel_aplicacao">
-                  <option value="">Selecione…</option>
-                  <option *ngFor="let n of niveisAplicacao" [value]="n">{{ n | titlecase }}</option>
-                </select>
-                <span class="field-error"
-                  *ngIf="variavel.get('nivel_aplicacao')?.invalid && variavel.get('nivel_aplicacao')?.touched">
-                  Obrigatório.
-                </span>
-              </div>
- 
-              <div class="field">
-                <label [for]="'var-tipo-' + i">Tipo de dado *</label>
-                <select [id]="'var-tipo-' + i" formControlName="tipo_dado">
-                  <option value="">Selecione…</option>
-                  <option *ngFor="let t of tiposDado" [value]="t">{{ t | titlecase }}</option>
-                </select>
-                <span class="field-error"
-                  *ngIf="variavel.get('tipo_dado')?.invalid && variavel.get('tipo_dado')?.touched">
-                  Obrigatório.
-                </span>
-              </div>
- 
-              <div class="field">
-                <label [for]="'var-metrica-' + i">Métrica</label>
-                <input [id]="'var-metrica-' + i" type="text" formControlName="metrica"
-                  placeholder="Ex.: °C, m², unidades" />
-              </div>
- 
-            </div>
-          </div>
-        </div>
- 
-        <button type="button" class="btn-add" (click)="adicionarVariavel()">
-          + Adicionar variável
-        </button>
- 
-      </fieldset>
- 
-      <p class="auth-error" *ngIf="error">{{ error }}</p>
- 
-      <div class="form-actions">
-        <a routerLink="/estudos" class="btn-secondary">Cancelar</a>
-        <button type="submit" class="btn-primary" [disabled]="loading">
-          {{ loading ? 'Salvando…' : 'Criar estudo' }}
-        </button>
+  <div class="page-header">
+    <h1>N<span class="sc">ovo</span> E<span class="sc">studo</span></h1>
+    <div class="divider">❧</div>
+  </div>
+
+  <!-- Nome -->
+  <div class="form-group">
+    <label class="field-label">Nome do estudo</label>
+    <input class="field-input" type="text" [(ngModel)]="nome" placeholder="Placeholder" />
+  </div>
+
+  <!-- Variáveis -->
+  <div class="section-header">
+    <label class="field-label">Variáveis Estudadas</label>
+    <button class="icon-btn primary add-var-btn" title="Adicionar variável" (click)="adicionarVariavel()">
+      &#oplus; <span class="add-circle">+</span>
+    </button>
+  </div>
+
+  <div class="variable-block" *ngFor="let v of variaveis; let i = index">
+    <div class="var-grid">
+      <div>
+        <label class="field-label-sm">Nome</label>
+        <input class="field-input" type="text" [(ngModel)]="v.nome" placeholder="Placeholder" />
       </div>
- 
-    </form>
+      <div>
+        <label class="field-label-sm">Nível do Estudo</label>
+        <select class="field-input" [(ngModel)]="v.nivel_aplicacao">
+          <option *ngFor="let n of niveisAplicacao" [value]="n">{{ labelNivel(n) }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label-sm">Tipo de Dado</label>
+        <select class="field-input" [(ngModel)]="v.tipo_dado">
+          <option value="numerico">Numérico</option>
+          <option value="tipado">Tipado</option>
+          <option value="data">Data</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label-sm">Métrica</label>
+        <input class="field-input" type="text" [(ngModel)]="v.metrica" placeholder="ex: °C" />
+      </div>
+      <div class="var-remove" *ngIf="variaveis.length > 1">
+        <button class="icon-btn danger" (click)="removerVariavel(i)" title="Remover">&#10005;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Observações -->
+  <div class="form-group" style="margin-top:16px;">
+    <label class="field-label">Observações</label>
+    <textarea class="field-input" [(ngModel)]="observacoes" placeholder="Placeholder"></textarea>
+  </div>
+
+  <div class="error-msg" *ngIf="erro">{{ erro }}</div>
+
+  <!-- Rodapé -->
+  <div class="form-footer">
+    <button class="btn-primary" (click)="confirmar()" [disabled]="carregando">
+      {{ carregando ? 'Salvando...' : 'Confirmar' }}
+    </button>
+    <button class="back-btn" (click)="voltar()">&#9664;</button>
+  </div>
+
+</div>
