@@ -1,4 +1,4 @@
-class CreateDwBronzeLayer < ActiveRecord::Migration[8.0]
+class CreateDwStagingLayer < ActiveRecord::Migration[8.0]
   def up
     execute "CREATE SCHEMA IF NOT EXISTS staging;"
 

@@ -18,36 +18,36 @@ default_args = {
 }
 
 TASKS_CONFIG = {
-    'silver_especies':             {'target': 'public.silver_especies',             'pks': ['id_especie'],                            'sql': 'silver/silver_especies.sql',             'conflict': 'UPDATE'},
-    'silver_variaveis':            {'target': 'public.silver_variaveis',            'pks': ['id'],                                    'sql': 'silver/silver_variaveis.sql',            'conflict': 'UPDATE'},
-    'silver_estudos':              {'target': 'public.silver_estudos',              'pks': ['id_estudo'],                             'sql': 'silver/silver_estudos.sql',              'conflict': 'UPDATE'},
-    'silver_campanhas':            {'target': 'public.silver_campanhas',            'pks': ['id_campanha'],                           'sql': 'silver/silver_campanhas.sql',            'conflict': 'UPDATE'},
-    'silver_unidades_amostrais':   {'target': 'public.silver_unidades_amostrais',   'pks': ['id_unidade'],                            'sql': 'silver/silver_unidades_amostrais.sql',   'conflict': 'UPDATE'},
-    'silver_eventos_amostragem':   {'target': 'public.silver_eventos_amostragem',   'pks': ['id_evento'],                             'sql': 'silver/silver_eventos_amostragem.sql',   'conflict': 'UPDATE'},
-    'silver_registro_ocorrencias': {'target': 'public.silver_registro_ocorrencias', 'pks': ['id_registro'],                           'sql': 'silver/silver_registro_ocorrencias.sql', 'conflict': 'UPDATE'},
-    'silver_valores_variaveis':    {'target': 'public.silver_valores_variaveis',    'pks': ['id'],                                    'sql': 'silver/silver_valores_variaveis.sql',    'conflict': 'UPDATE'},
-    'silver_variaveis_agregadas':  {'target': 'public.silver_variaveis_agregadas',  'pks': ['id_nivel_aplicacao', 'nivel_aplicacao'], 'sql': 'silver/silver_variaveis_agregadas.sql',  'conflict': 'UPDATE'},
-    'gold_dim_tempo':               {'target': 'public.dim_tempo',               'pks': ['id_data'],      'sql': 'gold/dimensions/dim_tempo.sql',               'conflict': 'NOTHING'},
-    'gold_dim_especie':             {'target': 'public.dim_especie',             'pks': ['id_especie'],   'sql': 'gold/dimensions/dim_especie.sql',             'conflict': 'UPDATE'},
-    'gold_dim_variavel':            {'target': 'public.dim_variavel',            'pks': ['id'],           'sql': 'gold/dimensions/dim_variavel.sql',            'conflict': 'UPDATE'},
-    'gold_dim_estudo':              {'target': 'public.dim_estudo',              'pks': ['id_estudo'],    'sql': 'gold/dimensions/dim_estudo.sql',              'conflict': 'UPDATE'},
-    'gold_dim_campanha':            {'target': 'public.dim_campanha',            'pks': ['id_campanha'],  'sql': 'gold/dimensions/dim_campanha.sql',            'conflict': 'UPDATE'},
-    'gold_dim_unidade_amostral':    {'target': 'public.dim_unidade_amostral',    'pks': ['id_unidade'],   'sql': 'gold/dimensions/dim_unidade_amostral.sql',    'conflict': 'UPDATE'},
-    'gold_dim_evento_amostragem':   {'target': 'public.dim_evento_amostragem',   'pks': ['id_evento'],    'sql': 'gold/dimensions/dim_evento_amostragem.sql',   'conflict': 'UPDATE'},
-    'gold_dim_registro_ocorrencia': {'target': 'public.dim_registro_ocorrencia', 'pks': ['id_registro'],  'sql': 'gold/dimensions/dim_registro_ocorrencia.sql', 'conflict': 'UPDATE'},
-    'gold_fato_medicao_entomologica': {'target': 'public.fato_medicao_entomologica', 'pks': ['id_registro'],                'sql': 'gold/facts/fato_medicao_entomologica.sql', 'conflict': 'UPDATE'},
-    'gold_fato_variaveis_unificadas': {'target': 'public.fato_variaveis_unificadas', 'pks': ['id_registro', 'id_variavel'], 'sql': 'gold/facts/fato_variaveis_unificadas.sql', 'conflict': 'UPDATE'},
-    'gold_presentation_indicadores': {'target': 'public.indicadores_dashboard', 'pks': ['id_registro'],                'sql': 'gold/presentation/indicadores_dashboard.sql', 'conflict': 'UPDATE'},
-    'gold_presentation_analises':    {'target': 'public.analises_estatisticas', 'pks': ['id_registro', 'id_variavel'], 'sql': 'gold/presentation/analises_estatisticas.sql',  'conflict': 'UPDATE'},
+    'silver_especies':                {'target': 'public.silver_especies',             'pks': ['id_especie'],                            'sql': 'silver/silver_especies.sql',                  'conflict': 'UPDATE'},
+    'silver_variaveis':               {'target': 'public.silver_variaveis',            'pks': ['id'],                                    'sql': 'silver/silver_variaveis.sql',                 'conflict': 'UPDATE'},
+    'silver_estudos':                 {'target': 'public.silver_estudos',              'pks': ['id_estudo'],                             'sql': 'silver/silver_estudos.sql',                   'conflict': 'UPDATE'},
+    'silver_campanhas':               {'target': 'public.silver_campanhas',            'pks': ['id_campanha'],                           'sql': 'silver/silver_campanhas.sql',                 'conflict': 'UPDATE'},
+    'silver_unidades_amostrais':      {'target': 'public.silver_unidades_amostrais',   'pks': ['id_unidade'],                            'sql': 'silver/silver_unidades_amostrais.sql',        'conflict': 'UPDATE'},
+    'silver_eventos_amostragem':      {'target': 'public.silver_eventos_amostragem',   'pks': ['id_evento'],                             'sql': 'silver/silver_eventos_amostragem.sql',        'conflict': 'UPDATE'},
+    'silver_registro_ocorrencias':    {'target': 'public.silver_registro_ocorrencias', 'pks': ['id_registro'],                           'sql': 'silver/silver_registro_ocorrencias.sql',      'conflict': 'UPDATE'},
+    'silver_valores_variaveis':       {'target': 'public.silver_valores_variaveis',    'pks': ['id'],                                    'sql': 'silver/silver_valores_variaveis.sql',         'conflict': 'UPDATE'},
+    'silver_variaveis_agregadas':     {'target': 'public.silver_variaveis_agregadas',  'pks': ['id_nivel_aplicacao', 'nivel_aplicacao'], 'sql': 'silver/silver_variaveis_agregadas.sql',       'conflict': 'UPDATE'},
+    'gold_dim_tempo':                 {'target': 'public.dim_tempo',                   'pks': ['id_data'],                               'sql': 'gold/dimensions/dim_tempo.sql',               'conflict': 'NOTHING'},
+    'gold_dim_especie':               {'target': 'public.dim_especie',                 'pks': ['id_especie'],                            'sql': 'gold/dimensions/dim_especie.sql',             'conflict': 'UPDATE'},
+    'gold_dim_variavel':              {'target': 'public.dim_variavel',                'pks': ['id'],                                    'sql': 'gold/dimensions/dim_variavel.sql',            'conflict': 'UPDATE'},
+    'gold_dim_estudo':                {'target': 'public.dim_estudo',                  'pks': ['id_estudo'],                             'sql': 'gold/dimensions/dim_estudo.sql',              'conflict': 'UPDATE'},
+    'gold_dim_campanha':              {'target': 'public.dim_campanha',                'pks': ['id_campanha'],                           'sql': 'gold/dimensions/dim_campanha.sql',            'conflict': 'UPDATE'},
+    'gold_dim_unidade_amostral':      {'target': 'public.dim_unidade_amostral',        'pks': ['id_unidade'],                            'sql': 'gold/dimensions/dim_unidade_amostral.sql',    'conflict': 'UPDATE'},
+    'gold_dim_evento_amostragem':     {'target': 'public.dim_evento_amostragem',       'pks': ['id_evento'],                             'sql': 'gold/dimensions/dim_evento_amostragem.sql',   'conflict': 'UPDATE'},
+    'gold_dim_registro_ocorrencia':   {'target': 'public.dim_registro_ocorrencia',     'pks': ['id_registro'],                           'sql': 'gold/dimensions/dim_registro_ocorrencia.sql', 'conflict': 'UPDATE'},
+    'gold_fato_medicao_entomologica': {'target': 'public.fato_medicao_entomologica',   'pks': ['id_registro'],                           'sql': 'gold/facts/fato_medicao_entomologica.sql',    'conflict': 'UPDATE'},
+    'gold_fato_variaveis_unificadas': {'target': 'public.fato_variaveis_unificadas',   'pks': ['id_registro', 'id_variavel'],            'sql': 'gold/facts/fato_variaveis_unificadas.sql',    'conflict': 'UPDATE'},
+    'gold_presentation_indicadores':  {'target': 'public.indicadores_dashboard',       'pks': ['id_registro'],                           'sql': 'gold/presentation/indicadores_dashboard.sql', 'conflict': 'UPDATE'},
+    'gold_presentation_analises':     {'target': 'public.analises_estatisticas',       'pks': ['id_registro', 'id_variavel'],            'sql': 'gold/presentation/analises_estatisticas.sql', 'conflict': 'UPDATE'},
 }
 
 DAG_ID = 'transform_star_schema'
 
 XCOM_TASK_IDS = (
-    [f'silver.{k}'         for k in TASKS_CONFIG if k.startswith('silver_')] +
-    [f'gold.dimensoes.{k}' for k in TASKS_CONFIG if 'dim'  in k] +
-    [f'gold.fatos.{k}'     for k in TASKS_CONFIG if 'fato' in k] +
-    [f'gold.presentation.{k}'     for k in TASKS_CONFIG if k.startswith('gold_presentation_')]
+    [f'silver.{k}'                 for k in TASKS_CONFIG if k.startswith('silver_')] +
+    [f'gold.dimensoes.{k}'         for k in TASKS_CONFIG if 'dim'  in k] +
+    [f'gold.fatos.{k}'             for k in TASKS_CONFIG if 'fato' in k] +
+    [f'gold.presentation.{k}'      for k in TASKS_CONFIG if k.startswith('gold_presentation_')]
 )
 
 
