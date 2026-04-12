@@ -45,6 +45,13 @@ def _verificar_dados_novos(**kwargs) -> bool:
         logging.info("[SHORT CIRCUIT] Carga inicial — processando.")
         return True
 
+    dest_hook = PostgresHook(postgres_conn_id='db_dw')
+    for tabela in TABELAS_MONITORADAS_OLTP:
+        res = dest_hook.get_first(f"SELECT COUNT(*) FROM staging.{tabela}")
+        if res and res[0] == 0:
+            logging.info(f"[SHORT CIRCUIT] staging.{tabela} vazio — DW resetado, forçando recarga.")
+            return True
+
     ultimo_run = max(runs_concluidos, key=lambda r: r.start_date)
     ultima_extracao = ultimo_run.start_date
     logging.info(f"[SHORT CIRCUIT] Última extração iniciou em: {ultima_extracao}")
@@ -72,9 +79,6 @@ def extract_and_load_table(table_name, load_strategy, **kwargs):
     res = dest_hook.get_first(f"SELECT COUNT(*) FROM staging.{table_name}")
     dw_count = res[0] if res else 0
     actual_strategy = 'full' if dw_count == 0 else load_strategy
-
-    if actual_strategy == 'full' and load_strategy == 'incremental':
-        logging.info(f"{table_name}: staging vazio — full load inicial.")
 
     with tempfile.NamedTemporaryFile(suffix='.csv') as tmp_file:
         sql_export = f"COPY {table_name} TO STDOUT WITH CSV HEADER;"

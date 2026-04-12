@@ -49,7 +49,7 @@ class CreateDwPresentationLayer < ActiveRecord::Migration[8.0]
       t.text      :valor_texto
       t.date      :valor_data
     end
-    execute "ALTER TABLE analises_estatisticas ADD PRIMARY KEY (id_registro, id_variavel);"
+    add_index :analises_estatisticas, [:id_registro, :id_variavel], unique: true, name: 'idx_presentation_analises_unique'
     add_index :analises_estatisticas, :id_estudo, name: 'idx_presentation_analises_estudo'
   end
 end
