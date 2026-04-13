@@ -195,7 +195,7 @@ class NovaUnidadeActivity : AppCompatActivity() {
                 background = ContextCompat.getDrawable(this@NovaUnidadeActivity, R.drawable.bg_field_green)
                 setPadding(20, 0, 20, 0)
                 setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-                inputType = if (v.tipoDado == "numerico")
+                inputType = if (v.tipoDado == "number")
                     android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
                 else android.text.InputType.TYPE_CLASS_TEXT
             }
