@@ -1,0 +1,35 @@
+<div class="auth-page">
+      <div class="auth-form-side">
+        <div class="auth-form-box">
+          <div class="form-group">
+            <label class="form-label">E-mail:</label>
+            <input class="form-control" type="email" [(ngModel)]="email" placeholder="seu@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Senha:</label>
+            <input class="form-control" type="password" [(ngModel)]="senha" placeholder="••••••••" />
+          </div>
+          <a class="forgot-link" routerLink="/recuperar-senha">Esqueci minha senha</a>
+          <div *ngIf="erro" class="alert alert-error mt-md">{{ erro }}</div>
+          <button class="btn btn-primary btn-full mt-md" (click)="onLogin()" [disabled]="loading">
+            {{ loading ? 'Entrando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-info-side">
+        <h1 class="auth-title">L O G I N</h1>
+        <!-- PLACEHOLDER: Substituir pela imagem do besouro. Arquivo: src/assets/images/auth-insect.png -->
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cellipse cx='140' cy='140' rx='100' ry='75' fill='none' stroke='%238A7D6E' stroke-width='1.5' stroke-dasharray='5,3'/%3E%3Ccircle cx='140' cy='140' r='38' fill='none' stroke='%238A7D6E' stroke-width='1.5'/%3E%3Cline x1='50' y1='140' x2='80' y2='140' stroke='%238A7D6E' stroke-width='1'/%3E%3Cline x1='200' y1='140' x2='230' y2='140' stroke='%238A7D6E' stroke-width='1'/%3E%3Ctext x='50%25' y='53%25' text-anchor='middle' font-size='11' fill='%238A7D6E' font-family='Georgia'%3EInseto Placeholder%3C/text%3E%3C/svg%3E"
+          alt="Inseto"
+          class="auth-insect"
+        />
+        <div class="auth-divider-lines"></div>
+        <p class="auth-info-text">Faça seu login de usuário para ter acesso ao sistema</p>
+        <p class="auth-info-text">
+          Ainda não tem uma conta?
+          <a routerLink="/cadastro">Faça seu cadastro aqui</a>
+        </p>
+      </div>
+    </div>

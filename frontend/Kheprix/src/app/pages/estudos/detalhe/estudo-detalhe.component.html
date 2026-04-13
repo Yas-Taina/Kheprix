@@ -1,0 +1,67 @@
+    <!-- Topbar de links -->
+    <div class="study-topbar">
+      <div class="study-topbar-item" (click)="irParaCampanhas()">
+        <!-- PLACEHOLDER: Ícone de borboleta. Substituir por <img src="/assets/images/insect-butterfly.png"> -->
+        <div style="font-size:2rem">🦋</div>
+        <span>Campanhas de<br>Coleta de Dados</span>
+      </div>
+      <div class="study-topbar-item" (click)="irParaNovaEspecie()">
+        <!-- PLACEHOLDER: Ícone de joaninha. Substituir por <img src="/assets/images/insect-ladybug.png"> -->
+        <div style="font-size:2rem">🐞</div>
+        <span>Cadastrar<br>Espécies</span>
+      </div>
+      <div class="study-topbar-item" (click)="irParaEspecies()">
+        <!-- PLACEHOLDER: Ícone de mariposa. Substituir por <img src="/assets/images/insect-moth.png"> -->
+        <div style="font-size:2rem">🦗</div>
+        <span>Ver Todas as<br>Espécies</span>
+      </div>
+    </div>
+
+    <div class="page-container" *ngIf="estudo">
+      <!-- Card do estudo -->
+      <div class="card">
+        <div class="estudo-header-row">
+          <div class="estudo-info-left">
+            <h1 class="page-title" style="text-align:left;font-size:1.6rem">{{ estudo.nome }}</h1>
+            <p class="text-muted" style="margin-top:4px">Editado em {{ util.formatDate(estudo.updated_at) }}</p>
+            <div class="d-flex gap-sm mt-md" style="flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" (click)="irParaEditar()">Visualizar Detalhes</button>
+              <button class="btn btn-secondary btn-sm" (click)="abrirExportar()">Exportar Dados</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal exportar -->
+      <div class="modal-backdrop" *ngIf="showExportar" (click)="fecharExportar()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div style="background:var(--color-bg-green-light);padding:var(--space-md);border-radius:var(--border-radius-md) var(--border-radius-md) 0 0;margin:-var(--space-2xl) -var(--space-2xl) var(--space-xl);display:flex;align-items:center;justify-content:space-between">
+            <h2 class="page-title" style="color:var(--color-text-on-green)">Estudos</h2>
+            <button class="modal-close" (click)="fecharExportar()">✕</button>
+          </div>
+          <h3 class="page-title" style="font-size:1.4rem">Exportar Dados</h3>
+          <div class="ornament-divider"><span>⸙</span></div>
+          <div class="form-group">
+            <label class="form-label">Salvar resultado como:</label>
+            <input class="form-control" value="Csv" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Agrupar por:</label>
+            <select class="form-control" [(ngModel)]="agrupamento">
+              <option value="registro_ocorrencia">Registro de ocorrência</option>
+              <option value="evento_amostragem">Evento de amostragem</option>
+              <option value="unidade_amostral">Unidade amostral</option>
+              <option value="campanha">Campanha</option>
+              <option value="especie">Espécie</option>
+            </select>
+          </div>
+          <div *ngIf="exportLoading" class="loading-overlay"><div class="spinner"></div></div>
+          <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
+          <div class="text-center mt-lg">
+            <button class="btn btn-primary" (click)="exportar()" [disabled]="exportLoading">Baixar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="page-container"><div class="loading-overlay"><div class="spinner"></div></div></div>

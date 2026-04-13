@@ -1,0 +1,91 @@
+    <div class="page-container">
+      <h1 class="page-title">Estudos</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <button class="btn btn-primary" (click)="router.navigate(['/estudos/novo'])">
+          Adicionar Estudo &nbsp;⊕
+        </button>
+        <button class="back-btn" (click)="router.navigate(['/inicio'])">◀</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <span class="filter-label">Buscar por:</span>
+        <select class="form-control" [(ngModel)]="tipoBusca" style="min-width:180px">
+          <option value="nome">Nome do Estudo</option>
+          <option value="criado_a_partir_de">Criado a partir de</option>
+          <option value="criado_ate">Criado até</option>
+          <option value="atualizado_a_partir_de">Atualizado a partir de</option>
+          <option value="atualizado_ate">Atualizado até</option>
+        </select>
+        <input class="form-control" type="text" [(ngModel)]="termoBusca" placeholder="Digite sua busca..." style="flex:1" />
+        <button class="btn-icon" (click)="buscar()" title="Buscar">
+          <!-- PLACEHOLDER: Ícone de lupa. Substituir por <img src="/assets/icons/search.svg"> -->
+          🔍
+        </button>
+        <button class="btn-icon" (click)="mostrarFiltros = !mostrarFiltros" title="Filtros avançados">
+          <!-- PLACEHOLDER: Ícone de funil. Substituir por <img src="/assets/icons/filter.svg"> -->
+          🔽
+        </button>
+      </div>
+
+      <!-- Filtros avançados (datas) -->
+      <div *ngIf="mostrarFiltros" class="form-row mb-lg">
+        <div class="form-group">
+          <label class="form-label">Criado a partir de</label>
+          <input class="form-control" type="date" [(ngModel)]="filtros.criado_a_partir_de" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Criado até</label>
+          <input class="form-control" type="date" [(ngModel)]="filtros.criado_ate" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Atualizado a partir de</label>
+          <input class="form-control" type="date" [(ngModel)]="filtros.atualizado_a_partir_de" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Atualizado até</label>
+          <input class="form-control" type="date" [(ngModel)]="filtros.atualizado_ate" />
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Data de Criação</th>
+            <th>Última Alteração</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of estudos" (click)="verDetalhe(e)">
+            <td>{{ e.nome }}</td>
+            <td>{{ util.formatDate(e.created_at) }}</td>
+            <td>{{ util.formatDate(e.updated_at) }}</td>
+            <td (click)="$event.stopPropagation()">
+              <div class="actions-cell">
+                <!-- Somente proprietário vê ícones de colaboradores e lixeira -->
+                <ng-container *ngIf="isProprietario(e)">
+                  <button class="btn-icon" (click)="verColaboradores(e)" title="Colaboradores">
+                    <!-- PLACEHOLDER: Ícone de usuário+. Substituir por <img src="/assets/icons/user-plus.svg"> -->
+                    <span style="font-size:1.2rem">👤+</span>
+                  </button>
+                  <button class="btn-icon danger" (click)="deletar(e)" title="Excluir">
+                    <!-- PLACEHOLDER: Ícone de lixeira. Substituir por <img src="/assets/icons/trash.svg"> -->
+                    <span style="font-size:1.2rem; color:var(--color-delete)">🗑️</span>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="!loading && estudos.length === 0" class="text-center text-muted mt-lg">
+        Nenhum estudo encontrado.
+      </div>
+    </div>

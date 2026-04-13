@@ -1,0 +1,92 @@
+    <div class="page-container" style="max-width:750px">
+      <h1 class="page-title">{{ isEdit ? 'Editar Estudo' : 'Novo Estudo' }}</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="form-group">
+        <label class="form-label">Nome do estudo</label>
+        <input class="form-control" type="text" [(ngModel)]="nome" placeholder="Nome do estudo" />
+      </div>
+
+      <!-- Variáveis (somente no cadastro) -->
+      <ng-container *ngIf="!isEdit">
+        <div class="d-flex align-center justify-between mb-md">
+          <label class="form-label" style="margin:0">Variáveis Estudadas</label>
+          <button class="btn-icon" (click)="addVariavel()" title="Adicionar variável" style="font-size:1.4rem; color:var(--color-btn-primary)">⊕</button>
+        </div>
+
+        <div class="variable-group" *ngFor="let v of variaveis; let i = index">
+          <button class="variable-remove-btn" (click)="removeVariavel(i)" title="Remover">✖</button>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input class="form-control" type="text" [(ngModel)]="v.nome" placeholder="Nome da variável" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nível do Estudo</label>
+              <select class="form-control" [(ngModel)]="v.nivel_aplicacao">
+                <option value="campanha">Campanha</option>
+                <option value="unidade">Unidade Amostral</option>
+                <option value="evento">Evento de Amostragem</option>
+                <option value="registro">Registro de Ocorrência</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipo de Dado</label>
+              <select class="form-control" [(ngModel)]="v.tipo_dado">
+                <option value="numerico">Numérico</option>
+                <option value="texto">Texto</option>
+                <option value="booleano">Booleano</option>
+                <option value="data">Data</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Métrica</label>
+              <input class="form-control" type="text" [(ngModel)]="v.metrica" placeholder="Ex: °C, m², kg" />
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Variáveis em modo edição (somente leitura) -->
+      <ng-container *ngIf="isEdit && variaveisEdit.length > 0">
+        <label class="form-label">Variáveis cadastradas (não editáveis)</label>
+        <div class="variable-group" *ngFor="let v of variaveisEdit" style="opacity:0.7">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input class="form-control" [value]="v.nome" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nível</label>
+              <input class="form-control" [value]="v.nivel_aplicacao" readonly />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipo</label>
+              <input class="form-control" [value]="v.tipo_dado" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Métrica</label>
+              <input class="form-control" [value]="v.metrica" readonly />
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <textarea class="form-control" [(ngModel)]="observacoes" placeholder="Observações" rows="4"></textarea>
+      </div>
+
+      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+      <div class="d-flex align-center justify-between mt-lg">
+        <button class="back-btn" (click)="router.navigate(['/estudos'])">◀</button>
+        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+          {{ loading ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
