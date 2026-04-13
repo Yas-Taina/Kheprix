@@ -88,7 +88,6 @@
             android:textSize="13sp"
             android:textColor="#4A5240"
             android:fontFamily="monospace"
-            android:textDecoration="underline"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintTop_toTopOf="@id/tvInstrucao"

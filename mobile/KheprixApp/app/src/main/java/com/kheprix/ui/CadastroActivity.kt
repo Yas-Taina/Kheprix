@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kheprix.api.RetrofitClient
+import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityCadastroBinding
 import com.kheprix.models.AutocadastroRequest
 import kotlinx.coroutines.launch
