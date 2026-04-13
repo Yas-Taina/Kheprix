@@ -10,3 +10,12 @@ airflow/documentation/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Android / Gradle
+mobile/KheprixApp/.gradle/
+mobile/KheprixApp/.idea/
+mobile/KheprixApp/local.properties
+mobile/KheprixApp/build/
+mobile/KheprixApp/app/build/
+mobile/KheprixApp/captures/
+*.iml
