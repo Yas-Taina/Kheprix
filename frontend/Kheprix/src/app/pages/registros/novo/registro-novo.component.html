@@ -1,0 +1,92 @@
+    <div class="page-container" style="max-width:700px">
+      <h1 class="page-title">{{ isEdit ? 'Editar Registro' : 'Novo Registro de Ocorrência' }}</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <!-- Foto  -->
+      <div class="form-group">
+        <label class="form-label">Foto</label>
+        <div class="photo-uploader">
+          <div class="form-control" style="flex:1">{{ fotoNome || 'Placeholder.jpeg' }}</div>
+          <button class="photo-upload-btn" (click)="abrirArquivo()" title="Selecionar arquivo">
+            <!-- PLACEHOLDER: Ícone de pasta. Substituir por <img src="/assets/icons/folder.svg"> -->
+            📁
+          </button>
+          <button class="photo-upload-btn" (click)="abrirCamera()" title="Câmera">
+            <!-- PLACEHOLDER: Ícone de câmera. Substituir por <img src="/assets/icons/camera.svg"> -->
+            📷
+          </button>
+        </div>
+        <img *ngIf="fotoPreview" [src]="fotoPreview" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-top:8px" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data de Início</label>
+          <input class="form-control" type="date" [(ngModel)]="data" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora de Início</label>
+          <input class="form-control" type="time" [(ngModel)]="hora" placeholder="23:59" />
+        </div>
+      </div>
+
+      <!-- Latitude e Longitude com GPS -->
+      <div class="form-group">
+        <label class="form-label">Latitude / Longitude</label>
+        <div class="location-input-group">
+          <input class="form-control" type="text" [(ngModel)]="latDMS" placeholder="-25°42'48&quot;" />
+          <input class="form-control" type="text" [(ngModel)]="lngDMS" placeholder="-49°16'15&quot;" />
+          <button class="btn-location" (click)="obterLocalizacao()" [disabled]="gpsLoading" title="Usar localização atual">
+            <!-- PLACEHOLDER: Ícone de pin. Substituir por <img src="/assets/icons/location-pin.svg"> -->
+            {{ gpsLoading ? '⏳' : '📍' }}
+          </button>
+        </div>
+        <small class="text-muted">Preenchido automaticamente via GPS ou manualmente</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Espécie</label>
+          <select class="form-control" [(ngModel)]="especieId">
+            <option [ngValue]="null">Selecione uma espécie</option>
+            <option *ngFor="let e of especies" [value]="e.id">
+              {{ e.genero }} {{ e.especie }}{{ e.nome_popular ? ' (' + e.nome_popular + ')' : '' }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantidade de Indivíduos</label>
+          <input class="form-control" type="number" [(ngModel)]="qtdeIndividuos" placeholder="15" min="0" />
+        </div>
+      </div>
+
+      <!-- Variáveis do Registro -->
+      <ng-container *ngIf="variaveis.length > 0">
+        <label class="form-label">Variáveis do Registro</label>
+        <div *ngFor="let v of variaveis; let i = index" class="form-group">
+          <label class="form-label">{{ v.nome }}</label>
+          <div class="form-inline-group">
+            <input class="form-control" type="text" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
+            <span *ngIf="v.metrica" class="text-muted" style="white-space:nowrap">{{ v.metrica }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="form-group">
+        <label class="orb-checkbox">
+          <input type="checkbox" [(ngModel)]="ausenciaEspecie" />
+          <span class="orb-indicator"></span>
+          Ausência da Espécie
+        </label>
+      </div>
+
+      <div *ngIf="gpsErro" class="alert alert-error mt-sm">{{ gpsErro }}</div>
+      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+      <div class="d-flex align-center justify-between mt-lg">
+        <button class="back-btn" (click)="voltar()">◀</button>
+        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+          {{ loading ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>

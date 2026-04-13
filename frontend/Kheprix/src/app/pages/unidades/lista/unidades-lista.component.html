@@ -1,0 +1,65 @@
+    <div class="page-container">
+      <h2 class="page-subtitle">{{ nomeCampanha }}</h2>
+      <h1 class="page-title">Unidades Amostrais</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <div class="d-flex gap-sm" style="flex-wrap:wrap">
+          <button class="btn btn-primary" (click)="toggleDetalhes()">
+            Visualizar Detalhes &nbsp;👁
+          </button>
+          <button class="btn btn-primary" (click)="router.navigate(['/estudos', estudoId, 'campanhas', campanhaId, 'unidades', 'novo'])">
+            Adicionar Unidade &nbsp;⊕
+          </button>
+        </div>
+        <button class="back-btn" (click)="router.navigate(['/estudos', estudoId, 'campanhas'])">◀</button>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Posição</th>
+            <th>Área (Raio)</th>
+            <th>Eventos de Amostragem</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of unidades" (click)="verEventos(u)">
+            <td>{{ u.nome }}</td>
+            <td>{{ formatCoord(u.latitude) }}, {{ formatCoord(u.longitude) }}</td>
+            <td>{{ u.raio ? u.raio + 'm' : '—' }}</td>
+            <td>—</td>
+            <td (click)="$event.stopPropagation()">
+              <div class="actions-cell">
+                <button class="btn-icon danger" (click)="deletar(u)">
+                  <span style="font-size:1.2rem; color:var(--color-delete)">🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Painel de detalhes inline -->
+      <div class="detail-panel" *ngIf="showDetalhes && campanhaDetalhe">
+        <h3 class="section-title">Detalhes da Campanha</h3>
+        <div class="detail-panel-actions">
+          <button class="btn btn-secondary btn-sm" (click)="editarCampanha()">Editar</button>
+          <button class="btn-icon" (click)="showDetalhes = false" title="Fechar">✕</button>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field"><label>Nome</label><span>{{ campanhaDetalhe.nome }}</span></div>
+          <div class="detail-field"><label>Data de Início</label><span>{{ util.formatDate(campanhaDetalhe.data_inicio) }}</span></div>
+          <div class="detail-field"><label>Data de Fim</label><span>{{ util.formatDate(campanhaDetalhe.data_fim) }}</span></div>
+          <div class="detail-field"><label>Descrição</label><span>{{ campanhaDetalhe.descricao || '—' }}</span></div>
+          <div class="detail-field"><label>Criado em</label><span>{{ util.formatDate(campanhaDetalhe.created_at) }}</span></div>
+          <div class="detail-field"><label>Atualizado em</label><span>{{ util.formatDate(campanhaDetalhe.updated_at) }}</span></div>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && unidades.length === 0" class="text-center text-muted mt-lg">Nenhuma unidade amostral.</div>
+    </div>

@@ -1,0 +1,71 @@
+    <div class="page-container">
+      <h2 class="page-subtitle">Evento de Amostragem {{ eventoId }}</h2>
+      <h1 class="page-title">Registros de Ocorrência</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <div class="d-flex gap-sm" style="flex-wrap:wrap">
+          <button class="btn btn-primary" (click)="toggleDetalhes()">Visualizar Detalhes &nbsp;👁</button>
+          <button class="btn btn-primary" (click)="novoRegistro()">Adicionar Registro &nbsp;⊕</button>
+        </div>
+        <button class="back-btn" (click)="voltar()">◀</button>
+      </div>
+
+      <!-- Filtro por espécie -->
+      <div class="filter-bar">
+        <span class="filter-label">Buscar por:</span>
+        <select class="form-control" style="min-width:180px">
+          <option>Nome da Espécie</option>
+        </select>
+        <input class="form-control" type="text" [(ngModel)]="busca" placeholder="Digite sua busca..." style="flex:1" />
+        <button class="btn-icon" (click)="filtrar()">🔍</button>
+        <button class="btn-icon">🔽</button>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th style="width:60px"></th>
+            <th>Nome Científico</th>
+            <th>Data</th>
+            <th>Posição</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of registrosFiltrados" (click)="verDetalhe(r)">
+            <td>
+              <!-- Foto do registro (não da espécie) -->
+              <img
+                [src]="r.foto ? util.buildFotoUrl(apiUrl, r.foto) : placeholderImg"
+                class="species-photo-circle"
+                alt="Registro"
+              />
+            </td>
+            <td><em>{{ getNomeEspecie(r.especie_id) }}</em></td>
+            <td>{{ util.formatDate(r.data) }}</td>
+            <td>{{ util.decimalToDMS(r.latitude) }}, {{ util.decimalToDMS(r.longitude) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Painel de detalhes do evento inline -->
+      <div class="detail-panel" *ngIf="showDetalhes && eventoDetalhe">
+        <div class="d-flex justify-between align-center mb-md">
+          <h3 class="section-title">Detalhes do Evento de Amostragem</h3>
+          <div class="d-flex gap-sm">
+            <button class="btn btn-secondary btn-sm" (click)="editarEvento()">Editar</button>
+            <button class="btn-icon" (click)="showDetalhes = false">✕</button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field"><label>Horário de Início</label><span>{{ util.formatDateTime(eventoDetalhe.horario_inicio) }}</span></div>
+          <div class="detail-field"><label>Horário de Fim</label><span>{{ util.formatDateTime(eventoDetalhe.horario_fim) }}</span></div>
+          <div class="detail-field"><label>Esforço Real</label><span>{{ eventoDetalhe.esforco_real || '—' }}</span></div>
+          <div class="detail-field"><label>Criado em</label><span>{{ util.formatDate(eventoDetalhe.created_at) }}</span></div>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && registros.length === 0" class="text-center text-muted mt-lg">Nenhum registro de ocorrência.</div>
+    </div>

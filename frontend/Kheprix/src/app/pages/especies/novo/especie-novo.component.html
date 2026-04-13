@@ -1,0 +1,75 @@
+    <div class="page-container" style="max-width:700px">
+      <h1 class="page-title">{{ isEdit ? 'Editar Espécie' : 'Cadastro de Espécies' }}</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <!-- Foto -->
+      <div class="form-group">
+        <label class="form-label">Foto</label>
+        <div class="photo-uploader">
+          <div class="form-control" style="flex:1">{{ fotoNome || 'Placeholder.jpeg' }}</div>
+          <button class="photo-upload-btn" (click)="abrirArquivo()" title="Selecionar arquivo">
+            <!-- PLACEHOLDER: Ícone de pasta. Substituir por <img src="/assets/icons/folder.svg"> -->
+            📁
+          </button>
+          <button class="photo-upload-btn" (click)="abrirCamera()" title="Câmera">
+            <!-- PLACEHOLDER: Ícone de câmera. Substituir por <img src="/assets/icons/camera.svg"> -->
+            📷
+          </button>
+        </div>
+        <img *ngIf="fotoPreview" [src]="fotoPreview" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-top:8px" />
+      </div>
+
+      <div class="form-row three-col">
+        <div class="form-group">
+          <label class="form-label">Classe</label>
+          <input class="form-control" type="text" [(ngModel)]="classe" placeholder="Insecta" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ordem</label>
+          <input class="form-control" type="text" [(ngModel)]="ordem" placeholder="Placeholder" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Família</label>
+          <input class="form-control" type="text" [(ngModel)]="familia" placeholder="Placeholder" />
+        </div>
+      </div>
+
+      <div class="form-row three-col">
+        <div class="form-group">
+          <label class="form-label">Gênero</label>
+          <input class="form-control" type="text" [(ngModel)]="genero" placeholder="Placeholder" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Espécie</label>
+          <input class="form-control" type="text" [(ngModel)]="especie" placeholder="Placeholder" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nome Popular</label>
+          <input class="form-control" type="text" [(ngModel)]="nomePopular" placeholder="Placeholder" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status de Conservação</label>
+        <select class="form-control" [(ngModel)]="statusConservacao">
+          <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="orb-checkbox">
+          <input type="checkbox" [(ngModel)]="endemismo" />
+          <span class="orb-indicator"></span>
+          A espécie é nativa da região
+        </label>
+      </div>
+
+      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+      <div class="d-flex align-center justify-between mt-lg">
+        <button class="back-btn" (click)="voltar()">◀</button>
+        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+          {{ loading ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
