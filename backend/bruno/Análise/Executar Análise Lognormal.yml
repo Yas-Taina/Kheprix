@@ -17,9 +17,7 @@ http:
     type: json
     data: |
       {
-        "chave": "lognormal",
-        "filtro_data_inicio": "2025-01-01",
-        "filtro_data_fim": "2025-12-31"
+        "chave": "lognormal"
       }
   auth: inherit
 
