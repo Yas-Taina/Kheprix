@@ -19,7 +19,7 @@ http:
           {"nome": "Responsavel", "nivel_aplicacao": "campanha", "tipo_dado": "string"},
           {"nome": "Tipo Solo", "nivel_aplicacao": "unidade", "tipo_dado": "string"},
           {"nome": "Temperatura", "metrica": "graus C", "nivel_aplicacao": "evento", "tipo_dado": "number"},
-          {"nome": "Comportamento", "nivel_aplicacao": "registro", "tipo_dado": "string"}
+          {"nome": "Comportamento", "nivel_aplicacao": "registro", "tipo_dado": "boolean"}
         ]
       }
   auth: inherit

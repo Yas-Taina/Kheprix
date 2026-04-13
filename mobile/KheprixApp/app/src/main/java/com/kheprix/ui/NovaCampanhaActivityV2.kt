@@ -138,7 +138,7 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                 setTextColor(0xFF4A5240.toInt())
                 hint = "Placeholder"
                 inputType = when (variavel.tipoDado) {
-                    "numerico" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
                             android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
                     else -> android.text.InputType.TYPE_CLASS_TEXT
                 }

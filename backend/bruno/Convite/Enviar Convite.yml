@@ -11,13 +11,13 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "32"
       type: path
   body:
     type: json
     data: |-
       {
-        "email_convidado": "convidado@exemplo.com"
+        "email_convidado": "chrisnotads2020@gmail.com"
       }
   auth: inherit
 
