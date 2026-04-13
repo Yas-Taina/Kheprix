@@ -1,0 +1,84 @@
+<div style="background:var(--color-bg-green-light);padding:var(--space-md) var(--space-xl);display:flex;align-items:center;justify-content:space-between">
+      <h1 class="page-title" style="color:var(--color-text-primary)">Colaboradores</h1>
+      <button class="modal-close" style="position:static" (click)="router.navigate(['/estudos', estudoId])">✕</button>
+    </div>
+
+    <div class="page-container" style="max-width:1000px">
+      <div class="colab-layout">
+
+        <!-- Esquerda: Convidar -->
+        <div class="colab-invite-section">
+          <h2 class="section-title" style="text-align:center">Convidar Colaboradores</h2>
+          <div class="form-group mt-lg">
+            <label class="form-label">E-mail do usuário</label>
+            <input class="form-control" type="email" [(ngModel)]="emailConvite" placeholder="email@exemplo.com" />
+          </div>
+          <div *ngIf="erroConvite" class="alert alert-error mt-sm">{{ erroConvite }}</div>
+          <div *ngIf="msgConvite" class="alert alert-success mt-sm">{{ msgConvite }}</div>
+          <button class="btn btn-primary mt-md" (click)="convidar()" [disabled]="loadingConvite">
+            {{ loadingConvite ? 'Enviando...' : 'Convidar' }}
+          </button>
+        </div>
+
+        <!-- Divisor -->
+        <div class="colab-divider">
+          <div style="width:1px;background:var(--border-color);height:100%"></div>
+          <span style="position:absolute;top:50%;transform:translateY(-50%);background:var(--color-bg-cream);padding:var(--space-xs)">⸙</span>
+        </div>
+
+        <!-- Direita: Autocadastro QR -->
+        <div class="colab-qr-section">
+          <h2 class="section-title" style="text-align:center">Configurar Autocadastro de Colaboradores</h2>
+          <div *ngIf="codigoAcesso" class="qrcode-container mt-lg">
+            <canvas #qrCanvas width="150" height="150"></canvas>
+            <div class="mt-sm">
+              <strong>Código do Estudo</strong><br>
+              <span style="font-family:var(--font-mono);font-size:1.1rem">{{ codigoAcesso.codigo }}</span>
+            </div>
+            <div class="form-group mt-md" style="width:100%">
+              <label class="form-label">Senha</label>
+              <input class="form-control" type="text" [(ngModel)]="novaSenhaAcesso" [placeholder]="codigoAcesso.senha_autocadastro" />
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="alterarSenha()" [disabled]="loadingSenha">
+              {{ loadingSenha ? 'Salvando...' : 'Alterar Senha' }}
+            </button>
+          </div>
+          <div *ngIf="!codigoAcesso && !loadingCodigo" class="loading-overlay"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Lista de colaboradores -->
+      <h2 class="section-title text-center mt-lg">Colaboradores do Estudo</h2>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <table class="data-table" *ngIf="colaboradores.length > 0">
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>Perfil de acesso</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of colaboradores">
+            <td>{{ c.nome }}</td>
+            <td>
+              <select class="form-control" style="max-width:180px" [(ngModel)]="c.perfil">
+                <option value="proprietario">Proprietário</option>
+                <option value="co-proprietario">Co-proprietário</option>
+                <option value="colaborador">Colaborador</option>
+              </select>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <button class="btn btn-secondary btn-sm" (click)="alterarAcesso(c)">Alterar Acesso</button>
+                <button class="btn-icon danger" (click)="remover(c)" title="Remover">
+                  <span style="font-size:1.2rem; color:var(--color-delete)">🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="colaboradores.length === 0 && !loading" class="text-center text-muted mt-lg">Nenhum colaborador cadastrado.</div>
+    </div>

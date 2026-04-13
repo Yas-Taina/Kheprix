@@ -1,0 +1,73 @@
+    <div class="page-container" style="max-width:700px" *ngIf="registro && especie">
+      <h1 class="page-title">Registro de Ocorrência</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="d-flex justify-end">
+        <button class="back-btn" (click)="voltar()">◀</button>
+      </div>
+
+      <div class="registro-card">
+        <div class="registro-foto-col">
+          <!-- Foto do REGISTRO, não da espécie -->
+          <img
+            [src]="registro.foto ? util.buildFotoUrl(apiUrl, registro.foto) : placeholderImg"
+            class="especie-foto-grande"
+            alt="Foto do registro"
+          />
+        </div>
+        <div class="registro-info-col">
+          <div>
+            <span class="detail-field-label">Nome Científico</span><br>
+            <em style="font-size:1.1rem; color:var(--color-text-secondary)">{{ especie.genero }} {{ especie.especie }}</em>
+          </div>
+          <div class="mt-md">
+            <span class="detail-field-label">Nome Popular</span><br>
+            <span>{{ especie.nome_popular || '—' }}</span>
+          </div>
+          <div class="mt-md">
+            <span class="detail-field-label">Quantidade de indivíduos</span><br>
+            <span>{{ registro.qtde_individuos ?? '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-grid mt-lg">
+        <div class="detail-field">
+          <label>Posição</label>
+          <span>{{ util.decimalToDMS(registro.latitude) }}, {{ util.decimalToDMS(registro.longitude) }}</span>
+        </div>
+        <div class="detail-field">
+          <label>Data</label>
+          <span>{{ util.formatDate(registro.data) }}</span>
+        </div>
+        <div class="detail-field">
+          <label>Hora</label>
+          <span>{{ registro.hora }}</span>
+        </div>
+      </div>
+
+      <div class="mt-md" *ngIf="registro.ausencia_especie">
+        <span class="alert alert-info" style="display:inline-block">Ausência da espécie registrada</span>
+      </div>
+
+      <!-- Variáveis do registro -->
+      <ng-container *ngIf="variaveis.length > 0">
+        <div class="mt-lg">
+          <div *ngFor="let v of variaveis; let i = index" class="detail-field mt-sm">
+            <label>{{ v.nome }}</label>
+            <span>{{ valoresExibicao[i] || '—' }} {{ v.metrica }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="d-flex justify-end gap-sm mt-xl">
+        <button class="btn-icon" (click)="editar()" title="Editar">
+          <span style="font-size:1.4rem; color:var(--color-edit)">✏️</span>
+        </button>
+        <button class="btn-icon danger" (click)="deletar()" title="Excluir">
+          <span style="font-size:1.4rem; color:var(--color-delete)">🗑️</span>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="page-container"><div class="loading-overlay"><div class="spinner"></div></div></div>

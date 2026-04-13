@@ -1,0 +1,10 @@
+.ultimo-estudo-card { background: var(--color-bg-cream); }
+    .ultimo-estudo-header { display: flex; gap: var(--space-lg); align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: var(--space-md); }
+    .ultimo-estudo-titulo { min-width: 120px; border-right: 1px solid var(--border-color); padding-right: var(--space-md); }
+    .study-name { font-family: var(--font-body); font-size: 1.3rem; color: var(--color-text-primary); }
+    .study-date { font-family: var(--font-body); font-size: 0.9rem; color: var(--color-text-muted); margin-top: 4px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+    .insect-placeholder { font-size: 3rem; height: 80px; display:flex; align-items:center; justify-content:center;
+      /* PLACEHOLDER: Remover este div e substituir por <img src="/assets/images/insect-X.png" class="sidebar-insect-img"> */
+    }
+    @media (max-width:600px) { .stats-grid { grid-template-columns: 1fr; } }

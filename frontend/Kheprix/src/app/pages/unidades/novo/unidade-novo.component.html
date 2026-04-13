@@ -1,0 +1,64 @@
+    <div class="page-container" style="max-width:700px">
+      <h1 class="page-title">{{ isEdit ? 'Editar Unidade Amostral' : 'Nova Unidade Amostral' }}</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-control" type="text" [(ngModel)]="nome" placeholder="Nome da unidade" />
+      </div>
+
+      <!-- Latitude e Longitude com ícone de GPS -->
+      <div class="form-group">
+        <label class="form-label">Latitude / Longitude</label>
+        <div class="location-input-group">
+          <input class="form-control" type="text" [(ngModel)]="latDMS" placeholder="-25°42'48&quot;" />
+          <input class="form-control" type="text" [(ngModel)]="lngDMS" placeholder="-49°16'15&quot;" />
+          <button class="btn-location" (click)="obterLocalizacao()" title="Usar localização atual" [disabled]="gpsLoading">
+            <!-- PLACEHOLDER: Ícone de pin/localização. Substituir por <img src="/assets/icons/location-pin.svg"> -->
+            {{ gpsLoading ? '⏳' : '📍' }}
+          </button>
+        </div>
+        <small class="text-muted">Formato: -25°42'48" (preenchido automaticamente via GPS ou manualmente)</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Raio (em metros)</label>
+        <div class="d-flex align-center gap-sm">
+          <input class="form-control" type="number" [(ngModel)]="raio" placeholder="2500" style="max-width:200px" />
+          <span class="text-muted" style="font-size:0.9rem">Usado para indicar a área total do estudo</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Método de Coleta</label>
+          <input class="form-control" type="text" [(ngModel)]="metodoColeta" placeholder="Ex: Armadilhas" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Esforço Amostral</label>
+          <input class="form-control" type="text" [(ngModel)]="esforcoAmostral" placeholder="Ex: 15" />
+        </div>
+      </div>
+
+      <!-- Variáveis da Unidade -->
+      <ng-container *ngIf="variaveis.length > 0">
+        <label class="form-label">Variáveis da Unidade</label>
+        <div *ngFor="let v of variaveis; let i = index" class="form-group">
+          <label class="form-label">{{ v.nome }}</label>
+          <div class="form-inline-group">
+            <input class="form-control" type="text" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
+            <span *ngIf="v.metrica" class="text-muted" style="white-space:nowrap">{{ v.metrica }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <div *ngIf="gpsErro" class="alert alert-error mt-sm">{{ gpsErro }}</div>
+      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+      <div class="d-flex align-center justify-between mt-lg">
+        <button class="back-btn" (click)="voltar()">◀</button>
+        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+          {{ loading ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>

@@ -1,0 +1,35 @@
+    <div class="page-container">
+      <h2 class="page-subtitle">{{ nomeEstudo }}</h2>
+      <h1 class="page-title">Campanhas de Coleta de Dados</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <button class="btn btn-primary" (click)="router.navigate(['/estudos', estudoId, 'campanhas', 'novo'])">
+          Adicionar Campanha &nbsp;⊕
+        </button>
+        <button class="back-btn" (click)="router.navigate(['/estudos', estudoId])">◀</button>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr><th>Nome</th><th>Data de Início</th><th>Última Alteração</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of campanhas" (click)="verUnidades(c)">
+            <td>{{ c.nome }}</td>
+            <td>{{ util.formatDate(c.data_inicio) }}</td>
+            <td>{{ util.formatDate(c.updated_at) }}</td>
+            <td (click)="$event.stopPropagation()">
+              <div class="actions-cell">
+                <button class="btn-icon danger" (click)="deletar(c)">
+                  <span style="font-size:1.2rem; color:var(--color-delete)">🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!loading && campanhas.length === 0" class="text-center text-muted mt-lg">Nenhuma campanha.</div>
+    </div>

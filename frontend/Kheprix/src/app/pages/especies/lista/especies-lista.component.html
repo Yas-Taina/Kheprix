@@ -1,0 +1,48 @@
+    <div class="page-container">
+      <h2 class="page-subtitle">{{ nomeEstudo }}</h2>
+      <h1 class="page-title">Espécies</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <button class="btn btn-primary" (click)="router.navigate(['/estudos', estudoId, 'especies', 'novo'])">
+          Adicionar Espécie &nbsp;⊕
+        </button>
+        <button class="back-btn" (click)="router.navigate(['/estudos', estudoId])">◀</button>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-label">Buscar por:</span>
+        <select class="form-control" style="min-width:180px">
+          <option>Nome da Espécie</option>
+        </select>
+        <input class="form-control" type="text" [(ngModel)]="busca" placeholder="Digite sua busca..." style="flex:1" (keyup.enter)="filtrar()" />
+        <button class="btn-icon" (click)="filtrar()">🔍</button>
+        <button class="btn-icon">🔽</button>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th style="width:60px"></th>
+            <th>Nome Científico</th>
+            <th>Nome Popular</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of especies" (click)="verDetalhe(e)">
+            <td>
+              <img
+                [src]="e.foto ? util.buildFotoUrl(apiUrl, e.foto) : placeholderImg"
+                class="species-photo-circle"
+                alt="{{ e.nome_popular }}"
+              />
+            </td>
+            <td><em>{{ e.genero }} {{ e.especie }}</em></td>
+            <td>{{ e.nome_popular }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!loading && especies.length === 0" class="text-center text-muted mt-lg">Nenhuma espécie cadastrada.</div>
+    </div>
