@@ -1,0 +1,65 @@
+
+    <div class="page-container" style="max-width:1100px">
+      <div class="convites-layout">
+
+        <!-- Esquerda: Convites recebidos -->
+        <div class="convites-section">
+          <h1 class="page-title" style="font-size:1.6rem">Convites de Colaboração</h1>
+          <div class="ornament-divider"><span>⸙</span></div>
+
+          <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+          <ng-container *ngIf="!loading">
+            <div *ngIf="convites.length === 0" class="text-muted text-center mt-lg">Nenhum convite pendente.</div>
+            <table class="data-table" *ngIf="convites.length > 0">
+              <thead>
+                <tr>
+                  <th>Nome do Estudo</th>
+                  <th>Proprietário</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of convites">
+                  <td>{{ c.nome_estudo }}</td>
+                  <td>{{ c.nome_remetente }}</td>
+                  <td>
+                    <div class="actions-cell">
+                      <button class="btn btn-primary btn-sm" (click)="aceitar(c)">Aceitar</button>
+                      <button class="btn btn-danger btn-sm" (click)="recusar(c)">Recusar</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </ng-container>
+
+          <div *ngIf="msgConvite" class="alert alert-success mt-md">{{ msgConvite }}</div>
+          <div *ngIf="erroConvite" class="alert alert-error mt-md">{{ erroConvite }}</div>
+        </div>
+
+        <!-- Direita: Autocadastro -->
+        <div class="autocadastro-section">
+          <h2 class="page-title" style="font-size:1.3rem">Autocadastro<br>em Estudo</h2>
+          <div class="ornament-divider"><span>⸙</span></div>
+
+          <div class="form-group">
+            <label class="form-label">Código</label>
+            <div class="form-inline-group">
+              <input class="form-control" type="text" [(ngModel)]="codigoAcesso" placeholder="Código do estudo" />
+              <!-- PLACEHOLDER: Ícone de QR Code. Substituir por <img src="/assets/icons/qrcode.svg"> -->
+              <button class="btn-icon" (click)="lerQrCode()" title="Ler QR Code" style="font-size:1.5rem">⊞</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Senha</label>
+            <input class="form-control" type="password" [(ngModel)]="senhaAcesso" placeholder="Senha de acesso" />
+          </div>
+          <div *ngIf="erroAcesso" class="alert alert-error mt-sm">{{ erroAcesso }}</div>
+          <div *ngIf="msgAcesso" class="alert alert-success mt-sm">{{ msgAcesso }}</div>
+          <button class="btn btn-primary btn-full mt-md" (click)="ingressarEstudo()" [disabled]="loadingAcesso">
+            {{ loadingAcesso ? 'Cadastrando...' : 'Cadastrar' }}
+          </button>
+        </div>
+      </div>
+    </div>

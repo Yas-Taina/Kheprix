@@ -1,7 +1,0 @@
-@import '../login/login.css';
-
-.sucesso-msg {
-  color: var(--color-bg-green-dark);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
