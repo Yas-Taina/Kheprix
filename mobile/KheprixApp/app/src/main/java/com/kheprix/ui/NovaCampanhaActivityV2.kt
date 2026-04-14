@@ -61,10 +61,14 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
 
         if (modoEdicao) {
             binding.etNome.setText(intent.getStringExtra("campanha_nome") ?: "")
+            intent.getStringExtra("campanha_data_inicio")?.let { iso ->
+                binding.etDataInicio.setText(isoParaBr(iso))
+            }
         }
 
-        // Ícone calendário: abre DatePickerDialog
+        // Campo e ícone calendário: abrem DatePickerDialog
         binding.ivCalendario.setOnClickListener { abrirDatePicker() }
+        binding.etDataInicio.setOnClickListener { abrirDatePicker() }
 
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarCampanha() else criarCampanha()
@@ -92,8 +96,33 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarCamposVariaveis()
+                    if (modoEdicao) preencherValoresVariaveis()
+                } else {
+                    Toast.makeText(
+                        this@NovaCampanhaActivityV2,
+                        "Erro ao carregar variáveis: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    renderizarCamposVariaveis()
                 }
-            } catch (_: Exception) { /* offline: sem variáveis */ }
+            } catch (_: Exception) {
+                renderizarCamposVariaveis()
+            }
+        }
+    }
+
+    private fun preencherValoresVariaveis() {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getCampanha(
+                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
+                )
+                if (resp.isSuccessful) {
+                    resp.body()?.valoresVariaveis?.forEach { vv ->
+                        camposVariavel[vv.variavelId]?.setText(vv.valor)
+                    }
+                }
+            } catch (_: Exception) { /* offline: valores não pré-preenchidos */ }
         }
     }
 
@@ -101,12 +130,19 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
         binding.layoutVariaveis.removeAllViews()
         camposVariavel.clear()
 
+        binding.tvVariaveisTitle.visibility = View.VISIBLE
+
         if (variaveis.isEmpty()) {
-            binding.tvVariaveisTitle.visibility = View.GONE
+            val vazio = TextView(this).apply {
+                text = "Sem variáveis cadastradas para o nível campanha."
+                textSize = 13f
+                setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, 4, 0, 0)
+            }
+            binding.layoutVariaveis.addView(vazio)
             return
         }
-
-        binding.tvVariaveisTitle.visibility = View.VISIBLE
 
         variaveis.forEachIndexed { index, variavel ->
             // Label: "Variável N:"
@@ -170,17 +206,44 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
 
     private fun abrirDatePicker() {
         val cal = java.util.Calendar.getInstance()
+        // Pré-seleciona data já preenchida, se houver
+        val atual = binding.etDataInicio.text.toString().trim()
+        if (atual.isNotEmpty()) {
+            val partes = atual.split("/")
+            if (partes.size == 3) runCatching {
+                cal.set(partes[2].toInt(), partes[1].toInt() - 1, partes[0].toInt())
+            }
+        }
         android.app.DatePickerDialog(
             this,
             { _, year, month, day ->
                 binding.etDataInicio.setText(
-                    "%04d-%02d-%02d".format(year, month + 1, day)
+                    "%02d/%02d/%04d".format(day, month + 1, year)
                 )
             },
             cal.get(java.util.Calendar.YEAR),
             cal.get(java.util.Calendar.MONTH),
             cal.get(java.util.Calendar.DAY_OF_MONTH)
         ).show()
+    }
+
+    /** Converte "dd/MM/yyyy" em "yyyy-MM-dd"; retorna null se inválido. */
+    private fun brParaIso(br: String): String? {
+        val partes = br.split("/")
+        if (partes.size != 3) return null
+        return runCatching {
+            "%04d-%02d-%02d".format(partes[2].toInt(), partes[1].toInt(), partes[0].toInt())
+        }.getOrNull()
+    }
+
+    /** Converte "yyyy-MM-dd" em "dd/MM/yyyy"; retorna a string original se não casar. */
+    private fun isoParaBr(iso: String): String {
+        val base = iso.take(10)
+        val partes = base.split("-")
+        if (partes.size != 3) return iso
+        return runCatching {
+            "%02d/%02d/%04d".format(partes[2].toInt(), partes[1].toInt(), partes[0].toInt())
+        }.getOrDefault(iso)
     }
 
     // ── Montar valores das variáveis ──────────────────────────────────────
@@ -206,6 +269,11 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
             return
         }
 
+        val inicioIso = brParaIso(inicio) ?: run {
+            Toast.makeText(this, "Data inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -213,9 +281,9 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId,
                     CampanhaRequest(
                         nome = nome,
-                        dataInicio = inicio,
+                        dataInicio = inicioIso,
                         descricao = descricao,
-                        valoresVariaveis = coletarValoresVariaveis().ifEmpty { null }
+                        valoresVariaveis = coletarValoresVariaveis()
                     )
                 )
                 if (resp.isSuccessful) {
@@ -240,6 +308,11 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
             return
         }
 
+        val inicioIso = brParaIso(inicio) ?: run {
+            Toast.makeText(this, "Data inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -247,9 +320,9 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId,
                     CampanhaRequest(
                         nome = nome,
-                        dataInicio = inicio,
+                        dataInicio = inicioIso,
                         descricao = descricao,
-                        valoresVariaveis = coletarValoresVariaveis().ifEmpty { null }
+                        valoresVariaveis = coletarValoresVariaveis()
                     )
                 )
                 if (resp.isSuccessful) {
