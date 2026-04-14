@@ -12,6 +12,7 @@ class CreateDwPresentationLayer < ActiveRecord::Migration[8.0]
       t.integer   :fk_estudo,          null: false
       t.string    :nome_estudo,        limit: 255
       t.string    :nome_campanha,      limit: 255
+      t.date      :data_inicio_campanha
       t.decimal   :latitude,           precision: 10, scale: 8
       t.decimal   :longitude,          precision: 11, scale: 8
       t.date      :data_registro
