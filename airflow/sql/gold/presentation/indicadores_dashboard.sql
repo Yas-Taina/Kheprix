@@ -3,6 +3,7 @@ SELECT
   f.fk_estudo,
   est.nome_estudo,
   cam.nome_campanha,
+  cam.data_inicio AS data_inicio_campanha,
   f.latitude,
   f.longitude,
   t.data_completa AS data_registro,
@@ -18,7 +19,7 @@ SELECT
   f.quantidade,
   COALESCE(esp.endemismo, false) AS is_endemica,
   CASE
-    WHEN esp.status_conservacao IN ('CR', 'EN', 'VU') THEN TRUE
+    WHEN esp.status_conservacao IN ('CR', 'EN', 'VU', 'EW', 'EX') THEN TRUE
     ELSE FALSE
   END AS is_ameacada
 FROM public.fato_medicao_entomologica f
