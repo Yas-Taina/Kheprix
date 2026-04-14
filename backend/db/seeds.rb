@@ -13,7 +13,7 @@ puts "🌱 Iniciando Seed Hierárquico Completo (Simulação de Dados Ecológico
 puts "Limpando registros antigos..."
 ValorVariavel.delete_all
 Variavel.delete_all
-RegistroOcorrencia.delete_all
+RegistroOcorrencia.unscoped.delete_all
 EventoAmostragem.delete_all
 UnidadeAmostral.delete_all
 Especie.delete_all
