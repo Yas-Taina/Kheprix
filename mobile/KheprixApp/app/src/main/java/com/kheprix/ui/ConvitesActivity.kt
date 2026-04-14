@@ -95,9 +95,9 @@ class ConvitesActivity : AppCompatActivity() {
             try {
                 val token = SessionManager.getAuthHeader()
                 val resp  = if (aceitar)
-                    RetrofitClient.apiService.aceitarConvite(token, convite.id.toString())
+                    RetrofitClient.apiService.aceitarConvite(token, convite.token)
                 else
-                    RetrofitClient.apiService.recusarConvite(token, convite.id.toString())
+                    RetrofitClient.apiService.recusarConvite(token, convite.token)
 
                 if (resp.isSuccessful) {
                     val msg = if (aceitar) "Convite aceito!" else "Convite recusado"

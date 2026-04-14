@@ -5,7 +5,7 @@ class EditarCampanhaDto
 
   attr_accessor :nome, :data_inicio, :data_fim, :descricao, :valores_variaveis
 
-  CAMPOS_OBRIGATORIOS = %i[nome data_inicio data_fim descricao valores_variaveis].freeze
+  CAMPOS_OBRIGATORIOS = %i[nome data_inicio descricao valores_variaveis].freeze
 
   validates :nome, presence: true
   validates :data_inicio, presence: true

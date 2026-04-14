@@ -81,7 +81,7 @@
                         <EditText android:id="@+id/etLatitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="30°34'45\""
+                            android:textColor="#4A5240" android:hint="30°34'45\"
                             android:inputType="text" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
@@ -107,7 +107,7 @@
                         <EditText android:id="@+id/etLongitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="23°45'65\""
+                            android:textColor="#4A5240" android:hint="23°45'65\"
                             android:inputType="text" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
@@ -127,7 +127,7 @@
                 android:text="Raio (em metros):" android:textSize="14sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace" android:layout_marginTop="12dp"/>
             <EditText android:id="@+id/etRaio"
-                android:layout_width="0dp" android:layout_height="48dp"
+                android:layout_width="match_parent" android:layout_height="48dp"
                 android:background="@drawable/bg_field_green" android:paddingStart="10dp" android:paddingEnd="10dp"
                 android:textColor="#4A5240" android:inputType="numberDecimal"
                 android:hint="20" android:layout_marginTop="4dp" android:layout_marginBottom="12dp"

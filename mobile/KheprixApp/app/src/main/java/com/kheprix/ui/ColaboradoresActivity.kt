@@ -1,5 +1,6 @@
 package com.kheprix.ui
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
