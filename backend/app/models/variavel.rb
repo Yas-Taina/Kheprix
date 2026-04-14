@@ -9,7 +9,7 @@ class Variavel < ApplicationRecord
   has_many :valores_variaveis, dependent: :destroy
 
   enum :nivel_aplicacao, { campanha: 0, unidade: 1, evento: 2, registro: 3 }
-  enum :tipo_dado, { string: 0, number: 1, date: 2 }
+  enum :tipo_dado, { string: 0, number: 1, date: 2, boolean: 3 }
 
   validates :nome, presence: true
   validates :nivel_aplicacao, presence: true

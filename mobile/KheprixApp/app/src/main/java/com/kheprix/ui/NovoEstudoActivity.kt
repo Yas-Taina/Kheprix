@@ -186,9 +186,10 @@ class NovoEstudoActivity : AppCompatActivity() {
     }
 
     private fun tipoParaApi(label: String) = when (label) {
-        "Numérico" -> "numerico"
-        "Texto"    -> "texto"
-        "Booleano" -> "booleano"
+        "Numérico" -> "number"
+        "Texto"    -> "string"
+        "Booleano" -> "boolean"
+        "Data"     -> "date"
         else       -> label.lowercase()
     }
 

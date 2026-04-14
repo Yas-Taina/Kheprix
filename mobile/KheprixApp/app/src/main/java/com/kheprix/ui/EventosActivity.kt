@@ -221,6 +221,8 @@ class NovoEventoActivity : AppCompatActivity() {
 
     private var dataInicio = ""
     private var horaInicio = ""
+    private var dataFim = ""
+    private var horaFim = ""
 
     private val variaveis = mutableListOf<VariavelResponse>()
     private val camposVariavel = mutableMapOf<Int, EditText>()
@@ -238,8 +240,12 @@ class NovoEventoActivity : AppCompatActivity() {
 
         binding.tvTitulo.text = if (modoEdicao) "Editar Evento" else "Novo Evento de Amostragem"
 
-        binding.ivCalendario.setOnClickListener { abrirDatePicker() }
-        binding.etHoraInicio.setOnClickListener { abrirTimePicker() }
+        binding.ivCalendario.setOnClickListener { abrirDatePicker(inicio = true) }
+        binding.etDataInicio.setOnClickListener { abrirDatePicker(inicio = true) }
+        binding.etHoraInicio.setOnClickListener { abrirTimePicker(inicio = true) }
+        binding.ivCalendarioFim.setOnClickListener { abrirDatePicker(inicio = false) }
+        binding.etDataFim.setOnClickListener { abrirDatePicker(inicio = false) }
+        binding.etHoraFim.setOnClickListener { abrirTimePicker(inicio = false) }
 
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarEvento() else criarEvento()
@@ -254,19 +260,23 @@ class NovoEventoActivity : AppCompatActivity() {
         carregarVariaveis()
     }
 
-    private fun abrirDatePicker() {
+    private fun abrirDatePicker(inicio: Boolean) {
         val cal = Calendar.getInstance()
         DatePickerDialog(this, { _, y, m, d ->
-            dataInicio = "%04d-%02d-%02d".format(y, m + 1, d)
-            binding.etDataInicio.setText("%02d/%02d/%04d".format(d, m + 1, y))
+            val iso = "%04d-%02d-%02d".format(y, m + 1, d)
+            val br  = "%02d/%02d/%04d".format(d, m + 1, y)
+            if (inicio) { dataInicio = iso; binding.etDataInicio.setText(br) }
+            else        { dataFim = iso;    binding.etDataFim.setText(br) }
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    private fun abrirTimePicker() {
+    private fun abrirTimePicker(inicio: Boolean) {
         val cal = Calendar.getInstance()
         TimePickerDialog(this, { _, h, m ->
-            horaInicio = "%02d:%02d:00".format(h, m)
-            binding.etHoraInicio.setText("%02d:%02d".format(h, m))
+            val iso = "%02d:%02d:00".format(h, m)
+            val exib = "%02d:%02d".format(h, m)
+            if (inicio) { horaInicio = iso; binding.etHoraInicio.setText(exib) }
+            else        { horaFim = iso;    binding.etHoraFim.setText(exib) }
         }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
 
@@ -329,14 +339,8 @@ class NovoEventoActivity : AppCompatActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                 )
                 resp.body()?.let { e ->
-                    val partes = e.horarioInicio.split("T")
-                    if (partes.size >= 2) {
-                        dataInicio = partes[0]
-                        horaInicio = partes[1].take(8)
-                        val dp = partes[0].split("-")
-                        binding.etDataInicio.setText("${dp.getOrElse(2){""}}/{${dp.getOrElse(1){""}}/{${dp.getOrElse(0){""}}}")
-                        binding.etHoraInicio.setText(partes[1].take(5))
-                    }
+                    preencherDataHora(e.horarioInicio, inicio = true)
+                    e.horarioFim?.let { preencherDataHora(it, inicio = false) }
                     binding.etEsforcoReal.setText(e.esforcoReal ?: "")
                 }
             } catch (_: Exception) {}
@@ -384,26 +388,52 @@ class NovoEventoActivity : AppCompatActivity() {
     }
 
     private fun coletarFormulario(): EventoRequest? {
-        val dataExib = binding.etDataInicio.text.toString().trim()
-        val horaExib = binding.etHoraInicio.text.toString().trim()
-
-        // Se o usuário não usou picker, tenta converter exibição
-        val dataFinal = dataInicio.ifEmpty {
-            // converte dd/mm/yyyy → yyyy-mm-dd
-            val p = dataExib.split("/")
-            if (p.size == 3) "${p[2]}-${p[1]}-${p[0]}" else ""
-        }
-        val horaFinal = horaInicio.ifEmpty {
-            if (horaExib.matches(Regex("\\d{2}:\\d{2}"))) "$horaExib:00" else ""
-        }
-        if (dataFinal.isEmpty() || horaFinal.isEmpty()) {
+        val iniIso = montarIso(dataInicio, horaInicio, binding.etDataInicio.text.toString().trim(), binding.etHoraInicio.text.toString().trim())
+        val fimIso = montarIso(dataFim, horaFim, binding.etDataFim.text.toString().trim(), binding.etHoraFim.text.toString().trim())
+        if (iniIso == null) {
             Toast.makeText(this, "Preencha data e hora de início", Toast.LENGTH_SHORT).show()
             return null
         }
+        if (fimIso == null) {
+            Toast.makeText(this, "Preencha data e hora de fim", Toast.LENGTH_SHORT).show()
+            return null
+        }
         return EventoRequest(
-            horarioInicio = "${dataFinal}T${horaFinal}",
+            horarioInicio = iniIso,
+            horarioFim = fimIso,
             esforcoReal = binding.etEsforcoReal.text.toString().trim().ifEmpty { null }
         )
+    }
+
+    /** Combina data/hora em ISO "yyyy-MM-ddTHH:mm:ss"; retorna null se faltar algum. */
+    private fun montarIso(dataIso: String, horaIso: String, dataExib: String, horaExib: String): String? {
+        val dataFinal = dataIso.ifEmpty {
+            val p = dataExib.split("/")
+            if (p.size == 3) "${p[2]}-${p[1]}-${p[0]}" else ""
+        }
+        val horaFinal = horaIso.ifEmpty {
+            if (horaExib.matches(Regex("\\d{2}:\\d{2}"))) "$horaExib:00" else ""
+        }
+        if (dataFinal.isEmpty() || horaFinal.isEmpty()) return null
+        return "${dataFinal}T${horaFinal}"
+    }
+
+    /** Pré-preenche campos a partir de string ISO do backend. */
+    private fun preencherDataHora(iso: String, inicio: Boolean) {
+        val partes = iso.split("T")
+        if (partes.size < 2) return
+        val dp = partes[0].split("-")
+        if (dp.size != 3) return
+        val br = "${dp[2]}/${dp[1]}/${dp[0]}"
+        val horaIsoStr = partes[1].take(8)
+        val horaExib = partes[1].take(5)
+        if (inicio) {
+            dataInicio = partes[0]; horaInicio = horaIsoStr
+            binding.etDataInicio.setText(br); binding.etHoraInicio.setText(horaExib)
+        } else {
+            dataFim = partes[0]; horaFim = horaIsoStr
+            binding.etDataFim.setText(br); binding.etHoraFim.setText(horaExib)
+        }
     }
 
     private fun setLoading(loading: Boolean) {
