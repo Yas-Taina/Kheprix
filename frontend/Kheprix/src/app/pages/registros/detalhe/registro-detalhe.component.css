@@ -1,0 +1,6 @@
+.registro-card { display: flex; gap: var(--space-xl); align-items: flex-start; }
+    .especie-foto-grande { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); }
+    .registro-info-col { flex: 1; }
+    .detail-field-label { font-size: 0.85rem; color: var(--color-text-muted); }
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
+    @media (max-width: 500px) { .registro-card { flex-direction: column; } .detail-grid { grid-template-columns: 1fr; } }

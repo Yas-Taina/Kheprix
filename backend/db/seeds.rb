@@ -13,7 +13,7 @@ puts "🌱 Iniciando Seed Hierárquico Completo (Simulação de Dados Ecológico
 puts "Limpando registros antigos..."
 ValorVariavel.delete_all
 Variavel.delete_all
-RegistroOcorrencia.delete_all
+RegistroOcorrencia.unscoped.delete_all
 EventoAmostragem.delete_all
 UnidadeAmostral.delete_all
 Especie.delete_all
@@ -60,6 +60,11 @@ CENARIOS = [
 ]
 
 EPITETOS = ["exemplaris", "secundus", "tertius"]
+ESPECIES_CONFIG = [
+  { status: 'LC', endemismo: false },
+  { status: 'VU', endemismo: true  },
+  { status: 'CR', endemismo: true  },
+]
 
 CENARIOS.each do |cenario|
   estudo = Estudo.create!(nome: cenario[:nome], observacoes: "Estudo acadêmico para TCC.")
@@ -84,7 +89,9 @@ CENARIOS.each do |cenario|
       nome_popular: "#{cenario[:especie_base]} #{i+1}",
       genero: "#{cenario[:especie_base].first}#{i}",
       especie: EPITETOS[i],
-      classe: "Insecta"
+      classe: "Insecta",
+      status_conservacao: ESPECIES_CONFIG[i][:status],
+      endemismo: ESPECIES_CONFIG[i][:endemismo]
     )
   end
 

@@ -11,7 +11,7 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "30"
       type: path
   auth: inherit
 

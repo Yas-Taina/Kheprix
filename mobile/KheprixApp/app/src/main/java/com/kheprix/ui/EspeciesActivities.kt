@@ -70,7 +70,7 @@ class EspeciesActivity : AppCompatActivity() {
             startActivity(i)
         }
 
-        binding.btnFiltrar.setOnClickListener { mostrarFiltroEspecie() }
+        binding.btnFiltrar.setOnClickListener { /* TODO: filtro de espécie */ }
 
         binding.ivMenuLateral.setOnClickListener { onBackPressed() }
         binding.ivPerfil.setOnClickListener {
@@ -82,7 +82,7 @@ class EspeciesActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        carregarEspecies(filtroNomePopular)
+        carregarEspecies()
     }
 
     private fun carregarEspecies() {

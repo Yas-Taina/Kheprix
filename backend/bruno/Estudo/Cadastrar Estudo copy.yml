@@ -1,0 +1,39 @@
+info:
+  name: Cadastrar Estudo copy
+  type: http
+  seq: 5
+
+http:
+  method: post
+  url: http://localhost:3000/estudos
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nome": "estudo mobile",
+        "observacoes": "estudo do mobile",
+        "variaveis": [
+          {
+            "metrica": "\"",
+            "nome": "var 1",
+            "nivel_aplicacao": "campanha",
+            "tipo_dado": "number"
+          },
+          {
+            "metrica": "#",
+            "nome": "var 3",
+            "nivel_aplicacao": "unidade",
+            "tipo_dado": "string"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

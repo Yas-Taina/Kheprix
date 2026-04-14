@@ -8,15 +8,14 @@ http:
   url: http://localhost:3000/fotos/estudos/:estudo_id/:tipo/:arquivo
   params:
     - name: estudo_id
-      value: "1"
+      value: "30"
       type: path
     - name: tipo
-      value: "especies"
+      value: especies
       type: path
     - name: arquivo
-      value: "exemplo.png"
+      value: b21155d4-ecae-4233-8006-420ab1b85a48.png
       type: path
-  auth: none
 
 settings:
   encodeUrl: false

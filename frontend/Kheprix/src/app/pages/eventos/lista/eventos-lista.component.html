@@ -1,0 +1,68 @@
+    <div class="page-container">
+      <h2 class="page-subtitle">{{ nomeUnidade }}</h2>
+      <h1 class="page-title">Eventos de Amostragem</h1>
+      <div class="ornament-divider"><span>⸙</span></div>
+
+      <div class="page-header-row">
+        <div class="d-flex gap-sm" style="flex-wrap:wrap">
+          <button class="btn btn-primary" (click)="toggleDetalhes()">
+            Visualizar Detalhes &nbsp;👁
+          </button>
+          <button class="btn btn-primary" (click)="novoEvento()">
+            Adicionar Evento &nbsp;⊕
+          </button>
+        </div>
+        <button class="back-btn" (click)="voltar()">◀</button>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Data de Início</th>
+            <th>Última Alteração</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ev of eventos" (click)="verRegistros(ev)">
+            <td>{{ util.formatDateTime(ev.horario_inicio) }}</td>
+            <td>{{ util.formatDate(ev.horario_inicio) }}</td>
+            <td>{{ util.formatDate(ev.created_at) }}</td>
+            <td (click)="$event.stopPropagation()">
+              <div class="actions-cell">
+                <button class="btn-icon danger" (click)="deletar(ev)">
+                  <span style="font-size:1.2rem; color:var(--color-delete)">🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Painel de detalhes inline -->
+      <div class="detail-panel" *ngIf="showDetalhes && unidadeDetalhe">
+        <div class="d-flex justify-between align-center mb-md">
+          <h3 class="section-title">Detalhes da Unidade Amostral</h3>
+          <div class="d-flex gap-sm">
+            <button class="btn btn-secondary btn-sm" (click)="editarUnidade()">Editar</button>
+            <button class="btn-icon" (click)="showDetalhes = false">✕</button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field"><label>Nome</label><span>{{ unidadeDetalhe.nome }}</span></div>
+          <div class="detail-field">
+            <label>Posição</label>
+            <span>{{ util.decimalToDMS(unidadeDetalhe.latitude) }}, {{ util.decimalToDMS(unidadeDetalhe.longitude) }}</span>
+          </div>
+          <div class="detail-field"><label>Raio</label><span>{{ unidadeDetalhe.raio ? unidadeDetalhe.raio + ' m' : '—' }}</span></div>
+          <div class="detail-field"><label>Método de Coleta</label><span>{{ unidadeDetalhe.metodo_coleta || '—' }}</span></div>
+          <div class="detail-field"><label>Esforço Amostral</label><span>{{ unidadeDetalhe.esforco_amostral || '—' }}</span></div>
+          <div class="detail-field"><label>Criado em</label><span>{{ util.formatDate(unidadeDetalhe.created_at) }}</span></div>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && eventos.length === 0" class="text-center text-muted mt-lg">Nenhum evento cadastrado.</div>
+    </div>

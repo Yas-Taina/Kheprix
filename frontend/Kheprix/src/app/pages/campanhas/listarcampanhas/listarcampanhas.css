@@ -1,7 +1,0 @@
-.actions-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-.detalhe-row td { padding: 0; border-top: none; }
-.detalhe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.detalhe-grid > div { display: flex; flex-direction: column; gap: 3px; }
-.field-label { font-family: var(--font-display); font-size: 14px; color: var(--color-text-medium); letter-spacing: 0.05em; }
-.field-value { font-size: 14px; color: var(--color-text-dark); letter-spacing: 0.04em; }
-.loading-msg { color: var(--color-text-light); font-size: 14px; padding: 24px 0; }
