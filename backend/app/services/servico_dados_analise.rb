@@ -27,8 +27,7 @@ class ServicoDadosAnalise
   # ==================== Abundâncias ====================
 
   def montar_abundancias(estudo_id:)
-    resultados = base_analises(estudo_id)
-      .sem_variaveis
+    resultados = registros_unicos(estudo_id)
       .group(:especie)
       .sum(:abundancia)
 
@@ -49,8 +48,7 @@ class ServicoDadosAnalise
   # ==================== Abundâncias por Amostra ====================
 
   def montar_abundancias_por_amostra(estudo_id:)
-    registros = base_analises(estudo_id)
-      .sem_variaveis
+    registros = registros_unicos(estudo_id)
       .group(:fk_unidade_amostral, :especie)
       .sum(:abundancia)
 
@@ -64,14 +62,14 @@ class ServicoDadosAnalise
 
     matriz = unidades_ids.map do |unidade_id|
       especies_nomes.map do |especie_nome|
-        registros[[unidade_id, especie_nome]] || 0
+        registros[[ unidade_id, especie_nome ]] || 0
       end
     end
 
     {
       abundancias_por_amostra: matriz,
       nomes_especies: especies_nomes,
-      nomes_amostras: nomes_amostras,
+      nomes_amostras: nomes_amostras
     }
   end
 
@@ -84,20 +82,17 @@ class ServicoDadosAnalise
     variavel_ids = params[:variavel_ids]
     return nil if variavel_ids.blank?
 
-    var_rows = base_analises(estudo_id)
-      .where(id_variavel: variavel_ids)
-      .select(:fk_unidade_amostral, :id_variavel, :nome_variavel, :valor_numerico)
-      .distinct
-
     var_index = {}
     nome_index = {}
-    var_rows.each do |r|
-      var_index[[r.fk_unidade_amostral, r.id_variavel]] = r.valor_numerico&.to_f || 0.0
-      nome_index[r.id_variavel] ||= r.nome_variavel
+
+    variavel_ids.each do |vid|
+      valores_variavel_unicos(estudo_id, vid).each do |r|
+        var_index[[ r.fk_unidade_amostral, r.id_variavel ]] = r.valor_numerico&.to_f || 0.0
+        nome_index[r.id_variavel] ||= r.nome_variavel
+      end
     end
 
-    unidades_ids = base_analises(estudo_id)
-      .sem_variaveis
+    unidades_ids = registros_unicos(estudo_id)
       .distinct
       .pluck(:fk_unidade_amostral)
       .sort
@@ -105,7 +100,7 @@ class ServicoDadosAnalise
     nomes_variaveis_ambientais = variavel_ids.map { |vid| nome_index[vid] || "Variável #{vid}" }
 
     variaveis_por_amostra = unidades_ids.map do |uid|
-      variavel_ids.map { |vid| var_index[[uid, vid]] || 0.0 }
+      variavel_ids.map { |vid| var_index[[ uid, vid ]] || 0.0 }
     end
 
     dados_abundancia.merge(
@@ -121,24 +116,21 @@ class ServicoDadosAnalise
     variavel_y_id = params[:variavel_y_id]
     return nil if variavel_x_id.blank? || variavel_y_id.blank?
 
-    rows = base_analises(estudo_id)
-      .where(id_variavel: [variavel_x_id, variavel_y_id])
-      .select(:fk_unidade_amostral, :id_variavel, :nome_variavel, :valor_numerico)
-
     hash_x = {}
     hash_y = {}
     nome_x = nil
     nome_y = nil
 
-    rows.each do |r|
+    valores_variavel_unicos(estudo_id, variavel_x_id).each do |r|
       next unless r.valor_numerico
-      if r.id_variavel == variavel_x_id
-        hash_x[r.fk_unidade_amostral] = r.valor_numerico.to_f
-        nome_x ||= r.nome_variavel
-      else
-        hash_y[r.fk_unidade_amostral] = r.valor_numerico.to_f
-        nome_y ||= r.nome_variavel
-      end
+      hash_x[r.fk_unidade_amostral] = r.valor_numerico.to_f
+      nome_x ||= r.nome_variavel
+    end
+
+    valores_variavel_unicos(estudo_id, variavel_y_id).each do |r|
+      next unless r.valor_numerico
+      hash_y[r.fk_unidade_amostral] = r.valor_numerico.to_f
+      nome_y ||= r.nome_variavel
     end
 
     ids_comuns = hash_x.keys & hash_y.keys
@@ -148,7 +140,7 @@ class ServicoDadosAnalise
       x: ids_comuns.map { |id| hash_x[id] },
       y: ids_comuns.map { |id| hash_y[id] },
       nome_x: nome_x || "Variável X",
-      nome_y: nome_y || "Variável Y",
+      nome_y: nome_y || "Variável Y"
     }
   end
 
@@ -179,7 +171,7 @@ class ServicoDadosAnalise
       grupo1: valores_g1,
       grupo2: valores_g2,
       nome_grupo1: params[:nome_grupo1] || "Grupo 1",
-      nome_grupo2: params[:nome_grupo2] || "Grupo 2",
+      nome_grupo2: params[:nome_grupo2] || "Grupo 2"
     }
   end
 
@@ -191,9 +183,6 @@ class ServicoDadosAnalise
 
     agrupar_por = params[:agrupar_por] || "unidade_amostral"
 
-    rows = base_analises(estudo_id)
-      .where(id_variavel: variavel_id)
-
     grupo_col = case agrupar_por
     when "campanha" then :fk_campanha
     when "unidade_amostral" then :fk_unidade_amostral
@@ -201,7 +190,8 @@ class ServicoDadosAnalise
     else return nil
     end
 
-    data = rows.pluck(grupo_col, :valor_numerico, :nome_variavel)
+    rows = valores_variavel_unicos(estudo_id, variavel_id)
+    data = rows.map { |r| [ r.send(grupo_col), r.valor_numerico, r.nome_variavel ] }
     return nil if data.empty?
 
     if agrupar_por == "campanha"
@@ -242,17 +232,15 @@ class ServicoDadosAnalise
     variavel_id = params[:variavel_id]
     return nil if variavel_id.blank?
 
-    rows = base_analises(estudo_id)
-      .where(id_variavel: variavel_id)
-      .pluck(:valor_numerico, :nome_variavel)
+    rows = valores_variavel_unicos(estudo_id, variavel_id)
 
     dados = []
     nome_variavel = nil
 
-    rows.each do |val, nome|
-      next unless val
-      nome_variavel ||= nome
-      dados << val.to_f
+    rows.each do |r|
+      next unless r.valor_numerico
+      nome_variavel ||= r.nome_variavel
+      dados << r.valor_numerico.to_f
     end
 
     return nil if dados.empty?
@@ -299,11 +287,25 @@ class ServicoDadosAnalise
     Dw::AnaliseEstatistica.do_estudo(estudo_id)
   end
 
-  def valores_variavel_por_unidade(estudo_id:, variavel_id:, unidade_ids:)
+  def registros_unicos(estudo_id)
+    subquery = base_analises(estudo_id)
+      .select("DISTINCT ON (id_registro) id_registro, especie, abundancia, fk_unidade_amostral, fk_evento, fk_campanha, nome_campanha")
+      .order(:id_registro)
+      .to_sql
+    Dw::AnaliseEstatistica.from("(#{subquery}) AS analises_estatisticas")
+  end
+
+  def valores_variavel_unicos(estudo_id, variavel_id)
     base_analises(estudo_id)
-      .where(id_variavel: variavel_id, fk_unidade_amostral: unidade_ids)
-      .pluck(:valor_numerico)
+      .where(id_variavel: variavel_id)
+      .select("DISTINCT ON (fk_unidade_amostral) fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_variavel, nome_variavel, valor_numerico")
+      .order(:fk_unidade_amostral)
+  end
+
+  def valores_variavel_por_unidade(estudo_id:, variavel_id:, unidade_ids:)
+    valores_variavel_unicos(estudo_id, variavel_id)
+      .where(fk_unidade_amostral: unidade_ids)
+      .map { |r| r.valor_numerico&.to_f }
       .compact
-      .map(&:to_f)
   end
 end
