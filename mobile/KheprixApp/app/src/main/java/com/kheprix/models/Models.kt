@@ -185,6 +185,7 @@ data class ConviteRecebidoResponse(
     @SerializedName("estudo_id") val estudoId: Int,
     @SerializedName("nome_estudo") val nomeEstudo: String,
     @SerializedName("nome_remetente") val nomeRemetente: String,
+    val token: String,
     val status: String,
     @SerializedName("data_expiracao") val dataExpiracao: String,
     @SerializedName("created_at") val createdAt: String
@@ -251,7 +252,13 @@ data class CampanhaResponse(
     @SerializedName("data_fim") val dataFim: String?,
     val descricao: String?,
     @SerializedName("created_at") val createdAt: String,
-    @SerializedName("updated_at") val updatedAt: String
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
+)
+
+data class ValorVariavelResponse(
+    @SerializedName("variavel_id") val variavelId: Int,
+    val valor: String
 )
 
 // ──────────────────────────────────────────────

@@ -63,7 +63,7 @@ class CampanhasActivity : AppCompatActivity() {
         binding.rvCampanhas.layoutManager = LinearLayoutManager(this)
         binding.rvCampanhas.adapter = CampanhaAdapter(campanhas,
             onItemClick = { campanha ->
-                val intent = Intent(this, NovaCampanhaActivityV2::class.java)
+                val intent = Intent(this, UnidadesActivity::class.java)
                 intent.putExtra("estudo_remote_id", estudoRemoteId)
                 intent.putExtra("estudo_nome", estudoNome)
                 intent.putExtra("campanha_id", campanha.id)

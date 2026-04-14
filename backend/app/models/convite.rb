@@ -26,6 +26,7 @@ class Convite < ApplicationRecord
         estudo_id: estudo_id,
         nome_estudo: estudo.nome,
         nome_remetente: proprietario_envio.nome,
+        token: token,
         status: status,
         data_expiracao: data_expiracao,
         created_at: created_at
