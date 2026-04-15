@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:3000/estudos
+  url: http://localhost:3000/dashboard
   auth: inherit
 
 settings:

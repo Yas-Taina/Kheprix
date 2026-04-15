@@ -2,27 +2,24 @@
 
 class ServicoDashboard
   def resumo_ultimo_estudo(usuario:)
+    # OLTP: busca o estudo mais recente do usuário
     estudo = Estudo.por_usuario(usuario).order(updated_at: :desc).first
     return nil unless estudo
 
-    registros = RegistroOcorrencia
-      .joins(evento_amostragem: { unidade_amostral: :campanha })
-      .where(campanhas: { estudo_id: estudo.id })
-
-    especie_ids_observadas = registros.distinct.pluck(:especie_id)
+    # DW: métricas da camada de apresentação
+    indicadores = Dw::IndicadoresDashboard.do_estudo(estudo.id)
 
     {
       id: estudo.id,
       nome: estudo.nome,
       updated_at: estudo.updated_at,
-      data_inicio: estudo.campanhas.minimum(:data_inicio),
-      total_registros: registros.count,
-      total_especies: especie_ids_observadas.size,
-      especies_ameacadas: Especie.where(id: especie_ids_observadas)
-        .where.not(status_conservacao: [ nil, "" ]).count,
-      especies_nativas: Especie.where(id: especie_ids_observadas, endemismo: true).count,
-      especies_invasoras: Especie.where(id: especie_ids_observadas, endemismo: false).count,
-      total_individuos: registros.sum(:qtde_individuos)
+      data_inicio: indicadores.minimum(:data_inicio_campanha),
+      total_registros: indicadores.count,
+      total_especies: indicadores.distinct.count(:nome_cientifico),
+      especies_ameacadas: indicadores.where(is_ameacada: true).distinct.count(:nome_cientifico),
+      especies_nativas: indicadores.where(is_endemica: true).distinct.count(:nome_cientifico),
+      especies_invasoras: indicadores.where(is_endemica: false).distinct.count(:nome_cientifico),
+      total_individuos: indicadores.sum(:quantidade)
     }
   end
 end
