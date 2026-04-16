@@ -7,6 +7,7 @@ SELECT
   f.fk_campanha,
   cam.nome_campanha,
   f.fk_unidade_amostral,
+  u.nome_unidade_amostral,
   f.fk_evento,
   esp.nome_cientifico AS especie,
   COALESCE(esp.ordem, 'NA') AS ordem,
@@ -21,4 +22,5 @@ FROM public.fato_medicao_entomologica f
 JOIN public.dim_especie esp ON esp.id_especie = f.fk_especie
 JOIN public.dim_estudo est ON est.id_estudo = f.fk_estudo
 JOIN public.dim_campanha cam ON cam.id_campanha = f.fk_campanha
+JOIN public.dim_unidade_amostral u ON u.id_unidade = f.fk_unidade_amostral
 LEFT JOIN public.fato_variaveis_unificadas var ON var.id_registro = f.id_registro
