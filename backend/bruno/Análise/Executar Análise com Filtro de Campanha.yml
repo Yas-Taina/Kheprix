@@ -1,0 +1,29 @@
+info:
+  name: Executar Análise com Filtro de Campanha
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "shannon",
+        "campanha_ids": [1, 2]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -2,6 +2,8 @@
 
 class ServicoDadosAnalise
   def montar_dados(estudo_id:, tipo_dado:, params:)
+    @campanha_ids = params[:campanha_ids].presence
+
     case tipo_dado
     when "abundancias"
       montar_abundancias(estudo_id: estudo_id)
@@ -58,7 +60,7 @@ class ServicoDadosAnalise
     especies_nomes = registros.keys.map(&:last).uniq.sort
 
     unidades = Dw::DimUnidadeAmostral.where(id_unidade: unidades_ids).index_by(&:id_unidade)
-    nomes_amostras = unidades_ids.map { |id| unidades[id]&.metodo_coleta || "Unidade #{id}" }
+    nomes_amostras = unidades_ids.map { |id| unidades[id]&.nome_unidade_amostral || "Unidade #{id}" }
 
     matriz = unidades_ids.map do |unidade_id|
       especies_nomes.map do |especie_nome|
@@ -205,7 +207,7 @@ class ServicoDadosAnalise
     elsif agrupar_por == "unidade_amostral"
       ids = data.map(&:first).uniq
       unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
-      label_fn = ->(id) { unidades[id]&.metodo_coleta || "Unidade #{id}" }
+      label_fn = ->(id) { unidades[id]&.nome_unidade_amostral || "Unidade #{id}" }
     else
       label_fn = ->(id) { "Evento #{id}" }
     end
@@ -252,6 +254,7 @@ class ServicoDadosAnalise
 
   def montar_matriz_acumulacao(estudo_id:)
     fatos = Dw::FatoMedicaoEntomologica.where(fk_estudo: estudo_id).joins(:tempo)
+    fatos = fatos.where(fk_campanha: @campanha_ids) if @campanha_ids.present?
 
     registros = fatos
       .select("fato_medicao_entomologica.fk_evento, fato_medicao_entomologica.fk_especie, SUM(fato_medicao_entomologica.quantidade) as total")
@@ -284,7 +287,9 @@ class ServicoDadosAnalise
   # ==================== Helpers ====================
 
   def base_analises(estudo_id)
-    Dw::AnaliseEstatistica.do_estudo(estudo_id)
+    escopo = Dw::AnaliseEstatistica.do_estudo(estudo_id)
+    escopo = escopo.where(fk_campanha: @campanha_ids) if @campanha_ids.present?
+    escopo
   end
 
   def registros_unicos(estudo_id)

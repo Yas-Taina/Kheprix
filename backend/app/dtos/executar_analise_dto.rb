@@ -4,7 +4,8 @@ class ExecutarAnaliseDto
   include ActiveModel::API
 
   attr_accessor :chave, :variavel_ids, :variavel_x_id, :variavel_y_id, :variavel_id,
-                :agrupar_por, :grupo1_ids, :grupo2_ids, :nome_grupo1, :nome_grupo2
+                :agrupar_por, :grupo1_ids, :grupo2_ids, :nome_grupo1, :nome_grupo2,
+                :campanha_ids
 
   validates :chave, presence: true
 
@@ -19,6 +20,7 @@ class ExecutarAnaliseDto
     @grupo2_ids = params[:grupo2_ids]
     @nome_grupo1 = params[:nome_grupo1]
     @nome_grupo2 = params[:nome_grupo2]
+    @campanha_ids = params[:campanha_ids]
   end
 
   def to_params
@@ -32,6 +34,7 @@ class ExecutarAnaliseDto
       grupo2_ids: grupo2_ids,
       nome_grupo1: nome_grupo1,
       nome_grupo2: nome_grupo2,
+      campanha_ids: campanha_ids,
     }
   end
 end
