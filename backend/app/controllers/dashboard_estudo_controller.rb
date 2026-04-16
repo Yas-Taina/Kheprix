@@ -7,7 +7,7 @@ class DashboardEstudoController < ApplicationController
 
   # GET /estudos/:id/dashboard
   def show
-    resultado = servico.dados_completos(estudo_id: @estudo.id)
+    resultado = servico.dados_completos(estudo: @estudo)
     render json: resultado, status: :ok
   end
 

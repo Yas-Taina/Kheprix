@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 class ServicoDashboardEstudo
-  def dados_completos(estudo_id:)
-    indicadores = Dw::IndicadoresDashboard.do_estudo(estudo_id)
+  def dados_completos(estudo:)
+    indicadores = Dw::IndicadoresDashboard.do_estudo(estudo.id)
 
     {
+      estudo: { id: estudo.id, nome: estudo.nome, updated_at: estudo.updated_at },
       resumo: resumo(indicadores),
       registros_por_data: registros_por_data(indicadores),
       ocorrencias_por_especie: ocorrencias_por_especie(indicadores),
