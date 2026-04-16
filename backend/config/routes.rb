@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
 
   resources :estudos do
+    get "dashboard", on: :member, to: "dashboard_estudo#show"
     get "exportar_dados", on: :member, to: "exportar_dados#exportar_dados"
     resources :analises, only: [] do
       collection do

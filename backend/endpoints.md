@@ -23,6 +23,12 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 |------|----------------|-----------------|
 | GET /dashboard | — | Com estudo disponível (200): id(int), nome(string), updated_at(datetime), data_inicio(date), total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int). O estudo é escolhido por `ultimo_estudo_acessado_id` do usuário; fallback para o estudo vinculado com `created_at` mais recente. Sem nenhum estudo vinculado (404): erro(string). |
 
+## Dashboard do Estudo (autenticado, colaborador)
+
+| Rota | Dados enviados | Dados recebidos |
+|------|----------------|-----------------|
+| GET /estudos/:id/dashboard | — | resumo: { total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int), data_inicio(date) }, registros_por_data: array[ { data(date), total(int) } ], ocorrencias_por_especie: array[ { nome_cientifico(string), nome_popular(string), total(int) } ], pontos_mapa: array[ { latitude(decimal), longitude(decimal), nome_cientifico(string), quantidade(int) } ], registros_por_especie_tempo: array[ { ano(int), mes(int), nome_cientifico(string), is_endemica(boolean), total(int) } ], especies_distintas_por_mes: array[ { ano(int), mes(int), total(int) } ] |
+
 ## Estudos (autenticado)
 
 | Rota | Dados enviados | Dados recebidos |
