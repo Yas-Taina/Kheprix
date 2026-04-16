@@ -1,6 +1,7 @@
 SELECT
   id AS id_unidade,
   campanha_id AS fk_campanha_src,
+  nome AS nome_unidade_amostral,
   latitude,
   longitude,
   raio,
