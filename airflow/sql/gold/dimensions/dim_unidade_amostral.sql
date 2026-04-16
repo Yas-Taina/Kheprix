@@ -2,6 +2,7 @@
 SELECT
   u.id_unidade,
   c.id_campanha AS fk_campanha,
+  u.nome_unidade_amostral,
   u.latitude,
   u.longitude,
   u.raio,

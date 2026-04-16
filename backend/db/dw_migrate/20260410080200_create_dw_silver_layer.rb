@@ -27,6 +27,7 @@ class CreateDwSilverLayer < ActiveRecord::Migration[8.0]
     create_table :silver_unidades_amostrais, id: false do |t|
       t.integer   :id_unidade, primary_key: true
       t.integer   :fk_campanha_src, null: false  # FK bruta, validada na Gold
+      t.string    :nome_unidade_amostral
       t.decimal   :latitude,  precision: 10, scale: 8
       t.decimal   :longitude, precision: 11, scale: 8
       t.decimal   :raio,      precision: 10, scale: 2

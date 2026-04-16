@@ -64,6 +64,7 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
     create_table :dim_unidade_amostral, id: false do |t|
       t.integer :id_unidade, primary_key: true
       t.integer :fk_campanha, null: false
+      t.string  :nome_unidade_amostral
       t.decimal :latitude,  precision: 10, scale: 8
       t.decimal :longitude, precision: 11, scale: 8
       t.decimal :raio,      precision: 10, scale: 2
