@@ -8,7 +8,10 @@ class RegistroOcorrencia < ApplicationRecord
   # 1. Associações
   belongs_to :evento_amostragem
   belongs_to :especie
-  has_many :valores_variaveis, foreign_key: :id_nivel_aplicacao, dependent: :destroy
+  has_many :valores_variaveis,
+    -> { joins(:variavel).where(variaveis: { nivel_aplicacao: :registro }) },
+    foreign_key: :id_nivel_aplicacao,
+    dependent: :destroy
 
   # 2. Validações
   validates :evento_amostragem_id, presence: true
