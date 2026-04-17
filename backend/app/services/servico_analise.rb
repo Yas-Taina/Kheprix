@@ -11,7 +11,7 @@ class ServicoAnalise
       params: params,
     )
 
-    return { erro: "Não foi possível montar os dados para a análise. Verifique se existem dados suficientes no estudo." } unless dados
+    return { erro: mensagem_sem_dados(analise, params) } unless dados
 
     dados = adaptar_campos(analise[:chave], dados)
 
@@ -42,6 +42,15 @@ class ServicoAnalise
   end
 
   private
+
+  def mensagem_sem_dados(analise, params)
+    filtros = []
+    filtros << "campanha_ids=#{params[:campanha_ids]}" if params[:campanha_ids].present?
+    filtros << "data_inicio=#{params[:data_inicio]}" if params[:data_inicio].present?
+    filtros << "data_fim=#{params[:data_fim]}" if params[:data_fim].present?
+    contexto = filtros.any? ? " com os filtros #{filtros.join(", ")}" : ""
+    "Não foi possível montar os dados para '#{analise[:nome]}'#{contexto}. Verifique se existem dados suficientes."
+  end
 
   # A API R usa nomes de campos diferentes para algumas análises.
   # Ex: KS espera amostra1/amostra2 em vez de grupo1/grupo2.

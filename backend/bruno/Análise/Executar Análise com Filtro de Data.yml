@@ -1,0 +1,30 @@
+info:
+  name: Executar Análise com Filtro de Data
+  type: http
+  seq: 5
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "chao1",
+        "data_inicio": "2025-02-01",
+        "data_fim": "2025-02-28"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
