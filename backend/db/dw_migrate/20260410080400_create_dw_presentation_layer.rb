@@ -41,6 +41,9 @@ class CreateDwPresentationLayer < ActiveRecord::Migration[8.0]
       t.integer   :fk_unidade_amostral
       t.string    :nome_unidade_amostral, limit: 255
       t.integer   :fk_evento
+      t.date      :data_registro
+      t.integer   :ano
+      t.integer   :mes
       t.string    :especie,              limit: 255
       t.string    :ordem,                limit: 100
       t.string    :familia,              limit: 100
