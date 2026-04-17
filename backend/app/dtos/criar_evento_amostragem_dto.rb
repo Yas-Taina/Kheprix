@@ -5,7 +5,7 @@ class CriarEventoAmostragemDto
 
   attr_accessor :horario_inicio, :horario_fim, :esforco_real, :valores_variaveis
 
-  validates :horario_inicio, presence: true
+  validates :horario_inicio, :horario_fim, :esforco_real, presence: true
   validate :valores_variaveis_validos
 
   def initialize(params = {})

@@ -10,7 +10,7 @@ class EventoAmostragem < ApplicationRecord
     foreign_key: :id_nivel_aplicacao,
     dependent: :destroy
 
-  validates :horario_inicio, presence: true
+  validates :horario_inicio, :horario_fim, :esforco_real, presence: true
   validate :horario_fim_apos_inicio
 
   scope :ordenados, -> { order(horario_inicio: :desc) }

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+require "builder"
+
 class ServicoExportacaoDados
   def gerar_xml(estudo:)
-    require "builder"
-
     variaveis = carregar_variaveis(estudo)
     valores_map = carregar_valores(estudo)
     variaveis_por_nivel = variaveis.group_by(&:nivel_aplicacao)
@@ -312,7 +312,7 @@ class ServicoExportacaoDados
       qtde_unidades qtde_eventos qtde_registros qtde_especies total_individuos
     ]
 
-    colunas_variaveis = variaveis.map { |v| "var_campanha_#{v.nome}" }
+    colunas_variaveis = variaveis.map { |v| "var_#{v.nivel_aplicacao}_#{v.nome}" }
 
     agregados_unidade = UnidadeAmostral
       .joins(campanha: :estudo)
