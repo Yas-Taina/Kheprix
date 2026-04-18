@@ -4,7 +4,7 @@ class CampanhasController < ApplicationController
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
-  before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
+  before_action :autorizar_proprietario_estudo!, only: %i[destroy]
   before_action :definir_campanha, only: %i[show update destroy]
 
   def index

@@ -4,7 +4,7 @@ class EspeciesController < ApplicationController
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
-  before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
+  before_action :autorizar_proprietario_estudo!, only: %i[destroy]
   before_action :carregar_especie, only: %i[show update destroy]
 
   # GET /estudos/:estudo_id/especies
