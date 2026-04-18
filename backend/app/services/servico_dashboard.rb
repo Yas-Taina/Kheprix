@@ -2,8 +2,7 @@
 
 class ServicoDashboard
   def resumo_ultimo_estudo(usuario:)
-    # OLTP: busca o estudo mais recente do usuário
-    estudo = Estudo.por_usuario(usuario).order(updated_at: :desc).first
+    estudo = estudo_alvo(usuario)
     return nil unless estudo
 
     # DW: métricas da camada de apresentação
@@ -21,5 +20,13 @@ class ServicoDashboard
       especies_invasoras: indicadores.where(is_endemica: false).distinct.count(:nome_cientifico),
       total_individuos: indicadores.sum(:quantidade)
     }
+  end
+
+  private
+
+  def estudo_alvo(usuario)
+    escopo = Estudo.por_usuario(usuario)
+    escopo.find_by(id: usuario.ultimo_estudo_acessado_id) ||
+      escopo.order(created_at: :desc).first
   end
 end
