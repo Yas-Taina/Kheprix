@@ -8,8 +8,8 @@ class Dw::FatoMedicaoEntomologica < DwRecord
   belongs_to :especie, class_name: "Dw::DimEspecie", foreign_key: "fk_especie"
   belongs_to :estudo, class_name: "Dw::DimEstudo", foreign_key: "fk_estudo"
   belongs_to :evento, class_name: "Dw::DimEventoAmostragem", foreign_key: "fk_evento"
-
-  has_many :variaveis_registro, class_name: "Dw::DimVariavelRegistro", foreign_key: "id_registro"
+  belongs_to :campanha, class_name: "Dw::DimCampanha", foreign_key: "fk_campanha"
+  belongs_to :unidade_amostral, class_name: "Dw::DimUnidadeAmostral", foreign_key: "fk_unidade_amostral"
 
   scope :do_estudo, ->(id_estudo) { where(fk_estudo: id_estudo) }
   scope :da_especie, ->(id_especie) { where(fk_especie: id_especie) }

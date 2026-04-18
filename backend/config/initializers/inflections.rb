@@ -24,4 +24,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular "unidade_amostral", "unidades_amostrais"
   inflect.irregular "nivel_aplicacao", "nivel_aplicacoes"
   inflect.irregular "registro_ocorrencia", "registro_ocorrencias"
+  inflect.irregular "analise", "analises"
 end
