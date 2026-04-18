@@ -6,7 +6,7 @@ class EventosAmostragemController < ApplicationController
   before_action :autorizar_acesso_estudo!
   before_action :definir_campanha
   before_action :definir_unidade_amostral
-  before_action :autorizar_proprietario_estudo!, only: %i[create update destroy]
+  before_action :autorizar_proprietario_estudo!, only: %i[destroy]
   before_action :definir_evento, only: %i[show update destroy]
 
   def index

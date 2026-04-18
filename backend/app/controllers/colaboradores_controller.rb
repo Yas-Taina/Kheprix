@@ -4,7 +4,7 @@ class ColaboradoresController < ApplicationController
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
-  before_action :autorizar_proprietario_estudo!, only: %i[update destroy]
+  before_action :autorizar_proprietario_estudo!, only: %i[index update destroy]
   before_action :definir_colaborador, only: %i[update destroy]
 
   def index
