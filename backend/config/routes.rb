@@ -18,6 +18,11 @@ Rails.application.routes.draw do
 
   resources :estudos do
     get "exportar_dados", on: :member, to: "exportar_dados#exportar_dados"
+    resources :analises, only: [] do
+      collection do
+        post :executar
+      end
+    end
     resources :campanhas do
       resources :unidades_amostrais, only: %i[index show create update destroy] do
         resources :eventos_amostragem, only: %i[index show create update destroy] do

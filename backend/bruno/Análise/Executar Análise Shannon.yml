@@ -1,0 +1,28 @@
+info:
+  name: Executar Análise Shannon
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "shannon"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
