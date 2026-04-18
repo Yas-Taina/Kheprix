@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EventosAmostragemController < ApplicationController
+  include EstudoAcessavel
+
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
@@ -71,12 +73,6 @@ class EventosAmostragemController < ApplicationController
 
   def servico
     @servico ||= ServicoEventoAmostragem.new
-  end
-
-  def definir_estudo
-    @estudo = Estudo.find(params[:estudo_id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { erro: "Estudo não encontrado" }, status: :not_found
   end
 
   def autorizar_acesso_estudo!

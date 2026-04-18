@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class VariaveisController < ApplicationController
+  include EstudoAcessavel
+
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
@@ -22,12 +24,6 @@ class VariaveisController < ApplicationController
   end
 
   private
-
-  def definir_estudo
-    @estudo = Estudo.find(params[:estudo_id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { erro: "Estudo não encontrado" }, status: :not_found
-  end
 
   def autorizar_acesso_estudo!
     colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)

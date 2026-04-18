@@ -21,7 +21,7 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
-| GET /dashboard | — | id(int), nome(string), updated_at(datetime), data_inicio(date), total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int) |
+| GET /dashboard | — | Com estudo disponível (200): id(int), nome(string), updated_at(datetime), data_inicio(date), total_registros(int), total_especies(int), especies_ameacadas(int), especies_nativas(int), especies_invasoras(int), total_individuos(int). O estudo é escolhido por `ultimo_estudo_acessado_id` do usuário; fallback para o estudo vinculado com `created_at` mais recente. Sem nenhum estudo vinculado (404): erro(string). |
 
 ## Estudos (autenticado)
 

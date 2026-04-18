@@ -7,7 +7,7 @@ class DashboardController < ApplicationController
     resultado = servico.resumo_ultimo_estudo(usuario: usuario_atual)
 
     if resultado.nil?
-      render json: { mensagem: "Nenhum estudo encontrado" }, status: :ok
+      render json: { erro: "Nenhum estudo encontrado" }, status: :not_found
     else
       render json: resultado, status: :ok
     end

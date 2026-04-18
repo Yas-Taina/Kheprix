@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_30_010000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_18_031456) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -130,7 +130,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_30_010000) do
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "ultimo_estudo_acessado_id"
     t.index ["email"], name: "index_usuarios_on_email", unique: true
+    t.index ["ultimo_estudo_acessado_id"], name: "index_usuarios_on_ultimo_estudo_acessado_id"
   end
 
   create_table "valores_variaveis", force: :cascade do |t|
@@ -168,6 +170,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_30_010000) do
   add_foreign_key "registro_ocorrencias", "especies"
   add_foreign_key "registro_ocorrencias", "eventos_amostragem"
   add_foreign_key "unidades_amostrais", "campanhas"
+  add_foreign_key "usuarios", "estudos", column: "ultimo_estudo_acessado_id", on_delete: :nullify
   add_foreign_key "valores_variaveis", "variaveis"
   add_foreign_key "variaveis", "estudos"
 end
