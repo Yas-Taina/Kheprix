@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CodigoAcessoController < ApplicationController
+  include EstudoAcessavel
+
   before_action :autenticar_requisicao!
   before_action :definir_estudo
   before_action :autorizar_proprietario_estudo!
@@ -29,12 +31,6 @@ class CodigoAcessoController < ApplicationController
 
   def resposta_codigo
     { codigo: @estudo.codigo, senha_autocadastro: @estudo.senha_autocadastro }
-  end
-
-  def definir_estudo
-    @estudo = Estudo.find(params[:estudo_id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { erro: "Estudo não encontrado" }, status: :not_found
   end
 
   def autorizar_proprietario_estudo!

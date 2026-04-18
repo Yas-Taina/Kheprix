@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EstudosController < ApplicationController
+  include EstudoAcessavel
+
   before_action :autenticar_requisicao!
 
   def index
@@ -30,6 +32,7 @@ class EstudosController < ApplicationController
     estudo = servico.cadastrar(nome: dto.nome, observacoes: dto.observacoes, usuario: usuario_atual, variaveis: dto.variaveis)
 
     if estudo.persisted?
+      @estudo = estudo
       render json: estudo, status: :created
     else
       render json: { erros: estudo.errors.full_messages }, status: :unprocessable_entity
