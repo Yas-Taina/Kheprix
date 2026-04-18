@@ -3,6 +3,8 @@
 class Usuario < ApplicationRecord
   has_secure_password
 
+  belongs_to :ultimo_estudo_acessado, class_name: "Estudo", optional: true
+
   validates :nome, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
 
