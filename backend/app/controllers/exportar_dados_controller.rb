@@ -33,13 +33,4 @@ class ExportarDadosController < ApplicationController
       render json: { erro: "Formato não suportado" }, status: :unprocessable_entity
     end
   end
-
-  private
-
-  def autorizar_acesso_estudo!
-    colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)
-    unless colaborador
-      render json: { erro: "Acesso negado a este estudo" }, status: :forbidden
-    end
-  end
 end
