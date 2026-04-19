@@ -2,6 +2,7 @@
 
 class ServicoRegistroOcorrencia
   include SalvaFotoBase64
+  include GerenciaValoresVariaveis
 
   def listar(evento_id:)
     RegistroOcorrencia.do_evento(evento_id).por_data
@@ -12,6 +13,10 @@ class ServicoRegistroOcorrencia
   end
 
   def criar(evento_id:, estudo_id:, atributos:, valores_variaveis: nil)
+    registro_placeholder = RegistroOcorrencia.new(atributos.merge(evento_amostragem_id: evento_id))
+    validar_variaveis_compat(registro_placeholder, valores_variaveis, estudo_id: estudo_id, nivel: :registro)
+    return registro_placeholder if registro_placeholder.errors.any?
+
     foto_base64 = atributos.delete(:foto)
     atributos[:foto] = salvar_foto_base64(foto_base64, estudo_id: estudo_id, tipo: "registro_ocorrencias") if foto_base64.present?
 
@@ -38,14 +43,14 @@ class ServicoRegistroOcorrencia
 
     ActiveRecord::Base.transaction do
       registro.update!(atributos)
-      unless valores_variaveis.nil?
-        registro.valores_variaveis.destroy_all
-        criar_valores_variaveis(registro, valores_variaveis)
-      end
+      sincronizar_valores_variaveis(registro, valores_variaveis)
       registro
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  rescue ActiveRecord::RecordNotFound => e
+    registro.errors.add(:base, e.message)
+    registro
   end
 
   def destruir(registro)
@@ -53,17 +58,4 @@ class ServicoRegistroOcorrencia
     registro.soft_delete
   end
 
-  private
-
-  def criar_valores_variaveis(registro, valores_variaveis)
-    return if valores_variaveis.blank?
-
-    valores_variaveis.each do |vv|
-      ValorVariavel.create!(
-        variavel_id: vv[:variavel_id],
-        id_nivel_aplicacao: registro.id,
-        valor: vv[:valor],
-      )
-    end
-  end
 end

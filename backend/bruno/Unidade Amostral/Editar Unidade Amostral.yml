@@ -30,7 +30,7 @@ http:
         "metodo_coleta": "Armadilha fotográfica e auditiva",
         "esforco_amostral": "45 dias de exposição",
       "valores_variaveis": [
-        { "variavel_id": 1, "valor": "920" }
+        { "id": 1, "valor": "920" }
       ]
       }
   auth: inherit

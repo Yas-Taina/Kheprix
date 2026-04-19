@@ -20,6 +20,10 @@ class UnidadeAmostral < ApplicationRecord
   scope :recentes, -> { order(updated_at: :desc) }
 
   def as_json(options = {})
-    super(only: %i[id campanha_id nome latitude longitude raio metodo_coleta esforco_amostral created_at updated_at], **options)
+    super(only: %i[id campanha_id nome latitude longitude raio metodo_coleta esforco_amostral created_at updated_at], **options).merge(
+      "valores_variaveis" => valores_variaveis.map { |vv|
+        { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
+      }
+    )
   end
 end

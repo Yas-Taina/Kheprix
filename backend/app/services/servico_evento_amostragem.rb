@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ServicoEventoAmostragem
+  include GerenciaValoresVariaveis
+
   def listar(unidade_amostral_id:)
     EventoAmostragem.where(unidade_amostral_id: unidade_amostral_id).ordenados
   end
@@ -10,13 +12,17 @@ class ServicoEventoAmostragem
   end
 
   def criar(unidade_amostral:, horario_inicio:, horario_fim:, esforco_real:, valores_variaveis: nil)
+    evento = EventoAmostragem.new(
+      unidade_amostral: unidade_amostral,
+      horario_inicio: horario_inicio,
+      horario_fim: horario_fim,
+      esforco_real: esforco_real,
+    )
+    validar_variaveis_compat(evento, valores_variaveis, estudo_id: unidade_amostral.campanha.estudo_id, nivel: :evento)
+    return evento if evento.errors.any?
+
     ActiveRecord::Base.transaction do
-      evento = EventoAmostragem.create!(
-        unidade_amostral: unidade_amostral,
-        horario_inicio: horario_inicio,
-        horario_fim: horario_fim,
-        esforco_real: esforco_real,
-      )
+      evento.save!
       criar_valores_variaveis(evento, valores_variaveis)
       evento
     end
@@ -31,14 +37,14 @@ class ServicoEventoAmostragem
         horario_fim: horario_fim,
         esforco_real: esforco_real,
       )
-      unless valores_variaveis.nil?
-        evento.valores_variaveis.destroy_all
-        criar_valores_variaveis(evento, valores_variaveis)
-      end
+      sincronizar_valores_variaveis(evento, valores_variaveis)
       evento
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  rescue ActiveRecord::RecordNotFound => e
+    evento.errors.add(:base, e.message)
+    evento
   end
 
   def excluir(evento:)
@@ -48,17 +54,4 @@ class ServicoEventoAmostragem
     evento.soft_delete
   end
 
-  private
-
-  def criar_valores_variaveis(evento, valores_variaveis)
-    return if valores_variaveis.blank?
-
-    valores_variaveis.each do |vv|
-      ValorVariavel.create!(
-        variavel_id: vv[:variavel_id],
-        id_nivel_aplicacao: evento.id,
-        valor: vv[:valor],
-      )
-    end
-  end
 end

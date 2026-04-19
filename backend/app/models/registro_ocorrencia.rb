@@ -43,7 +43,10 @@ class RegistroOcorrencia < ApplicationRecord
       **options,
     ).merge(
       "hora" => hora&.strftime("%H:%M:%S"),
-      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil
+      "foto" => foto.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{foto}" : nil,
+      "valores_variaveis" => valores_variaveis.map { |vv|
+        { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
+      },
     )
   end
 end

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ServicoUnidadeAmostral
+  include GerenciaValoresVariaveis
+
   def listar(campanha_id:)
     UnidadeAmostral.where(campanha_id: campanha_id).recentes
   end
@@ -10,16 +12,20 @@ class ServicoUnidadeAmostral
   end
 
   def cadastrar(campanha:, nome:, latitude:, longitude:, raio:, metodo_coleta:, esforco_amostral:, valores_variaveis: nil)
+    unidade = UnidadeAmostral.new(
+      campanha: campanha,
+      nome: nome,
+      latitude: latitude,
+      longitude: longitude,
+      raio: raio,
+      metodo_coleta: metodo_coleta,
+      esforco_amostral: esforco_amostral,
+    )
+    validar_variaveis_compat(unidade, valores_variaveis, estudo_id: campanha.estudo_id, nivel: :unidade)
+    return unidade if unidade.errors.any?
+
     ActiveRecord::Base.transaction do
-      unidade = UnidadeAmostral.create!(
-        campanha: campanha,
-        nome: nome,
-        latitude: latitude,
-        longitude: longitude,
-        raio: raio,
-        metodo_coleta: metodo_coleta,
-        esforco_amostral: esforco_amostral,
-      )
+      unidade.save!
       criar_valores_variaveis(unidade, valores_variaveis)
       unidade
     end
@@ -37,14 +43,14 @@ class ServicoUnidadeAmostral
         metodo_coleta: metodo_coleta,
         esforco_amostral: esforco_amostral,
       )
-      unless valores_variaveis.nil?
-        unidade.valores_variaveis.destroy_all
-        criar_valores_variaveis(unidade, valores_variaveis)
-      end
+      sincronizar_valores_variaveis(unidade, valores_variaveis)
       unidade
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  rescue ActiveRecord::RecordNotFound => e
+    unidade.errors.add(:base, e.message)
+    unidade
   end
 
   def excluir(unidade:)
@@ -60,17 +66,4 @@ class ServicoUnidadeAmostral
     unidade.soft_delete
   end
 
-  private
-
-  def criar_valores_variaveis(unidade, valores_variaveis)
-    return if valores_variaveis.blank?
-
-    valores_variaveis.each do |vv|
-      ValorVariavel.create!(
-        variavel_id: vv[:variavel_id],
-        id_nivel_aplicacao: unidade.id,
-        valor: vv[:valor],
-      )
-    end
-  end
 end

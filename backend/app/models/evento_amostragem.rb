@@ -26,6 +26,10 @@ class EventoAmostragem < ApplicationRecord
         created_at
       ],
       **options,
+    ).merge(
+      "valores_variaveis" => valores_variaveis.map { |vv|
+        { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
+      },
     )
   end
 
