@@ -25,7 +25,7 @@ http:
         "data_fim": "2026-03-20",
         "descricao": "Campanha atualizada",
         "valores_variaveis": [
-          {"variavel_id": 1, "valor": "30.0"}
+          {"id": 1, "valor": "30.0"}
         ]
       }
   auth: inherit

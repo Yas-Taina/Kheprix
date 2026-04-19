@@ -2,14 +2,17 @@
 
 class AtualizarRegistroOcorrenciaDto
   include ActiveModel::API
+  include ValidaValoresVariaveis
 
-  attr_accessor :especie_id, :data, :hora, :latitude, :longitude, :qtde_individuos, :foto, :ausencia_especie
+  attr_accessor :especie_id, :data, :hora, :latitude, :longitude, :qtde_individuos, :foto, :ausencia_especie,
+                :valores_variaveis
 
   validates :especie_id, presence: true
   validates :data, presence: true
   validates :hora, presence: true
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
+  validate :valida_valores_variaveis_edicao
 
   def initialize(params = {})
     @chaves_informadas = []
@@ -21,6 +24,7 @@ class AtualizarRegistroOcorrenciaDto
     @qtde_individuos = params[:qtde_individuos]
     @foto = params[:foto]
     @ausencia_especie = params[:ausencia_especie]
+    @valores_variaveis = params[:valores_variaveis]
     @chaves_informadas << :foto if params.key?(:foto)
   end
 

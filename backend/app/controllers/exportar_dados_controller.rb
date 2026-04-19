@@ -15,12 +15,23 @@ class ExportarDadosController < ApplicationController
       return
     end
 
-    csv = ServicoExportacaoDados.new.gerar_csv(estudo: @estudo, agrupamento: dto.agrupamento)
+    servico = ServicoExportacaoDados.new
 
-    send_data "\xEF\xBB\xBF" + csv,
-      type: "text/csv; charset=utf-8",
-      disposition: "attachment",
-      filename: "dados_estudo.csv"
+    if dto.formato == "xml"
+      xml = servico.gerar_xml(estudo: @estudo)
+      send_data xml,
+        type: "application/xml; charset=utf-8",
+        disposition: "attachment",
+        filename: "dados_estudo.xml"
+    elsif dto.formato == "csv"
+      csv = servico.gerar_csv(estudo: @estudo, agrupamento: dto.agrupamento)
+      send_data "\xEF\xBB\xBF" + csv,
+        type: "text/csv; charset=utf-8",
+        disposition: "attachment",
+        filename: "dados_estudo.csv"
+    else
+      render json: { erro: "Formato não suportado" }, status: :unprocessable_entity
+    end
   end
 
   private
