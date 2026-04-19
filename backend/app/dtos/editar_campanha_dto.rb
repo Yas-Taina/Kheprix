@@ -2,15 +2,16 @@
 
 class EditarCampanhaDto
   include ActiveModel::API
+  include ValidaValoresVariaveis
 
   attr_accessor :nome, :data_inicio, :data_fim, :descricao, :valores_variaveis
 
-  CAMPOS_OBRIGATORIOS = %i[nome data_inicio descricao valores_variaveis].freeze
+  CAMPOS_OBRIGATORIOS = %i[nome data_inicio descricao].freeze
 
   validates :nome, presence: true
   validates :data_inicio, presence: true
   validate :campos_informados
-  validate :valores_variaveis_validos
+  validate :valida_valores_variaveis_edicao
 
   def initialize(params = {})
     @chaves_informadas = params.respond_to?(:keys) ? params.keys.map(&:to_sym) : []
@@ -27,23 +28,6 @@ class EditarCampanhaDto
     CAMPOS_OBRIGATORIOS.each do |campo|
       unless @chaves_informadas.include?(campo)
         errors.add(campo, "deve ser informado")
-      end
-    end
-  end
-
-  def valores_variaveis_validos
-    return if valores_variaveis.blank?
-
-    unless valores_variaveis.is_a?(Array)
-      errors.add(:valores_variaveis, "deve ser um array")
-      return
-    end
-
-    valores_variaveis.each_with_index do |vv, indice|
-      %i[variavel_id valor].each do |campo|
-        if vv[campo].blank?
-          errors.add(:base, "Valor variável #{indice + 1}: #{campo} não pode ficar em branco")
-        end
       end
     end
   end

@@ -28,7 +28,10 @@ http:
       {
         "horario_inicio": "2026-03-10T07:30:00.000Z",
         "horario_fim": "2026-03-10T11:30:00.000Z",
-        "esforco_real": "4 horas de observação direta com binóculos"
+        "esforco_real": "4 horas de observação direta com binóculos",
+      "valores_variaveis": [
+        { "id": 1, "valor": "26.1" }
+      ]
       }
   auth: inherit
 

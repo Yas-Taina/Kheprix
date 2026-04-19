@@ -1,6 +1,112 @@
 # frozen_string_literal: true
 
+require "builder"
+
 class ServicoExportacaoDados
+  def gerar_xml(estudo:)
+    variaveis = carregar_variaveis(estudo)
+    valores_map = carregar_valores(estudo)
+    variaveis_por_nivel = variaveis.group_by(&:nivel_aplicacao)
+
+    campanhas = estudo.campanhas
+      .includes(
+        unidades_amostrais: {
+          eventos_amostragem: {
+            registro_ocorrencias: :especie
+          }
+        }
+      )
+      .order("campanhas.nome")
+
+    xml = Builder::XmlMarkup.new(indent: 2)
+    xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
+
+    xml.estudo do
+      xml.nome(estudo.nome)
+      xml.observacoes(estudo.observacoes)
+
+      xml.especies do
+        estudo.especies.order(:nome_popular).each do |esp|
+          xml.especie do
+            xml.classe(esp.classe)
+            xml.ordem(esp.ordem)
+            xml.familia(esp.familia)
+            xml.genero(esp.genero)
+            xml.especie(esp.especie)
+            xml.nome_popular(esp.nome_popular)
+            xml.status_conservacao(esp.status_conservacao)
+            xml.endemismo(esp.endemismo)
+          end
+        end
+      end
+
+      xml.variaveis do
+        variaveis.each do |v|
+          xml.variavel do
+            xml.nome(v.nome)
+            xml.nivel_aplicacao(v.nivel_aplicacao)
+            xml.tipo_dado(v.tipo_dado)
+            xml.metrica(v.metrica)
+          end
+        end
+      end
+
+      xml.campanhas do
+        campanhas.each do |campanha|
+          xml.campanha do
+            xml.nome(campanha.nome)
+            xml.data_inicio(campanha.data_inicio)
+            xml.data_fim(campanha.data_fim)
+            xml.descricao(campanha.descricao)
+            escrever_valores_variaveis(xml, variaveis_por_nivel["campanha"], valores_map, campanha.id)
+
+            xml.unidades_amostrais do
+              campanha.unidades_amostrais.each do |unidade|
+                xml.unidade_amostral do
+                  xml.nome(unidade.nome)
+                  xml.latitude(unidade.latitude)
+                  xml.longitude(unidade.longitude)
+                  xml.raio(unidade.raio)
+                  xml.metodo_coleta(unidade.metodo_coleta)
+                  xml.esforco_amostral(unidade.esforco_amostral)
+                  escrever_valores_variaveis(xml, variaveis_por_nivel["unidade"], valores_map, unidade.id)
+
+                  xml.eventos_amostragem do
+                    unidade.eventos_amostragem.each do |evento|
+                      xml.evento_amostragem do
+                        xml.horario_inicio(formatar_datetime(evento.horario_inicio))
+                        xml.horario_fim(formatar_datetime(evento.horario_fim))
+                        xml.esforco_real(evento.esforco_real)
+                        escrever_valores_variaveis(xml, variaveis_por_nivel["evento"], valores_map, evento.id)
+
+                        xml.registros_ocorrencia do
+                          evento.registro_ocorrencias.each do |reg|
+                            xml.registro_ocorrencia do
+                              xml.data(reg.data)
+                              xml.hora(reg.hora&.strftime("%H:%M:%S"))
+                              xml.latitude(reg.latitude)
+                              xml.longitude(reg.longitude)
+                              xml.qtde_individuos(reg.qtde_individuos)
+                              xml.ausencia_especie(reg.ausencia_especie)
+                              xml.especie_nome_popular(reg.especie&.nome_popular)
+                              escrever_valores_variaveis(xml, variaveis_por_nivel["registro"], valores_map, reg.id)
+                            end
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    xml.target!
+  end
+
   def gerar_csv(estudo:, agrupamento:)
     case agrupamento
     when "registro_ocorrencia" then gerar_por_registro(estudo)
@@ -206,7 +312,7 @@ class ServicoExportacaoDados
       qtde_unidades qtde_eventos qtde_registros qtde_especies total_individuos
     ]
 
-    colunas_variaveis = variaveis.map { |v| "var_campanha_#{v.nome}" }
+    colunas_variaveis = variaveis.map { |v| "var_#{v.nivel_aplicacao}_#{v.nome}" }
 
     agregados_unidade = UnidadeAmostral
       .joins(campanha: :estudo)
@@ -324,5 +430,18 @@ class ServicoExportacaoDados
 
   def formatar_datetime(dt)
     dt&.strftime("%Y-%m-%d %H:%M")
+  end
+
+  def escrever_valores_variaveis(xml, variaveis_nivel, valores_map, entidade_id)
+    return if variaveis_nivel.blank?
+
+    xml.valores_variaveis do
+      variaveis_nivel.each do |v|
+        xml.valor do
+          xml.variavel(v.nome)
+          xml.valor(valores_map.dig(v.id, entidade_id))
+        end
+      end
+    end
   end
 end

@@ -36,6 +36,7 @@ http:
     - name: formato
       value: csv
       type: query
+      enabled: true
   auth: inherit
 
 settings:

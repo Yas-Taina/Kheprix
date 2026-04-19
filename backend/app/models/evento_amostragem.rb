@@ -5,8 +5,12 @@ class EventoAmostragem < ApplicationRecord
 
   belongs_to :unidade_amostral
   has_many :registro_ocorrencias
+  has_many :valores_variaveis,
+    -> { joins(:variavel).where(variaveis: { nivel_aplicacao: :evento }) },
+    foreign_key: :id_nivel_aplicacao,
+    dependent: :destroy
 
-  validates :horario_inicio, presence: true
+  validates :horario_inicio, :horario_fim, :esforco_real, presence: true
   validate :horario_fim_apos_inicio
 
   scope :ordenados, -> { order(horario_inicio: :desc) }
@@ -22,6 +26,10 @@ class EventoAmostragem < ApplicationRecord
         created_at
       ],
       **options,
+    ).merge(
+      "valores_variaveis" => valores_variaveis.map { |vv|
+        { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
+      },
     )
   end
 

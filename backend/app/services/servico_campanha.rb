@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ServicoCampanha
+  include GerenciaValoresVariaveis
+
   def listar(estudo_id:)
     Campanha.where(estudo_id: estudo_id).order(updated_at: :desc)
   end
@@ -10,14 +12,18 @@ class ServicoCampanha
   end
 
   def cadastrar(estudo:, nome:, data_inicio:, data_fim:, descricao:, valores_variaveis: nil)
+    campanha = Campanha.new(
+      estudo: estudo,
+      nome: nome,
+      data_inicio: data_inicio,
+      data_fim: data_fim,
+      descricao: descricao,
+    )
+    validar_variaveis_compat(campanha, valores_variaveis, estudo_id: estudo.id, nivel: :campanha)
+    return campanha if campanha.errors.any?
+
     ActiveRecord::Base.transaction do
-      campanha = Campanha.create!(
-        estudo: estudo,
-        nome: nome,
-        data_inicio: data_inicio,
-        data_fim: data_fim,
-        descricao: descricao,
-      )
+      campanha.save!
       criar_valores_variaveis(campanha, valores_variaveis)
       campanha
     end
@@ -33,14 +39,14 @@ class ServicoCampanha
         data_fim: data_fim,
         descricao: descricao,
       )
-      unless valores_variaveis.nil?
-        campanha.valores_variaveis.destroy_all
-        criar_valores_variaveis(campanha, valores_variaveis)
-      end
+      sincronizar_valores_variaveis(campanha, valores_variaveis)
       campanha
     end
   rescue ActiveRecord::RecordInvalid => e
     e.record
+  rescue ActiveRecord::RecordNotFound => e
+    campanha.errors.add(:base, e.message)
+    campanha
   end
 
   def excluir(campanha:)
@@ -59,17 +65,4 @@ class ServicoCampanha
     campanha.soft_delete
   end
 
-  private
-
-  def criar_valores_variaveis(campanha, valores_variaveis)
-    return if valores_variaveis.blank?
-
-    valores_variaveis.each do |vv|
-      ValorVariavel.create!(
-        variavel_id: vv[:variavel_id],
-        id_nivel_aplicacao: campanha.id,
-        valor: vv[:valor],
-      )
-    end
-  end
 end
