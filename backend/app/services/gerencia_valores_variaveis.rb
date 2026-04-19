@@ -20,7 +20,7 @@ module GerenciaValoresVariaveis
   end
 
   def valor_compativel?(valor, tipo_dado)
-    return false if valor.blank?
+    return false if valor.nil? || valor == ""
 
     case tipo_dado.to_s
     when "number"
@@ -36,6 +36,8 @@ module GerenciaValoresVariaveis
       rescue Date::Error, TypeError
         false
       end
+    when "boolean"
+      [ true, false, "true", "false" ].include?(valor)
     else
       true
     end
@@ -48,7 +50,7 @@ module GerenciaValoresVariaveis
       ValorVariavel.create!(
         variavel_id: vv[:variavel_id],
         id_nivel_aplicacao: entidade.id,
-        valor: vv[:valor],
+        valor: vv[:valor].to_s,
       )
     end
   end
