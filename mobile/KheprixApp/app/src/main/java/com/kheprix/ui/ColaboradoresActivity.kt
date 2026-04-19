@@ -333,9 +333,9 @@ class ColaboradoresActivity : AppCompatActivity() {
 
     /** Converte label PT-BR → valor da API */
     private fun perfilParaApi(label: String) = when (label) {
-        "Co-proprietário" -> "co_proprietario"
-        "Colaborador"     -> "colaborador"
-        else              -> label.lowercase()
+        "Proprietário" -> "proprietario"
+        "Colaborador"  -> "colaborador"
+        else           -> label.lowercase()
     }
 }
 
@@ -347,7 +347,7 @@ class ColaboradorAdapter(
     private val onDeletar: (ColaboradorResponse) -> Unit
 ) : RecyclerView.Adapter<ColaboradorAdapter.VH>() {
 
-    private val perfis = listOf("Colaborador", "Co-proprietário")
+    private val perfis = listOf("Colaborador", "Proprietário")
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val tvNome: TextView       = view.findViewById(R.id.tvColabNome)
@@ -372,8 +372,8 @@ class ColaboradorAdapter(
 
         // Pré-selecionar perfil atual
         val perfilLabel = when (item.perfil) {
-            "co_proprietario" -> "Co-proprietário"
-            else              -> "Colaborador"
+            "proprietario" -> "Proprietário"
+            else           -> "Colaborador"
         }
         holder.spinner.setSelection(perfis.indexOf(perfilLabel).coerceAtLeast(0))
 

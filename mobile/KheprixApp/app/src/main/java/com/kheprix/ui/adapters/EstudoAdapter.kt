@@ -12,7 +12,7 @@ import com.kheprix.R
 /**
  * Modelo de item da lista de estudos (UI layer).
  *
- * @param perfil  "proprietario" | "co_proprietario" | "colaborador"
+ * @param perfil  "proprietario" | "colaborador"
  * @param salvosOffline true se existe entrada na tabela local de estudos
  * @param registrosOffline  quantidade de rows não sincronizadas
  */
