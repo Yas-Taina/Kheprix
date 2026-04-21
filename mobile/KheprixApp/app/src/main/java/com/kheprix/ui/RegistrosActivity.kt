@@ -28,8 +28,11 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovoRegistroBinding
 import com.kheprix.databinding.ActivityRegistrosBinding
+import com.kheprix.databinding.ActivityRegistrosDetalheBinding
 import com.kheprix.models.*
+import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
@@ -76,9 +79,8 @@ class RegistrosActivity : AppCompatActivity() {
 
         binding.tvEventoNome.text = eventoNome
 
-        adapter = RegistroAdapter(registrosFiltrados,
-            onItemClick = { r -> abrirEdicao(r) },
-            onDeleteClick = { r -> confirmarDelete(r) },
+        adapter = RegistroAdapter(registrosFiltrados, lifecycleScope,
+            onItemClick = { r -> abrirDetalhe(r) },
             buscarEspecie = { id -> especies.firstOrNull { it.id == id } }
         )
         binding.rvRegistros.layoutManager = LinearLayoutManager(this)
@@ -185,8 +187,8 @@ class RegistrosActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
     }
 
-    private fun abrirEdicao(r: RegistroResponse) {
-        startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
+    private fun abrirDetalhe(r: RegistroResponse) {
+        startActivity(Intent(this, RegistroDetalheActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
             putExtra("campanha_id", campanhaId)
             putExtra("unidade_id", unidadeId)
@@ -194,29 +196,12 @@ class RegistrosActivity : AppCompatActivity() {
             putExtra("registro_id", r.id)
         })
     }
-
-    private fun confirmarDelete(r: RegistroResponse) {
-        AlertDialog.Builder(this)
-            .setTitle("Deletar registro")
-            .setMessage("Deletar registro #${r.id}?")
-            .setPositiveButton("Deletar") { _, _ ->
-                lifecycleScope.launch {
-                    try {
-                        RetrofitClient.apiService.deleteRegistro(
-                            SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, r.id
-                        )
-                        carregarRegistros()
-                    } catch (_: Exception) {}
-                }
-            }
-            .setNegativeButton("Cancelar", null).show()
-    }
 }
 
 class RegistroAdapter(
     private val items: List<RegistroResponse>,
+    private val scope: CoroutineScope,
     private val onItemClick: (RegistroResponse) -> Unit,
-    private val onDeleteClick: (RegistroResponse) -> Unit,
     private val buscarEspecie: (Int) -> EspecieResponse?
 ) : RecyclerView.Adapter<RegistroAdapter.VH>() {
 
@@ -224,7 +209,6 @@ class RegistroAdapter(
         val tvId: TextView     = view.findViewById(R.id.tvRegistroId)
         val tvData: TextView   = view.findViewById(R.id.tvRegistroData)
         val ivFoto: ImageView  = view.findViewById(R.id.ivRegistroFoto)
-        val ivDelete: ImageView = view.findViewById(R.id.ivDeleteRegistro)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -237,11 +221,13 @@ class RegistroAdapter(
         holder.tvData.text = item.data.split("-").let { p ->
             if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else item.data
         }
-        item.foto?.let { b64 ->
-            PhotoUtils.base64ToBitmap(b64)?.let { holder.ivFoto.setImageBitmap(it) }
-        }
+        ImagemLoader.load(
+            scope = scope,
+            target = holder.ivFoto,
+            url = item.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
         holder.itemView.setOnClickListener { onItemClick(item) }
-        holder.ivDelete.setOnClickListener { onDeleteClick(item) }
     }
 
     override fun getItemCount() = items.size
@@ -520,7 +506,8 @@ class NovoRegistroActivity : AppCompatActivity() {
                     binding.etLatitude.setText(decimalToDms(r.latitude))
                     binding.etLongitude.setText(decimalToDms(r.longitude))
                     binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
-                    fotoBase64 = r.foto
+                    // fotoBase64 permanece null: se o usuário não escolher nova
+                    // foto, o patch omite o campo e o backend preserva a atual.
                     if (r.foto != null) binding.tvNomeFoto.text = "foto_atual.jpg"
                     // Selecionar espécie no spinner
                     val idx = especies.indexOfFirst { it.id == r.especieId }
@@ -651,6 +638,164 @@ class NovoRegistroActivity : AppCompatActivity() {
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         binding.btnConfirmar.isEnabled = !loading
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// DETALHE DE REGISTRO
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Exibe os detalhes de um Registro de Ocorrência com opção de editar e deletar.
+ *
+ * Campos: foto, nome científico/popular (da espécie), qtde indivíduos,
+ * latitude/longitude, data, hora e variáveis de nível "registro" do estudo.
+ *
+ * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id
+ */
+class RegistroDetalheActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityRegistrosDetalheBinding
+    private var estudoRemoteId = -1
+    private var campanhaId     = -1
+    private var unidadeId      = -1
+    private var eventoId       = -1
+    private var registroId     = -1
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityRegistrosDetalheBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        unidadeId      = intent.getIntExtra("unidade_id", -1)
+        eventoId       = intent.getIntExtra("evento_id", -1)
+        registroId     = intent.getIntExtra("registro_id", -1)
+
+        binding.ivEditar.setOnClickListener {
+            startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
+                putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("campanha_id", campanhaId)
+                putExtra("unidade_id", unidadeId)
+                putExtra("evento_id", eventoId)
+                putExtra("registro_id", registroId)
+            })
+        }
+        binding.ivDeletar.setOnClickListener { confirmarDelete() }
+        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivPerfil.setOnClickListener {
+            startActivity(Intent(this, PerfilActivity::class.java))
+        }
+
+        carregarVariaveis()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        carregarRegistro()
+    }
+
+    private fun carregarRegistro() {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getRegistro(
+                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                )
+                resp.body()?.let { r ->
+                    binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
+                    binding.tvLatitude.text  = r.latitude.toString()
+                    binding.tvLongitude.text = r.longitude.toString()
+                    binding.tvData.text      = r.data.split("-").let { p ->
+                        if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
+                    }
+                    binding.tvHora.text = r.hora.take(5)
+
+                    ImagemLoader.load(
+                        scope = lifecycleScope,
+                        target = binding.ivFoto,
+                        url = r.foto,
+                        placeholder = R.drawable.ic_placeholder_beetle
+                    )
+
+                    carregarEspecie(r.especieId)
+                }
+            } catch (_: Exception) {
+                Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun carregarEspecie(especieId: Int) {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getEspecie(
+                    SessionManager.getAuthHeader(), estudoRemoteId, especieId
+                )
+                resp.body()?.let { e ->
+                    binding.tvTitulo.text         = "${e.genero} ${e.especie}"
+                    binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
+                    binding.tvNomePopular.text    = e.nomePopular ?: "—"
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun carregarVariaveis() {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getVariaveis(
+                    SessionManager.getAuthHeader(), estudoRemoteId, nivelAplicacao = "registro"
+                )
+                if (resp.isSuccessful) renderizarVariaveis(resp.body() ?: emptyList())
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun renderizarVariaveis(vars: List<VariavelResponse>) {
+        binding.layoutVariaveis.removeAllViews()
+        if (vars.isEmpty()) {
+            binding.tvVariaveisTitle.visibility = View.GONE
+            return
+        }
+        binding.tvVariaveisTitle.visibility = View.VISIBLE
+        vars.forEachIndexed { i, v ->
+            val nome = TextView(this).apply {
+                text = "${v.nome}${if (v.metrica.isNullOrBlank()) "" else " (${v.metrica})"}:"
+                textSize = 14f
+                setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, if (i > 0) 10 else 0, 0, 0)
+            }
+            val valor = TextView(this).apply {
+                text = "—"
+                textSize = 15f
+                setTextColor(0xFF4A5240.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+            }
+            binding.layoutVariaveis.addView(nome)
+            binding.layoutVariaveis.addView(valor)
+        }
+    }
+
+    private fun confirmarDelete() {
+        AlertDialog.Builder(this)
+            .setTitle("Deletar registro")
+            .setMessage("Tem certeza?")
+            .setPositiveButton("Deletar") { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        RetrofitClient.apiService.deleteRegistro(
+                            SessionManager.getAuthHeader(),
+                            estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                        )
+                        finish()
+                    } catch (_: Exception) {
+                        Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar", null).show()
     }
 }
 

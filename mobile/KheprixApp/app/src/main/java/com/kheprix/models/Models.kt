@@ -343,7 +343,7 @@ data class RegistroResponse(
     val latitude: Double,
     val longitude: Double,
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int?,
-    /** Base64-encoded image */
+    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean?,
     @SerializedName("created_at") val createdAt: String

@@ -121,6 +121,8 @@
             android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.RegistroRapidoActivity"
             android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.RegistroDetalheActivity"
+            android:exported="false" android:screenOrientation="portrait" />
 
         <!-- ── ESPÉCIES ──────────────────────────────────────────────── -->
         <activity android:name=".ui.EspeciesActivity"

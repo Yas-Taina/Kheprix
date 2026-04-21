@@ -192,21 +192,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b60164b0-f9c1-4759-9589-19f0247a5e37" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Campanha/Cadastrar Campanha.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Campanha/Cadastrar Campanha.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Colaborador/Listar Colaboradores.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Colaborador/Listar Colaboradores.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Especie/Cadastrar Especie.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Especie/Cadastrar Especie.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Estudo/Cadastrar Estudo.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Estudo/Cadastrar Estudo.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Evento Amostragem/Criar Evento Amostragem.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Evento Amostragem/Criar Evento Amostragem.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Registro Ocorrencia/Criar Registro.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Registro Ocorrencia/Criar Registro.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Unidade Amostral/Cadastrar Unidade Amostral.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Unidade Amostral/Cadastrar Unidade Amostral.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Usuário/Autocadastro.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Usuário/Autocadastro.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Usuário/Login.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Usuário/Login.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Variável/Listar Variáveis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Variável/Listar Variáveis.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/RetrofitClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/RetrofitClient.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/DatabaseHelper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/DatabaseHelper.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_registro.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_registro.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
