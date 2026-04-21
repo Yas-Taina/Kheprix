@@ -22,7 +22,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         const val DB_NAME = "estudos_offline.db"
-        const val DB_VERSION = 1
+        const val DB_VERSION = 2
 
         // ── TABLE NAMES ──────────────────────────────────────────────────────
         const val TABLE_ESTUDOS             = "estudos"
@@ -33,6 +33,7 @@ class DatabaseHelper(context: Context) :
         const val TABLE_UNIDADES            = "unidades_amostrais"
         const val TABLE_EVENTOS             = "eventos_amostragem"
         const val TABLE_REGISTROS           = "registros_ocorrencia"
+        const val TABLE_IMAGENS_CACHE       = "imagens_cache"
 
         // ── COMMON COLUMNS ───────────────────────────────────────────────────
         const val COL_LOCAL_ID      = "local_id"
@@ -51,16 +52,13 @@ class DatabaseHelper(context: Context) :
         db.execSQL(SQL_CREATE_UNIDADES)
         db.execSQL(SQL_CREATE_EVENTOS)
         db.execSQL(SQL_CREATE_REGISTROS)
+        db.execSQL(SQL_CREATE_IMAGENS_CACHE)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Simple drop-and-recreate for future migrations
-        listOf(
-            TABLE_REGISTROS, TABLE_EVENTOS, TABLE_UNIDADES,
-            TABLE_VALORES_VARIAVEIS, TABLE_CAMPANHAS,
-            TABLE_ESPECIES, TABLE_VARIAVEIS, TABLE_ESTUDOS
-        ).forEach { db.execSQL("DROP TABLE IF EXISTS $it") }
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL(SQL_CREATE_IMAGENS_CACHE)
+        }
     }
 
     // ── DDL ─────────────────────────────────────────────────────────────────
@@ -173,6 +171,14 @@ class DatabaseHelper(context: Context) :
             esforco_real        TEXT,
             $COL_CREATED_AT     TEXT,
             FOREIGN KEY(unidade_local_id) REFERENCES $TABLE_UNIDADES($COL_LOCAL_ID)
+        )
+    """.trimIndent()
+
+    private val SQL_CREATE_IMAGENS_CACHE = """
+        CREATE TABLE $TABLE_IMAGENS_CACHE (
+            url         TEXT PRIMARY KEY,
+            bytes       BLOB NOT NULL,
+            $COL_CREATED_AT INTEGER NOT NULL
         )
     """.trimIndent()
 

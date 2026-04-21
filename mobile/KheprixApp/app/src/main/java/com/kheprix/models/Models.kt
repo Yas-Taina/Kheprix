@@ -126,7 +126,7 @@ data class EspeciePatchRequest(
 data class EspecieResponse(
     val id: Int,
     @SerializedName("estudo_id") val estudoId: Int,
-    /** Base64-encoded image */
+    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     val classe: String,
     val ordem: String,

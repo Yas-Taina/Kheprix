@@ -14,10 +14,10 @@ http:
       value: "6"
       type: path
     - name: campanha_id
-      value: "6"
+      value: "8"
       type: path
     - name: unidade_amostral_id
-      value: "1"
+      value: "11"
       type: path
   body:
     type: json

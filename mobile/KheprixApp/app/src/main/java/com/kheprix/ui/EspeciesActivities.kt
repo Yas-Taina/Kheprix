@@ -24,7 +24,9 @@ import com.kheprix.databinding.ActivityEspeciesBinding
 import com.kheprix.models.EspecieRequest
 import com.kheprix.models.EspeciePatchRequest
 import com.kheprix.models.EspecieResponse
+import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -54,7 +56,7 @@ class EspeciesActivity : AppCompatActivity() {
         binding.tvEstudoNome.text = estudoNome
 
         binding.rvEspecies.layoutManager = LinearLayoutManager(this)
-        binding.rvEspecies.adapter = EspecieAdapter(especies,
+        binding.rvEspecies.adapter = EspecieAdapter(especies, lifecycleScope,
             onItemClick = { especie ->
                 val i = Intent(this, EspecieDetalheActivity::class.java)
                 i.putExtra("estudo_remote_id", estudoRemoteId)
@@ -106,6 +108,7 @@ class EspeciesActivity : AppCompatActivity() {
 // Adapter da lista
 class EspecieAdapter(
     private val items: List<EspecieResponse>,
+    private val scope: CoroutineScope,
     private val onItemClick: (EspecieResponse) -> Unit
 ) : RecyclerView.Adapter<EspecieAdapter.VH>() {
 
@@ -124,11 +127,12 @@ class EspecieAdapter(
         holder.tvNomeCientifico.text = "${item.genero} ${item.especie}"
         holder.tvNomePopular.text    = item.nomePopular ?: "—"
 
-        // Decode base64 photo
-        item.foto?.let { base64 ->
-            val bmp = PhotoUtils.base64ToBitmap(base64)
-            if (bmp != null) holder.ivFoto.setImageBitmap(bmp)
-        }
+        ImagemLoader.load(
+            scope = scope,
+            target = holder.ivFoto,
+            url = item.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
 
         holder.itemView.setOnClickListener { onItemClick(item) }
     }
@@ -261,7 +265,8 @@ class CadastroEspecieActivity : AppCompatActivity() {
                     binding.etEspecie.setText(e.especie)
                     binding.etNomePopular.setText(e.nomePopular ?: "")
                     binding.checkEndemismo.isChecked = e.endemismo
-                    fotoBase64 = e.foto
+                    // fotoBase64 permanece null: se o usuário não escolher nova
+                    // foto, o patch omite o campo e o backend preserva a atual.
 
                     // Selecionar status no spinner
                     val idx = STATUS_CONSERVACAO.indexOfFirst {
@@ -423,10 +428,12 @@ class EspecieDetalheActivity : AppCompatActivity() {
                     binding.tvEndemismo.text = if (e.endemismo) "A espécie é nativa da região do estudo" else ""
                     binding.tvEndemismo.visibility = if (e.endemismo) View.VISIBLE else View.GONE
 
-                    e.foto?.let { base64 ->
-                        val bmp = PhotoUtils.base64ToBitmap(base64)
-                        if (bmp != null) binding.ivFoto.setImageBitmap(bmp)
-                    }
+                    ImagemLoader.load(
+                        scope = lifecycleScope,
+                        target = binding.ivFoto,
+                        url = e.foto,
+                        placeholder = R.drawable.ic_placeholder_beetle
+                    )
                 }
             } catch (_: Exception) { }
         }
