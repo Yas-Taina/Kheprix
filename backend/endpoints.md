@@ -162,7 +162,8 @@ Neste caso o sistema assume extensão `.png` por padrão.
 
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
-| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null) }. 422: chave inválida ou dados insuficientes. 403: não é colaborador do estudo. 404: estudo não encontrado. |
+| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null), urlArquivo(string URL\|null) }. 422: chave inválida ou dados insuficientes. 403: não é colaborador do estudo. 404: estudo não encontrado. |
+| GET /analises/estudos/:estudo_id/:chave/:arquivo | — | 200 arquivo ZIP (Content-Type: application/zip) contendo `resultado.json` (sempre), `resultado.xml` (sempre) e `resultado.html` (somente quando a análise retorna gráfico). 401 sem token. 403 não é colaborador do estudo. 404 arquivo ou estudo inexistente. |
 
 ### Chaves de análise disponíveis
 
