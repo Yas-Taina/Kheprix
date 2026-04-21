@@ -286,7 +286,8 @@ class NovoRegistroActivity : AppCompatActivity() {
 
     private val especies = mutableListOf<EspecieResponse>()
     private val variaveis = mutableListOf<VariavelResponse>()
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     private val locationPermLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -460,11 +461,7 @@ class NovoRegistroActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = 4 }
             }
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
-                background = ContextCompat.getDrawable(this@NovoRegistroActivity, R.drawable.bg_field_green)
-                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-            }
+            val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
             if (!v.metrica.isNullOrEmpty()) {
                 linha.addView(TextView(this).apply {
@@ -473,6 +470,35 @@ class NovoRegistroActivity : AppCompatActivity() {
                 })
             }
             binding.layoutVariaveis.addView(linha)
+        }
+    }
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                adapter = ArrayAdapter(
+                    this@NovoRegistroActivity,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
         }
     }
 

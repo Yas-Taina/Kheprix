@@ -45,8 +45,9 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
     /** Variáveis de nível campanha carregadas da API */
     private val variaveis = mutableListOf<VariavelResponse>()
 
-    /** Views dos campos de variáveis, mapeadas por variavel.id */
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Views dos campos de variáveis, mapeadas por variavel.id.
+     *  Para tipo "boolean" a view é um Spinner; para os demais tipos é um EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,10 +120,25 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                 )
                 if (resp.isSuccessful) {
                     resp.body()?.valoresVariaveis?.forEach { vv ->
-                        camposVariavel[vv.variavelId]?.setText(vv.valor)
+                        aplicarValorNoCampo(vv.variavelId, vv.valor)
                     }
                 }
             } catch (_: Exception) { /* offline: valores não pré-preenchidos */ }
+        }
+    }
+
+    private fun aplicarValorNoCampo(variavelId: Int, valor: String) {
+        when (val view = camposVariavel[variavelId]) {
+            is Spinner -> {
+                val idx = when (valor.trim().lowercase()) {
+                    "true", "verdadeiro" -> 1
+                    "false", "falso"     -> 2
+                    else                 -> 0
+                }
+                view.setSelection(idx)
+            }
+            is EditText -> view.setText(valor)
+            else -> { /* tipo desconhecido: ignora */ }
         }
     }
 
@@ -165,20 +181,7 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                 ).also { it.topMargin = 4 }
             }
 
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    0, 52.dpToPx(), 1f
-                )
-                background = ContextCompat.getDrawable(this@NovaCampanhaActivityV2, R.drawable.bg_field_green)
-                setPadding(24, 0, 24, 0)
-                setTextColor(0xFF4A5240.toInt())
-                hint = "Placeholder"
-                inputType = when (variavel.tipoDado) {
-                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
-                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-                    else -> android.text.InputType.TYPE_CLASS_TEXT
-                }
-            }
+            val campo: View = criarCampoVariavel(variavel.tipoDado)
             camposVariavel[variavel.id] = campo
             linha.addView(campo)
 
@@ -200,6 +203,37 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
 
     private fun Int.dpToPx() =
         (this * resources.displayMetrics.density).toInt()
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, 52.dpToPx(), 1f)
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(24, 0, 24, 0)
+                adapter = ArrayAdapter(
+                    this@NovaCampanhaActivityV2,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(24, 0, 24, 0)
+                setTextColor(0xFF4A5240.toInt())
+                hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
+        }
+    }
 
 
     // ── DatePicker ────────────────────────────────────────────────────────
@@ -249,12 +283,18 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
     // ── Montar valores das variáveis ──────────────────────────────────────
 
     private fun coletarValoresVariaveis(): List<ValorVariavelRequest> {
-        return camposVariavel.entries
-            .mapNotNull { (varId, campo) ->
-                val valor = campo.text.toString().trim()
-                if (valor.isNotEmpty()) ValorVariavelRequest(variavelId = varId, valor = valor)
-                else null
-            }
+        return camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "True"
+                    "Falso"      -> "False"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+            ValorVariavelRequest(variavelId = varId, valor = valor)
+        }
     }
 
     // ── API ───────────────────────────────────────────────────────────────

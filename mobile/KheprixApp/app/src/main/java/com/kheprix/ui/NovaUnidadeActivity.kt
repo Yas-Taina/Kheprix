@@ -54,7 +54,8 @@ class NovaUnidadeActivity : AppCompatActivity() {
     private var lonDecimal: Double? = null
 
     private val variaveis = mutableListOf<VariavelResponse>()
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -190,15 +191,7 @@ class NovaUnidadeActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).also { it.topMargin = 4 }
             }
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(0, 48.dpToPx(), 1f)
-                background = ContextCompat.getDrawable(this@NovaUnidadeActivity, R.drawable.bg_field_green)
-                setPadding(20, 0, 20, 0)
-                setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-                inputType = if (v.tipoDado == "number")
-                    android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-                else android.text.InputType.TYPE_CLASS_TEXT
-            }
+            val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
             if (!v.metrica.isNullOrEmpty()) {
                 linha.addView(TextView(this).apply {
@@ -212,6 +205,36 @@ class NovaUnidadeActivity : AppCompatActivity() {
     }
 
     private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, 48.dpToPx(), 1f)
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                adapter = ArrayAdapter(
+                    this@NovaUnidadeActivity,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
+        }
+    }
 
     // ── Edição ────────────────────────────────────────────────────────────
 
