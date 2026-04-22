@@ -18,6 +18,7 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityEventosBinding
 import com.kheprix.databinding.ActivityNovoEventoBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
 import com.kheprix.models.VariavelResponse
@@ -388,8 +389,32 @@ class NovoEventoActivity : AppCompatActivity() {
                     Toast.makeText(this@NovoEventoActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovoEventoActivity, "Sem conexão — salvo localmente", Toast.LENGTH_SHORT).show()
+                salvarEventoOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    /**
+     * Persiste o evento no SQLite. Requer que estudo→campanha→unidade estejam
+     * salvos offline — se algum faltar, aborta e NÃO grava órfão.
+     */
+    private fun salvarEventoOffline(req: EventoRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
+            Toast.makeText(this, "Sem conexão — estudo não salvo offline.", Toast.LENGTH_LONG).show(); return
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
+            Toast.makeText(this, "Sem conexão — campanha não salva offline.", Toast.LENGTH_LONG).show(); return
+        }
+        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
+            Toast.makeText(this, "Sem conexão — unidade não salva offline.", Toast.LENGTH_LONG).show(); return
+        }
+        try {
+            repo.criarEventoOffline(unidadeLocalId, req)
+            Toast.makeText(this, "Sem conexão — evento salvo offline.", Toast.LENGTH_LONG).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

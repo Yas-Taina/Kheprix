@@ -17,6 +17,7 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
@@ -322,35 +323,44 @@ class NovaUnidadeActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Persiste a unidade no SQLite. Requer que o estudo e a campanha pai
+     * estejam salvos offline — se não estiverem, aborta e NÃO grava órfão.
+     */
     private fun salvarOffline(req: UnidadeRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+        if (estudoLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — este estudo não está salvo offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId)
+        if (campanhaLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — esta campanha não está salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
         try {
-            val db = com.kheprix.db.DatabaseHelper(this).writableDatabase
-            // Busca campanha_local_id pelo remote_id
-            val cur = db.rawQuery(
-                "SELECT local_id FROM campanhas WHERE remote_id = ?",
-                arrayOf(campanhaId.toString())
-            )
-            val campanhaLocalId = cur.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-            if (campanhaLocalId != -1L) {
-                val cv = android.content.ContentValues().apply {
-                    put("sincronizado", 0)
-                    put("campanha_local_id", campanhaLocalId)
-                    put("nome", req.nome)
-                    put("latitude", req.latitude)
-                    put("longitude", req.longitude)
-                    req.raio?.let { put("raio", it) }
-                    req.metodoColeta?.let { put("metodo_coleta", it) }
-                    req.esforcoAmostral?.let { put("esforco_amostral", it) }
-                    put("created_at", java.time.Instant.now().toString())
-                }
-                db.insert("unidades_amostrais", null, cv)
-                Toast.makeText(this, "Salvo offline. Sincronize quando tiver conexão.", Toast.LENGTH_LONG).show()
-                finish()
-            } else {
-                Toast.makeText(this, "Sem conexão e sem dados locais para esta campanha.", Toast.LENGTH_LONG).show()
-            }
+            repo.criarUnidadeOffline(campanhaLocalId, req)
+            Toast.makeText(
+                this,
+                "Sem conexão — unidade salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
         } catch (e: Exception) {
-            Toast.makeText(this, "Sem conexão — não foi possível salvar offline.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

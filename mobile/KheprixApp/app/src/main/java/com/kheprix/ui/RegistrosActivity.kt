@@ -29,6 +29,7 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovoRegistroBinding
 import com.kheprix.databinding.ActivityRegistrosBinding
 import com.kheprix.databinding.ActivityRegistrosDetalheBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.*
 import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
@@ -594,45 +595,49 @@ class NovoRegistroActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Persiste o registro no SQLite. Requer que estudo→campanha→unidade→evento
+     * e a espécie estejam salvos offline — se algum faltar, nada é inserido
+     * (para não gerar registro órfão) e o usuário é avisado.
+     *
+     * Quando req==null estamos em modo edição sem sucesso na API: apenas mostra
+     * o OfflineWarning sem persistir (PATCH offline é tratado em fase posterior).
+     */
     private fun mostrarDialogOffline(req: RegistroRequest?) {
-        // Persiste no SQLite quando offline
         if (req != null) {
-            try {
-                val db = com.kheprix.db.DatabaseHelper(this).writableDatabase
-                // Busca local_id do evento pelo remote_id
-                val curEvento = db.rawQuery(
-                    "SELECT local_id FROM eventos_amostragem WHERE remote_id = ?",
-                    arrayOf(eventoId.toString())
-                )
-                val eventoLocalId = curEvento.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-
-                // Busca local_id da espécie pelo remote_id
-                val curEspecie = db.rawQuery(
-                    "SELECT local_id FROM especies WHERE remote_id = ?",
-                    arrayOf(req.especieId.toString())
-                )
-                val especieLocalId = curEspecie.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-
-                if (eventoLocalId != -1L && especieLocalId != -1L) {
-                    val cv = android.content.ContentValues().apply {
-                        put("sincronizado", 0)
-                        put("evento_local_id", eventoLocalId)
-                        put("especie_local_id", especieLocalId)
-                        put("especie_remote_id", req.especieId)
-                        put("data", req.data)
-                        put("hora", req.hora)
-                        put("latitude", req.latitude)
-                        put("longitude", req.longitude)
-                        put("qtde_individuos", req.qtdeIndividuos)
-                        put("foto", req.foto)
-                        req.ausenciaEspecie?.let { put("ausencia_especie", if (it) 1 else 0) }
-                        put("created_at", java.time.Instant.now().toString())
-                    }
-                    db.insert("registros_ocorrencia", null, cv)
-                }
-            } catch (_: Exception) { /* silencioso */ }
+            val salvo = salvarRegistroOffline(req)
+            if (!salvo) return
         }
         startActivity(Intent(this, OfflineWarningActivity::class.java))
+    }
+
+    /**
+     * @return true se gravou, false se faltou integridade (aborta sem inserir).
+     */
+    private fun salvarRegistroOffline(req: RegistroRequest): Boolean {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
+            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
+            Toast.makeText(this, "Campanha não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
+            Toast.makeText(this, "Unidade não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val eventoLocalId = repo.eventoLocalIdFromRemote(unidadeLocalId, eventoId) ?: run {
+            Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val especieLocalId = repo.especieLocalIdFromRemote(estudoLocalId, req.especieId) ?: run {
+            Toast.makeText(this, "Espécie não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        return try {
+            repo.criarRegistroOffline(eventoLocalId, especieLocalId, req)
+            true
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
+            false
+        }
     }
 
     private fun setLoading(loading: Boolean) {

@@ -11,6 +11,7 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaCampanhaV2Binding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.CampanhaRequest
 import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
@@ -314,17 +315,18 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
             return
         }
 
+        val req = CampanhaRequest(
+            nome = nome,
+            dataInicio = inicioIso,
+            descricao = descricao,
+            valoresVariaveis = coletarValoresVariaveis()
+        )
+
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.postCampanha(
-                    SessionManager.getAuthHeader(), estudoRemoteId,
-                    CampanhaRequest(
-                        nome = nome,
-                        dataInicio = inicioIso,
-                        descricao = descricao,
-                        valoresVariaveis = coletarValoresVariaveis()
-                    )
+                    SessionManager.getAuthHeader(), estudoRemoteId, req
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@NovaCampanhaActivityV2, "Campanha criada!", Toast.LENGTH_SHORT).show()
@@ -333,8 +335,40 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
                     Toast.makeText(this@NovaCampanhaActivityV2, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovaCampanhaActivityV2, "Sem conexão", Toast.LENGTH_SHORT).show()
+                salvarCampanhaOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    /**
+     * Persiste a campanha no SQLite. Requer que o estudo pai esteja salvo
+     * offline — se não estiver, aborta com aviso e NÃO grava órfão.
+     */
+    private fun salvarCampanhaOffline(req: CampanhaRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+        if (estudoLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — este estudo não está salvo offline. Salve o estudo primeiro.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        try {
+            repo.criarCampanhaOffline(estudoLocalId, req)
+            Toast.makeText(
+                this,
+                "Sem conexão — campanha salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

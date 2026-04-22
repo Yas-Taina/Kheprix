@@ -11,10 +11,10 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "6"
+      value: "13"
       type: path
     - name: campanha_id
-      value: "8"
+      value: "18"
       type: path
   body:
     type: json
