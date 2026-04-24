@@ -1,0 +1,25 @@
+info:
+  name: Baixar Resultado
+  type: http
+  seq: 6
+
+http:
+  method: get
+  url: http://localhost:3000/analises/estudos/:estudo_id/:chave/:arquivo
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+    - name: chave
+      value: shannon
+      type: path
+    - name: arquivo
+      value: analise_Shannon_Wiener_21-04-2026_14-30.zip
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

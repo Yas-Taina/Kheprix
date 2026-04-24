@@ -22,11 +22,24 @@ class AnalisesController < ApplicationController
     if resultado[:erro]
       render json: { erro: resultado[:erro] }, status: :unprocessable_entity
     else
-      render json: resultado, status: :ok
+      render json: resposta_com_url_absoluta(resultado), status: :ok
     end
   end
 
   private
+
+  def resposta_com_url_absoluta(resultado)
+    path = resultado[:url_arquivo]
+    url_absoluto = path.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{path}" : nil
+
+    {
+      analise: resultado[:analise],
+      nome: resultado[:nome],
+      valor: resultado[:valor],
+      grafico: resultado[:grafico],
+      urlArquivo: url_absoluto
+    }
+  end
 
   def definir_estudo
     @estudo = Estudo.find(params[:estudo_id])

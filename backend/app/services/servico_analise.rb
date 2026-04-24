@@ -33,15 +33,35 @@ class ServicoAnalise
       return { erro: "A API R não retornou resultados. Verifique se o serviço está disponível." }
     end
 
+    payload = {
+      chave: analise[:chave],
+      nome: analise[:nome],
+      valor: valor,
+      grafico: grafico,
+      params: params,
+      timestamp: Time.zone.now.iso8601
+    }
+
+    url_arquivo = salvar_arquivo(payload: payload, estudo_id: estudo_id, chave: analise[:chave], nome: analise[:nome])
+
     {
       analise: analise[:chave],
       nome: analise[:nome],
       valor: valor,
-      grafico: grafico
+      grafico: grafico,
+      url_arquivo: url_arquivo
     }
   end
 
   private
+
+  def salvar_arquivo(payload:, estudo_id:, chave:, nome:)
+    xml = GenericoHashParaXml.call(payload)
+    SalvaResultadoAnalise.salvar(payload: payload, xml: xml, estudo_id: estudo_id, chave: chave, nome: nome)
+  rescue StandardError => e
+    Rails.logger.warn("Falha ao gravar arquivo de resultado da análise #{chave}: #{e.class}: #{e.message}")
+    nil
+  end
 
   def mensagem_sem_dados(analise, params)
     filtros = []
