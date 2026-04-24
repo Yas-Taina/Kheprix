@@ -308,10 +308,12 @@ class ServicoDadosAnalise
   end
 
   def valores_variavel_unicos(estudo_id:, variavel_id:)
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+
     base_analises(estudo_id)
       .where(id_variavel: variavel_id)
-      .select("DISTINCT ON (fk_unidade_amostral) fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_variavel, nome_variavel, valor_numerico")
-      .order(:fk_unidade_amostral)
+      .select("DISTINCT ON (#{coluna}) id_registro, fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_variavel, nome_variavel, nivel_variavel, valor_numerico")
+      .order(coluna)
   end
 
   def valores_variavel_por_unidade(estudo_id:, variavel_id:, unidade_ids:)
@@ -319,5 +321,25 @@ class ServicoDadosAnalise
       .where(fk_unidade_amostral: unidade_ids)
       .map { |r| r.valor_numerico&.to_f }
       .compact
+  end
+
+  # Escolhe a coluna do DISTINCT ON conforme o nivel_variavel da variável solicitada.
+  # Variáveis CAMPANHA/UNIDADE/EVENTO/REGISTRO precisam ser consultadas na dimensão
+  # nativa — normalizar tudo por fk_unidade_amostral perde dados de eventos/registros
+  # distintos na mesma unidade e replica valor por unidade no caso de campanha.
+  # O retorno é whitelist, então é seguro interpolar no SQL.
+  def coluna_do_nivel_variavel(estudo_id:, variavel_id:)
+    nivel = base_analises(estudo_id)
+      .where(id_variavel: variavel_id)
+      .limit(1)
+      .pluck(:nivel_variavel)
+      .first
+
+    case nivel.to_s.downcase
+    when "campanha" then "fk_campanha"
+    when "evento"   then "fk_evento"
+    when "registro" then "id_registro"
+    else "fk_unidade_amostral"
+    end
   end
 end
