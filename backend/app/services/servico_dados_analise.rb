@@ -3,8 +3,14 @@
 class ServicoDadosAnalise
   def montar_dados(estudo_id:, tipo_dado:, params:)
     @campanha_ids = params[:campanha_ids].presence
+    @unidade_ids = params[:unidade_ids].presence
+    @evento_ids = params[:evento_ids].presence
     @data_inicio = params[:data_inicio].presence
     @data_fim = params[:data_fim].presence
+    @latitude_min = params[:latitude_min]
+    @latitude_max = params[:latitude_max]
+    @longitude_min = params[:longitude_min]
+    @longitude_max = params[:longitude_max]
 
     case tipo_dado
     when "abundancias"
@@ -293,10 +299,31 @@ class ServicoDadosAnalise
   def base_analises(estudo_id)
     escopo = Dw::AnaliseEstatistica.do_estudo(estudo_id)
     escopo = escopo.where(fk_campanha: @campanha_ids) if @campanha_ids.present?
+    escopo = escopo.where(fk_unidade_amostral: @unidade_ids) if @unidade_ids.present?
+    escopo = escopo.where(fk_evento: @evento_ids) if @evento_ids.present?
     if @data_inicio.present? || @data_fim.present?
       escopo = escopo.where(data_registro: @data_inicio..@data_fim)
     end
+
+    ids_bounding_box = unidades_no_bounding_box
+    escopo = escopo.where(fk_unidade_amostral: ids_bounding_box) if ids_bounding_box
+
     escopo
+  end
+
+  # Retorna IDs de unidades amostrais dentro do bounding box, ou nil se nenhum
+  # parâmetro geográfico foi passado (aí o filtro não se aplica). Consulta o DW
+  # (`dim_unidade_amostral`) porque `analises_estatisticas` não tem lat/long.
+  def unidades_no_bounding_box
+    return nil if @latitude_min.nil? && @latitude_max.nil? &&
+                  @longitude_min.nil? && @longitude_max.nil?
+
+    query = Dw::DimUnidadeAmostral.all
+    query = query.where("latitude >= ?", @latitude_min) if @latitude_min
+    query = query.where("latitude <= ?", @latitude_max) if @latitude_max
+    query = query.where("longitude >= ?", @longitude_min) if @longitude_min
+    query = query.where("longitude <= ?", @longitude_max) if @longitude_max
+    query.pluck(:id_unidade)
   end
 
   def registros_unicos(estudo_id)
