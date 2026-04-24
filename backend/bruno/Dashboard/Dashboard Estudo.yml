@@ -5,11 +5,12 @@ info:
 
 http:
   method: GET
-  url: http://localhost:3000/estudos/1/dashboard
+  url: http://localhost:3000/estudos/:id/dashboard
+  params:
+    - name: id
+      value: "6"
+      type: path
   auth: inherit
-
-headers:
-  Content-Type: application/json
 
 settings:
   encodeUrl: true
