@@ -187,60 +187,39 @@ class ServicoDadosAnalise
 
   # ==================== Múltiplos Grupos ====================
 
+  AGRUPAMENTOS_VALIDOS = %w[campanha unidade_amostral evento_amostragem mes ano estacao].freeze
+
   def montar_multiplos_grupos(estudo_id:, params:)
     fonte = (params[:fonte] || "variavel").to_s
     agrupar_por = params[:agrupar_por] || "unidade_amostral"
+    return nil unless AGRUPAMENTOS_VALIDOS.include?(agrupar_por)
 
-    grupo_col = case agrupar_por
-    when "campanha" then :fk_campanha
-    when "unidade_amostral" then :fk_unidade_amostral
-    when "evento_amostragem" then :fk_evento
-    else return nil
-    end
-
-    if fonte == "variavel"
+    rows = if fonte == "variavel"
       variavel_id = params[:variavel_id]
       return nil if variavel_id.blank?
-      rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
-      data = rows.map { |r| [ r.send(grupo_col), r.valor_numerico, r.nome_variavel ] }
+      rows_variavel_para_grupos(estudo_id: estudo_id, variavel_id: variavel_id)
     else
-      nome = "#{fonte.capitalize} por #{agrupar_por}"
-      data = dados_derivados_agrupados(
-        estudo_id: estudo_id, fonte: fonte, grupo_col: grupo_col,
-      ).map { |grupo_id, valor| [ grupo_id, valor, nome ] }
+      rows_derivadas_para_grupos(estudo_id: estudo_id, fonte: fonte)
     end
-    return nil if data.empty?
+    return nil if rows.empty?
 
-    if agrupar_por == "campanha"
-      ids = data.map(&:first).uniq
-      labels = base_analises(estudo_id)
-        .where(fk_campanha: ids)
-        .distinct
-        .pluck(:fk_campanha, :nome_campanha)
-        .to_h
-      label_fn = ->(id) { labels[id] || "Campanha #{id}" }
-    elsif agrupar_por == "unidade_amostral"
-      ids = data.map(&:first).uniq
-      unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
-      label_fn = ->(id) { unidades[id]&.nome_unidade_amostral || "Unidade #{id}" }
-    else
-      label_fn = ->(id) { "Evento #{id}" }
-    end
+    label_fn = construir_label_fn(estudo_id: estudo_id, agrupar_por: agrupar_por, rows: rows)
+    nome_variavel = rows.first[:nome] || "Variável"
 
     valores = []
     grupos = []
-    nome_variavel = nil
 
-    data.each do |grupo_id, valor_num, nome_var|
-      next unless valor_num
-      nome_variavel ||= nome_var
-      valores << valor_num.to_f
-      grupos << label_fn.call(grupo_id)
+    rows.each do |row|
+      next if row[:valor].nil?
+      label = label_fn.call(row)
+      next if label.nil?
+      valores << row[:valor].to_f
+      grupos << label
     end
 
     return nil if valores.empty?
 
-    { valores: valores, grupos: grupos, nome_variavel: nome_variavel || "Variável" }
+    { valores: valores, grupos: grupos, nome_variavel: nome_variavel }
   end
 
   # ==================== Vetor Único ====================
@@ -339,7 +318,7 @@ class ServicoDadosAnalise
 
   def registros_unicos(estudo_id)
     subquery = base_analises(estudo_id)
-      .select("DISTINCT ON (id_registro) id_registro, especie, abundancia, fk_unidade_amostral, fk_evento, fk_campanha, nome_campanha, data_registro")
+      .select("DISTINCT ON (id_registro) id_registro, especie, abundancia, fk_unidade_amostral, fk_evento, fk_campanha, nome_campanha, data_registro, ano, mes")
       .order(:id_registro)
       .to_sql
     Dw::AnaliseEstatistica.from("(#{subquery}) AS analises_estatisticas")
@@ -401,28 +380,6 @@ class ServicoDadosAnalise
     end
   end
 
-  # Para análises multiplos_grupos com fonte derivada: cada evento vira uma
-  # observação e o grupo é dado por grupo_col. Retorna lista [[grupo_id, valor]].
-  def dados_derivados_agrupados(estudo_id:, fonte:, grupo_col:)
-    base = registros_unicos(estudo_id)
-    cols = grupo_col == :fk_evento ? [ :fk_evento ] : [ :fk_evento, grupo_col ]
-
-    rows = case fonte
-    when "abundancia"
-      base.group(*cols).sum(:abundancia)
-    when "riqueza"
-      base.where("abundancia > 0").group(*cols).distinct.count(:especie)
-    else
-      {}
-    end
-
-    if grupo_col == :fk_evento
-      rows.map { |evento_id, valor| [ evento_id, valor.to_f ] }
-    else
-      rows.map { |(_evento_id, grupo_id), valor| [ grupo_id, valor.to_f ] }
-    end
-  end
-
   def hash_bivariado(estudo_id:, fonte:, variavel_id:, nivel:)
     if fonte == "variavel"
       return [ {}, nil ] if variavel_id.blank?
@@ -456,6 +413,95 @@ class ServicoDadosAnalise
     when "campanha" then :fk_campanha
     when "evento"   then :fk_evento
     else :fk_unidade_amostral
+    end
+  end
+
+  # ==================== Helpers de Múltiplos Grupos ====================
+
+  def rows_variavel_para_grupos(estudo_id:, variavel_id:)
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    base_analises(estudo_id)
+      .where(id_variavel: variavel_id)
+      .select(
+        "DISTINCT ON (#{coluna}) id_registro, fk_unidade_amostral, fk_campanha, " \
+        "nome_campanha, fk_evento, nome_variavel, valor_numerico, ano, mes",
+      )
+      .order(coluna)
+      .map do |r|
+        {
+          valor: r.valor_numerico,
+          nome: r.nome_variavel,
+          fk_campanha: r.fk_campanha,
+          fk_unidade_amostral: r.fk_unidade_amostral,
+          fk_evento: r.fk_evento,
+          nome_campanha: r.nome_campanha,
+          ano: r.ano,
+          mes: r.mes
+        }
+      end
+  end
+
+  def rows_derivadas_para_grupos(estudo_id:, fonte:)
+    base = registros_unicos(estudo_id)
+    cols = %i[fk_evento fk_unidade_amostral fk_campanha nome_campanha ano mes]
+
+    raw = case fonte
+    when "abundancia"
+      base.group(*cols).sum(:abundancia)
+    when "riqueza"
+      base.where("abundancia > 0").group(*cols).distinct.count(:especie)
+    else
+      {}
+    end
+
+    nome = fonte.capitalize
+    raw.map do |(evento_id, unidade_id, campanha_id, nome_campanha, ano, mes), valor|
+      {
+        valor: valor,
+        nome: nome,
+        fk_campanha: campanha_id,
+        fk_unidade_amostral: unidade_id,
+        fk_evento: evento_id,
+        nome_campanha: nome_campanha,
+        ano: ano,
+        mes: mes
+      }
+    end
+  end
+
+  def construir_label_fn(estudo_id:, agrupar_por:, rows:)
+    case agrupar_por
+    when "campanha"
+      ->(row) { row[:nome_campanha] || "Campanha #{row[:fk_campanha]}" }
+    when "unidade_amostral"
+      ids = rows.map { |r| r[:fk_unidade_amostral] }.compact.uniq
+      unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
+      ->(row) { unidades[row[:fk_unidade_amostral]]&.nome_unidade_amostral || "Unidade #{row[:fk_unidade_amostral]}" }
+    when "evento_amostragem"
+      ->(row) { "Evento #{row[:fk_evento]}" }
+    when "ano"
+      ->(row) { row[:ano]&.to_s }
+    when "mes"
+      ->(row) {
+        next nil if row[:ano].nil? || row[:mes].nil?
+        "#{row[:ano]}-#{row[:mes].to_s.rjust(2, "0")}"
+      }
+    when "estacao"
+      ->(row) { estacao_label(mes: row[:mes], ano: row[:ano]) }
+    end
+  end
+
+  # Estações do hemisfério sul. O ano da estação é o ano calendário onde
+  # janeiro/fevereiro caem (ex.: dezembro/2024 + jan/fev/2025 => "Verão 2025").
+  def estacao_label(mes:, ano:)
+    return nil if mes.nil? || ano.nil?
+
+    case mes.to_i
+    when 12       then "Verão #{ano.to_i + 1}"
+    when 1, 2     then "Verão #{ano}"
+    when 3, 4, 5  then "Outono #{ano}"
+    when 6, 7, 8  then "Inverno #{ano}"
+    when 9, 10, 11 then "Primavera #{ano}"
     end
   end
 end
