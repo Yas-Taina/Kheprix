@@ -1,0 +1,30 @@
+info:
+  name: Executar Kruskal Riqueza por Estação
+  type: http
+  seq: 9
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "kruskal",
+        "fonte": "riqueza",
+        "agrupar_por": "estacao"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
