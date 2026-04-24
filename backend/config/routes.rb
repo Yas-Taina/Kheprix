@@ -43,4 +43,9 @@ Rails.application.routes.draw do
   post "convites/:token/recusar", to: "gerenciar_convites#recusar", as: :recusar_convite
 
   get "fotos/estudos/:estudo_id/:tipo/:arquivo", to: "fotos#show", as: :foto, constraints: { arquivo: /[^\/]+/ }
+
+  get "analises/estudos/:estudo_id/:chave/:arquivo",
+      to: "resultados_analise#show",
+      as: :resultado_analise,
+      constraints: { arquivo: /[^\/]+/ }
 end
