@@ -1,0 +1,19 @@
+info:
+  name: Dashboard Estudo
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://localhost:3000/estudos/:id/dashboard
+  params:
+    - name: id
+      value: "6"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

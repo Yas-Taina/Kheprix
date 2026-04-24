@@ -65,13 +65,6 @@ class RegistroOcorrenciasController < ApplicationController
     @servico ||= ServicoRegistroOcorrencia.new
   end
 
-  def autorizar_acesso_estudo!
-    colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)
-    unless colaborador
-      render json: { erro: "Acesso negado a este estudo" }, status: :forbidden
-    end
-  end
-
   def definir_campanha
     @campanha = @estudo.campanhas.find(params[:campanha_id])
   rescue ActiveRecord::RecordNotFound
