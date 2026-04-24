@@ -3,14 +3,20 @@
 class ExecutarAnaliseDto
   include ActiveModel::API
 
+  FONTES = %w[variavel abundancia riqueza].freeze
+  NIVEIS_AGREGACAO = %w[campanha unidade_amostral evento].freeze
+
   attr_accessor :chave, :variavel_ids, :variavel_x_id, :variavel_y_id, :variavel_id,
                 :agrupar_por, :grupo1_ids, :grupo2_ids, :nome_grupo1, :nome_grupo2,
                 :campanha_ids, :unidade_ids, :evento_ids, :data_inicio, :data_fim,
-                :latitude_min, :latitude_max, :longitude_min, :longitude_max
+                :latitude_min, :latitude_max, :longitude_min, :longitude_max,
+                :fonte, :fonte_x, :fonte_y, :nivel_agregacao
 
   validates :chave, presence: true
   validate :validar_datas
   validate :validar_bounding_box
+  validate :validar_fontes
+  validate :validar_nivel_agregacao
 
   def initialize(params = {})
     @chave = params[:chave]
@@ -32,6 +38,10 @@ class ExecutarAnaliseDto
     @latitude_max, @erro_lat_max = parse_decimal(params[:latitude_max], :latitude_max)
     @longitude_min, @erro_lng_min = parse_decimal(params[:longitude_min], :longitude_min)
     @longitude_max, @erro_lng_max = parse_decimal(params[:longitude_max], :longitude_max)
+    @fonte = params[:fonte]
+    @fonte_x = params[:fonte_x]
+    @fonte_y = params[:fonte_y]
+    @nivel_agregacao = params[:nivel_agregacao]
   end
 
   def to_params
@@ -53,7 +63,11 @@ class ExecutarAnaliseDto
       latitude_min: latitude_min,
       latitude_max: latitude_max,
       longitude_min: longitude_min,
-      longitude_max: longitude_max
+      longitude_max: longitude_max,
+      fonte: fonte,
+      fonte_x: fonte_x,
+      fonte_y: fonte_y,
+      nivel_agregacao: nivel_agregacao
     }
   end
 
@@ -98,6 +112,22 @@ class ExecutarAnaliseDto
 
     if @longitude_min && @longitude_max && @longitude_min > @longitude_max
       errors.add(:longitude_max, "deve ser maior ou igual a longitude_min")
+    end
+  end
+
+  def validar_fontes
+    { fonte: @fonte, fonte_x: @fonte_x, fonte_y: @fonte_y }.each do |campo, valor|
+      next if valor.nil? || valor == ""
+      unless FONTES.include?(valor.to_s)
+        errors.add(campo, "deve ser um de: #{FONTES.join(", ")}")
+      end
+    end
+  end
+
+  def validar_nivel_agregacao
+    return if @nivel_agregacao.nil? || @nivel_agregacao == ""
+    unless NIVEIS_AGREGACAO.include?(@nivel_agregacao.to_s)
+      errors.add(:nivel_agregacao, "deve ser um de: #{NIVEIS_AGREGACAO.join(", ")}")
     end
   end
 end

@@ -125,26 +125,19 @@ class ServicoDadosAnalise
   # ==================== Dois Vetores ====================
 
   def montar_dois_vetores(estudo_id:, params:)
-    variavel_x_id = params[:variavel_x_id]
-    variavel_y_id = params[:variavel_y_id]
-    return nil if variavel_x_id.blank? || variavel_y_id.blank?
+    fonte_x = (params[:fonte_x] || "variavel").to_s
+    fonte_y = (params[:fonte_y] || "variavel").to_s
+    nivel = params[:nivel_agregacao] || "unidade_amostral"
 
-    hash_x = {}
-    hash_y = {}
-    nome_x = nil
-    nome_y = nil
-
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_x_id).each do |r|
-      next unless r.valor_numerico
-      hash_x[r.fk_unidade_amostral] = r.valor_numerico.to_f
-      nome_x ||= r.nome_variavel
-    end
-
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_y_id).each do |r|
-      next unless r.valor_numerico
-      hash_y[r.fk_unidade_amostral] = r.valor_numerico.to_f
-      nome_y ||= r.nome_variavel
-    end
+    hash_x, nome_x = hash_bivariado(
+      estudo_id: estudo_id, fonte: fonte_x,
+      variavel_id: params[:variavel_x_id], nivel: nivel,
+    )
+    hash_y, nome_y = hash_bivariado(
+      estudo_id: estudo_id, fonte: fonte_y,
+      variavel_id: params[:variavel_y_id], nivel: nivel,
+    )
+    return nil if hash_x.empty? || hash_y.empty?
 
     ids_comuns = hash_x.keys & hash_y.keys
     return nil if ids_comuns.empty?
@@ -160,23 +153,27 @@ class ServicoDadosAnalise
   # ==================== Dois Grupos ====================
 
   def montar_dois_grupos(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
-
+    fonte = (params[:fonte] || "variavel").to_s
     grupo1_ids = params[:grupo1_ids]
     grupo2_ids = params[:grupo2_ids]
     return nil if grupo1_ids.blank? || grupo2_ids.blank?
 
-    valores_g1 = valores_variavel_por_unidade(
-      estudo_id: estudo_id,
-      variavel_id: variavel_id,
-      unidade_ids: grupo1_ids,
-    )
-    valores_g2 = valores_variavel_por_unidade(
-      estudo_id: estudo_id,
-      variavel_id: variavel_id,
-      unidade_ids: grupo2_ids,
-    )
+    if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
+      valores_g1 = valores_variavel_por_unidade(
+        estudo_id: estudo_id, variavel_id: variavel_id, unidade_ids: grupo1_ids,
+      )
+      valores_g2 = valores_variavel_por_unidade(
+        estudo_id: estudo_id, variavel_id: variavel_id, unidade_ids: grupo2_ids,
+      )
+    else
+      por_unidade = dados_derivados(
+        estudo_id: estudo_id, fonte: fonte, nivel_agregacao: "unidade_amostral",
+      )
+      valores_g1 = grupo1_ids.filter_map { |id| por_unidade[id]&.to_f }
+      valores_g2 = grupo2_ids.filter_map { |id| por_unidade[id]&.to_f }
+    end
 
     return nil if valores_g1.empty? || valores_g2.empty?
 
@@ -191,9 +188,7 @@ class ServicoDadosAnalise
   # ==================== Múltiplos Grupos ====================
 
   def montar_multiplos_grupos(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
-
+    fonte = (params[:fonte] || "variavel").to_s
     agrupar_por = params[:agrupar_por] || "unidade_amostral"
 
     grupo_col = case agrupar_por
@@ -203,8 +198,17 @@ class ServicoDadosAnalise
     else return nil
     end
 
-    rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
-    data = rows.map { |r| [ r.send(grupo_col), r.valor_numerico, r.nome_variavel ] }
+    if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
+      rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+      data = rows.map { |r| [ r.send(grupo_col), r.valor_numerico, r.nome_variavel ] }
+    else
+      nome = "#{fonte.capitalize} por #{agrupar_por}"
+      data = dados_derivados_agrupados(
+        estudo_id: estudo_id, fonte: fonte, grupo_col: grupo_col,
+      ).map { |grupo_id, valor| [ grupo_id, valor, nome ] }
+    end
     return nil if data.empty?
 
     if agrupar_por == "campanha"
@@ -242,18 +246,25 @@ class ServicoDadosAnalise
   # ==================== Vetor Único ====================
 
   def montar_vetor_unico(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
+    fonte = (params[:fonte] || "variavel").to_s
 
-    rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+    if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
 
-    dados = []
-    nome_variavel = nil
-
-    rows.each do |r|
-      next unless r.valor_numerico
-      nome_variavel ||= r.nome_variavel
-      dados << r.valor_numerico.to_f
+      rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+      dados = []
+      nome_variavel = nil
+      rows.each do |r|
+        next unless r.valor_numerico
+        nome_variavel ||= r.nome_variavel
+        dados << r.valor_numerico.to_f
+      end
+    else
+      nivel = params[:nivel_agregacao] || "unidade_amostral"
+      valores = dados_derivados(estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel)
+      dados = valores.values.map(&:to_f)
+      nome_variavel = "#{fonte.capitalize} por #{nivel}"
     end
 
     return nil if dados.empty?
@@ -367,6 +378,84 @@ class ServicoDadosAnalise
     when "evento"   then "fk_evento"
     when "registro" then "id_registro"
     else "fk_unidade_amostral"
+    end
+  end
+
+  # ==================== Helpers de Fonte Derivada ====================
+
+  # Retorna hash {chave_dimensao => valor_float} para fonte abundancia/riqueza
+  # agrupado pela dimensão escolhida.
+  # - abundancia = SUM(abundancia)
+  # - riqueza    = COUNT(DISTINCT especie) (exclui ausências com abundancia <= 0)
+  def dados_derivados(estudo_id:, fonte:, nivel_agregacao:)
+    coluna = coluna_nivel_agregacao(nivel_agregacao)
+    base = registros_unicos(estudo_id)
+
+    case fonte
+    when "abundancia"
+      base.group(coluna).sum(:abundancia)
+    when "riqueza"
+      base.where("abundancia > 0").group(coluna).distinct.count(:especie)
+    else
+      {}
+    end
+  end
+
+  # Para análises multiplos_grupos com fonte derivada: cada evento vira uma
+  # observação e o grupo é dado por grupo_col. Retorna lista [[grupo_id, valor]].
+  def dados_derivados_agrupados(estudo_id:, fonte:, grupo_col:)
+    base = registros_unicos(estudo_id)
+    cols = grupo_col == :fk_evento ? [ :fk_evento ] : [ :fk_evento, grupo_col ]
+
+    rows = case fonte
+    when "abundancia"
+      base.group(*cols).sum(:abundancia)
+    when "riqueza"
+      base.where("abundancia > 0").group(*cols).distinct.count(:especie)
+    else
+      {}
+    end
+
+    if grupo_col == :fk_evento
+      rows.map { |evento_id, valor| [ evento_id, valor.to_f ] }
+    else
+      rows.map { |(_evento_id, grupo_id), valor| [ grupo_id, valor.to_f ] }
+    end
+  end
+
+  def hash_bivariado(estudo_id:, fonte:, variavel_id:, nivel:)
+    if fonte == "variavel"
+      return [ {}, nil ] if variavel_id.blank?
+
+      hash = {}
+      nome = nil
+      valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id).each do |r|
+        next unless r.valor_numerico
+        chave = chave_nivel_nativo(r)
+        hash[chave] = r.valor_numerico.to_f
+        nome ||= r.nome_variavel
+      end
+      [ hash, nome ]
+    else
+      valores = dados_derivados(estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel)
+      [ valores.transform_values(&:to_f), "#{fonte.capitalize} por #{nivel}" ]
+    end
+  end
+
+  def chave_nivel_nativo(row)
+    case row.nivel_variavel.to_s.downcase
+    when "campanha" then row.fk_campanha
+    when "evento"   then row.fk_evento
+    when "registro" then row.id_registro
+    else row.fk_unidade_amostral
+    end
+  end
+
+  def coluna_nivel_agregacao(nivel_agregacao)
+    case nivel_agregacao.to_s
+    when "campanha" then :fk_campanha
+    when "evento"   then :fk_evento
+    else :fk_unidade_amostral
     end
   end
 end
