@@ -62,6 +62,8 @@ services:
       POSTGRES_DW_USER: ${POSTGRES_DW_USER:-kheprix_user}
       POSTGRES_DW_PASSWORD: ${POSTGRES_DW_PASSWORD:-kheprix_password}
       POSTGRES_DW_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
+      # Senha do usuário read-only — usada pela migração CreateChatbotReadonlyUser
+      POSTGRES_DW_CHATBOT_PASSWORD: ${POSTGRES_DW_CHATBOT_PASSWORD:-chatbot_senha_local}
       FRONTEND_URL: ${FRONTEND_URL}
       REDEFINICAO_SENHA_CAMINHO: ${REDEFINICAO_SENHA_CAMINHO}
       SMTP_HOST: ${SMTP_HOST}
@@ -103,6 +105,30 @@ services:
   #     - web
   #   networks:
   #     - kheprix_network
+
+  chatbot:
+    build:
+      context: ./chatbot
+      dockerfile: Dockerfile
+    container_name: kheprix_chatbot_container
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      CHATBOT_INTERNAL_KEY: ${CHATBOT_INTERNAL_KEY}
+      # Usuário read-only dedicado — só SELECT em indicadores_dashboard e analises_estatisticas
+      POSTGRES_DW_HOST: db_dw
+      POSTGRES_DW_PORT: 5432
+      POSTGRES_DW_USER: ${POSTGRES_DW_CHATBOT_USER:-kheprix_chatbot_ro}
+      POSTGRES_DW_PASSWORD: ${POSTGRES_DW_CHATBOT_PASSWORD:-chatbot_senha_local}
+      POSTGRES_DW_DB: ${POSTGRES_DW_DB:-kheprix_dw_db}
+    depends_on:
+      db_dw:
+        condition: service_healthy
+    networks:
+      - kheprix_network
 
   adminer:
     image: adminer
