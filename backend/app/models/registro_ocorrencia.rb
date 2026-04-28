@@ -21,6 +21,9 @@ class RegistroOcorrencia < ApplicationRecord
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
+  # 2.1 Callbacks
+  before_validation :zerar_qtde_individuos_se_ausencia
+
   # 3. Scopes
   scope :do_evento, ->(evento_id) { where(evento_amostragem_id: evento_id) }
   scope :por_data, -> { order(data: :desc, hora: :desc) }
@@ -48,5 +51,11 @@ class RegistroOcorrencia < ApplicationRecord
         { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
       },
     )
+  end
+
+  private
+
+  def zerar_qtde_individuos_se_ausencia
+    self.qtde_individuos = 0 if ausencia_especie
   end
 end
