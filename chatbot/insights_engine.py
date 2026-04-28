@@ -1,0 +1,279 @@
+"""
+Geração de Insights Analíticos
+================================
+Gera um relatório narrativo sobre os estudos do pesquisador combinando:
+  - Queries predefinidas e seguras contra o DW
+  - LLM (Groq/Llama) para narrativa analítica em português
+
+Diferente do endpoint /query (Text-to-SQL livre), o /insights usa SQL
+fixo e auditável — sem geração dinâmica de código pelo modelo.
+
+As métricas coletadas cobrem:
+  1. Resumo geral          — riqueza, abundância, período, campanhas
+  2. Top espécies          — as 5 mais abundantes
+  3. Conservação           — distribuição de status IUCN, ameaçadas, endêmicas
+  4. Distribuição temporal — registros por estação do ano
+  5. Composição taxonômica — riqueza por ordem
+"""
+import json
+import logging
+import time
+
+import psycopg2
+import psycopg2.extras
+from openai import OpenAI, APIStatusError
+
+from config import GROQ_API_KEY, GROQ_MODEL
+from db import obter_conexao
+
+logger = logging.getLogger("kheprix.chatbot")
+
+_client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1",
+)
+
+_ERROS_TRANSIENTES = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 2
+_RETRY_DELAY_S = 4
+
+# ---------------------------------------------------------------------------
+# Queries predefinidas (SQL fixo, sem entrada do usuário interpolada)
+# Os estudo_ids são sempre passados como parâmetro psycopg2.
+# ---------------------------------------------------------------------------
+
+_SQL_RESUMO_GERAL = """
+SELECT
+    COUNT(DISTINCT nome_cientifico)                        AS riqueza_total,
+    SUM(quantidade)                                        AS abundancia_total,
+    COUNT(*)                                               AS total_registros,
+    COUNT(DISTINCT nome_campanha)                          AS total_campanhas,
+    MIN(data_registro)::text                               AS primeira_coleta,
+    MAX(data_registro)::text                               AS ultima_coleta,
+    STRING_AGG(DISTINCT nome_estudo, ', ' ORDER BY nome_estudo) AS estudos
+FROM public.indicadores_dashboard
+WHERE fk_estudo = ANY(%(estudo_ids)s)
+"""
+
+_SQL_TOP_ESPECIES = """
+SELECT
+    nome_cientifico,
+    nome_popular,
+    SUM(quantidade)          AS abundancia,
+    COUNT(DISTINCT nome_campanha) AS campanhas
+FROM public.indicadores_dashboard
+WHERE fk_estudo = ANY(%(estudo_ids)s)
+GROUP BY nome_cientifico, nome_popular
+ORDER BY abundancia DESC
+LIMIT 5
+"""
+
+_SQL_CONSERVACAO = """
+SELECT
+    COUNT(DISTINCT nome_cientifico) FILTER (WHERE is_ameacada = true)  AS especies_ameacadas,
+    COUNT(DISTINCT nome_cientifico) FILTER (WHERE is_endemica = true)  AS especies_endemicas,
+    COUNT(DISTINCT nome_cientifico)                                     AS total_especies,
+    STRING_AGG(DISTINCT nome_cientifico, ', ')
+        FILTER (WHERE is_ameacada = true)                              AS nomes_ameacadas,
+    STRING_AGG(DISTINCT status_conservacao, ', ')
+        FILTER (WHERE is_ameacada = true AND status_conservacao != 'NA') AS status_iucn
+FROM public.indicadores_dashboard
+WHERE fk_estudo = ANY(%(estudo_ids)s)
+"""
+
+_SQL_SAZONALIDADE = """
+SELECT
+    estacao,
+    SUM(quantidade)              AS total_individuos,
+    COUNT(DISTINCT nome_cientifico) AS riqueza
+FROM public.indicadores_dashboard
+WHERE fk_estudo = ANY(%(estudo_ids)s)
+  AND estacao IS NOT NULL
+  AND estacao != 'NA'
+GROUP BY estacao
+ORDER BY total_individuos DESC
+"""
+
+_SQL_TAXONOMIA = """
+SELECT
+    ordem,
+    COUNT(DISTINCT nome_cientifico) AS riqueza,
+    SUM(quantidade)                 AS abundancia
+FROM public.indicadores_dashboard
+WHERE fk_estudo = ANY(%(estudo_ids)s)
+  AND ordem IS NOT NULL
+  AND ordem != 'NA'
+GROUP BY ordem
+ORDER BY riqueza DESC
+LIMIT 8
+"""
+
+_PROMPT_INSIGHTS = """
+Você é um ecólogo analítico do sistema Kheprix, especializado em entomologia.
+Com base nas métricas coletadas do banco de dados, gere um relatório de insights
+em português do Brasil para o pesquisador.
+
+## ESTRUTURA DO RELATÓRIO (use exatamente estas seções)
+
+### Visão Geral
+Descreva o escopo do estudo: período, campanhas, riqueza e abundância total.
+
+### Espécies em Destaque
+Comente sobre as espécies mais abundantes e o que isso pode indicar ecologicamente.
+Seja factual — baseie-se apenas nos dados fornecidos.
+
+### Conservação e Endemismo
+Destaque espécies ameaçadas, seus status IUCN e a proporção de endêmicas.
+Se não houver espécies ameaçadas, diga isso claramente.
+
+### Padrões Temporais
+Analise a distribuição por estação: qual concentra mais registros e possíveis explicações
+baseadas nos dados (não em conhecimento geral sobre a espécie).
+
+### Composição Taxonômica
+Comente sobre a distribuição por ordens taxonômicas presentes.
+
+## REGRAS
+- Cite apenas valores que aparecem nos dados fornecidos.
+- Não faça recomendações de manejo ou conservação além dos dados.
+- Não mencione IDs de backend, nomes de tabelas ou SQL.
+- Máximo de 5 parágrafos curtos (um por seção).
+- Responda em português do Brasil.
+"""
+
+
+# ---------------------------------------------------------------------------
+# Coleta de métricas
+# ---------------------------------------------------------------------------
+
+def _executar_query(sql: str, estudo_ids: list[int]) -> list[dict]:
+    with obter_conexao() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, {"estudo_ids": estudo_ids})
+            return [dict(row) for row in cur.fetchall()]
+
+
+def _coletar_metricas(estudo_ids: list[int]) -> dict:
+    """
+    Executa todas as queries predefinidas e retorna as métricas consolidadas.
+    Em caso de erro em uma query individual, registra e continua com as demais.
+    """
+    metricas = {}
+    queries = {
+        "resumo":      _SQL_RESUMO_GERAL,
+        "top_especies": _SQL_TOP_ESPECIES,
+        "conservacao": _SQL_CONSERVACAO,
+        "sazonalidade": _SQL_SAZONALIDADE,
+        "taxonomia":   _SQL_TAXONOMIA,
+    }
+
+    for nome, sql in queries.items():
+        try:
+            resultado = _executar_query(sql, estudo_ids)
+            metricas[nome] = resultado
+        except psycopg2.Error as exc:
+            logger.error(
+                "insights_query_falhou",
+                extra={"query": nome, "erro": str(exc)},
+            )
+            metricas[nome] = []
+
+    return metricas
+
+
+# ---------------------------------------------------------------------------
+# Geração da narrativa via LLM
+# ---------------------------------------------------------------------------
+
+def _gerar_narrativa(metricas: dict, estudo_ids: list[int]) -> str:
+    contexto = (
+        f"Estudos consultados (IDs internos): {len(estudo_ids)} estudo(s)\n\n"
+        f"=== Resumo Geral ===\n"
+        f"{json.dumps(metricas.get('resumo', []), default=str, ensure_ascii=False)}\n\n"
+        f"=== Top 5 Espécies por Abundância ===\n"
+        f"{json.dumps(metricas.get('top_especies', []), default=str, ensure_ascii=False)}\n\n"
+        f"=== Conservação e Endemismo ===\n"
+        f"{json.dumps(metricas.get('conservacao', []), default=str, ensure_ascii=False)}\n\n"
+        f"=== Registros por Estação ===\n"
+        f"{json.dumps(metricas.get('sazonalidade', []), default=str, ensure_ascii=False)}\n\n"
+        f"=== Composição Taxonômica (top ordens) ===\n"
+        f"{json.dumps(metricas.get('taxonomia', []), default=str, ensure_ascii=False)}"
+    )
+
+    for tentativa in range(_MAX_RETRIES + 1):
+        try:
+            resposta = _client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": _PROMPT_INSIGHTS},
+                    {"role": "user",   "content": contexto},
+                ],
+                temperature=0.2,
+                max_tokens=900,
+            )
+            return resposta.choices[0].message.content
+        except APIStatusError as exc:
+            if exc.status_code in _ERROS_TRANSIENTES and tentativa < _MAX_RETRIES:
+                logger.warning(
+                    "insights_llm_retry",
+                    extra={"tentativa": tentativa + 1, "status": exc.status_code},
+                )
+                time.sleep(_RETRY_DELAY_S * (tentativa + 1))
+                continue
+            raise
+
+
+# ---------------------------------------------------------------------------
+# Pipeline principal
+# ---------------------------------------------------------------------------
+
+def gerar_insights(estudo_ids: list[int], usuario_id: int) -> dict:
+    """
+    Coleta métricas predefinidas do DW e gera narrativa analítica via LLM.
+
+    Retorna:
+        narrativa   str         relatório em linguagem natural
+        metricas    dict        dados brutos de cada dimensão analítica
+        erro        str | None  mensagem de erro, ou None em caso de sucesso
+    """
+    inicio = time.monotonic()
+
+    try:
+        metricas = _coletar_metricas(estudo_ids)
+    except Exception as exc:
+        logger.error("insights_coleta_falhou", extra={"usuario_id": usuario_id, "erro": str(exc)})
+        return {
+            "narrativa": "Não foi possível coletar as métricas dos estudos. Tente novamente.",
+            "metricas": {},
+            "erro": f"Falha na coleta de métricas: {exc}",
+        }
+
+    # Se o resumo geral não retornou dados, os estudos estão vazios
+    resumo = metricas.get("resumo", [{}])
+    if not resumo or resumo[0].get("total_registros") in (None, 0):
+        return {
+            "narrativa": "Não foram encontrados registros nos estudos informados.",
+            "metricas": metricas,
+            "erro": None,
+        }
+
+    try:
+        narrativa = _gerar_narrativa(metricas, estudo_ids)
+    except Exception as exc:
+        logger.error("insights_llm_falhou", extra={"usuario_id": usuario_id, "erro": str(exc)})
+        narrativa = (
+            f"Os dados foram coletados com sucesso, mas não foi possível gerar "
+            f"a narrativa analítica. Tente novamente em instantes."
+        )
+
+    duracao_ms = round((time.monotonic() - inicio) * 1000)
+    logger.info(
+        "insights_gerados",
+        extra={"usuario_id": usuario_id, "duracao_ms": duracao_ms},
+    )
+
+    return {
+        "narrativa": narrativa,
+        "metricas": metricas,
+        "erro": None,
+    }
