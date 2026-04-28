@@ -18,7 +18,11 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityEventosBinding
 import com.kheprix.databinding.ActivityNovoEventoBinding
+import com.kheprix.db.CampanhaDao
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.EventoDao
 import com.kheprix.db.OfflineRepository
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
 import com.kheprix.models.VariavelResponse
@@ -99,37 +103,136 @@ class EventosActivity : AppCompatActivity() {
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getUnidade(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
-                )
-                resp.body()?.let { u ->
-                    binding.tvDetalheNome.text  = u.nome
-                    binding.tvDetalheLat.text   = decimalToDms(u.latitude)
-                    binding.tvDetalheLon.text   = decimalToDms(u.longitude)
-                    binding.tvDetalheRaio.text  = u.raio?.let { "${it}m" } ?: "—"
-                    binding.tvDetalheMetodo.text = u.metodoColeta ?: "—"
-                    binding.tvDetalheEsforco.text = u.esforcoAmostral ?: "—"
-                }
-            } catch (_: Exception) {}
+            // Tenta API quando temos remote id da unidade.
+            if (unidadeId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getUnidade(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
+                    )
+                    resp.body()?.let { u ->
+                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral)
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            // Fallback offline: SQLite.
+            preencherDetalhesOffline()
         }
     }
 
+    private fun preencherCardUnidade(
+        nome: String, lat: Double, lon: Double,
+        raio: Double?, metodo: String?, esforco: String?
+    ) {
+        binding.tvDetalheNome.text   = nome
+        binding.tvDetalheLat.text    = decimalToDms(lat)
+        binding.tvDetalheLon.text    = decimalToDms(lon)
+        binding.tvDetalheRaio.text   = raio?.let { "${it}m" } ?: "—"
+        binding.tvDetalheMetodo.text = metodo ?: "—"
+        binding.tvDetalheEsforco.text = esforco ?: "—"
+    }
+
+    private fun preencherDetalhesOffline() {
+        val unidadeDao = UnidadeDao(this)
+        val campanhaDao = CampanhaDao(this)
+        val estudoDao = EstudoDao(this)
+
+        val campanhaLocalId = if (campanhaId > 0) {
+            estudoDao.buscarPorRemoteId(estudoRemoteId)?.localId?.let { estudoLocal ->
+                campanhaDao.buscarPorRemoteIdEscopo(campanhaId, estudoLocal)?.localId
+            }
+        } else null
+
+        val unidade = when {
+            unidadeId > 0 && campanhaLocalId != null ->
+                unidadeDao.buscarPorRemoteIdEscopo(unidadeId, campanhaLocalId)
+            campanhaLocalId != null ->
+                unidadeDao.listarPorCampanhaLocal(campanhaLocalId).firstOrNull { it.nome == unidadeNome }
+            else ->
+                unidadeDao.listarTodos().firstOrNull { it.nome == unidadeNome }
+        } ?: return
+
+        preencherCardUnidade(
+            unidade.nome, unidade.latitude, unidade.longitude,
+            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral
+        )
+    }
+
     private fun carregarEventos() {
+        // Se unidade_id == -1, é offline-only: buscar via SQLite
+        if (unidadeId == -1) {
+            val unidadeDao = UnidadeDao(this)
+            val campanhaDao = CampanhaDao(this)
+            val campanha = campanhaDao.listarTodos().firstOrNull { it.remoteId == campanhaId || (campanhaId == -1) } ?: return
+            val unidade = unidadeDao.listarPorCampanhaLocal(campanha.localId).firstOrNull { it.nome == unidadeNome } ?: return
+            carregarEventosOffline(unidade.localId)
+            return
+        }
+
         lifecycleScope.launch {
+            val eventosOnline = mutableListOf<EventoResponse>()
+
+            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getEventos(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                 )
                 if (resp.isSuccessful) {
-                    eventos.clear()
-                    eventos.addAll(resp.body() ?: emptyList())
-                    binding.rvEventos.adapter?.notifyDataSetChanged()
+                    eventosOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@EventosActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            eventos.clear()
+            eventos.addAll(eventosOnline)
+
+            // Tenta mesclar eventos offline-only. Se qualquer pai não estiver
+            // no SQLite, pula o merge mas mantém os eventos online visíveis.
+            val estudoLocalId = EstudoDao(this@EventosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            val campanhaLocalId = estudoLocalId?.let {
+                CampanhaDao(this@EventosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
+            val unidadeLocalId = campanhaLocalId?.let {
+                UnidadeDao(this@EventosActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
+            }
+
+            if (unidadeLocalId != null) {
+                val eventoDao = EventoDao(this@EventosActivity)
+                val offline = eventoDao.listarPorUnidadeLocal(unidadeLocalId)
+                val remoteIds = eventosOnline.mapNotNull { it.id }.toSet()
+                offline.forEach { off ->
+                    if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                        eventos.add(EventoResponse(
+                            // Eventos offline-only ficam com id = -localId para
+                            // serem rastreáveis pelo SQLite nas telas seguintes.
+                            id = off.remoteId ?: -off.localId.toInt(),
+                            unidadeAmostralId = off.unidadeLocalId.toInt(),
+                            horarioInicio = off.horarioInicio,
+                            horarioFim = off.horarioFim,
+                            esforcoReal = off.esforcoReal,
+                            createdAt = off.createdAt ?: ""
+                        ))
+                    }
+                }
+            }
+
+            binding.rvEventos.adapter?.notifyDataSetChanged()
         }
+    }
+
+    private fun carregarEventosOffline(unidadeLocalId: Long) {
+        val eventoDao = EventoDao(this)
+        eventos.clear()
+        eventos.addAll(eventoDao.listarPorUnidadeLocal(unidadeLocalId).map { off ->
+            EventoResponse(
+                id = off.remoteId ?: -off.localId.toInt(),
+                unidadeAmostralId = off.unidadeLocalId.toInt(),
+                horarioInicio = off.horarioInicio,
+                horarioFim = off.horarioFim,
+                esforcoReal = off.esforcoReal,
+                createdAt = off.createdAt ?: ""
+            )
+        })
+        binding.rvEventos.adapter?.notifyDataSetChanged()
     }
 
     private fun abrirRegistros(e: EventoResponse) {

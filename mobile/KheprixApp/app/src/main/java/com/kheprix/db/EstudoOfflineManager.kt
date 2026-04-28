@@ -116,11 +116,25 @@ class EstudoOfflineManager(context: Context) {
         val estudo = queryEstudoByLocalId(db, estudoLocalId)
         var estudoRemoteId = estudo.remoteId
 
+        // Load local variables up front — the backend requires them in the
+        // study creation payload (POST /estudos rejects empty `variaveis`).
+        val variaveisLocais = queryUnsyncedVariaveis(db, estudoLocalId)
+
         if (estudo.sincronizado == 0) {
+            if (variaveisLocais.isEmpty()) {
+                error("Estudo não possui variáveis para sincronizar")
+            }
             val req = EstudoRequest(
                 nome = estudo.nome,
                 observacoes = estudo.observacoes,
-                variaveis = emptyList() // variables handled below
+                variaveis = variaveisLocais.map { v ->
+                    VariavelRequest(
+                        nome = v.nome,
+                        nivelAplicacao = v.nivelAplicacao,
+                        tipoDado = v.tipoDado,
+                        metrica = v.metrica
+                    )
+                }
             )
             val resp = api.postEstudo(token, req).body()
                 ?: error("Erro ao criar estudo no servidor")
@@ -131,22 +145,22 @@ class EstudoOfflineManager(context: Context) {
         val remoteEstudoId = estudoRemoteId ?: error("Estudo remoto não disponível")
 
         // ── Variables ────────────────────────────────────────────────────────
-        val variaveis = queryUnsyncedVariaveis(db, estudoLocalId)
+        // After the study POST the server has created the variables; fetch them
+        // back and match by (nome, nivel_aplicacao, tipo_dado) to stamp remote
+        // IDs on the local rows.
         val varLocalToRemote = mutableMapOf<Long, Int>()
-        variaveis.forEach { v ->
-            val req = VariavelRequest(
-                nome = v.nome,
-                nivelAplicacao = v.nivelAplicacao,
-                tipoDado = v.tipoDado,
-                metrica = v.metrica
-            )
-            // Variables are created as part of a study POST in the API spec.
-            // For individual sync we re-create the study with new variables or
-            // use the same endpoint. Here we track them only locally.
-            // Mark as synced if remoteId exists (from salvar), else keep 0.
-            if (v.remoteId != null) {
-                varLocalToRemote[v.localId] = v.remoteId
-                markSynced(db, TABLE_VARIAVEIS, v.localId, v.remoteId)
+        if (variaveisLocais.isNotEmpty()) {
+            val remotas = api.getVariaveis(token, remoteEstudoId).body() ?: emptyList()
+            variaveisLocais.forEach { v ->
+                val match = remotas.firstOrNull {
+                    it.nome == v.nome &&
+                    it.nivelAplicacao == v.nivelAplicacao &&
+                    it.tipoDado == v.tipoDado
+                }
+                if (match != null) {
+                    varLocalToRemote[v.localId] = match.id
+                    markSynced(db, TABLE_VARIAVEIS, v.localId, match.id)
+                }
             }
         }
 
@@ -329,6 +343,21 @@ class EstudoOfflineManager(context: Context) {
     //    Returns the total count of rows with sincronizado = 0 for the
     //    entire study tree (study + all child levels).
     // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Indica se o estudo foi explicitamente salvo offline pelo usuário
+     * (vs. apenas espelhado via `cacheEstudo` durante navegação online).
+     *
+     * Heurística: presença de variáveis locais. `salvarEstudoOffline` e
+     * `criarEstudoOffline` inserem variáveis; `cacheEstudo` não.
+     */
+    fun isExplicitamenteSalvoOffline(estudoLocalId: Long): Boolean {
+        val db = dbHelper.readableDatabase
+        return db.rawQuery(
+            "SELECT 1 FROM $TABLE_VARIAVEIS WHERE estudo_local_id = ? LIMIT 1",
+            arrayOf(estudoLocalId.toString())
+        ).use { it.moveToFirst() }
+    }
 
     fun contarRegistrosOffline(estudoLocalId: Long): Int {
         val db = dbHelper.readableDatabase

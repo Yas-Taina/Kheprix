@@ -1,6 +1,7 @@
 package com.kheprix.util
 
 import android.graphics.BitmapFactory
+import android.util.Base64
 import android.util.Log
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
@@ -41,10 +42,23 @@ object ImagemLoader {
             return
         }
 
+        target.setImageResource(placeholder)
+
+        // Fotos criadas offline são salvas como Base64 no SQLite (sem prefixo
+        // data URI). URLs http(s) ou paths relativos vão pelo fluxo de cache+download.
+        val ehUrl = url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")
+
+        if (!ehUrl) {
+            scope.launch {
+                val bmp = withContext(Dispatchers.IO) { decodeBase64(url) }
+                if (bmp != null) target.setImageBitmap(bmp)
+            }
+            return
+        }
+
         val resolvido = resolverUrl(url)
         val context = target.context.applicationContext
         val dao = ImagemCacheDao(context)
-        target.setImageResource(placeholder)
 
         scope.launch {
             val bytes = withContext(Dispatchers.IO) {
@@ -52,6 +66,17 @@ object ImagemLoader {
             }
             val bmp = bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
             if (bmp != null) target.setImageBitmap(bmp)
+        }
+    }
+
+    private fun decodeBase64(raw: String): android.graphics.Bitmap? {
+        val payload = if (raw.startsWith("data:")) raw.substringAfter(",", "") else raw
+        if (payload.isEmpty()) return null
+        return try {
+            val bytes = Base64.decode(payload, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } catch (_: Exception) {
+            null
         }
     }
 

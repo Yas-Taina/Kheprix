@@ -11,7 +11,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityEstudosBinding
+import com.kheprix.db.EstudoDao
 import com.kheprix.db.EstudoOfflineManager
+import com.kheprix.db.OfflineRepository
 import com.kheprix.ui.adapters.EstudoAdapter
 import com.kheprix.ui.adapters.EstudoItem
 import kotlinx.coroutines.launch
@@ -100,42 +102,71 @@ class EstudosActivity : AppCompatActivity() {
     private fun carregarEstudos(nome: String = "") {
         setLoading(true)
         lifecycleScope.launch {
+            val estudosOnline = mutableListOf<EstudoItem>()
+
+            // Tenta carregar da API (se online)
             try {
                 val token = SessionManager.getAuthHeader()
                 val response = RetrofitClient.apiService.getEstudos(token, nome = nome.ifEmpty { null })
 
                 if (response.isSuccessful) {
-                    val lista = response.body() ?: emptyList()
-                    estudos.clear()
-                    lista.forEach { estudo ->
-                        // Verifica se já existe salvo offline pelo remote_id
-                        val localId = buscarLocalIdPorRemoteId(estudo.id)
-                        val offline = localId != null
-                        val offlineCount = if (offline && localId != null)
-                            offlineManager.contarRegistrosOffline(localId) else 0
+                    val repo = OfflineRepository(this@EstudosActivity)
+                    response.body()?.forEach { estudo ->
+                        // Espelha o estudo no SQLite para permitir acesso offline
+                        // sem depender do fluxo explícito "Salvar Offline".
+                        val localId = try { repo.cacheEstudo(estudo) }
+                                      catch (_: Exception) { buscarLocalIdPorRemoteId(estudo.id) }
+                        val explicito = localId?.let {
+                            offlineManager.isExplicitamenteSalvoOffline(it)
+                        } ?: false
+                        val offlineCount = localId?.let {
+                            offlineManager.contarRegistrosOffline(it)
+                        } ?: 0
 
-                        estudos.add(
-                            EstudoItem(
-                                remoteId = estudo.id,
-                                localId = localId,
-                                nome = estudo.nome,
-                                createdAt = estudo.createdAt,
-                                perfil = estudo.perfil ?: "",
-                                salvosOffline = offline,
-                                registrosOffline = offlineCount
-                            )
-                        )
+                        estudosOnline.add(EstudoItem(
+                            remoteId = estudo.id,
+                            localId = localId,
+                            nome = estudo.nome,
+                            createdAt = estudo.createdAt,
+                            perfil = estudo.perfil ?: "",
+                            salvosOffline = explicito,
+                            registrosOffline = offlineCount
+                        ))
                     }
-                    adapter.notifyDataSetChanged()
-                } else {
-                    Toast.makeText(this@EstudosActivity, "Erro ao carregar estudos", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@EstudosActivity, "Sem conexão. Dados locais exibidos.", Toast.LENGTH_SHORT).show()
-                carregarEstudosLocais()
-            } finally {
-                setLoading(false)
+            } catch (_: Exception) {
+                // Offline: tudo bem, vamos usar SQLite abaixo
             }
+
+            // Merge com SQLite (inclui offline-only + já-sincronizados)
+            val estudosOffline = EstudoDao(this@EstudosActivity).listarTodos()
+            val remoteIds = estudosOnline.mapNotNull { it.remoteId }.toSet()
+
+            estudos.clear()
+            estudos.addAll(estudosOnline)
+
+            // Adicionar offline-only (não presentes na API). Filtra para
+            // mostrar apenas os explicitamente salvos offline (ou criados
+            // localmente) — não os apenas espelhados via cacheEstudo.
+            estudosOffline.forEach { off ->
+                val isOfflineOnly = off.remoteId == null || !remoteIds.contains(off.remoteId)
+                if (!isOfflineOnly) return@forEach
+                if (!offlineManager.isExplicitamenteSalvoOffline(off.localId)) return@forEach
+
+                val offlineCount = offlineManager.contarRegistrosOffline(off.localId)
+                estudos.add(EstudoItem(
+                    remoteId = off.remoteId ?: -1,
+                    localId = off.localId,
+                    nome = off.nome,
+                    createdAt = off.createdAt ?: "",
+                    perfil = off.perfil ?: "",
+                    salvosOffline = true,
+                    registrosOffline = offlineCount
+                ))
+            }
+
+            adapter.notifyDataSetChanged()
+            setLoading(false)
         }
     }
 

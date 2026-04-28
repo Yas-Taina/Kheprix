@@ -11,7 +11,7 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "13"
+      value: "1"
       type: path
   body:
     type: json
@@ -22,7 +22,7 @@ http:
         "data_fim": "2026-03-15",
         "descricao": "Campanha de coleta no período de verão",
         "valores_variaveis": [
-           {"variavel_id": 46, "valor": "Batata"}
+           {"variavel_id": 1, "valor": "Batata"}
         ]
       }
   auth: inherit

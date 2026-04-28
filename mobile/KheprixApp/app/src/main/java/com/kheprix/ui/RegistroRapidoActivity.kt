@@ -9,6 +9,10 @@ import androidx.lifecycle.lifecycleScope
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityRegistroRapidoBinding
+import com.kheprix.db.CampanhaDao
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.EventoDao
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.CampanhaResponse
 import com.kheprix.models.EstudoResponse
 import com.kheprix.models.EventoResponse
@@ -94,15 +98,34 @@ class RegistroRapidoActivity : AppCompatActivity() {
     private fun carregarEstudos() {
         lifecycleScope.launch {
             try {
+                // Tenta carregar da API
                 val resp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
                 if (resp.isSuccessful) {
                     estudos.clear()
                     estudos.addAll(resp.body() ?: emptyList())
-                    popularSpinner(binding.spinnerEstudo, estudos.map { it.nome })
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@RegistroRapidoActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            // Merge com SQLite: adiciona offline-only
+            val offlineDao = EstudoDao(this@RegistroRapidoActivity)
+            val offlineEstudos = offlineDao.listarTodos()
+            val remoteIds = estudos.mapNotNull { it.id }.toSet()
+
+            offlineEstudos.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    // Criar pseudo-EstudoResponse para offline-only (remoteId=-1 como marcador)
+                    estudos.add(EstudoResponse(
+                        id = off.remoteId ?: -1,
+                        nome = off.nome,
+                        observacoes = off.observacoes,
+                        perfil = off.perfil,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: ""
+                    ))
+                }
             }
+
+            popularSpinner(binding.spinnerEstudo, estudos.map { it.nome })
         }
     }
 
@@ -114,6 +137,18 @@ class RegistroRapidoActivity : AppCompatActivity() {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
 
+        // Se estudo_id == -1, é offline-only: buscar local_id do DAO
+        if (estudoId == -1) {
+            val estudoSel = estudoSelecionado()
+            if (estudoSel != null) {
+                val estudo = EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoSel.nome }
+                if (estudo != null) {
+                    carregarCampanhasOffline(estudo.localId)
+                }
+            }
+            return
+        }
+
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getCampanhas(SessionManager.getAuthHeader(), estudoId)
@@ -121,8 +156,48 @@ class RegistroRapidoActivity : AppCompatActivity() {
                     campanhas.addAll(resp.body() ?: emptyList())
                     popularSpinner(binding.spinnerCampanha, campanhas.map { it.nome })
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { }
+
+            // Merge com SQLite
+            val offlineDao = CampanhaDao(this@RegistroRapidoActivity)
+            val estudoLocalId = EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId ?: return@launch
+            val offline = offlineDao.listarPorEstudoLocal(estudoLocalId)
+            val remoteIds = campanhas.mapNotNull { it.id }.toSet()
+
+            offline.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    campanhas.add(CampanhaResponse(
+                        id = off.remoteId ?: -1,
+                        nome = off.nome,
+                        dataInicio = off.dataInicio,
+                        dataFim = off.dataFim,
+                        descricao = off.descricao,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: "",
+                        valoresVariaveis = null
+                    ))
+                }
+            }
+            popularSpinner(binding.spinnerCampanha, campanhas.map { it.nome })
         }
+    }
+
+    private fun carregarCampanhasOffline(estudoLocalId: Long) {
+        val offlineDao = CampanhaDao(this)
+        campanhas.clear()
+        campanhas.addAll(offlineDao.listarPorEstudoLocal(estudoLocalId).map { off ->
+            CampanhaResponse(
+                id = off.remoteId ?: -1,
+                nome = off.nome,
+                dataInicio = off.dataInicio,
+                dataFim = off.dataFim,
+                descricao = off.descricao,
+                createdAt = off.createdAt ?: "",
+                updatedAt = off.updatedAt ?: "",
+                valoresVariaveis = null
+            )
+        })
+        popularSpinner(binding.spinnerCampanha, campanhas.map { it.nome })
     }
 
     private fun carregarUnidades(estudoId: Int, campanhaId: Int) {
@@ -131,6 +206,14 @@ class RegistroRapidoActivity : AppCompatActivity() {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
 
+        if (campanhaId == -1) {
+            val campanhaLoc = CampanhaDao(this).listarTodos().firstOrNull { it.remoteId == -1 }
+            if (campanhaLoc != null) {
+                carregarUnidadesOffline(campanhaLoc.localId)
+            }
+            return
+        }
+
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getUnidades(SessionManager.getAuthHeader(), estudoId, campanhaId)
@@ -138,13 +221,65 @@ class RegistroRapidoActivity : AppCompatActivity() {
                     unidades.addAll(resp.body() ?: emptyList())
                     popularSpinner(binding.spinnerUnidade, unidades.map { it.nome })
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { }
+
+            // Merge com SQLite
+            val unidadeDao = UnidadeDao(this@RegistroRapidoActivity)
+            val campanhaLocalId = CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(campanhaId, EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId ?: return@launch)?.localId ?: return@launch
+            val offline = unidadeDao.listarPorCampanhaLocal(campanhaLocalId)
+            val remoteIds = unidades.mapNotNull { it.id }.toSet()
+
+            offline.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    unidades.add(UnidadeResponse(
+                        id = off.remoteId ?: -1,
+                        campanhaId = off.campanhaLocalId.toInt(),
+                        nome = off.nome,
+                        latitude = off.latitude,
+                        longitude = off.longitude,
+                        raio = off.raio,
+                        metodoColeta = off.metodoColeta,
+                        esforcoAmostral = off.esforcoAmostral,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: ""
+                    ))
+                }
+            }
+            popularSpinner(binding.spinnerUnidade, unidades.map { it.nome })
         }
+    }
+
+    private fun carregarUnidadesOffline(campanhaLocalId: Long) {
+        val unidadeDao = UnidadeDao(this)
+        unidades.clear()
+        unidades.addAll(unidadeDao.listarPorCampanhaLocal(campanhaLocalId).map { off ->
+            UnidadeResponse(
+                id = off.remoteId ?: -1,
+                campanhaId = off.campanhaLocalId.toInt(),
+                nome = off.nome,
+                latitude = off.latitude,
+                longitude = off.longitude,
+                raio = off.raio,
+                metodoColeta = off.metodoColeta,
+                esforcoAmostral = off.esforcoAmostral,
+                createdAt = off.createdAt ?: "",
+                updatedAt = off.updatedAt ?: ""
+            )
+        })
+        popularSpinner(binding.spinnerUnidade, unidades.map { it.nome })
     }
 
     private fun carregarEventos(estudoId: Int, campanhaId: Int, unidadeId: Int) {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
+
+        if (unidadeId == -1) {
+            val unidadeLoc = UnidadeDao(this).listarPorCampanhaLocal(CampanhaDao(this).listarTodos().first { it.remoteId == campanhaId }.localId).firstOrNull { it.remoteId == -1 }
+            if (unidadeLoc != null) {
+                carregarEventosOffline(unidadeLoc.localId)
+            }
+            return
+        }
 
         lifecycleScope.launch {
             try {
@@ -153,8 +288,44 @@ class RegistroRapidoActivity : AppCompatActivity() {
                     eventos.addAll(resp.body() ?: emptyList())
                     popularSpinner(binding.spinnerEvento, eventos.map { it.horarioInicio })
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { }
+
+            // Merge com SQLite
+            val eventoDao = EventoDao(this@RegistroRapidoActivity)
+            val unidadeLocalId = UnidadeDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(unidadeId, CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(campanhaId, EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId ?: return@launch)?.localId ?: return@launch)?.localId ?: return@launch
+            val offline = eventoDao.listarPorUnidadeLocal(unidadeLocalId)
+            val remoteIds = eventos.mapNotNull { it.id }.toSet()
+
+            offline.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    eventos.add(EventoResponse(
+                        id = off.remoteId ?: -off.localId.toInt(),
+                        unidadeAmostralId = off.unidadeLocalId.toInt(),
+                        horarioInicio = off.horarioInicio,
+                        horarioFim = off.horarioFim,
+                        esforcoReal = off.esforcoReal,
+                        createdAt = off.createdAt ?: ""
+                    ))
+                }
+            }
+            popularSpinner(binding.spinnerEvento, eventos.map { it.horarioInicio })
         }
+    }
+
+    private fun carregarEventosOffline(unidadeLocalId: Long) {
+        val eventoDao = EventoDao(this)
+        eventos.clear()
+        eventos.addAll(eventoDao.listarPorUnidadeLocal(unidadeLocalId).map { off ->
+            EventoResponse(
+                id = off.remoteId ?: -off.localId.toInt(),
+                unidadeAmostralId = off.unidadeLocalId.toInt(),
+                horarioInicio = off.horarioInicio,
+                horarioFim = off.horarioFim,
+                esforcoReal = off.esforcoReal,
+                createdAt = off.createdAt ?: ""
+            )
+        })
+        popularSpinner(binding.spinnerEvento, eventos.map { it.horarioInicio })
     }
 
     private fun popularSpinner(spinner: Spinner, itens: List<String>) {

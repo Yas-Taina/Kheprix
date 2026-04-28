@@ -21,6 +21,7 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityCadastroEspecieBinding
 import com.kheprix.databinding.ActivityEspecieDetalheBinding
 import com.kheprix.databinding.ActivityEspeciesBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.EspecieRequest
 import com.kheprix.models.EspeciePatchRequest
 import com.kheprix.models.EspecieResponse
@@ -89,18 +90,51 @@ class EspeciesActivity : AppCompatActivity() {
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
+            val especiesOnline = mutableListOf<EspecieResponse>()
             try {
                 val resp = RetrofitClient.apiService.getEspecies(
                     SessionManager.getAuthHeader(), estudoRemoteId
                 )
                 if (resp.isSuccessful) {
-                    especies.clear()
-                    especies.addAll(resp.body() ?: emptyList())
-                    binding.rvEspecies.adapter?.notifyDataSetChanged()
+                    especiesOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@EspeciesActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            val repo = OfflineRepository(this@EspeciesActivity)
+            // Resolve estudo localId, cacheando da API se necessário.
+            var estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+            if (estudoLocalId == null && especiesOnline.isNotEmpty()) {
+                try {
+                    val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
+                        .body()?.firstOrNull { it.id == estudoRemoteId }
+                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                } catch (_: Exception) { }
             }
+
+            // Espelha espécies online no SQLite para acesso offline posterior.
+            estudoLocalId?.let { id ->
+                especiesOnline.forEach { e ->
+                    try { repo.cacheEspecie(id, e) } catch (_: Exception) { }
+                }
+            }
+
+            especies.clear()
+            especies.addAll(especiesOnline)
+
+            // Mescla com espécies offline (criadas localmente, ainda não sincronizadas).
+            if (estudoLocalId != null) {
+                val remoteIds = especiesOnline.map { it.id }.toSet()
+                val offline = repo.listarEspeciesPorEstudoLocal(estudoLocalId!!)
+                offline.forEach { off ->
+                    // id < 0 ⇒ offline-only (codificado como -localId); senão
+                    // é remoteId e só adiciona se não veio da API.
+                    if (off.id < 0 || !remoteIds.contains(off.id)) {
+                        especies.add(off)
+                    }
+                }
+            }
+
+            binding.rvEspecies.adapter?.notifyDataSetChanged()
         }
     }
 }
@@ -282,17 +316,17 @@ class CadastroEspecieActivity : AppCompatActivity() {
 
     private fun criarEspecie() {
         val req = coletarFormulario() ?: return
+        val especieReq = EspecieRequest(
+            classe = req.classe, ordem = req.ordem, familia = req.familia,
+            genero = req.genero, especie = req.especie, endemismo = req.endemismo,
+            foto = req.foto, nomePopular = req.nomePopular,
+            statusConservacao = req.statusConservacao
+        )
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.postEspecie(
-                    SessionManager.getAuthHeader(), estudoRemoteId,
-                    EspecieRequest(
-                        classe = req.classe, ordem = req.ordem, familia = req.familia,
-                        genero = req.genero, especie = req.especie, endemismo = req.endemismo,
-                        foto = req.foto, nomePopular = req.nomePopular,
-                        statusConservacao = req.statusConservacao
-                    )
+                    SessionManager.getAuthHeader(), estudoRemoteId, especieReq
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@CadastroEspecieActivity, "Espécie cadastrada!", Toast.LENGTH_SHORT).show()
@@ -301,8 +335,36 @@ class CadastroEspecieActivity : AppCompatActivity() {
                     Toast.makeText(this@CadastroEspecieActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@CadastroEspecieActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                salvarEspecieOffline(especieReq)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun salvarEspecieOffline(req: EspecieRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+        if (estudoLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — este estudo não está salvo offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        try {
+            repo.criarEspecieOffline(estudoLocalId, req)
+            Toast.makeText(
+                this,
+                "Sem conexão — espécie salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
