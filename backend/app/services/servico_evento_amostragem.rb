@@ -11,11 +11,10 @@ class ServicoEventoAmostragem
     EventoAmostragem.find_by(id: id)
   end
 
-  def criar(unidade_amostral:, horario_inicio:, horario_fim:, esforco_real:, valores_variaveis: nil)
+  def criar(unidade_amostral:, horario_inicio:, esforco_real:, valores_variaveis: nil)
     evento = EventoAmostragem.new(
       unidade_amostral: unidade_amostral,
       horario_inicio: horario_inicio,
-      horario_fim: horario_fim,
       esforco_real: esforco_real,
     )
     validar_variaveis_compat(evento, valores_variaveis, estudo_id: unidade_amostral.campanha.estudo_id, nivel: :evento)
@@ -30,11 +29,10 @@ class ServicoEventoAmostragem
     e.record
   end
 
-  def atualizar(evento:, horario_inicio:, horario_fim:, esforco_real:, valores_variaveis: nil)
+  def atualizar(evento:, horario_inicio:, esforco_real:, valores_variaveis: nil)
     ActiveRecord::Base.transaction do
       evento.update!(
         horario_inicio: horario_inicio,
-        horario_fim: horario_fim,
         esforco_real: esforco_real,
       )
       sincronizar_valores_variaveis(evento, valores_variaveis)

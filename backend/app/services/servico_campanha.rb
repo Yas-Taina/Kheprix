@@ -11,12 +11,11 @@ class ServicoCampanha
     Campanha.find(id)
   end
 
-  def cadastrar(estudo:, nome:, data_inicio:, data_fim:, descricao:, valores_variaveis: nil)
+  def cadastrar(estudo:, nome:, data_inicio:, descricao:, valores_variaveis: nil)
     campanha = Campanha.new(
       estudo: estudo,
       nome: nome,
       data_inicio: data_inicio,
-      data_fim: data_fim,
       descricao: descricao,
     )
     validar_variaveis_compat(campanha, valores_variaveis, estudo_id: estudo.id, nivel: :campanha)
@@ -31,12 +30,11 @@ class ServicoCampanha
     e.record
   end
 
-  def atualizar(campanha:, nome:, data_inicio:, data_fim:, descricao:, valores_variaveis: nil)
+  def atualizar(campanha:, nome:, data_inicio:, descricao:, valores_variaveis: nil)
     ActiveRecord::Base.transaction do
       campanha.update!(
         nome: nome,
         data_inicio: data_inicio,
-        data_fim: data_fim,
         descricao: descricao,
       )
       sincronizar_valores_variaveis(campanha, valores_variaveis)

@@ -56,7 +56,6 @@ class ServicoExportacaoDados
           xml.campanha do
             xml.nome(campanha.nome)
             xml.data_inicio(campanha.data_inicio)
-            xml.data_fim(campanha.data_fim)
             xml.descricao(campanha.descricao)
             escrever_valores_variaveis(xml, variaveis_por_nivel["campanha"], valores_map, campanha.id)
 
@@ -75,7 +74,6 @@ class ServicoExportacaoDados
                     unidade.eventos_amostragem.each do |evento|
                       xml.evento_amostragem do
                         xml.horario_inicio(formatar_datetime(evento.horario_inicio))
-                        xml.horario_fim(formatar_datetime(evento.horario_fim))
                         xml.esforco_real(evento.esforco_real)
                         escrever_valores_variaveis(xml, variaveis_por_nivel["evento"], valores_map, evento.id)
 
@@ -132,10 +130,10 @@ class ServicoExportacaoDados
 
     colunas_fixas = %w[
       estudo_nome
-      campanha_nome campanha_data_inicio campanha_data_fim campanha_descricao
+      campanha_nome campanha_data_inicio campanha_descricao
       unidade_amostral_nome unidade_amostral_latitude unidade_amostral_longitude
       unidade_amostral_raio unidade_amostral_metodo_coleta unidade_amostral_esforco_amostral
-      evento_horario_inicio evento_horario_fim evento_esforco_real
+      evento_horario_inicio evento_esforco_real
       registro_data registro_hora registro_latitude registro_longitude
       registro_qtde_individuos registro_ausencia_especie
       especie_classe especie_ordem especie_familia especie_genero
@@ -155,10 +153,10 @@ class ServicoExportacaoDados
 
         linha = [
           estudo.nome,
-          campanha.nome, campanha.data_inicio, campanha.data_fim, campanha.descricao,
+          campanha.nome, campanha.data_inicio, campanha.descricao,
           unidade.nome, unidade.latitude, unidade.longitude,
           unidade.raio, unidade.metodo_coleta, unidade.esforco_amostral,
-          formatar_datetime(evento.horario_inicio), formatar_datetime(evento.horario_fim), evento.esforco_real,
+          formatar_datetime(evento.horario_inicio), evento.esforco_real,
           reg.data, reg.hora&.strftime("%H:%M:%S"), reg.latitude, reg.longitude,
           reg.qtde_individuos, reg.ausencia_especie,
           especie.classe, especie.ordem, especie.familia, especie.genero,
@@ -187,9 +185,9 @@ class ServicoExportacaoDados
 
     colunas_fixas = %w[
       estudo_nome
-      campanha_nome campanha_data_inicio campanha_data_fim
+      campanha_nome campanha_data_inicio
       unidade_amostral_nome unidade_amostral_latitude unidade_amostral_longitude
-      evento_horario_inicio evento_horario_fim evento_esforco_real
+      evento_horario_inicio evento_esforco_real
       qtde_registros qtde_especies total_individuos
     ]
 
@@ -219,9 +217,9 @@ class ServicoExportacaoDados
 
         linha = [
           estudo.nome,
-          campanha.nome, campanha.data_inicio, campanha.data_fim,
+          campanha.nome, campanha.data_inicio,
           unidade.nome, unidade.latitude, unidade.longitude,
-          formatar_datetime(evento.horario_inicio), formatar_datetime(evento.horario_fim), evento.esforco_real,
+          formatar_datetime(evento.horario_inicio), evento.esforco_real,
           agg[:qtde], agg[:especies], agg[:individuos]
         ]
 
@@ -247,7 +245,7 @@ class ServicoExportacaoDados
 
     colunas_fixas = %w[
       estudo_nome
-      campanha_nome campanha_data_inicio campanha_data_fim
+      campanha_nome campanha_data_inicio
       unidade_amostral_nome unidade_amostral_latitude unidade_amostral_longitude
       unidade_amostral_raio unidade_amostral_metodo_coleta unidade_amostral_esforco_amostral
       qtde_eventos qtde_registros qtde_especies total_individuos
@@ -284,7 +282,7 @@ class ServicoExportacaoDados
 
         linha = [
           estudo.nome,
-          campanha.nome, campanha.data_inicio, campanha.data_fim,
+          campanha.nome, campanha.data_inicio,
           unidade.nome, unidade.latitude, unidade.longitude,
           unidade.raio, unidade.metodo_coleta, unidade.esforco_amostral,
           agregados_evento[unidade.id] || 0, agg_reg[:qtde], agg_reg[:especies], agg_reg[:individuos]
@@ -308,7 +306,7 @@ class ServicoExportacaoDados
 
     colunas_fixas = %w[
       estudo_nome
-      campanha_nome campanha_data_inicio campanha_data_fim campanha_descricao
+      campanha_nome campanha_data_inicio campanha_descricao
       qtde_unidades qtde_eventos qtde_registros qtde_especies total_individuos
     ]
 
@@ -348,7 +346,7 @@ class ServicoExportacaoDados
 
         linha = [
           estudo.nome,
-          campanha.nome, campanha.data_inicio, campanha.data_fim, campanha.descricao,
+          campanha.nome, campanha.data_inicio, campanha.descricao,
           agregados_unidade[campanha.id] || 0,
           agregados_evento[campanha.id] || 0,
           agg_reg[:qtde], agg_reg[:especies], agg_reg[:individuos]
