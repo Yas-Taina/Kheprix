@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
  *  - Clique num item → detalhe/edição da campanha (a criar)
  *  - Lixeira → deletar campanha (com confirmação)
  */
-class CampanhasActivity : AppCompatActivity() {
+class CampanhasActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCampanhasBinding
     private var estudoRemoteId = -1
@@ -84,7 +84,7 @@ class CampanhasActivity : AppCompatActivity() {
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

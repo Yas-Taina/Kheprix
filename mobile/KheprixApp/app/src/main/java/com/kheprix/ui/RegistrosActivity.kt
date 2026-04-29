@@ -56,7 +56,7 @@ import java.util.Calendar
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, evento_nome
  */
-class RegistrosActivity : AppCompatActivity() {
+class RegistrosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosBinding
     private var estudoRemoteId = -1
@@ -116,7 +116,7 @@ class RegistrosActivity : AppCompatActivity() {
         // Filtro por espécie
         binding.btnFiltrar.setOnClickListener { mostrarFiltroEspecie() }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -367,7 +367,7 @@ class RegistroAdapter(
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id (-1 novo)
  */
-class NovoRegistroActivity : AppCompatActivity() {
+class NovoRegistroActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoRegistroBinding
 
@@ -431,7 +431,7 @@ class NovoRegistroActivity : AppCompatActivity() {
             if (modoEdicao) editarRegistro() else criarRegistro()
         }
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -787,7 +787,7 @@ class NovoRegistroActivity : AppCompatActivity() {
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id
  */
-class RegistroDetalheActivity : AppCompatActivity() {
+class RegistroDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosDetalheBinding
     private var estudoRemoteId = -1
@@ -817,7 +817,7 @@ class RegistroDetalheActivity : AppCompatActivity() {
             })
         }
         binding.ivDeletar.setOnClickListener { confirmarDelete() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -943,7 +943,7 @@ class RegistroDetalheActivity : AppCompatActivity() {
  * e que a sincronização poderá ser feita quando houver conexão.
  * Botão "Continuar" fecha a tela.
  */
-class OfflineWarningActivity : AppCompatActivity() {
+class OfflineWarningActivity : BaseDrawerActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

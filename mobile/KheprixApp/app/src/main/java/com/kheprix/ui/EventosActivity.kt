@@ -41,7 +41,7 @@ import java.util.Calendar
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, unidade_nome
  */
-class EventosActivity : AppCompatActivity() {
+class EventosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEventosBinding
     private var estudoRemoteId = -1
@@ -90,7 +90,7 @@ class EventosActivity : AppCompatActivity() {
             })
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -314,7 +314,7 @@ class EventoAdapter(
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id (-1 novo)
  */
-class NovoEventoActivity : AppCompatActivity() {
+class NovoEventoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEventoBinding
     private var estudoRemoteId = -1
@@ -356,7 +356,7 @@ class NovoEventoActivity : AppCompatActivity() {
             if (modoEdicao) editarEvento() else criarEvento()
         }
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

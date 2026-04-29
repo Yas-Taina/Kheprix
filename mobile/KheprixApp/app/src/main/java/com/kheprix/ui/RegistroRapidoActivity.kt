@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
  * Os spinners são dependentes: ao selecionar um Estudo, carrega as Campanhas;
  * ao selecionar a Campanha, carrega as Unidades; e assim por diante.
  */
-class RegistroRapidoActivity : AppCompatActivity() {
+class RegistroRapidoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistroRapidoBinding
 
@@ -48,7 +48,7 @@ class RegistroRapidoActivity : AppCompatActivity() {
         setupSpinners()
 
         binding.btnProsseguir.setOnClickListener { prosseguir() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

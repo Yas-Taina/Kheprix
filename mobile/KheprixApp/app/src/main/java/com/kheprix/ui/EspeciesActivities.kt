@@ -39,7 +39,7 @@ import java.io.File
  * Lista de espécies de um estudo.
  * Extras: estudo_remote_id, estudo_nome
  */
-class EspeciesActivity : AppCompatActivity() {
+class EspeciesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspeciesBinding
     private var estudoRemoteId = -1
@@ -77,7 +77,7 @@ class EspeciesActivity : AppCompatActivity() {
 
         binding.btnFiltrar.setOnClickListener { abrirDialogoFiltro() }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -234,7 +234,7 @@ class EspecieAdapter(
  *   estudo_remote_id → Int  (obrigatório)
  *   especie_id       → Int  (se edição; -1 para criação)
  */
-class CadastroEspecieActivity : AppCompatActivity() {
+class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCadastroEspecieBinding
 
@@ -275,7 +275,7 @@ class CadastroEspecieActivity : AppCompatActivity() {
         }
 
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -484,7 +484,7 @@ class CadastroEspecieActivity : AppCompatActivity() {
  *
  * Extras: estudo_remote_id, especie_id, estudo_nome
  */
-class EspecieDetalheActivity : AppCompatActivity() {
+class EspecieDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspecieDetalheBinding
     private var estudoRemoteId = -1
@@ -508,7 +508,7 @@ class EspecieDetalheActivity : AppCompatActivity() {
         }
 
         binding.ivDeletar.setOnClickListener { confirmarDelete() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

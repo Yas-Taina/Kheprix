@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
  *   implementation 'com.google.zxing:core:3.5.1'
  *   (ZXing Android Embedded já inclui o core)
  */
-class ColaboradoresActivity : AppCompatActivity() {
+class ColaboradoresActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityColaboradoresBinding
     private var estudoRemoteId = -1
@@ -74,7 +74,7 @@ class ColaboradoresActivity : AppCompatActivity() {
         carregarCodigoAcesso()
         carregarConvitesPendentes()
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

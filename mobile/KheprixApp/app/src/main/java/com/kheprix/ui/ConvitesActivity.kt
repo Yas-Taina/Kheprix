@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
  *  POST /convites/:token/aceitar → aceita
  *  POST /convites/:token/recusar → recusa
  */
-class ConvitesActivity : AppCompatActivity() {
+class ConvitesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityConvitesBinding
     private val convites = mutableListOf<ConviteRecebidoResponse>()
@@ -54,7 +54,7 @@ class ConvitesActivity : AppCompatActivity() {
             startActivity(Intent(this, AutocadastroEstudoActivity::class.java))
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

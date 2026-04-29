@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
  *   campanha_nome     → String
  *   estudo_nome       → String
  */
-class UnidadesActivity : AppCompatActivity() {
+class UnidadesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityUnidadesBinding
     private var estudoRemoteId = -1
@@ -88,7 +88,7 @@ class UnidadesActivity : AppCompatActivity() {
             })
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

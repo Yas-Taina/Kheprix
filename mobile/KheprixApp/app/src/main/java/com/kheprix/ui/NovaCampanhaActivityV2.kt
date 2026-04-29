@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
  *   campanha_id      → Int (-1 para criação)
  *   campanha_nome    → String (pré-preenchimento em edição)
  */
-class NovaCampanhaActivityV2 : AppCompatActivity() {
+class NovaCampanhaActivityV2 : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovaCampanhaV2Binding
 
@@ -77,7 +77,7 @@ class NovaCampanhaActivityV2 : AppCompatActivity() {
         }
 
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

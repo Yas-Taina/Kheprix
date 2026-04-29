@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
  *   EXTRA_ESTUDO_NOME      → String
  *   EXTRA_ESTUDO_OBS       → String
  */
-class NovoEstudoActivity : AppCompatActivity() {
+class NovoEstudoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEstudoBinding
 

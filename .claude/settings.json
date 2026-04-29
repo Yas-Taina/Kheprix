@@ -6,7 +6,8 @@
       "Bash(docker exec *)",
       "Bash(python seed_organico.py)",
       "Bash(curl -s -X POST http://localhost:3000/autenticacao/login -H \"Content-Type: application/json\" -d '{\"email\":\"chrisnotads2020@gmail.com\",\"senha\":\"senha123\"}')",
-      "Bash(python -m json.tool)"
+      "Bash(python -m json.tool)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep -E \"class .* : \\(AppCompatActivity|BaseDrawerActivity\\)\" \"{}\" | head -3')"
     ]
   }
 }

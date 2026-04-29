@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
  *   unidade_id       → Int (-1 para criação)
  *   (dados para pré-preenchimento em modo edição)
  */
-class NovaUnidadeActivity : AppCompatActivity() {
+class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovaUnidadeBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -91,7 +91,7 @@ class NovaUnidadeActivity : AppCompatActivity() {
         }
 
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
  *  - Clique no item → EstudoDetalheActivity
  *  - Ícone usuário+ → ColaboradoresActivity
  */
-class EstudosActivity : AppCompatActivity() {
+class EstudosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEstudosBinding
     private lateinit var offlineManager: EstudoOfflineManager
@@ -93,10 +93,9 @@ class EstudosActivity : AppCompatActivity() {
         binding.btnFiltrar.setOnClickListener { mostrarFiltroDialog() }
 
         // Header: menu lateral e perfil
-        binding.ivMenuLateral.setOnClickListener {
-        }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
-            // TODO: abrir PerfilActivity
+            startActivity(Intent(this, PerfilActivity::class.java))
         }
     }
 
