@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_18_031456) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_28_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,7 +18,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_18_031456) do
     t.bigint "estudo_id", null: false
     t.string "nome", limit: 255, null: false
     t.date "data_inicio", null: false
-    t.date "data_fim"
     t.text "descricao"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -80,7 +79,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_18_031456) do
   create_table "eventos_amostragem", id: :serial, force: :cascade do |t|
     t.bigint "unidade_amostral_id", null: false
     t.datetime "horario_inicio", null: false
-    t.datetime "horario_fim", null: false
     t.text "esforco_real", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

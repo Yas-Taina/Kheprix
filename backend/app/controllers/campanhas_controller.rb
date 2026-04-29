@@ -30,7 +30,6 @@ class CampanhasController < ApplicationController
       estudo: @estudo,
       nome: dto.nome,
       data_inicio: dto.data_inicio,
-      data_fim: dto.data_fim,
       descricao: dto.descricao,
       valores_variaveis: dto.valores_variaveis,
     )
@@ -54,7 +53,6 @@ class CampanhasController < ApplicationController
       campanha: @campanha,
       nome: dto.nome,
       data_inicio: dto.data_inicio,
-      data_fim: dto.data_fim,
       descricao: dto.descricao,
       valores_variaveis: dto.valores_variaveis,
     )

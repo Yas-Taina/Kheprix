@@ -22,7 +22,6 @@ http:
       {
         "nome": "Campanha Verão 2026 - Atualizada",
         "data_inicio": "2026-01-20",
-        "data_fim": "2026-03-20",
         "descricao": "Campanha atualizada",
         "valores_variaveis": [
           {"id": 1, "valor": "30.0"}

@@ -140,10 +140,10 @@ def _seed_estudo_base():
         (campanha_id,), fetch=True
     )[0]['id']
 
-    # eventos_amostragem: horario_fim e esforco_real são NOT NULL no schema
+    # eventos_amostragem: horario_inicio e esforco_real são NOT NULL no schema
     exec_oltp("""
-        INSERT INTO eventos_amostragem (unidade_amostral_id, horario_inicio, horario_fim, esforco_real, created_at, updated_at)
-        SELECT %s, NOW(), NOW() + interval '2 hours', 'Esforço teste', NOW(), NOW()
+        INSERT INTO eventos_amostragem (unidade_amostral_id, horario_inicio, esforco_real, created_at, updated_at)
+        SELECT %s, NOW(), 'Esforço teste', NOW(), NOW()
         WHERE NOT EXISTS (
             SELECT 1 FROM eventos_amostragem WHERE unidade_amostral_id = %s AND deleted_at IS NULL
         );

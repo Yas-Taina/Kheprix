@@ -31,7 +31,6 @@ class EventosAmostragemController < ApplicationController
     evento = servico.criar(
       unidade_amostral: @unidade_amostral,
       horario_inicio: dto.horario_inicio,
-      horario_fim: dto.horario_fim,
       esforco_real: dto.esforco_real,
       valores_variaveis: dto.valores_variaveis,
     )
@@ -54,7 +53,6 @@ class EventosAmostragemController < ApplicationController
     evento = servico.atualizar(
       evento: @evento,
       horario_inicio: dto.horario_inicio,
-      horario_fim: dto.horario_fim,
       esforco_real: dto.esforco_real,
       valores_variaveis: dto.valores_variaveis,
     )
