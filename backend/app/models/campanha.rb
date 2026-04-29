@@ -14,7 +14,7 @@ class Campanha < ApplicationRecord
   validates :data_inicio, presence: true
 
   def as_json(options = {})
-    super(only: %i[id nome data_inicio data_fim descricao created_at updated_at], **options).merge(
+    super(only: %i[id nome data_inicio descricao created_at updated_at], **options).merge(
       "valores_variaveis" => valores_variaveis.map { |vv|
         { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
       }

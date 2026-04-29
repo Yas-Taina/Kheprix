@@ -61,11 +61,13 @@ module GerenciaValoresVariaveis
     agora = Time.zone.now
     ids_payload = payload.map { |vv| vv[:id].to_i }
     ids_existentes = entidade.valores_variaveis.pluck(:id)
+    alterado = false
 
     ids_remover = ids_existentes - ids_payload
     if ids_remover.any?
       ValorVariavel.where(id: ids_remover)
         .update_all(deleted_at: agora, updated_at: agora)
+      alterado = true
     end
 
     payload.each do |vv|
@@ -78,9 +80,13 @@ module GerenciaValoresVariaveis
       end
 
       novo_valor = vv[:valor].to_s
-      existente.update!(valor: novo_valor) if existente.valor.to_s != novo_valor
+      if existente.valor.to_s != novo_valor
+        existente.update!(valor: novo_valor)
+        alterado = true
+      end
     end
 
+    entidade.touch if alterado
     entidade.valores_variaveis.reload
   end
 end

@@ -98,10 +98,9 @@ CENARIOS.each do |cenario|
   # --- HIERARQUIA DE COLETA ---
   # 1 Campanha
   campanha = Campanha.create!(
-    estudo: estudo, 
-    nome: "Campanha Principal - #{estudo.nome}", 
-    data_inicio: 6.months.ago, 
-    data_fim: Date.today
+    estudo: estudo,
+    nome: "Campanha Principal - #{estudo.nome}",
+    data_inicio: 6.months.ago
   )
   ValorVariavel.create!(variavel: var_campanha, id_nivel_aplicacao: campanha.id, valor: FASES_LUA.sample)
 
@@ -122,7 +121,6 @@ CENARIOS.each do |cenario|
       evento = EventoAmostragem.create!(
         unidade_amostral: unidade,
         horario_inicio: (e_idx + 1).days.ago.change(hour: 8),
-        horario_fim: (e_idx + 1).days.ago.change(hour: 12),
         esforco_real: "4 horas de coleta ativa"
       )
       ValorVariavel.create!(variavel: var_evento, id_nivel_aplicacao: evento.id, valor: rand(22.0..32.0).round(1).to_s)

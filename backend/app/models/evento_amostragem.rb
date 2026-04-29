@@ -10,8 +10,7 @@ class EventoAmostragem < ApplicationRecord
     foreign_key: :id_nivel_aplicacao,
     dependent: :destroy
 
-  validates :horario_inicio, :horario_fim, :esforco_real, presence: true
-  validate :horario_fim_apos_inicio
+  validates :horario_inicio, :esforco_real, presence: true
 
   scope :ordenados, -> { order(horario_inicio: :desc) }
 
@@ -21,9 +20,9 @@ class EventoAmostragem < ApplicationRecord
         id
         unidade_amostral_id
         horario_inicio
-        horario_fim
         esforco_real
         created_at
+        updated_at
       ],
       **options,
     ).merge(
@@ -31,15 +30,5 @@ class EventoAmostragem < ApplicationRecord
         { "id" => vv.id, "variavel_id" => vv.variavel_id, "valor" => vv.valor }
       },
     )
-  end
-
-  private
-
-  def horario_fim_apos_inicio
-    return if horario_fim.blank? || horario_inicio.blank?
-
-    if horario_fim <= horario_inicio
-      errors.add(:horario_fim, "deve ser posterior ao horário de início")
-    end
   end
 end
