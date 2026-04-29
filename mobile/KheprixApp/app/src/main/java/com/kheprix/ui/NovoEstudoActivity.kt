@@ -10,6 +10,7 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovoEstudoBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.EstudoRequest
 import com.kheprix.models.VariavelRequest
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
  *   EXTRA_ESTUDO_NOME      → String
  *   EXTRA_ESTUDO_OBS       → String
  */
-class NovoEstudoActivity : AppCompatActivity() {
+class NovoEstudoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEstudoBinding
 
@@ -147,12 +148,17 @@ class NovoEstudoActivity : AppCompatActivity() {
         }
         val variaveis = coletarVariaveis() ?: return
 
+        val req = EstudoRequest(
+            nome = nome,
+            observacoes = obs.ifEmpty { null },
+            variaveis = variaveis
+        )
+
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.apiService.postEstudo(
-                    SessionManager.getAuthHeader(),
-                    EstudoRequest(nome = nome, observacoes = obs.ifEmpty { null }, variaveis = variaveis)
+                    SessionManager.getAuthHeader(), req
                 )
                 if (response.isSuccessful) {
                     Toast.makeText(this@NovoEstudoActivity, "Estudo criado!", Toast.LENGTH_SHORT).show()
@@ -160,11 +166,33 @@ class NovoEstudoActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this@NovoEstudoActivity, "Erro: ${response.code()}", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@NovoEstudoActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                salvarEstudoOffline(req)
             } finally {
                 setLoading(false)
             }
+        }
+    }
+
+    /**
+     * Persiste o estudo no SQLite com sincronizado=0. Será enviado quando a
+     * conexão voltar (via sincronizarDadosEstudo).
+     */
+    private fun salvarEstudoOffline(req: EstudoRequest) {
+        try {
+            OfflineRepository(this).criarEstudoOffline(req)
+            Toast.makeText(
+                this,
+                "Sem conexão — estudo salvo offline. Sincronize quando estiver online.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

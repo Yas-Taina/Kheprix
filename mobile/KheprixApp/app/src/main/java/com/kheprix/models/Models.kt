@@ -73,6 +73,23 @@ data class EstudoResponse(
 )
 
 // ──────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────
+
+data class DashboardResponse(
+    val id: Int,
+    val nome: String,
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("data_inicio") val dataInicio: String?,
+    @SerializedName("total_registros") val totalRegistros: Int,
+    @SerializedName("total_especies") val totalEspecies: Int,
+    @SerializedName("especies_ameacadas") val especiesAmeacadas: Int,
+    @SerializedName("especies_nativas") val especiesNativas: Int,
+    @SerializedName("especies_invasoras") val especiesInvasoras: Int,
+    @SerializedName("total_individuos") val totalIndividuos: Int
+)
+
+// ──────────────────────────────────────────────
 // VARIÁVEIS
 // ──────────────────────────────────────────────
 
@@ -126,7 +143,7 @@ data class EspeciePatchRequest(
 data class EspecieResponse(
     val id: Int,
     @SerializedName("estudo_id") val estudoId: Int,
-    /** Base64-encoded image */
+    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     val classe: String,
     val ordem: String,
@@ -343,7 +360,7 @@ data class RegistroResponse(
     val latitude: Double,
     val longitude: Double,
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int?,
-    /** Base64-encoded image */
+    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean?,
     @SerializedName("created_at") val createdAt: String

@@ -11,7 +11,7 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "30"
+      value: "13"
       type: path
     - name: nivel_aplicacao
       value: campanha

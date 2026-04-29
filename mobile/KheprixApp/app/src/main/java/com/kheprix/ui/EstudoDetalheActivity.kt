@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  *   EXTRA_ESTUDO_NOME      → String
  *   EXTRA_PERFIL           → String
  */
-class EstudoDetalheActivity : AppCompatActivity() {
+class EstudoDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEstudoDetalheBinding
     private lateinit var offlineManager: EstudoOfflineManager
@@ -114,7 +114,7 @@ class EstudoDetalheActivity : AppCompatActivity() {
         }
 
         // Header
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener { startActivity(android.content.Intent(this, PerfilActivity::class.java)) }
     }
 

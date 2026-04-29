@@ -11,16 +11,16 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "7"
+      value: "13"
       type: path
     - name: campanha_id
-      value: "7"
+      value: "18"
       type: path
     - name: unidade_amostral_id
-      value: "2"
+      value: "24"
       type: path
     - name: evento_amostragem_id
-      value: "2"
+      value: "63"
       type: path
   auth: inherit
 

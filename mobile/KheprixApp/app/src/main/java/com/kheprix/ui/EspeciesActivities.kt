@@ -21,10 +21,13 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityCadastroEspecieBinding
 import com.kheprix.databinding.ActivityEspecieDetalheBinding
 import com.kheprix.databinding.ActivityEspeciesBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.EspecieRequest
 import com.kheprix.models.EspeciePatchRequest
 import com.kheprix.models.EspecieResponse
+import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -36,12 +39,14 @@ import java.io.File
  * Lista de espécies de um estudo.
  * Extras: estudo_remote_id, estudo_nome
  */
-class EspeciesActivity : AppCompatActivity() {
+class EspeciesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspeciesBinding
     private var estudoRemoteId = -1
     private var estudoNome = ""
     private val especies = mutableListOf<EspecieResponse>()
+    private val especiesExibidas = mutableListOf<EspecieResponse>()
+    private var filtro: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +59,7 @@ class EspeciesActivity : AppCompatActivity() {
         binding.tvEstudoNome.text = estudoNome
 
         binding.rvEspecies.layoutManager = LinearLayoutManager(this)
-        binding.rvEspecies.adapter = EspecieAdapter(especies,
+        binding.rvEspecies.adapter = EspecieAdapter(especiesExibidas, lifecycleScope,
             onItemClick = { especie ->
                 val i = Intent(this, EspecieDetalheActivity::class.java)
                 i.putExtra("estudo_remote_id", estudoRemoteId)
@@ -70,9 +75,9 @@ class EspeciesActivity : AppCompatActivity() {
             startActivity(i)
         }
 
-        binding.btnFiltrar.setOnClickListener { /* TODO: filtro de espécie */ }
+        binding.btnFiltrar.setOnClickListener { abrirDialogoFiltro() }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -87,25 +92,103 @@ class EspeciesActivity : AppCompatActivity() {
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
+            val especiesOnline = mutableListOf<EspecieResponse>()
             try {
                 val resp = RetrofitClient.apiService.getEspecies(
                     SessionManager.getAuthHeader(), estudoRemoteId
                 )
                 if (resp.isSuccessful) {
-                    especies.clear()
-                    especies.addAll(resp.body() ?: emptyList())
-                    binding.rvEspecies.adapter?.notifyDataSetChanged()
+                    especiesOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@EspeciesActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            val repo = OfflineRepository(this@EspeciesActivity)
+            // Resolve estudo localId, cacheando da API se necessário.
+            var estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+            if (estudoLocalId == null && especiesOnline.isNotEmpty()) {
+                try {
+                    val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
+                        .body()?.firstOrNull { it.id == estudoRemoteId }
+                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                } catch (_: Exception) { }
             }
+
+            // Espelha espécies online no SQLite para acesso offline posterior.
+            estudoLocalId?.let { id ->
+                especiesOnline.forEach { e ->
+                    try { repo.cacheEspecie(id, e) } catch (_: Exception) { }
+                }
+            }
+
+            especies.clear()
+            especies.addAll(especiesOnline)
+
+            // Mescla com espécies offline (criadas localmente, ainda não sincronizadas).
+            if (estudoLocalId != null) {
+                val remoteIds = especiesOnline.map { it.id }.toSet()
+                val offline = repo.listarEspeciesPorEstudoLocal(estudoLocalId!!)
+                offline.forEach { off ->
+                    // id < 0 ⇒ offline-only (codificado como -localId); senão
+                    // é remoteId e só adiciona se não veio da API.
+                    if (off.id < 0 || !remoteIds.contains(off.id)) {
+                        especies.add(off)
+                    }
+                }
+            }
+
+            aplicarFiltro()
         }
+    }
+
+    private fun abrirDialogoFiltro() {
+        val edit = EditText(this).apply {
+            hint = "Nome popular, científico, classe..."
+            setText(filtro)
+            setSingleLine(true)
+        }
+        val container = FrameLayout(this).apply {
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            addView(edit)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Filtrar espécies")
+            .setView(container)
+            .setPositiveButton("Filtrar") { _, _ ->
+                filtro = edit.text.toString().trim()
+                aplicarFiltro()
+            }
+            .setNegativeButton("Limpar") { _, _ ->
+                filtro = ""
+                aplicarFiltro()
+            }
+            .setNeutralButton("Cancelar", null)
+            .show()
+    }
+
+    private fun aplicarFiltro() {
+        especiesExibidas.clear()
+        if (filtro.isEmpty()) {
+            especiesExibidas.addAll(especies)
+        } else {
+            val q = filtro.lowercase()
+            especiesExibidas.addAll(especies.filter { e ->
+                (e.nomePopular?.lowercase()?.contains(q) == true) ||
+                e.genero.lowercase().contains(q) ||
+                e.especie.lowercase().contains(q) ||
+                e.classe.lowercase().contains(q) ||
+                e.ordem.lowercase().contains(q) ||
+                e.familia.lowercase().contains(q)
+            })
+        }
+        binding.rvEspecies.adapter?.notifyDataSetChanged()
     }
 }
 
 // Adapter da lista
 class EspecieAdapter(
     private val items: List<EspecieResponse>,
+    private val scope: CoroutineScope,
     private val onItemClick: (EspecieResponse) -> Unit
 ) : RecyclerView.Adapter<EspecieAdapter.VH>() {
 
@@ -124,11 +207,12 @@ class EspecieAdapter(
         holder.tvNomeCientifico.text = "${item.genero} ${item.especie}"
         holder.tvNomePopular.text    = item.nomePopular ?: "—"
 
-        // Decode base64 photo
-        item.foto?.let { base64 ->
-            val bmp = PhotoUtils.base64ToBitmap(base64)
-            if (bmp != null) holder.ivFoto.setImageBitmap(bmp)
-        }
+        ImagemLoader.load(
+            scope = scope,
+            target = holder.ivFoto,
+            url = item.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
 
         holder.itemView.setOnClickListener { onItemClick(item) }
     }
@@ -150,7 +234,7 @@ class EspecieAdapter(
  *   estudo_remote_id → Int  (obrigatório)
  *   especie_id       → Int  (se edição; -1 para criação)
  */
-class CadastroEspecieActivity : AppCompatActivity() {
+class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCadastroEspecieBinding
 
@@ -191,7 +275,7 @@ class CadastroEspecieActivity : AppCompatActivity() {
         }
 
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -261,7 +345,8 @@ class CadastroEspecieActivity : AppCompatActivity() {
                     binding.etEspecie.setText(e.especie)
                     binding.etNomePopular.setText(e.nomePopular ?: "")
                     binding.checkEndemismo.isChecked = e.endemismo
-                    fotoBase64 = e.foto
+                    // fotoBase64 permanece null: se o usuário não escolher nova
+                    // foto, o patch omite o campo e o backend preserva a atual.
 
                     // Selecionar status no spinner
                     val idx = STATUS_CONSERVACAO.indexOfFirst {
@@ -277,17 +362,17 @@ class CadastroEspecieActivity : AppCompatActivity() {
 
     private fun criarEspecie() {
         val req = coletarFormulario() ?: return
+        val especieReq = EspecieRequest(
+            classe = req.classe, ordem = req.ordem, familia = req.familia,
+            genero = req.genero, especie = req.especie, endemismo = req.endemismo,
+            foto = req.foto, nomePopular = req.nomePopular,
+            statusConservacao = req.statusConservacao
+        )
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.postEspecie(
-                    SessionManager.getAuthHeader(), estudoRemoteId,
-                    EspecieRequest(
-                        classe = req.classe, ordem = req.ordem, familia = req.familia,
-                        genero = req.genero, especie = req.especie, endemismo = req.endemismo,
-                        foto = req.foto, nomePopular = req.nomePopular,
-                        statusConservacao = req.statusConservacao
-                    )
+                    SessionManager.getAuthHeader(), estudoRemoteId, especieReq
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@CadastroEspecieActivity, "Espécie cadastrada!", Toast.LENGTH_SHORT).show()
@@ -296,8 +381,36 @@ class CadastroEspecieActivity : AppCompatActivity() {
                     Toast.makeText(this@CadastroEspecieActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@CadastroEspecieActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                salvarEspecieOffline(especieReq)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun salvarEspecieOffline(req: EspecieRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+        if (estudoLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — este estudo não está salvo offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        try {
+            repo.criarEspecieOffline(estudoLocalId, req)
+            Toast.makeText(
+                this,
+                "Sem conexão — espécie salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -371,7 +484,7 @@ class CadastroEspecieActivity : AppCompatActivity() {
  *
  * Extras: estudo_remote_id, especie_id, estudo_nome
  */
-class EspecieDetalheActivity : AppCompatActivity() {
+class EspecieDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspecieDetalheBinding
     private var estudoRemoteId = -1
@@ -395,7 +508,7 @@ class EspecieDetalheActivity : AppCompatActivity() {
         }
 
         binding.ivDeletar.setOnClickListener { confirmarDelete() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -423,10 +536,12 @@ class EspecieDetalheActivity : AppCompatActivity() {
                     binding.tvEndemismo.text = if (e.endemismo) "A espécie é nativa da região do estudo" else ""
                     binding.tvEndemismo.visibility = if (e.endemismo) View.VISIBLE else View.GONE
 
-                    e.foto?.let { base64 ->
-                        val bmp = PhotoUtils.base64ToBitmap(base64)
-                        if (bmp != null) binding.ivFoto.setImageBitmap(bmp)
-                    }
+                    ImagemLoader.load(
+                        scope = lifecycleScope,
+                        target = binding.ivFoto,
+                        url = e.foto,
+                        placeholder = R.drawable.ic_placeholder_beetle
+                    )
                 }
             } catch (_: Exception) { }
         }

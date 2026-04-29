@@ -22,7 +22,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         const val DB_NAME = "estudos_offline.db"
-        const val DB_VERSION = 1
+        const val DB_VERSION = 3
 
         // ── TABLE NAMES ──────────────────────────────────────────────────────
         const val TABLE_ESTUDOS             = "estudos"
@@ -33,6 +33,7 @@ class DatabaseHelper(context: Context) :
         const val TABLE_UNIDADES            = "unidades_amostrais"
         const val TABLE_EVENTOS             = "eventos_amostragem"
         const val TABLE_REGISTROS           = "registros_ocorrencia"
+        const val TABLE_IMAGENS_CACHE       = "imagens_cache"
 
         // ── COMMON COLUMNS ───────────────────────────────────────────────────
         const val COL_LOCAL_ID      = "local_id"
@@ -51,16 +52,63 @@ class DatabaseHelper(context: Context) :
         db.execSQL(SQL_CREATE_UNIDADES)
         db.execSQL(SQL_CREATE_EVENTOS)
         db.execSQL(SQL_CREATE_REGISTROS)
+        db.execSQL(SQL_CREATE_IMAGENS_CACHE)
+        criarIndicesUnicidade(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Simple drop-and-recreate for future migrations
-        listOf(
-            TABLE_REGISTROS, TABLE_EVENTOS, TABLE_UNIDADES,
-            TABLE_VALORES_VARIAVEIS, TABLE_CAMPANHAS,
-            TABLE_ESPECIES, TABLE_VARIAVEIS, TABLE_ESTUDOS
-        ).forEach { db.execSQL("DROP TABLE IF EXISTS $it") }
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL(SQL_CREATE_IMAGENS_CACHE)
+        }
+        if (oldVersion < 3) {
+            removerDuplicatasRemoteId(db)
+            criarIndicesUnicidade(db)
+        }
+    }
+
+    /**
+     * Remove linhas duplicadas pelo mesmo (parentLocalId, remoteId) antes de
+     * criar os índices UNIQUE. Mantém a linha mais antiga (menor local_id).
+     */
+    private fun removerDuplicatasRemoteId(db: SQLiteDatabase) {
+        val alvos = listOf(
+            TABLE_ESTUDOS    to null,
+            TABLE_VARIAVEIS  to "estudo_local_id",
+            TABLE_ESPECIES   to "estudo_local_id",
+            TABLE_CAMPANHAS  to "estudo_local_id",
+            TABLE_UNIDADES   to "campanha_local_id",
+            TABLE_EVENTOS    to "unidade_local_id",
+            TABLE_REGISTROS  to "evento_local_id"
+        )
+        alvos.forEach { (tabela, parentCol) ->
+            val grupo = if (parentCol != null) "$parentCol, $COL_REMOTE_ID" else COL_REMOTE_ID
+            db.execSQL(
+                """
+                DELETE FROM $tabela
+                WHERE $COL_REMOTE_ID IS NOT NULL
+                  AND $COL_LOCAL_ID NOT IN (
+                    SELECT MIN($COL_LOCAL_ID) FROM $tabela
+                    WHERE $COL_REMOTE_ID IS NOT NULL
+                    GROUP BY $grupo
+                  )
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * Índices UNIQUE parciais. A cláusula WHERE remote_id IS NOT NULL permite
+     * que múltiplas linhas offline (remote_id=NULL) coexistam, ao passo que
+     * duplicatas com o mesmo remote_id dentro do mesmo pai são proibidas.
+     */
+    private fun criarIndicesUnicidade(db: SQLiteDatabase) {
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_ESTUDOS}_remote    ON $TABLE_ESTUDOS($COL_REMOTE_ID)                     WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_VARIAVEIS}_remote  ON $TABLE_VARIAVEIS(estudo_local_id, $COL_REMOTE_ID) WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_ESPECIES}_remote   ON $TABLE_ESPECIES(estudo_local_id, $COL_REMOTE_ID)  WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_CAMPANHAS}_remote  ON $TABLE_CAMPANHAS(estudo_local_id, $COL_REMOTE_ID) WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_UNIDADES}_remote   ON $TABLE_UNIDADES(campanha_local_id, $COL_REMOTE_ID) WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_EVENTOS}_remote    ON $TABLE_EVENTOS(unidade_local_id, $COL_REMOTE_ID)   WHERE $COL_REMOTE_ID IS NOT NULL")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_REGISTROS}_remote  ON $TABLE_REGISTROS(evento_local_id, $COL_REMOTE_ID)  WHERE $COL_REMOTE_ID IS NOT NULL")
     }
 
     // ── DDL ─────────────────────────────────────────────────────────────────
@@ -173,6 +221,14 @@ class DatabaseHelper(context: Context) :
             esforco_real        TEXT,
             $COL_CREATED_AT     TEXT,
             FOREIGN KEY(unidade_local_id) REFERENCES $TABLE_UNIDADES($COL_LOCAL_ID)
+        )
+    """.trimIndent()
+
+    private val SQL_CREATE_IMAGENS_CACHE = """
+        CREATE TABLE $TABLE_IMAGENS_CACHE (
+            url         TEXT PRIMARY KEY,
+            bytes       BLOB NOT NULL,
+            $COL_CREATED_AT INTEGER NOT NULL
         )
     """.trimIndent()
 
