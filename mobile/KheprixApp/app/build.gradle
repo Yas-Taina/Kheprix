@@ -63,7 +63,7 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
 
     // ── Material Design ────────────────────────────────────────────────
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'com.google.android.material:material:1.12.0'
 
     // ── Navigation Drawer ─────────────────────────────────────────────
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'

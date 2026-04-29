@@ -73,7 +73,13 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
             inflateHeaderView(R.layout.nav_drawer_header)
             itemTextColor = ColorStateListSimples(Color.parseColor("#4A5240"))
             itemIconTintList = ColorStateListSimples(Color.parseColor("#6B7A5E"))
-            subheaderColor = ColorStateListSimples(Color.parseColor("#4A5240"))
+            // setSubheaderColor exige Material Components 1.12.0+. Reflection
+            // mantem compativel: em versoes antigas, simplesmente nao aplica.
+            try {
+                NavigationView::class.java
+                    .getMethod("setSubheaderColor", android.content.res.ColorStateList::class.java)
+                    .invoke(this, ColorStateListSimples(Color.parseColor("#4A5240")))
+            } catch (_: Throwable) { }
             setNavigationItemSelectedListener(this@BaseDrawerActivity)
         }
         val widthPx = (280 * resources.displayMetrics.density).toInt()
