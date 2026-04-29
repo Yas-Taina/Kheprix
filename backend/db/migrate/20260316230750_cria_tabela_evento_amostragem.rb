@@ -6,6 +6,7 @@ class CriaTabelaEventoAmostragem < ActiveRecord::Migration[8.0]
       t.references :unidade_amostral, null: false, foreign_key: { to_table: :unidades_amostrais }
 
       t.datetime :horario_inicio, null: false
+      t.datetime :horario_fim, null: false
       t.text :esforco_real, null: false
 
       t.timestamps
