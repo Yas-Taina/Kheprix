@@ -73,6 +73,23 @@ data class EstudoResponse(
 )
 
 // ──────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────
+
+data class DashboardResponse(
+    val id: Int,
+    val nome: String,
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("data_inicio") val dataInicio: String?,
+    @SerializedName("total_registros") val totalRegistros: Int,
+    @SerializedName("total_especies") val totalEspecies: Int,
+    @SerializedName("especies_ameacadas") val especiesAmeacadas: Int,
+    @SerializedName("especies_nativas") val especiesNativas: Int,
+    @SerializedName("especies_invasoras") val especiesInvasoras: Int,
+    @SerializedName("total_individuos") val totalIndividuos: Int
+)
+
+// ──────────────────────────────────────────────
 // VARIÁVEIS
 // ──────────────────────────────────────────────
 

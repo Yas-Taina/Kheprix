@@ -38,16 +38,11 @@ class HomeActivity : BaseDrawerActivity() {
 
         offlineManager = EstudoOfflineManager(this)
         setupCardListeners()
-        carregarUltimoEstudo()
     }
 
     override fun onResume() {
         super.onResume()
-        if (ultimoEstudoLocalId != -1L) {
-            val count = offlineManager.contarRegistrosOffline(ultimoEstudoLocalId)
-            binding.tvOfflineCount.text = "$count Registros Offline"
-            binding.tvOfflineCount.visibility = if (count > 0) View.VISIBLE else View.GONE
-        }
+        carregarUltimoEstudo()
     }
 
     private fun setupCardListeners() {
@@ -84,20 +79,23 @@ class HomeActivity : BaseDrawerActivity() {
     private fun carregarUltimoEstudo() {
         lifecycleScope.launch {
             try {
-                val resp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
-                if (resp.isSuccessful) {
-                    val lista = resp.body() ?: emptyList()
-                    if (lista.isEmpty()) { binding.cardUltimoEstudo.visibility = View.GONE; return@launch }
-                    val ultimo = lista.maxByOrNull { it.updatedAt } ?: lista.first()
-                    ultimoEstudoRemoteId = ultimo.id
-                    ultimoEstudoLocalId  = buscarLocalId(ultimo.id)
-                    binding.tvUltimoEstudoNome.text = ultimo.nome
-                    binding.tvUltimoEstudoData.text = "Editado em ${formatarData(ultimo.updatedAt)}"
-                    val c = if (ultimoEstudoLocalId != -1L) offlineManager.contarRegistrosOffline(ultimoEstudoLocalId) else 0
-                    binding.tvOfflineCount.text = "$c Registros Offline"
-                    binding.tvOfflineCount.visibility = if (c > 0) View.VISIBLE else View.GONE
-                    binding.cardUltimoEstudo.visibility = View.VISIBLE
-                } else carregarUltimoEstudoLocal()
+                val resp = RetrofitClient.apiService.getDashboard(SessionManager.getAuthHeader())
+                when {
+                    resp.isSuccessful -> {
+                        val dash = resp.body()
+                        if (dash == null) { binding.cardUltimoEstudo.visibility = View.GONE; return@launch }
+                        ultimoEstudoRemoteId = dash.id
+                        ultimoEstudoLocalId  = buscarLocalId(dash.id)
+                        binding.tvUltimoEstudoNome.text = dash.nome
+                        binding.tvUltimoEstudoData.text = "Editado em ${formatarData(dash.updatedAt)}"
+                        val c = if (ultimoEstudoLocalId != -1L) offlineManager.contarRegistrosOffline(ultimoEstudoLocalId) else 0
+                        binding.tvOfflineCount.text = "$c Registros Offline"
+                        binding.tvOfflineCount.visibility = if (c > 0) View.VISIBLE else View.GONE
+                        binding.cardUltimoEstudo.visibility = View.VISIBLE
+                    }
+                    resp.code() == 404 -> binding.cardUltimoEstudo.visibility = View.GONE
+                    else -> carregarUltimoEstudoLocal()
+                }
             } catch (_: Exception) { carregarUltimoEstudoLocal() }
         }
     }

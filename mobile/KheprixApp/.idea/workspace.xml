@@ -192,19 +192,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b60164b0-f9c1-4759-9589-19f0247a5e37" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../backend/bruno/Campanha/Cadastrar Campanha.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/bruno/Campanha/Cadastrar Campanha.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/db/schema.rb" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/db/schema.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/EstudoOfflineManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/EstudoOfflineManager.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/OfflineRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/db/OfflineRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/CampanhasActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/CampanhasActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudosActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EventosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EventosActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistroRapidoActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistroRapidoActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/UnidadesActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/UnidadesActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/util/ImagemLoader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/util/ImagemLoader.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/ApiService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/ApiService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/HomeActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/HomeActivity.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
