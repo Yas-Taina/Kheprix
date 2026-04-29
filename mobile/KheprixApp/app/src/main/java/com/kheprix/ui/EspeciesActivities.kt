@@ -45,6 +45,8 @@ class EspeciesActivity : AppCompatActivity() {
     private var estudoRemoteId = -1
     private var estudoNome = ""
     private val especies = mutableListOf<EspecieResponse>()
+    private val especiesExibidas = mutableListOf<EspecieResponse>()
+    private var filtro: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +59,7 @@ class EspeciesActivity : AppCompatActivity() {
         binding.tvEstudoNome.text = estudoNome
 
         binding.rvEspecies.layoutManager = LinearLayoutManager(this)
-        binding.rvEspecies.adapter = EspecieAdapter(especies, lifecycleScope,
+        binding.rvEspecies.adapter = EspecieAdapter(especiesExibidas, lifecycleScope,
             onItemClick = { especie ->
                 val i = Intent(this, EspecieDetalheActivity::class.java)
                 i.putExtra("estudo_remote_id", estudoRemoteId)
@@ -73,7 +75,7 @@ class EspeciesActivity : AppCompatActivity() {
             startActivity(i)
         }
 
-        binding.btnFiltrar.setOnClickListener { /* TODO: filtro de espécie */ }
+        binding.btnFiltrar.setOnClickListener { abrirDialogoFiltro() }
 
         binding.ivMenuLateral.setOnClickListener { onBackPressed() }
         binding.ivPerfil.setOnClickListener {
@@ -134,8 +136,52 @@ class EspeciesActivity : AppCompatActivity() {
                 }
             }
 
-            binding.rvEspecies.adapter?.notifyDataSetChanged()
+            aplicarFiltro()
         }
+    }
+
+    private fun abrirDialogoFiltro() {
+        val edit = EditText(this).apply {
+            hint = "Nome popular, científico, classe..."
+            setText(filtro)
+            setSingleLine(true)
+        }
+        val container = FrameLayout(this).apply {
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            addView(edit)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Filtrar espécies")
+            .setView(container)
+            .setPositiveButton("Filtrar") { _, _ ->
+                filtro = edit.text.toString().trim()
+                aplicarFiltro()
+            }
+            .setNegativeButton("Limpar") { _, _ ->
+                filtro = ""
+                aplicarFiltro()
+            }
+            .setNeutralButton("Cancelar", null)
+            .show()
+    }
+
+    private fun aplicarFiltro() {
+        especiesExibidas.clear()
+        if (filtro.isEmpty()) {
+            especiesExibidas.addAll(especies)
+        } else {
+            val q = filtro.lowercase()
+            especiesExibidas.addAll(especies.filter { e ->
+                (e.nomePopular?.lowercase()?.contains(q) == true) ||
+                e.genero.lowercase().contains(q) ||
+                e.especie.lowercase().contains(q) ||
+                e.classe.lowercase().contains(q) ||
+                e.ordem.lowercase().contains(q) ||
+                e.familia.lowercase().contains(q)
+            })
+        }
+        binding.rvEspecies.adapter?.notifyDataSetChanged()
     }
 }
 

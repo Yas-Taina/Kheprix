@@ -192,11 +192,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b60164b0-f9c1-4759-9589-19f0247a5e37" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../backend/db/schema.rb" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/db/schema.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/ApiService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/api/ApiService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/HomeActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/HomeActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

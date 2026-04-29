@@ -39,6 +39,7 @@ class EstudosActivity : AppCompatActivity() {
     private lateinit var offlineManager: EstudoOfflineManager
     private val estudos = mutableListOf<EstudoItem>()
     private lateinit var adapter: EstudoAdapter
+    private var filtroNome: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,15 +100,16 @@ class EstudosActivity : AppCompatActivity() {
         }
     }
 
-    private fun carregarEstudos(nome: String = "") {
+    private fun carregarEstudos() {
         setLoading(true)
+        val filtro = filtroNome
         lifecycleScope.launch {
             val estudosOnline = mutableListOf<EstudoItem>()
 
             // Tenta carregar da API (se online)
             try {
                 val token = SessionManager.getAuthHeader()
-                val response = RetrofitClient.apiService.getEstudos(token, nome = nome.ifEmpty { null })
+                val response = RetrofitClient.apiService.getEstudos(token, nome = filtro.ifEmpty { null })
 
                 if (response.isSuccessful) {
                     val repo = OfflineRepository(this@EstudosActivity)
@@ -152,6 +154,7 @@ class EstudosActivity : AppCompatActivity() {
                 val isOfflineOnly = off.remoteId == null || !remoteIds.contains(off.remoteId)
                 if (!isOfflineOnly) return@forEach
                 if (!offlineManager.isExplicitamenteSalvoOffline(off.localId)) return@forEach
+                if (filtro.isNotEmpty() && !off.nome.contains(filtro, ignoreCase = true)) return@forEach
 
                 val offlineCount = offlineManager.contarRegistrosOffline(off.localId)
                 estudos.add(EstudoItem(
@@ -284,7 +287,6 @@ class EstudosActivity : AppCompatActivity() {
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
     }
-    private var filtroNome: String = ""
 
     private fun mostrarFiltroDialog() {
         val editText = android.widget.EditText(this).apply {
@@ -296,7 +298,7 @@ class EstudosActivity : AppCompatActivity() {
             .setView(editText)
             .setPositiveButton("Filtrar") { _, _ ->
                 filtroNome = editText.text.toString().trim()
-                carregarEstudos(filtroNome)
+                carregarEstudos()
             }
             .setNeutralButton("Limpar") { _, _ ->
                 filtroNome = ""
@@ -305,6 +307,4 @@ class EstudosActivity : AppCompatActivity() {
             .setNegativeButton("Cancelar", null)
             .show()
     }
-
-
 }
