@@ -32,6 +32,7 @@ class CreateDwStagingLayer < ActiveRecord::Migration[8.0]
       t.integer :estudo_id
       t.string :nome
       t.date :data_inicio
+      t.date :data_fim
       t.text :descricao
       t.datetime :deleted_at
       t.datetime :loaded_at, default: -> { 'CURRENT_TIMESTAMP' }
@@ -70,6 +71,7 @@ class CreateDwStagingLayer < ActiveRecord::Migration[8.0]
     create_table "staging.eventos_amostragem", id: :integer do |t|
       t.integer :unidade_amostral_id
       t.datetime :horario_inicio
+      t.datetime :horario_fim
       t.text :esforco_real
       t.datetime :deleted_at
       t.datetime :loaded_at, default: -> { 'CURRENT_TIMESTAMP' }
