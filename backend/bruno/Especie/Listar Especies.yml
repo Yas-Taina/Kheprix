@@ -11,12 +11,11 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "13"
       type: path
     - name: nome_popular
       value: ""
       type: query
-      enabled: false
   auth: inherit
 
 settings:

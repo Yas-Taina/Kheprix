@@ -11,10 +11,10 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "1"
+      value: "13"
       type: path
     - name: especie_id
-      value: "1"
+      value: "33"
       type: path
   auth: inherit
 

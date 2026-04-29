@@ -22,7 +22,7 @@ import com.kheprix.db.EstudoOfflineManager
  * com SessionManager.saveUser(id, name, email) após o login.
  * (Veja LoginActivity — adicione a chamada após salvar o token.)
  */
-class PerfilActivity : AppCompatActivity() {
+class PerfilActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityPerfilBinding
 

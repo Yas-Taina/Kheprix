@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  * SUBSTITUIR o ícone de QR (ivScanQr):
  *   @drawable/ic_qr_scan → ícone de scan (quadrado com cantos marcados, como no design)
  */
-class AutocadastroEstudoActivity : AppCompatActivity() {
+class AutocadastroEstudoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityAutocadastroEstudoBinding
 
@@ -60,7 +60,7 @@ class AutocadastroEstudoActivity : AppCompatActivity() {
             ingressarEstudo(codigo, senha)
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }

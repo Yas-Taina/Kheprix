@@ -28,8 +28,15 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovoRegistroBinding
 import com.kheprix.databinding.ActivityRegistrosBinding
+import com.kheprix.databinding.ActivityRegistrosDetalheBinding
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.EventoDao
+import com.kheprix.db.OfflineRepository
+import com.kheprix.db.RegistroDao
 import com.kheprix.models.*
+import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
@@ -49,7 +56,7 @@ import java.util.Calendar
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, evento_nome
  */
-class RegistrosActivity : AppCompatActivity() {
+class RegistrosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosBinding
     private var estudoRemoteId = -1
@@ -76,9 +83,8 @@ class RegistrosActivity : AppCompatActivity() {
 
         binding.tvEventoNome.text = eventoNome
 
-        adapter = RegistroAdapter(registrosFiltrados,
-            onItemClick = { r -> abrirEdicao(r) },
-            onDeleteClick = { r -> confirmarDelete(r) },
+        adapter = RegistroAdapter(registrosFiltrados, lifecycleScope,
+            onItemClick = { r -> abrirDetalhe(r) },
             buscarEspecie = { id -> especies.firstOrNull { it.id == id } }
         )
         binding.rvRegistros.layoutManager = LinearLayoutManager(this)
@@ -110,7 +116,7 @@ class RegistrosActivity : AppCompatActivity() {
         // Filtro por espécie
         binding.btnFiltrar.setOnClickListener { mostrarFiltroEspecie() }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -124,43 +130,154 @@ class RegistrosActivity : AppCompatActivity() {
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
+            val online = mutableListOf<EspecieResponse>()
             try {
                 val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
-                if (resp.isSuccessful) { especies.clear(); especies.addAll(resp.body() ?: emptyList()) }
-            } catch (_: Exception) {}
+                if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
+            } catch (_: Exception) { }
+
+            val repo = OfflineRepository(this@RegistrosActivity)
+            val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+            estudoLocalId?.let { id ->
+                online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
+            }
+
+            especies.clear()
+            especies.addAll(online)
+            if (estudoLocalId != null) {
+                val remoteIds = online.map { it.id }.toSet()
+                repo.listarEspeciesPorEstudoLocal(estudoLocalId).forEach { off ->
+                    if (off.id < 0 || !remoteIds.contains(off.id)) especies.add(off)
+                }
+            }
+            adapter.notifyDataSetChanged()
         }
     }
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getEvento(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
-                )
-                resp.body()?.let { e ->
-                    binding.tvDetalheInicio.text  = e.horarioInicio.replace("T", " ").take(16)
-                    binding.tvDetalheFim.text     = e.horarioFim?.replace("T", " ")?.take(16) ?: "—"
-                    binding.tvDetalheEsforco.text = e.esforcoReal ?: "—"
-                }
-            } catch (_: Exception) {}
+            // Tenta API se o evento tem remote id; senão, vai direto ao SQLite.
+            if (eventoId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getEvento(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
+                    )
+                    resp.body()?.let { e ->
+                        preencherCardEvento(e.horarioInicio, e.horarioFim, e.esforcoReal)
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            preencherDetalhesEventoOffline()
         }
     }
 
+    private fun preencherCardEvento(inicio: String, fim: String?, esforco: String?) {
+        binding.tvDetalheInicio.text  = inicio.replace("T", " ").take(16)
+        binding.tvDetalheFim.text     = fim?.replace("T", " ")?.take(16) ?: "—"
+        binding.tvDetalheEsforco.text = esforco ?: "—"
+    }
+
+    private fun preencherDetalhesEventoOffline() {
+        val eventoDao = EventoDao(this)
+        val evento = when {
+            eventoId < 0 -> eventoDao.listarTodos().firstOrNull { it.localId == (-eventoId).toLong() }
+            eventoId > 0 -> eventoDao.listarTodos().firstOrNull { it.remoteId == eventoId }
+            else -> eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome }
+        } ?: return
+        preencherCardEvento(evento.horarioInicio, evento.horarioFim, evento.esforcoReal)
+    }
+
     private fun carregarRegistros() {
+        // Evento offline-only: id < 0 codifica -localId. id == -1 é o marcador
+        // antigo (sem localId disponível); cai no lookup por horárioInicio.
+        if (eventoId == -1) {
+            val eventoDao = EventoDao(this)
+            val evento = eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome } ?: return
+            carregarRegistrosOffline(evento.localId)
+            return
+        }
+        if (eventoId < 0) {
+            carregarRegistrosOffline((-eventoId).toLong())
+            return
+        }
+
         lifecycleScope.launch {
+            val registrosOnline = mutableListOf<RegistroResponse>()
+
+            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getRegistros(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                 )
                 if (resp.isSuccessful) {
-                    registros.clear()
-                    registros.addAll(resp.body() ?: emptyList())
-                    aplicarFiltro(especieIdFiltro)
+                    registrosOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@RegistrosActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            registros.clear()
+            registros.addAll(registrosOnline)
+
+            // Tenta mesclar registros offline-only. Se qualquer pai não estiver
+            // no SQLite, o merge é pulado — mas os registros online ainda
+            // aparecem.
+            val estudoLocalId = EstudoDao(this@RegistrosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            val campanhaLocalId = estudoLocalId?.let {
+                com.kheprix.db.CampanhaDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
+            val unidadeLocalId = campanhaLocalId?.let {
+                com.kheprix.db.UnidadeDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
+            }
+            val eventoLocalId = unidadeLocalId?.let {
+                EventoDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(eventoId, it)?.localId
+            }
+
+            if (eventoLocalId != null) {
+                val registroDao = RegistroDao(this@RegistrosActivity)
+                val offline = registroDao.listarPorEventoLocal(eventoLocalId)
+                val remoteIds = registrosOnline.mapNotNull { it.id }.toSet()
+                offline.forEach { off ->
+                    if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                        registros.add(RegistroResponse(
+                            id = off.remoteId ?: -1,
+                            especieId = off.especieRemoteId,
+                            eventoAmostragemId = off.eventoLocalId.toInt(),
+                            data = off.data,
+                            hora = off.hora,
+                            latitude = off.latitude,
+                            longitude = off.longitude,
+                            qtdeIndividuos = off.qtdeIndividuos,
+                            foto = off.foto,
+                            ausenciaEspecie = off.ausenciaEspecie,
+                            createdAt = off.createdAt ?: ""
+                        ))
+                    }
+                }
+            }
+
+            aplicarFiltro(especieIdFiltro)
         }
+    }
+
+    private fun carregarRegistrosOffline(eventoLocalId: Long) {
+        val registroDao = RegistroDao(this)
+        registros.clear()
+        registros.addAll(registroDao.listarPorEventoLocal(eventoLocalId).map { off ->
+            RegistroResponse(
+                id = off.remoteId ?: -1,
+                especieId = off.especieRemoteId,
+                eventoAmostragemId = off.eventoLocalId.toInt(),
+                data = off.data,
+                hora = off.hora,
+                latitude = off.latitude,
+                longitude = off.longitude,
+                qtdeIndividuos = off.qtdeIndividuos,
+                foto = off.foto,
+                ausenciaEspecie = off.ausenciaEspecie,
+                createdAt = off.createdAt ?: ""
+            )
+        })
+        aplicarFiltro(especieIdFiltro)
     }
 
     // ── Filtro ────────────────────────────────────────────────────────────
@@ -185,8 +302,8 @@ class RegistrosActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
     }
 
-    private fun abrirEdicao(r: RegistroResponse) {
-        startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
+    private fun abrirDetalhe(r: RegistroResponse) {
+        startActivity(Intent(this, RegistroDetalheActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
             putExtra("campanha_id", campanhaId)
             putExtra("unidade_id", unidadeId)
@@ -194,29 +311,12 @@ class RegistrosActivity : AppCompatActivity() {
             putExtra("registro_id", r.id)
         })
     }
-
-    private fun confirmarDelete(r: RegistroResponse) {
-        AlertDialog.Builder(this)
-            .setTitle("Deletar registro")
-            .setMessage("Deletar registro #${r.id}?")
-            .setPositiveButton("Deletar") { _, _ ->
-                lifecycleScope.launch {
-                    try {
-                        RetrofitClient.apiService.deleteRegistro(
-                            SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, r.id
-                        )
-                        carregarRegistros()
-                    } catch (_: Exception) {}
-                }
-            }
-            .setNegativeButton("Cancelar", null).show()
-    }
 }
 
 class RegistroAdapter(
     private val items: List<RegistroResponse>,
+    private val scope: CoroutineScope,
     private val onItemClick: (RegistroResponse) -> Unit,
-    private val onDeleteClick: (RegistroResponse) -> Unit,
     private val buscarEspecie: (Int) -> EspecieResponse?
 ) : RecyclerView.Adapter<RegistroAdapter.VH>() {
 
@@ -224,7 +324,6 @@ class RegistroAdapter(
         val tvId: TextView     = view.findViewById(R.id.tvRegistroId)
         val tvData: TextView   = view.findViewById(R.id.tvRegistroData)
         val ivFoto: ImageView  = view.findViewById(R.id.ivRegistroFoto)
-        val ivDelete: ImageView = view.findViewById(R.id.ivDeleteRegistro)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -237,11 +336,13 @@ class RegistroAdapter(
         holder.tvData.text = item.data.split("-").let { p ->
             if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else item.data
         }
-        item.foto?.let { b64 ->
-            PhotoUtils.base64ToBitmap(b64)?.let { holder.ivFoto.setImageBitmap(it) }
-        }
+        ImagemLoader.load(
+            scope = scope,
+            target = holder.ivFoto,
+            url = item.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
         holder.itemView.setOnClickListener { onItemClick(item) }
-        holder.ivDelete.setOnClickListener { onDeleteClick(item) }
     }
 
     override fun getItemCount() = items.size
@@ -266,7 +367,7 @@ class RegistroAdapter(
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id (-1 novo)
  */
-class NovoRegistroActivity : AppCompatActivity() {
+class NovoRegistroActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoRegistroBinding
 
@@ -286,7 +387,8 @@ class NovoRegistroActivity : AppCompatActivity() {
 
     private val especies = mutableListOf<EspecieResponse>()
     private val variaveis = mutableListOf<VariavelResponse>()
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     private val locationPermLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -329,7 +431,7 @@ class NovoRegistroActivity : AppCompatActivity() {
             if (modoEdicao) editarRegistro() else criarRegistro()
         }
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -415,17 +517,32 @@ class NovoRegistroActivity : AppCompatActivity() {
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
+            val online = mutableListOf<EspecieResponse>()
             try {
                 val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
-                if (resp.isSuccessful) {
-                    especies.clear(); especies.addAll(resp.body() ?: emptyList())
-                    val nomes = listOf("Selecione...") + especies.map { "${it.genero} ${it.especie}" }
-                    binding.spinnerEspecie.adapter = ArrayAdapter(this@NovoRegistroActivity,
-                        android.R.layout.simple_spinner_item, nomes).also {
-                        it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    }
+                if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
+            } catch (_: Exception) { }
+
+            val repo = OfflineRepository(this@NovoRegistroActivity)
+            val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+            estudoLocalId?.let { id ->
+                online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
+            }
+
+            especies.clear()
+            especies.addAll(online)
+            // Mescla com espécies criadas/cacheadas offline (inclui id = -1).
+            if (estudoLocalId != null) {
+                val remoteIds = online.map { it.id }.toSet()
+                repo.listarEspeciesPorEstudoLocal(estudoLocalId).forEach { off ->
+                    if (off.id < 0 || !remoteIds.contains(off.id)) especies.add(off)
                 }
-            } catch (_: Exception) {}
+            }
+
+            val nomes = listOf("Selecione...") + especies.map { "${it.genero} ${it.especie}" }
+            binding.spinnerEspecie.adapter = ArrayAdapter(
+                this@NovoRegistroActivity, android.R.layout.simple_spinner_item, nomes
+            ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         }
     }
 
@@ -460,11 +577,7 @@ class NovoRegistroActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = 4 }
             }
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
-                background = ContextCompat.getDrawable(this@NovoRegistroActivity, R.drawable.bg_field_green)
-                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-            }
+            val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
             if (!v.metrica.isNullOrEmpty()) {
                 linha.addView(TextView(this).apply {
@@ -473,6 +586,35 @@ class NovoRegistroActivity : AppCompatActivity() {
                 })
             }
             binding.layoutVariaveis.addView(linha)
+        }
+    }
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                adapter = ArrayAdapter(
+                    this@NovoRegistroActivity,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
         }
     }
 
@@ -494,7 +636,8 @@ class NovoRegistroActivity : AppCompatActivity() {
                     binding.etLatitude.setText(decimalToDms(r.latitude))
                     binding.etLongitude.setText(decimalToDms(r.longitude))
                     binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
-                    fotoBase64 = r.foto
+                    // fotoBase64 permanece null: se o usuário não escolher nova
+                    // foto, o patch omite o campo e o backend preserva a atual.
                     if (r.foto != null) binding.tvNomeFoto.text = "foto_atual.jpg"
                     // Selecionar espécie no spinner
                     val idx = especies.indexOfFirst { it.id == r.especieId }
@@ -581,50 +724,212 @@ class NovoRegistroActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Persiste o registro no SQLite. Requer que estudo→campanha→unidade→evento
+     * e a espécie estejam salvos offline — se algum faltar, nada é inserido
+     * (para não gerar registro órfão) e o usuário é avisado.
+     *
+     * Quando req==null estamos em modo edição sem sucesso na API: apenas mostra
+     * o OfflineWarning sem persistir (PATCH offline é tratado em fase posterior).
+     */
     private fun mostrarDialogOffline(req: RegistroRequest?) {
-        // Persiste no SQLite quando offline
         if (req != null) {
-            try {
-                val db = com.kheprix.db.DatabaseHelper(this).writableDatabase
-                // Busca local_id do evento pelo remote_id
-                val curEvento = db.rawQuery(
-                    "SELECT local_id FROM eventos_amostragem WHERE remote_id = ?",
-                    arrayOf(eventoId.toString())
-                )
-                val eventoLocalId = curEvento.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-
-                // Busca local_id da espécie pelo remote_id
-                val curEspecie = db.rawQuery(
-                    "SELECT local_id FROM especies WHERE remote_id = ?",
-                    arrayOf(req.especieId.toString())
-                )
-                val especieLocalId = curEspecie.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-
-                if (eventoLocalId != -1L && especieLocalId != -1L) {
-                    val cv = android.content.ContentValues().apply {
-                        put("sincronizado", 0)
-                        put("evento_local_id", eventoLocalId)
-                        put("especie_local_id", especieLocalId)
-                        put("especie_remote_id", req.especieId)
-                        put("data", req.data)
-                        put("hora", req.hora)
-                        put("latitude", req.latitude)
-                        put("longitude", req.longitude)
-                        put("qtde_individuos", req.qtdeIndividuos)
-                        put("foto", req.foto)
-                        req.ausenciaEspecie?.let { put("ausencia_especie", if (it) 1 else 0) }
-                        put("created_at", java.time.Instant.now().toString())
-                    }
-                    db.insert("registros_ocorrencia", null, cv)
-                }
-            } catch (_: Exception) { /* silencioso */ }
+            val salvo = salvarRegistroOffline(req)
+            if (!salvo) return
         }
         startActivity(Intent(this, OfflineWarningActivity::class.java))
+    }
+
+    /**
+     * @return true se gravou, false se faltou integridade (aborta sem inserir).
+     */
+    private fun salvarRegistroOffline(req: RegistroRequest): Boolean {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
+            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
+            Toast.makeText(this, "Campanha não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
+            Toast.makeText(this, "Unidade não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val eventoLocalId = repo.resolveEventoLocalId(unidadeLocalId, eventoId) ?: run {
+            Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val especieLocalId = repo.resolveEspecieLocalId(estudoLocalId, req.especieId) ?: run {
+            Toast.makeText(this, "Espécie não está salva offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        return try {
+            repo.criarRegistroOffline(eventoLocalId, especieLocalId, req)
+            true
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
+            false
+        }
     }
 
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         binding.btnConfirmar.isEnabled = !loading
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// DETALHE DE REGISTRO
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Exibe os detalhes de um Registro de Ocorrência com opção de editar e deletar.
+ *
+ * Campos: foto, nome científico/popular (da espécie), qtde indivíduos,
+ * latitude/longitude, data, hora e variáveis de nível "registro" do estudo.
+ *
+ * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id
+ */
+class RegistroDetalheActivity : BaseDrawerActivity() {
+
+    private lateinit var binding: ActivityRegistrosDetalheBinding
+    private var estudoRemoteId = -1
+    private var campanhaId     = -1
+    private var unidadeId      = -1
+    private var eventoId       = -1
+    private var registroId     = -1
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityRegistrosDetalheBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        unidadeId      = intent.getIntExtra("unidade_id", -1)
+        eventoId       = intent.getIntExtra("evento_id", -1)
+        registroId     = intent.getIntExtra("registro_id", -1)
+
+        binding.ivEditar.setOnClickListener {
+            startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
+                putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("campanha_id", campanhaId)
+                putExtra("unidade_id", unidadeId)
+                putExtra("evento_id", eventoId)
+                putExtra("registro_id", registroId)
+            })
+        }
+        binding.ivDeletar.setOnClickListener { confirmarDelete() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
+        binding.ivPerfil.setOnClickListener {
+            startActivity(Intent(this, PerfilActivity::class.java))
+        }
+
+        carregarVariaveis()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        carregarRegistro()
+    }
+
+    private fun carregarRegistro() {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getRegistro(
+                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                )
+                resp.body()?.let { r ->
+                    binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
+                    binding.tvLatitude.text  = r.latitude.toString()
+                    binding.tvLongitude.text = r.longitude.toString()
+                    binding.tvData.text      = r.data.split("-").let { p ->
+                        if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
+                    }
+                    binding.tvHora.text = r.hora.take(5)
+
+                    ImagemLoader.load(
+                        scope = lifecycleScope,
+                        target = binding.ivFoto,
+                        url = r.foto,
+                        placeholder = R.drawable.ic_placeholder_beetle
+                    )
+
+                    carregarEspecie(r.especieId)
+                }
+            } catch (_: Exception) {
+                Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun carregarEspecie(especieId: Int) {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getEspecie(
+                    SessionManager.getAuthHeader(), estudoRemoteId, especieId
+                )
+                resp.body()?.let { e ->
+                    binding.tvTitulo.text         = "${e.genero} ${e.especie}"
+                    binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
+                    binding.tvNomePopular.text    = e.nomePopular ?: "—"
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun carregarVariaveis() {
+        lifecycleScope.launch {
+            try {
+                val resp = RetrofitClient.apiService.getVariaveis(
+                    SessionManager.getAuthHeader(), estudoRemoteId, nivelAplicacao = "registro"
+                )
+                if (resp.isSuccessful) renderizarVariaveis(resp.body() ?: emptyList())
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun renderizarVariaveis(vars: List<VariavelResponse>) {
+        binding.layoutVariaveis.removeAllViews()
+        if (vars.isEmpty()) {
+            binding.tvVariaveisTitle.visibility = View.GONE
+            return
+        }
+        binding.tvVariaveisTitle.visibility = View.VISIBLE
+        vars.forEachIndexed { i, v ->
+            val nome = TextView(this).apply {
+                text = "${v.nome}${if (v.metrica.isNullOrBlank()) "" else " (${v.metrica})"}:"
+                textSize = 14f
+                setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, if (i > 0) 10 else 0, 0, 0)
+            }
+            val valor = TextView(this).apply {
+                text = "—"
+                textSize = 15f
+                setTextColor(0xFF4A5240.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+            }
+            binding.layoutVariaveis.addView(nome)
+            binding.layoutVariaveis.addView(valor)
+        }
+    }
+
+    private fun confirmarDelete() {
+        AlertDialog.Builder(this)
+            .setTitle("Deletar registro")
+            .setMessage("Tem certeza?")
+            .setPositiveButton("Deletar") { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        RetrofitClient.apiService.deleteRegistro(
+                            SessionManager.getAuthHeader(),
+                            estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                        )
+                        finish()
+                    } catch (_: Exception) {
+                        Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar", null).show()
     }
 }
 
@@ -638,7 +943,7 @@ class NovoRegistroActivity : AppCompatActivity() {
  * e que a sincronização poderá ser feita quando houver conexão.
  * Botão "Continuar" fecha a tela.
  */
-class OfflineWarningActivity : AppCompatActivity() {
+class OfflineWarningActivity : BaseDrawerActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

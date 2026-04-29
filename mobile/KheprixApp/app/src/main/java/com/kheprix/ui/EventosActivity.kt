@@ -18,6 +18,11 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityEventosBinding
 import com.kheprix.databinding.ActivityNovoEventoBinding
+import com.kheprix.db.CampanhaDao
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.EventoDao
+import com.kheprix.db.OfflineRepository
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
 import com.kheprix.models.VariavelResponse
@@ -36,7 +41,7 @@ import java.util.Calendar
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, unidade_nome
  */
-class EventosActivity : AppCompatActivity() {
+class EventosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEventosBinding
     private var estudoRemoteId = -1
@@ -85,7 +90,7 @@ class EventosActivity : AppCompatActivity() {
             })
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -98,37 +103,136 @@ class EventosActivity : AppCompatActivity() {
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getUnidade(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
-                )
-                resp.body()?.let { u ->
-                    binding.tvDetalheNome.text  = u.nome
-                    binding.tvDetalheLat.text   = decimalToDms(u.latitude)
-                    binding.tvDetalheLon.text   = decimalToDms(u.longitude)
-                    binding.tvDetalheRaio.text  = u.raio?.let { "${it}m" } ?: "—"
-                    binding.tvDetalheMetodo.text = u.metodoColeta ?: "—"
-                    binding.tvDetalheEsforco.text = u.esforcoAmostral ?: "—"
-                }
-            } catch (_: Exception) {}
+            // Tenta API quando temos remote id da unidade.
+            if (unidadeId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getUnidade(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
+                    )
+                    resp.body()?.let { u ->
+                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral)
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            // Fallback offline: SQLite.
+            preencherDetalhesOffline()
         }
     }
 
+    private fun preencherCardUnidade(
+        nome: String, lat: Double, lon: Double,
+        raio: Double?, metodo: String?, esforco: String?
+    ) {
+        binding.tvDetalheNome.text   = nome
+        binding.tvDetalheLat.text    = decimalToDms(lat)
+        binding.tvDetalheLon.text    = decimalToDms(lon)
+        binding.tvDetalheRaio.text   = raio?.let { "${it}m" } ?: "—"
+        binding.tvDetalheMetodo.text = metodo ?: "—"
+        binding.tvDetalheEsforco.text = esforco ?: "—"
+    }
+
+    private fun preencherDetalhesOffline() {
+        val unidadeDao = UnidadeDao(this)
+        val campanhaDao = CampanhaDao(this)
+        val estudoDao = EstudoDao(this)
+
+        val campanhaLocalId = if (campanhaId > 0) {
+            estudoDao.buscarPorRemoteId(estudoRemoteId)?.localId?.let { estudoLocal ->
+                campanhaDao.buscarPorRemoteIdEscopo(campanhaId, estudoLocal)?.localId
+            }
+        } else null
+
+        val unidade = when {
+            unidadeId > 0 && campanhaLocalId != null ->
+                unidadeDao.buscarPorRemoteIdEscopo(unidadeId, campanhaLocalId)
+            campanhaLocalId != null ->
+                unidadeDao.listarPorCampanhaLocal(campanhaLocalId).firstOrNull { it.nome == unidadeNome }
+            else ->
+                unidadeDao.listarTodos().firstOrNull { it.nome == unidadeNome }
+        } ?: return
+
+        preencherCardUnidade(
+            unidade.nome, unidade.latitude, unidade.longitude,
+            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral
+        )
+    }
+
     private fun carregarEventos() {
+        // Se unidade_id == -1, é offline-only: buscar via SQLite
+        if (unidadeId == -1) {
+            val unidadeDao = UnidadeDao(this)
+            val campanhaDao = CampanhaDao(this)
+            val campanha = campanhaDao.listarTodos().firstOrNull { it.remoteId == campanhaId || (campanhaId == -1) } ?: return
+            val unidade = unidadeDao.listarPorCampanhaLocal(campanha.localId).firstOrNull { it.nome == unidadeNome } ?: return
+            carregarEventosOffline(unidade.localId)
+            return
+        }
+
         lifecycleScope.launch {
+            val eventosOnline = mutableListOf<EventoResponse>()
+
+            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getEventos(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                 )
                 if (resp.isSuccessful) {
-                    eventos.clear()
-                    eventos.addAll(resp.body() ?: emptyList())
-                    binding.rvEventos.adapter?.notifyDataSetChanged()
+                    eventosOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@EventosActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            eventos.clear()
+            eventos.addAll(eventosOnline)
+
+            // Tenta mesclar eventos offline-only. Se qualquer pai não estiver
+            // no SQLite, pula o merge mas mantém os eventos online visíveis.
+            val estudoLocalId = EstudoDao(this@EventosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            val campanhaLocalId = estudoLocalId?.let {
+                CampanhaDao(this@EventosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
+            val unidadeLocalId = campanhaLocalId?.let {
+                UnidadeDao(this@EventosActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
+            }
+
+            if (unidadeLocalId != null) {
+                val eventoDao = EventoDao(this@EventosActivity)
+                val offline = eventoDao.listarPorUnidadeLocal(unidadeLocalId)
+                val remoteIds = eventosOnline.mapNotNull { it.id }.toSet()
+                offline.forEach { off ->
+                    if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                        eventos.add(EventoResponse(
+                            // Eventos offline-only ficam com id = -localId para
+                            // serem rastreáveis pelo SQLite nas telas seguintes.
+                            id = off.remoteId ?: -off.localId.toInt(),
+                            unidadeAmostralId = off.unidadeLocalId.toInt(),
+                            horarioInicio = off.horarioInicio,
+                            horarioFim = off.horarioFim,
+                            esforcoReal = off.esforcoReal,
+                            createdAt = off.createdAt ?: ""
+                        ))
+                    }
+                }
+            }
+
+            binding.rvEventos.adapter?.notifyDataSetChanged()
         }
+    }
+
+    private fun carregarEventosOffline(unidadeLocalId: Long) {
+        val eventoDao = EventoDao(this)
+        eventos.clear()
+        eventos.addAll(eventoDao.listarPorUnidadeLocal(unidadeLocalId).map { off ->
+            EventoResponse(
+                id = off.remoteId ?: -off.localId.toInt(),
+                unidadeAmostralId = off.unidadeLocalId.toInt(),
+                horarioInicio = off.horarioInicio,
+                horarioFim = off.horarioFim,
+                esforcoReal = off.esforcoReal,
+                createdAt = off.createdAt ?: ""
+            )
+        })
+        binding.rvEventos.adapter?.notifyDataSetChanged()
     }
 
     private fun abrirRegistros(e: EventoResponse) {
@@ -210,7 +314,7 @@ class EventoAdapter(
  *
  * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id (-1 novo)
  */
-class NovoEventoActivity : AppCompatActivity() {
+class NovoEventoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEventoBinding
     private var estudoRemoteId = -1
@@ -225,7 +329,8 @@ class NovoEventoActivity : AppCompatActivity() {
     private var horaFim = ""
 
     private val variaveis = mutableListOf<VariavelResponse>()
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -251,7 +356,7 @@ class NovoEventoActivity : AppCompatActivity() {
             if (modoEdicao) editarEvento() else criarEvento()
         }
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -315,11 +420,7 @@ class NovoEventoActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
                 ).also { it.topMargin = 4 }
             }
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
-                background = androidx.core.content.ContextCompat.getDrawable(this@NovoEventoActivity, R.drawable.bg_field_green)
-                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-            }
+            val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
             if (!v.metrica.isNullOrEmpty()) {
                 linha.addView(TextView(this).apply {
@@ -329,6 +430,35 @@ class NovoEventoActivity : AppCompatActivity() {
                 })
             }
             binding.layoutVariaveis.addView(linha)
+        }
+    }
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
+        val bg = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                adapter = ArrayAdapter(
+                    this@NovoEventoActivity,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0); setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
         }
     }
 
@@ -362,8 +492,32 @@ class NovoEventoActivity : AppCompatActivity() {
                     Toast.makeText(this@NovoEventoActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovoEventoActivity, "Sem conexão — salvo localmente", Toast.LENGTH_SHORT).show()
+                salvarEventoOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    /**
+     * Persiste o evento no SQLite. Requer que estudo→campanha→unidade estejam
+     * salvos offline — se algum faltar, aborta e NÃO grava órfão.
+     */
+    private fun salvarEventoOffline(req: EventoRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
+            Toast.makeText(this, "Sem conexão — estudo não salvo offline.", Toast.LENGTH_LONG).show(); return
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
+            Toast.makeText(this, "Sem conexão — campanha não salva offline.", Toast.LENGTH_LONG).show(); return
+        }
+        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
+            Toast.makeText(this, "Sem conexão — unidade não salva offline.", Toast.LENGTH_LONG).show(); return
+        }
+        try {
+            repo.criarEventoOffline(unidadeLocalId, req)
+            Toast.makeText(this, "Sem conexão — evento salvo offline.", Toast.LENGTH_LONG).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

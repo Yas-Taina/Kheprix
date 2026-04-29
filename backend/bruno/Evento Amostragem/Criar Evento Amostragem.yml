@@ -11,13 +11,13 @@ http:
       value: application/json
   params:
     - name: estudo_id
-      value: "6"
+      value: "13"
       type: path
     - name: campanha_id
-      value: "6"
+      value: "18"
       type: path
     - name: unidade_amostral_id
-      value: "1"
+      value: "24"
       type: path
   body:
     type: json

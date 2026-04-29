@@ -17,6 +17,9 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityCampanhasBinding
+import com.kheprix.db.CampanhaDao
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.CampanhaResponse
 import kotlinx.coroutines.launch
 
@@ -32,7 +35,7 @@ import kotlinx.coroutines.launch
  *  - Clique num item → detalhe/edição da campanha (a criar)
  *  - Lixeira → deletar campanha (com confirmação)
  */
-class CampanhasActivity : AppCompatActivity() {
+class CampanhasActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCampanhasBinding
     private var estudoRemoteId = -1
@@ -81,27 +84,98 @@ class CampanhasActivity : AppCompatActivity() {
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
     }
 
     private fun carregarCampanhas() {
+        // Se estudo_remote_id == -1, é offline-only: buscar via SQLite
+        if (estudoRemoteId == -1) {
+            val estudo = EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }
+            if (estudo != null) {
+                carregarCampanhasOffline(estudo.localId)
+            }
+            return
+        }
+
         lifecycleScope.launch {
+            val campanhasOnline = mutableListOf<CampanhaResponse>()
+
+            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getCampanhas(
                     SessionManager.getAuthHeader(), estudoRemoteId
                 )
                 if (resp.isSuccessful) {
-                    campanhas.clear()
-                    campanhas.addAll(resp.body() ?: emptyList())
-                    binding.rvCampanhas.adapter?.notifyDataSetChanged()
+                    campanhasOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@CampanhasActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            // Merge com SQLite
+            val campanhaDao = CampanhaDao(this@CampanhasActivity)
+            val repo = OfflineRepository(this@CampanhasActivity)
+            // Garante que o estudo esteja espelhado no SQLite para que as
+            // campanhas carregadas online possam ser associadas e ficar
+            // acessíveis offline (sem precisar do fluxo "Salvar Offline").
+            var estudoLocalId = EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            if (estudoLocalId == null && campanhasOnline.isNotEmpty()) {
+                try {
+                    val estudoResp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader()).body()
+                    val estudo = estudoResp?.firstOrNull { it.id == estudoRemoteId }
+                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                } catch (_: Exception) { }
             }
+            if (estudoLocalId == null) return@launch
+
+            // Espelha as campanhas carregadas online no SQLite.
+            campanhasOnline.forEach { c ->
+                try { repo.cacheCampanha(estudoLocalId!!, c) } catch (_: Exception) { }
+            }
+
+            val offline = campanhaDao.listarPorEstudoLocal(estudoLocalId!!)
+            val remoteIds = campanhasOnline.mapNotNull { it.id }.toSet()
+
+            campanhas.clear()
+            campanhas.addAll(campanhasOnline)
+
+            // Adicionar offline-only (não presentes na API)
+            offline.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    campanhas.add(CampanhaResponse(
+                        id = off.remoteId ?: -1,
+                        nome = off.nome,
+                        dataInicio = off.dataInicio,
+                        dataFim = off.dataFim,
+                        descricao = off.descricao,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: "",
+                        valoresVariaveis = null
+                    ))
+                }
+            }
+
+            binding.rvCampanhas.adapter?.notifyDataSetChanged()
         }
+    }
+
+    private fun carregarCampanhasOffline(estudoLocalId: Long) {
+        val campanhaDao = CampanhaDao(this)
+        campanhas.clear()
+        campanhas.addAll(campanhaDao.listarPorEstudoLocal(estudoLocalId).map { off ->
+            CampanhaResponse(
+                id = off.remoteId ?: -1,
+                nome = off.nome,
+                dataInicio = off.dataInicio,
+                dataFim = off.dataFim,
+                descricao = off.descricao,
+                createdAt = off.createdAt ?: "",
+                updatedAt = off.updatedAt ?: "",
+                valoresVariaveis = null
+            )
+        })
+        binding.rvCampanhas.adapter?.notifyDataSetChanged()
     }
 
     private fun confirmarDelete(campanha: CampanhaResponse) {

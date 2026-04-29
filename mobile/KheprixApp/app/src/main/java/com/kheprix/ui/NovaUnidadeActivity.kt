@@ -17,6 +17,7 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
+import com.kheprix.db.OfflineRepository
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
@@ -40,7 +41,7 @@ import kotlinx.coroutines.launch
  *   unidade_id       → Int (-1 para criação)
  *   (dados para pré-preenchimento em modo edição)
  */
-class NovaUnidadeActivity : AppCompatActivity() {
+class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovaUnidadeBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -54,7 +55,8 @@ class NovaUnidadeActivity : AppCompatActivity() {
     private var lonDecimal: Double? = null
 
     private val variaveis = mutableListOf<VariavelResponse>()
-    private val camposVariavel = mutableMapOf<Int, EditText>()
+    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
+    private val camposVariavel = mutableMapOf<Int, View>()
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -89,7 +91,7 @@ class NovaUnidadeActivity : AppCompatActivity() {
         }
 
         binding.ivBack.setOnClickListener { finish() }
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -190,15 +192,7 @@ class NovaUnidadeActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).also { it.topMargin = 4 }
             }
-            val campo = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(0, 48.dpToPx(), 1f)
-                background = ContextCompat.getDrawable(this@NovaUnidadeActivity, R.drawable.bg_field_green)
-                setPadding(20, 0, 20, 0)
-                setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
-                inputType = if (v.tipoDado == "number")
-                    android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-                else android.text.InputType.TYPE_CLASS_TEXT
-            }
+            val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
             if (!v.metrica.isNullOrEmpty()) {
                 linha.addView(TextView(this).apply {
@@ -212,6 +206,36 @@ class NovaUnidadeActivity : AppCompatActivity() {
     }
 
     private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
+
+    /** Cria a view de entrada adequada ao tipoDado da variável. */
+    private fun criarCampoVariavel(tipoDado: String): View {
+        val lp = LinearLayout.LayoutParams(0, 48.dpToPx(), 1f)
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
+        return when (tipoDado) {
+            "boolean" -> Spinner(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                adapter = ArrayAdapter(
+                    this@NovaUnidadeActivity,
+                    android.R.layout.simple_spinner_item,
+                    listOf("—", "Verdadeiro", "Falso")
+                ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            }
+            else -> EditText(this).apply {
+                layoutParams = lp
+                background = bg
+                setPadding(20, 0, 20, 0)
+                setTextColor(0xFF4A5240.toInt()); hint = "Placeholder"
+                inputType = when (tipoDado) {
+                    "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
+                            android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+                    else -> android.text.InputType.TYPE_CLASS_TEXT
+                }
+            }
+        }
+    }
 
     // ── Edição ────────────────────────────────────────────────────────────
 
@@ -299,35 +323,44 @@ class NovaUnidadeActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Persiste a unidade no SQLite. Requer que o estudo e a campanha pai
+     * estejam salvos offline — se não estiverem, aborta e NÃO grava órfão.
+     */
     private fun salvarOffline(req: UnidadeRequest) {
+        val repo = OfflineRepository(this)
+        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+        if (estudoLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — este estudo não está salvo offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId)
+        if (campanhaLocalId == null) {
+            Toast.makeText(
+                this,
+                "Sem conexão — esta campanha não está salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
         try {
-            val db = com.kheprix.db.DatabaseHelper(this).writableDatabase
-            // Busca campanha_local_id pelo remote_id
-            val cur = db.rawQuery(
-                "SELECT local_id FROM campanhas WHERE remote_id = ?",
-                arrayOf(campanhaId.toString())
-            )
-            val campanhaLocalId = cur.use { if (it.moveToFirst()) it.getLong(0) else -1L }
-            if (campanhaLocalId != -1L) {
-                val cv = android.content.ContentValues().apply {
-                    put("sincronizado", 0)
-                    put("campanha_local_id", campanhaLocalId)
-                    put("nome", req.nome)
-                    put("latitude", req.latitude)
-                    put("longitude", req.longitude)
-                    req.raio?.let { put("raio", it) }
-                    req.metodoColeta?.let { put("metodo_coleta", it) }
-                    req.esforcoAmostral?.let { put("esforco_amostral", it) }
-                    put("created_at", java.time.Instant.now().toString())
-                }
-                db.insert("unidades_amostrais", null, cv)
-                Toast.makeText(this, "Salvo offline. Sincronize quando tiver conexão.", Toast.LENGTH_LONG).show()
-                finish()
-            } else {
-                Toast.makeText(this, "Sem conexão e sem dados locais para esta campanha.", Toast.LENGTH_LONG).show()
-            }
+            repo.criarUnidadeOffline(campanhaLocalId, req)
+            Toast.makeText(
+                this,
+                "Sem conexão — unidade salva offline.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
         } catch (e: Exception) {
-            Toast.makeText(this, "Sem conexão — não foi possível salvar offline.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Erro ao salvar offline: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

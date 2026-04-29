@@ -196,6 +196,7 @@
         app:menu="@menu/drawer_menu"
         app:itemTextColor="#4A5240"
         app:itemIconTint="#6B7A5E"
+        app:subheaderColor="#4A5240"
         app:headerLayout="@layout/nav_drawer_header"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -17,6 +17,10 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityUnidadesBinding
+import com.kheprix.db.CampanhaDao
+import com.kheprix.db.EstudoDao
+import com.kheprix.db.OfflineRepository
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.UnidadeResponse
 import kotlinx.coroutines.launch
 
@@ -34,7 +38,7 @@ import kotlinx.coroutines.launch
  *   campanha_nome     → String
  *   estudo_nome       → String
  */
-class UnidadesActivity : AppCompatActivity() {
+class UnidadesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityUnidadesBinding
     private var estudoRemoteId = -1
@@ -84,7 +88,7 @@ class UnidadesActivity : AppCompatActivity() {
             })
         }
 
-        binding.ivMenuLateral.setOnClickListener { onBackPressed() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
@@ -115,20 +119,107 @@ class UnidadesActivity : AppCompatActivity() {
     }
 
     private fun carregarUnidades() {
+        // Se campanha_id == -1, é offline-only: buscar via SQLite
+        if (campanhaId == -1) {
+            val campanhaDao = CampanhaDao(this)
+            val campanha = campanhaDao.listarTodos().firstOrNull { it.nome == campanhaNome } ?: return
+            carregarUnidadesOffline(campanha.localId)
+            return
+        }
+
         lifecycleScope.launch {
+            val unidadesOnline = mutableListOf<UnidadeResponse>()
+
+            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getUnidades(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                 )
                 if (resp.isSuccessful) {
-                    unidades.clear()
-                    unidades.addAll(resp.body() ?: emptyList())
-                    binding.rvUnidades.adapter?.notifyDataSetChanged()
+                    unidadesOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) {
-                Toast.makeText(this@UnidadesActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) { }
+
+            // Merge com SQLite
+            val unidadeDao = UnidadeDao(this@UnidadesActivity)
+            val repo = OfflineRepository(this@UnidadesActivity)
+            // Resolve estudo localId; se não existir, tenta espelhar da API
+            // para permitir cache das unidades carregadas online.
+            var estudoLocalId = EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            if (estudoLocalId == null && unidadesOnline.isNotEmpty()) {
+                try {
+                    val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
+                        .body()?.firstOrNull { it.id == estudoRemoteId }
+                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                } catch (_: Exception) { }
             }
+            if (estudoLocalId == null) return@launch
+
+            // Espelha a campanha no SQLite (caso ainda não exista), usando
+            // dados da API; sem isso, as unidades online não podem ser associadas.
+            var campanhaLocalId = CampanhaDao(this@UnidadesActivity)
+                .buscarPorRemoteIdEscopo(campanhaId, estudoLocalId!!)?.localId
+            if (campanhaLocalId == null && unidadesOnline.isNotEmpty()) {
+                try {
+                    val camp = RetrofitClient.apiService.getCampanha(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
+                    ).body()
+                    if (camp != null) campanhaLocalId = repo.cacheCampanha(estudoLocalId!!, camp)
+                } catch (_: Exception) { }
+            }
+            if (campanhaLocalId == null) return@launch
+
+            // Espelha as unidades carregadas online.
+            unidadesOnline.forEach { u ->
+                try { repo.cacheUnidade(campanhaLocalId!!, u) } catch (_: Exception) { }
+            }
+
+            val offline = unidadeDao.listarPorCampanhaLocal(campanhaLocalId!!)
+            val remoteIds = unidadesOnline.mapNotNull { it.id }.toSet()
+
+            unidades.clear()
+            unidades.addAll(unidadesOnline)
+
+            // Adicionar offline-only (não presentes na API)
+            offline.forEach { off ->
+                if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
+                    unidades.add(UnidadeResponse(
+                        id = off.remoteId ?: -1,
+                        campanhaId = off.campanhaLocalId.toInt(),
+                        nome = off.nome,
+                        latitude = off.latitude,
+                        longitude = off.longitude,
+                        raio = off.raio,
+                        metodoColeta = off.metodoColeta,
+                        esforcoAmostral = off.esforcoAmostral,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: ""
+                    ))
+                }
+            }
+
+            binding.rvUnidades.adapter?.notifyDataSetChanged()
         }
+    }
+
+    private fun carregarUnidadesOffline(campanhaLocalId: Long) {
+        val unidadeDao = UnidadeDao(this)
+        unidades.clear()
+        unidades.addAll(unidadeDao.listarPorCampanhaLocal(campanhaLocalId).map { off ->
+            UnidadeResponse(
+                id = off.remoteId ?: -1,
+                campanhaId = off.campanhaLocalId.toInt(),
+                nome = off.nome,
+                latitude = off.latitude,
+                longitude = off.longitude,
+                raio = off.raio,
+                metodoColeta = off.metodoColeta,
+                esforcoAmostral = off.esforcoAmostral,
+                createdAt = off.createdAt ?: "",
+                updatedAt = off.updatedAt ?: ""
+            )
+        })
+        binding.rvUnidades.adapter?.notifyDataSetChanged()
     }
 
     private fun abrirEventos(u: UnidadeResponse) {

@@ -31,6 +31,15 @@ interface ApiService {
     suspend fun autocadastro(@Body body: AutocadastroRequest): Response<UsuarioResponse>
 
     // ──────────────────────────────────────────────
+    // DASHBOARD
+    // ──────────────────────────────────────────────
+
+    @GET("dashboard")
+    suspend fun getDashboard(
+        @Header("Authorization") token: String
+    ): Response<DashboardResponse>
+
+    // ──────────────────────────────────────────────
     // ESTUDOS
     // ──────────────────────────────────────────────
 
