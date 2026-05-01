@@ -10,6 +10,7 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 | POST /autenticacao/solicitar_redefinicao | email(string) | mensagem(string) |
 | POST /autenticacao/validar_token_redefinicao | token(string) | valido(boolean) |
 | POST /autenticacao/redefinir_senha | token(string), nova_senha(string) | mensagem(string) |
+| POST /autenticacao/validar_token | token(string) | valido(boolean) |
 
 ## Usuários
 
