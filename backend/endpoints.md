@@ -168,7 +168,7 @@ Neste caso o sistema assume extensão `.png` por padrão.
 
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
-| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional: campanha \| unidade_amostral \| evento_amostragem \| mes \| ano \| estacao), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), unidade_ids(array int, opcional), evento_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional), latitude_min(decimal, opcional), latitude_max(decimal, opcional), longitude_min(decimal, opcional), longitude_max(decimal, opcional), fonte(string, opcional: variavel \| abundancia \| riqueza), fonte_x(string, opcional: idem fonte), fonte_y(string, opcional: idem fonte), nivel_agregacao(string, opcional: campanha \| unidade_amostral \| evento) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null) }. 422: chave inválida, dados insuficientes ou parâmetro inválido (fonte/agrupar_por/bounding box). 403: não é colaborador do estudo. 404: estudo não encontrado. |
+| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional: campanha \| unidade_amostral \| evento \| mes \| ano \| estacao), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), unidade_ids(array int, opcional), evento_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional), latitude_min(decimal, opcional), latitude_max(decimal, opcional), longitude_min(decimal, opcional), longitude_max(decimal, opcional), fonte(string, opcional: variavel \| abundancia \| riqueza), fonte_x(string, opcional: idem fonte), fonte_y(string, opcional: idem fonte), nivel_agregacao(string, opcional: campanha \| unidade_amostral \| evento) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null), urlArquivo(string URL\|null) }. 422: chave inválida, dados insuficientes ou parâmetro inválido (fonte/agrupar_por/nivel_agregacao/bounding box). 403: não é colaborador do estudo. 404: estudo não encontrado. |
 | GET /analises/estudos/:estudo_id/:chave/:arquivo | — | 200 arquivo ZIP (Content-Type: application/zip) contendo `resultado.json` (sempre), `resultado.xml` (sempre) e `resultado.html` (somente quando a análise retorna gráfico). 401 sem token. 403 não é colaborador do estudo. 404 arquivo ou estudo inexistente. |
 
 ### Chaves de análise disponíveis
@@ -286,12 +286,12 @@ Análises numéricas (`vetor_unico`, `dois_vetores`, `dois_grupos`, `multiplos_g
 | abundancias_por_amostra | — | (n/a) |
 | matriz_acumulacao | — | (n/a) |
 | abundancias_com_variaveis | variavel_ids | (n/a) |
-| dois_vetores | variavel_x_id, variavel_y_id | — (fonte_x/fonte_y) |
+| dois_vetores | variavel_x_id, variavel_y_id | — (fonte_x/fonte_y) — **caso misto suportado**: fonte_x=variavel exige variavel_x_id, fonte_y=abundancia/riqueza usa nivel_agregacao do request. Cada perna é independente. As duas pernas precisam resolver pra mesma dimensão DW (campanha/unidade/evento) — senão 422. |
 | vetor_unico | variavel_id | — (fonte) |
 | dois_grupos | variavel_id, grupo1_ids, grupo2_ids (nome_grupo1, nome_grupo2 opcionais) | grupo1_ids, grupo2_ids (fonte) |
 | multiplos_grupos | variavel_id, agrupar_por | agrupar_por (fonte) |
 
 Valores aceitos em `agrupar_por`:
 
-- **Hierárquicos**: `campanha`, `unidade_amostral`, `evento_amostragem`
-- **Temporais**: `mes` (`YYYY-MM`), `ano` (`YYYY`), `estacao` (Verão/Outono/Inverno/Primavera do hemisfério sul; dezembro cai no verão do ano seguinte)
+- **Hierárquicos**: `campanha`, `unidade_amostral`, `evento`
+- **Temporais**: `mes` (`YYYY-MM`), `ano` (`YYYY`), `estacao` (Verão/Outono/Inverno/Primavera do hemisfério sul; dezembro cai no verão do ano seguinte). Aceitos apenas com `fonte=abundancia`/`riqueza` ou com `fonte=variavel` quando a variável é a nível registro/evento — variáveis a nível campanha/unidade são rejeitadas porque não têm granularidade temporal.

@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class ServicoDadosAnalise
+  # Levantada quando dois_vetores recebe x e y em dimensões DW diferentes
+  # (ex.: variavel a nivel campanha + fonte=abundancia a nivel unidade). Sem essa
+  # validação, hash_x.keys & hash_y.keys faria interseção crua de Integer entre
+  # espaços de IDs incompatíveis e produziria correlações inventadas quando
+  # IDs colidissem por acaso entre campanha e unidade.
+  class NivelIncompativel < StandardError; end
+
   def montar_dados(estudo_id:, tipo_dado:, params:)
     @campanha_ids = params[:campanha_ids].presence
     @unidade_ids = params[:unidade_ids].presence
@@ -99,7 +106,7 @@ class ServicoDadosAnalise
     nome_index = {}
 
     variavel_ids.each do |vid|
-      valores_variavel_unicos(estudo_id: estudo_id, variavel_id: vid).each do |r|
+      valores_por_unidade(estudo_id: estudo_id, variavel_id: vid).each do |r|
         var_index[[ r.fk_unidade_amostral, r.id_variavel ]] = r.valor_numerico&.to_f || 0.0
         nome_index[r.id_variavel] ||= r.nome_variavel
       end
@@ -128,6 +135,25 @@ class ServicoDadosAnalise
     fonte_x = (params[:fonte_x] || "variavel").to_s
     fonte_y = (params[:fonte_y] || "variavel").to_s
     nivel = params[:nivel_agregacao] || "unidade_amostral"
+
+    # Quando fonte é variavel, a variavel_id correspondente é obrigatória. Sem
+    # essa validação, dimensao_efetiva retorna nil pra essa perna, o cross-nivel
+    # check é pulado (col_x && col_y && ...), e o request cai em "dados
+    # insuficientes" genérico — UX ruim, esconde a causa real.
+    if fonte_x == "variavel" && params[:variavel_x_id].blank?
+      raise NivelIncompativel, "variavel_x_id é obrigatório quando fonte_x=variavel"
+    end
+    if fonte_y == "variavel" && params[:variavel_y_id].blank?
+      raise NivelIncompativel, "variavel_y_id é obrigatório quando fonte_y=variavel"
+    end
+
+    col_x = dimensao_efetiva(estudo_id: estudo_id, fonte: fonte_x, variavel_id: params[:variavel_x_id], nivel: nivel)
+    col_y = dimensao_efetiva(estudo_id: estudo_id, fonte: fonte_y, variavel_id: params[:variavel_y_id], nivel: nivel)
+    if col_x && col_y && col_x != col_y
+      raise NivelIncompativel,
+            "x (#{fonte_x}: #{col_x}) e y (#{fonte_y}: #{col_y}) precisam estar na mesma dimensão. " \
+            "Ajuste nivel_agregacao ou escolha variáveis no mesmo nível."
+    end
 
     hash_x, nome_x = hash_bivariado(
       estudo_id: estudo_id, fonte: fonte_x,
@@ -168,11 +194,34 @@ class ServicoDadosAnalise
         estudo_id: estudo_id, variavel_id: variavel_id, unidade_ids: grupo2_ids,
       )
     else
-      por_unidade = dados_derivados(
-        estudo_id: estudo_id, fonte: fonte, nivel_agregacao: "unidade_amostral",
+      nivel = params[:nivel_agregacao] || "unidade_amostral"
+      por_dimensao = dados_derivados(
+        estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel,
       )
-      valores_g1 = grupo1_ids.filter_map { |id| por_unidade[id]&.to_f }
-      valores_g2 = grupo2_ids.filter_map { |id| por_unidade[id]&.to_f }
+      valores_g1 = grupo1_ids.filter_map { |id| por_dimensao[id]&.to_f }
+      valores_g2 = grupo2_ids.filter_map { |id| por_dimensao[id]&.to_f }
+
+      # Detecta IDs que não retornaram dados pra dimensão escolhida. Sem detectar,
+      # tanto o caso "todos errados" quanto o caso "alguns errados (lookup parcial)"
+      # caíam em mensagens genéricas — pior, lookup parcial com IDs colidindo por
+      # acaso entre dimensões fazia o teste t rodar com vetores corrompidos sem
+      # aviso. Agora distinguimos: total = 0 ⇒ todos errados; total < esperado ⇒
+      # alguns errados (parcial). Mensagem diferente em cada caso.
+      total_obtido = valores_g1.size + valores_g2.size
+      total_esperado = grupo1_ids.size + grupo2_ids.size
+      if por_dimensao.any? && total_obtido < total_esperado
+        if total_obtido.zero?
+          raise NivelIncompativel,
+                "Nenhum dos IDs em grupo1_ids/grupo2_ids corresponde a #{nivel} no estudo. " \
+                "Para fonte=#{fonte} com nivel_agregacao=#{nivel}, os grupo*_ids precisam " \
+                "ser IDs de #{nivel}."
+        else
+          raise NivelIncompativel,
+                "Alguns IDs em grupo1_ids/grupo2_ids não retornaram dados para #{nivel} " \
+                "(#{total_obtido}/#{total_esperado} encontrados). Verifique se são IDs de " \
+                "#{nivel} válidos com registros após os filtros aplicados."
+        end
+      end
     end
 
     return nil if valores_g1.empty? || valores_g2.empty?
@@ -187,7 +236,9 @@ class ServicoDadosAnalise
 
   # ==================== Múltiplos Grupos ====================
 
-  AGRUPAMENTOS_VALIDOS = %w[campanha unidade_amostral evento_amostragem mes ano estacao].freeze
+  AGRUPAMENTOS_VALIDOS = %w[campanha unidade_amostral evento mes ano estacao].freeze
+
+  AGRUPAMENTOS_TEMPORAIS = %w[mes ano estacao].freeze
 
   def montar_multiplos_grupos(estudo_id:, params:)
     fonte = (params[:fonte] || "variavel").to_s
@@ -197,6 +248,8 @@ class ServicoDadosAnalise
     rows = if fonte == "variavel"
       variavel_id = params[:variavel_id]
       return nil if variavel_id.blank?
+
+      validar_compatibilidade_temporal!(estudo_id: estudo_id, variavel_id: variavel_id, agrupar_por: agrupar_por)
       rows_variavel_para_grupos(estudo_id: estudo_id, variavel_id: variavel_id)
     else
       rows_derivadas_para_grupos(estudo_id: estudo_id, fonte: fonte)
@@ -334,10 +387,29 @@ class ServicoDadosAnalise
   end
 
   def valores_variavel_por_unidade(estudo_id:, variavel_id:, unidade_ids:)
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+    valores_por_unidade(estudo_id: estudo_id, variavel_id: variavel_id)
       .where(fk_unidade_amostral: unidade_ids)
       .map { |r| r.valor_numerico&.to_f }
       .compact
+  end
+
+  # Sempre 1 linha por unidade amostral, com o valor da variável replicado quando
+  # ela é a nível campanha (que tem 1 valor por campanha estendido a todas as unidades
+  # daquela campanha pelo DW). Usado por callers que precisam de matriz unit-keyed
+  # (RDA/CCA, dois_grupos com fonte=variavel) — sem isso, variável a nível campanha
+  # devolveria 1 unidade arbitrária por campanha e o resto cairia em 0.0.
+  #
+  # Limitação: pra variáveis a nível EVENTO ou REGISTRO, há
+  # múltiplos valores por unidade (cada evento/registro tem o seu). O DISTINCT ON
+  # devolve UM valor — agora determinístico por causa do tiebreaker `id_registro`,
+  # mas ainda é "1 valor arbitrário entre vários", não uma agregação. Pra esses
+  # níveis, considere usar fonte=abundancia/riqueza com nivel_agregacao apropriado,
+  # ou aceite que a matriz reflete o registro de menor id por unidade.
+  def valores_por_unidade(estudo_id:, variavel_id:)
+    base_analises(estudo_id)
+      .where(id_variavel: variavel_id)
+      .select("DISTINCT ON (fk_unidade_amostral) fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_registro, id_variavel, nome_variavel, valor_numerico")
+      .order(:fk_unidade_amostral, :id_registro)
   end
 
   # Escolhe a coluna do DISTINCT ON conforme o nivel_variavel da variável solicitada.
@@ -345,18 +417,22 @@ class ServicoDadosAnalise
   # nativa — normalizar tudo por fk_unidade_amostral perde dados de eventos/registros
   # distintos na mesma unidade e replica valor por unidade no caso de campanha.
   # O retorno é whitelist, então é seguro interpolar no SQL.
+  # Memoizado por instância pra evitar N+1 quando vários callers consultam a mesma variável.
   def coluna_do_nivel_variavel(estudo_id:, variavel_id:)
-    nivel = base_analises(estudo_id)
-      .where(id_variavel: variavel_id)
-      .limit(1)
-      .pluck(:nivel_variavel)
-      .first
+    @nivel_cache ||= {}
+    @nivel_cache[variavel_id] ||= begin
+      nivel = base_analises(estudo_id)
+        .where(id_variavel: variavel_id)
+        .limit(1)
+        .pluck(:nivel_variavel)
+        .first
 
-    case nivel.to_s.downcase
-    when "campanha" then "fk_campanha"
-    when "evento"   then "fk_evento"
-    when "registro" then "id_registro"
-    else "fk_unidade_amostral"
+      case nivel.to_s.downcase
+      when "campanha" then "fk_campanha"
+      when "evento"   then "fk_evento"
+      when "registro" then "id_registro"
+      else "fk_unidade_amostral"
+      end
     end
   end
 
@@ -414,6 +490,45 @@ class ServicoDadosAnalise
     when "evento"   then :fk_evento
     else :fk_unidade_amostral
     end
+  end
+
+  # Devolve a coluna DW que vai chavear o hash de cada perna do dois_vetores.
+  # fonte=variavel usa o nivel_variavel da própria variável (via coluna_do_nivel_variavel),
+  # fonte derivada usa o nivel_agregacao do request. Retorna nil quando a perna ainda
+  # não tem variavel_id pra resolver — caso em que deixa o caller decidir como tratar.
+  def dimensao_efetiva(estudo_id:, fonte:, variavel_id:, nivel:)
+    return nil if fonte == "variavel" && variavel_id.blank?
+
+    if fonte == "variavel"
+      coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    else
+      coluna_nivel_agregacao(nivel).to_s
+    end
+  end
+
+  # Agrupar por mes/ano/estacao em multiplos_grupos com fonte=variavel só faz sentido
+  # quando a variável tem 1:1 com data: nivel=registro (cada registro tem sua data) ou
+  # nivel=evento (cada evento tem sua data, todos os registros do evento compartilham).
+  # Pra nivel=campanha ou nivel=unidade, o DISTINCT ON pega ano/mes do id_registro
+  # arbitrário escolhido pelo Postgres — ANOVA/Kruskal acabam com 1 observação por grupo.
+  # Rejeita explicitamente em vez de devolver resultado silenciosamente errado.
+  def validar_compatibilidade_temporal!(estudo_id:, variavel_id:, agrupar_por:)
+    return unless AGRUPAMENTOS_TEMPORAIS.include?(agrupar_por)
+
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    return if %w[id_registro fk_evento].include?(coluna)
+
+    nivel_legivel = case coluna
+    when "fk_campanha" then "campanha"
+    when "fk_unidade_amostral" then "unidade"
+    else coluna
+    end
+
+    raise NivelIncompativel,
+          "agrupar_por=#{agrupar_por} requer variável a nível registro ou evento " \
+          "(cada registro/evento tem uma data). A variável solicitada é a nível " \
+          "#{nivel_legivel}, que não tem granularidade temporal — ANOVA/Kruskal " \
+          "acabariam com 1 observação por grupo."
   end
 
   # ==================== Helpers de Múltiplos Grupos ====================
@@ -477,7 +592,7 @@ class ServicoDadosAnalise
       ids = rows.map { |r| r[:fk_unidade_amostral] }.compact.uniq
       unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
       ->(row) { unidades[row[:fk_unidade_amostral]]&.nome_unidade_amostral || "Unidade #{row[:fk_unidade_amostral]}" }
-    when "evento_amostragem"
+    when "evento"
       ->(row) { "Evento #{row[:fk_evento]}" }
     when "ano"
       ->(row) { row[:ano]&.to_s }

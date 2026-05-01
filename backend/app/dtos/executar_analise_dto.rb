@@ -5,6 +5,7 @@ class ExecutarAnaliseDto
 
   FONTES = %w[variavel abundancia riqueza].freeze
   NIVEIS_AGREGACAO = %w[campanha unidade_amostral evento].freeze
+  AGRUPAMENTOS = %w[campanha unidade_amostral evento mes ano estacao].freeze
 
   attr_accessor :chave, :variavel_ids, :variavel_x_id, :variavel_y_id, :variavel_id,
                 :agrupar_por, :grupo1_ids, :grupo2_ids, :nome_grupo1, :nome_grupo2,
@@ -17,6 +18,7 @@ class ExecutarAnaliseDto
   validate :validar_bounding_box
   validate :validar_fontes
   validate :validar_nivel_agregacao
+  validate :validar_agrupar_por
 
   def initialize(params = {})
     @chave = params[:chave]
@@ -128,6 +130,13 @@ class ExecutarAnaliseDto
     return if @nivel_agregacao.nil? || @nivel_agregacao == ""
     unless NIVEIS_AGREGACAO.include?(@nivel_agregacao.to_s)
       errors.add(:nivel_agregacao, "deve ser um de: #{NIVEIS_AGREGACAO.join(", ")}")
+    end
+  end
+
+  def validar_agrupar_por
+    return if @agrupar_por.nil? || @agrupar_por == ""
+    unless AGRUPAMENTOS.include?(@agrupar_por.to_s)
+      errors.add(:agrupar_por, "deve ser um de: #{AGRUPAMENTOS.join(", ")}")
     end
   end
 end
