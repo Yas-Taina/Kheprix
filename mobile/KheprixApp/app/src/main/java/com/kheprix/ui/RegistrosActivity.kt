@@ -126,7 +126,12 @@ class RegistrosActivity : BaseDrawerActivity() {
         carregarRegistros()
     }
 
-    override fun onResume() { super.onResume(); carregarRegistros() }
+    override fun onResume() {
+        super.onResume()
+        carregarEspecies()
+        carregarDetalhes()
+        carregarRegistros()
+    }
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
@@ -163,7 +168,7 @@ class RegistrosActivity : BaseDrawerActivity() {
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                     )
                     resp.body()?.let { e ->
-                        preencherCardEvento(e.horarioInicio, e.horarioFim, e.esforcoReal)
+                        preencherCardEvento(e.horarioInicio, e.esforcoReal)
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -172,9 +177,8 @@ class RegistrosActivity : BaseDrawerActivity() {
         }
     }
 
-    private fun preencherCardEvento(inicio: String, fim: String?, esforco: String?) {
+    private fun preencherCardEvento(inicio: String, esforco: String?) {
         binding.tvDetalheInicio.text  = inicio.replace("T", " ").take(16)
-        binding.tvDetalheFim.text     = fim?.replace("T", " ")?.take(16) ?: "—"
         binding.tvDetalheEsforco.text = esforco ?: "—"
     }
 
@@ -185,7 +189,7 @@ class RegistrosActivity : BaseDrawerActivity() {
             eventoId > 0 -> eventoDao.listarTodos().firstOrNull { it.remoteId == eventoId }
             else -> eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome }
         } ?: return
-        preencherCardEvento(evento.horarioInicio, evento.horarioFim, evento.esforcoReal)
+        preencherCardEvento(evento.horarioInicio, evento.esforcoReal)
     }
 
     private fun carregarRegistros() {
@@ -390,6 +394,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
 
+    private var registroCarregado: RegistroResponse? = null
+
     private val locationPermLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
             if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true) obterLocalizacao()
@@ -403,6 +409,12 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     private val camera = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == Activity.RESULT_OK) processarImagem(cameraUri)
     }
+
+    private val cameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) abrirCamera()
+            else Toast.makeText(this, "Permissão de câmera necessária", Toast.LENGTH_SHORT).show()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -421,7 +433,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         binding.ivGaleria.setOnClickListener {
             galeria.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))
         }
-        binding.ivCamera.setOnClickListener { abrirCamera() }
+        binding.ivCamera.setOnClickListener { verificarPermissaoCamera() }
         binding.ivCalendario.setOnClickListener { abrirDatePicker() }
         binding.etHora.setOnClickListener { abrirTimePicker() }
         binding.ivGpsLat.setOnClickListener { verificarPermissaoGps() }
@@ -447,6 +459,15 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         uri ?: return
         fotoBase64 = PhotoUtils.uriToBase64(this, uri)
         binding.tvNomeFoto.text = uri.lastPathSegment ?: "foto.jpg"
+    }
+
+    private fun verificarPermissaoCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED) {
+            abrirCamera()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     private fun abrirCamera() {
@@ -587,6 +608,24 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             }
             binding.layoutVariaveis.addView(linha)
         }
+
+        aplicarValoresVariaveis()
+    }
+
+    private fun aplicarValoresVariaveis() {
+        val r = registroCarregado ?: return
+        if (camposVariavel.isEmpty()) return
+        r.valoresVariaveis?.forEach { vv ->
+            when (val view = camposVariavel[vv.variavelId]) {
+                is Spinner -> view.setSelection(when (vv.valor.trim().lowercase()) {
+                    "true", "verdadeiro" -> 1
+                    "false", "falso"     -> 2
+                    else                 -> 0
+                })
+                is EditText -> view.setText(vv.valor)
+                else -> {}
+            }
+        }
     }
 
     /** Cria a view de entrada adequada ao tipoDado da variável. */
@@ -627,6 +666,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
                 )
                 resp.body()?.let { r ->
+                    registroCarregado = r
                     val dp = r.data.split("-")
                     dataStr = r.data
                     binding.etData.setText(if (dp.size == 3) "${dp[2]}/${dp[1]}/${dp[0]}" else r.data)
@@ -642,6 +682,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     // Selecionar espécie no spinner
                     val idx = especies.indexOfFirst { it.id == r.especieId }
                     if (idx >= 0) binding.spinnerEspecie.setSelection(idx + 1)
+                    aplicarValoresVariaveis()
                 }
             } catch (_: Exception) {}
         }
@@ -678,7 +719,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                 val req = RegistroPatchRequest(
                     especieId = form.especieId, data = form.data, hora = form.hora,
                     latitude = form.latitude, longitude = form.longitude,
-                    qtdeIndividuos = form.qtdeIndividuos, foto = form.foto
+                    qtdeIndividuos = form.qtdeIndividuos, foto = form.foto,
+                    valoresVariaveis = form.valoresVariaveis
                 )
                 val resp = RetrofitClient.apiService.patchRegistro(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId, req
@@ -720,8 +762,40 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             especieId = especie.id, data = dataFinal, hora = horaFinal,
             latitude = lat, longitude = lon,
             qtdeIndividuos = binding.etQtde.text.toString().trim().toIntOrNull(),
-            foto = fotoBase64
+            foto = fotoBase64,
+            valoresVariaveis = coletarValoresVariaveis()
         )
+    }
+
+    private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
+        if (camposVariavel.isEmpty()) return null
+        val idPorVariavel: Map<Int, Int> =
+            registroCarregado?.valoresVariaveis
+                ?.mapNotNull { vv -> vv.id?.let { vv.variavelId to it } }
+                ?.toMap() ?: emptyMap()
+
+        val itens = camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+
+            if (modoEdicao) {
+                val existingId = idPorVariavel[varId]
+                if (existingId != null)
+                    ValorVariavelRequest(id = existingId, variavelId = varId, valor = valor)
+                else
+                    ValorVariavelRequest(variavelId = varId, valor = valor)
+            } else {
+                ValorVariavelRequest(variavelId = varId, valor = valor)
+            }
+        }
+        return itens.ifEmpty { null }
     }
 
     /**
@@ -796,6 +870,9 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     private var eventoId       = -1
     private var registroId     = -1
 
+    private var registroCarregado: RegistroResponse? = null
+    private val variaveis = mutableListOf<VariavelResponse>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegistrosDetalheBinding.inflate(layoutInflater)
@@ -837,6 +914,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
                 )
                 resp.body()?.let { r ->
+                    registroCarregado = r
                     binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
                     binding.tvLatitude.text  = r.latitude.toString()
                     binding.tvLongitude.text = r.longitude.toString()
@@ -853,6 +931,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     )
 
                     carregarEspecie(r.especieId)
+                    renderizarVariaveis()
                 }
             } catch (_: Exception) {
                 Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
@@ -881,19 +960,29 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                 val resp = RetrofitClient.apiService.getVariaveis(
                     SessionManager.getAuthHeader(), estudoRemoteId, nivelAplicacao = "registro"
                 )
-                if (resp.isSuccessful) renderizarVariaveis(resp.body() ?: emptyList())
+                if (resp.isSuccessful) {
+                    variaveis.clear()
+                    variaveis.addAll(resp.body() ?: emptyList())
+                    renderizarVariaveis()
+                }
             } catch (_: Exception) { }
         }
     }
 
-    private fun renderizarVariaveis(vars: List<VariavelResponse>) {
+    private fun renderizarVariaveis() {
         binding.layoutVariaveis.removeAllViews()
-        if (vars.isEmpty()) {
+        if (variaveis.isEmpty()) {
             binding.tvVariaveisTitle.visibility = View.GONE
             return
         }
         binding.tvVariaveisTitle.visibility = View.VISIBLE
-        vars.forEachIndexed { i, v ->
+
+        val valoresPorVariavel: Map<Int, String> =
+            registroCarregado?.valoresVariaveis
+                ?.associate { it.variavelId to it.valor }
+                ?: emptyMap()
+
+        variaveis.forEachIndexed { i, v ->
             val nome = TextView(this).apply {
                 text = "${v.nome}${if (v.metrica.isNullOrBlank()) "" else " (${v.metrica})"}:"
                 textSize = 14f
@@ -902,7 +991,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                 setPadding(0, if (i > 0) 10 else 0, 0, 0)
             }
             val valor = TextView(this).apply {
-                text = "—"
+                text = formatarValor(valoresPorVariavel[v.id], v.tipoDado)
                 textSize = 15f
                 setTextColor(0xFF4A5240.toInt())
                 typeface = android.graphics.Typeface.MONOSPACE
@@ -910,6 +999,17 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
             binding.layoutVariaveis.addView(nome)
             binding.layoutVariaveis.addView(valor)
         }
+    }
+
+    private fun formatarValor(valor: String?, tipoDado: String): String {
+        if (valor.isNullOrBlank()) return "—"
+        return if (tipoDado == "boolean") {
+            when (valor.trim().lowercase()) {
+                "true", "verdadeiro" -> "Verdadeiro"
+                "false", "falso"     -> "Falso"
+                else                 -> valor
+            }
+        } else valor
     }
 
     private fun confirmarDelete() {

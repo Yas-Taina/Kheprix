@@ -75,11 +75,7 @@
                         android:text="Data início:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
                     <TextView android:id="@+id/tvDetalheInicio" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Data fim:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <TextView android:id="@+id/tvDetalheFim" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Descrição:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
                     <TextView android:id="@+id/tvDetalheDescricao" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="8dp"/>

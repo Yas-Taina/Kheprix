@@ -126,8 +126,8 @@ def main(base_url: str) -> int:
     # ------------------------------------------------------------------ ESTUDO 1
     print("\n[2] Estudo 1 (dono: Joao) com variaveis em todos os niveis")
     code, est1 = http("POST", "/estudos", joao, {
-        "nome": "Mata Atlantica - Nucleo Picinguaba",
-        "observacoes": "Estudo de longo prazo sobre fauna terrestre",
+        "nome": "Entomofauna - Mata Atlantica Nucleo Picinguaba",
+        "observacoes": "Estudo de longo prazo sobre insetos terrestres",
         "variaveis": [
             {"nome": "Responsavel",   "nivel_aplicacao": "campanha", "tipo_dado": "string"},
             {"nome": "Tipo de solo",  "nivel_aplicacao": "unidade",  "tipo_dado": "string"},
@@ -149,13 +149,13 @@ def main(base_url: str) -> int:
     var_comportamento = var_by_name["Comportamento"]["id"]
 
     # ------------------------------------------------------------------ ESPECIES
-    print("\n[3] Cadastrando especies")
+    print("\n[3] Cadastrando especies (apenas insetos)")
     especies_payload = [
-        {"classe": "Mammalia", "ordem": "Carnivora",   "familia": "Felidae",     "genero": "Panthera",  "especie": "onca",            "nome_popular": "Onca-pintada",        "status_conservacao": "Vulneravel",       "endemismo": False},
-        {"classe": "Aves",     "ordem": "Passeriformes","familia": "Thraupidae",  "genero": "Tangara",   "especie": "seledon",         "nome_popular": "Saira-sete-cores",    "status_conservacao": "Pouco preocupante","endemismo": True},
-        {"classe": "Mammalia", "ordem": "Pilosa",      "familia": "Bradypodidae", "genero": "Bradypus",  "especie": "torquatus",       "nome_popular": "Preguica-de-coleira", "status_conservacao": "Vulneravel",       "endemismo": True},
-        {"classe": "Reptilia", "ordem": "Squamata",    "familia": "Viperidae",    "genero": "Bothrops",  "especie": "jararaca",        "nome_popular": "Jararaca",            "status_conservacao": "Pouco preocupante","endemismo": False},
-        {"classe": "Insecta",  "ordem": "Hymenoptera", "familia": "Formicidae",   "genero": "Atta",      "especie": "laevigata",       "nome_popular": "Sauva",               "status_conservacao": "Pouco preocupante","endemismo": False},
+        {"classe": "Insecta", "ordem": "Hymenoptera", "familia": "Formicidae",  "genero": "Atta",          "especie": "laevigata",  "nome_popular": "Sauva-cabeca-de-vidro", "status_conservacao": "Pouco preocupante", "endemismo": False},
+        {"classe": "Insecta", "ordem": "Coleoptera",  "familia": "Scarabaeidae","genero": "Dichotomius",   "especie": "geminatus",  "nome_popular": "Besouro-rola-bosta",    "status_conservacao": "Pouco preocupante", "endemismo": False},
+        {"classe": "Insecta", "ordem": "Lepidoptera", "familia": "Nymphalidae", "genero": "Heliconius",    "especie": "erato",      "nome_popular": "Borboleta-erato",       "status_conservacao": "Pouco preocupante", "endemismo": False},
+        {"classe": "Insecta", "ordem": "Odonata",     "familia": "Libellulidae","genero": "Erythrodiplax", "especie": "fusca",      "nome_popular": "Libelula-parda",        "status_conservacao": "Pouco preocupante", "endemismo": False},
+        {"classe": "Insecta", "ordem": "Hymenoptera", "familia": "Apidae",      "genero": "Melipona",      "especie": "scutellaris","nome_popular": "Abelha-urucu",          "status_conservacao": "Vulneravel",        "endemismo": True},
     ]
     especies_ids: list[int] = []
     for sp in especies_payload:
@@ -168,7 +168,7 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/estudos/{estudo_id}/especies/{especies_ids[0]}", joao)
     step("GET /especies/:id", code, _)
     code, _ = http("PATCH", f"/estudos/{estudo_id}/especies/{especies_ids[1]}", joao,
-                   {"nome_popular": "Saira-sete-cores (Mata Atlantica)"})
+                   {"nome_popular": "Besouro-rola-bosta (Mata Atlantica)"})
     step("PATCH especie", code, _)
 
     # ------------------------------------------------------------------ CAMPANHAS
@@ -195,12 +195,14 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/estudos/{estudo_id}/campanhas/{campanhas[0]['id']}", joao)
     step("GET campanha :id", code, _)
     # PATCH campanha - exercita updated_at e altera valores_variaveis
+    # Em edicao o DTO exige `id` do valor_variavel existente (nao `variavel_id`)
+    valor_var_id = campanhas[0]["valores_variaveis"][0]["id"]
     code, _ = http("PATCH", f"/estudos/{estudo_id}/campanhas/{campanhas[0]['id']}", joao, {
         "nome": campanhas[0]["nome"] + " (revisada)",
         "data_inicio": campanhas[0]["data_inicio"],
         "data_fim": campanhas[0].get("data_fim"),
         "descricao": "Descricao atualizada apos revisao",
-        "valores_variaveis": [{"variavel_id": var_responsavel, "valor": "Joao (revisado)"}],
+        "valores_variaveis": [{"id": valor_var_id, "valor": "Joao (revisado)"}],
     })
     step("PATCH campanha[0]", code, _)
 
@@ -379,8 +381,8 @@ def main(base_url: str) -> int:
                    {"codigo": codigo["codigo"], "senha_autocadastro": nova_senha})
     step("POST /estudos/ingressar (Beatriz)", code, _)
 
-    # ------------------------------------------------------------------ ESTUDO 2 (Carlos)
-    print("\n[8] Estudo 2 (dono: Carlos) com Joao convidado e aceitando")
+    # ------------------------------------------------------------------ ESTUDO 2 (Carlos) + convites pendentes para Joao
+    print("\n[8] Estudos secundarios — 4 convites pendentes para Joao")
     code, est2 = http("POST", "/estudos", carlos, {
         "nome": "Cerrado - Chapada dos Veadeiros",
         "observacoes": "Estudo paralelo para testar visao de colaborador",
@@ -391,11 +393,33 @@ def main(base_url: str) -> int:
     })
     step("POST /estudos (Estudo 2 - Carlos)", code, est2)
     estudo2_id = est2["id"]
+    # Convite #1 para Joao - fica pendente (NAO aceita)
     code, conv_joao = http("POST", f"/estudos/{estudo2_id}/convites", carlos,
                            {"email_convidado": DONO_PRINCIPAL["email"]})
-    step("POST convite Joao -> Estudo 2", code, conv_joao)
-    code, _ = http("POST", f"/convites/{conv_joao['token']}/aceitar", joao)
-    step("POST aceitar convite Joao", code, _)
+    step("POST convite Joao -> Estudo 2 (pendente)", code, conv_joao)
+
+    # Tres estudos adicionais (Maria, Beatriz, Pedro) cada um convidando Joao
+    estudos_extras = [
+        (maria,   "Caatinga - Reserva Serra das Almas"),
+        (beatriz, "Pampa - Estancia do Sul"),
+        (pedro,   "Pantanal - Rio Negro"),
+    ]
+    for token_dono, nome_estudo in estudos_extras:
+        code, est_extra = http("POST", "/estudos", token_dono, {
+            "nome": nome_estudo,
+            "observacoes": "Estudo auxiliar com convite pendente para Joao",
+            "variaveis": [
+                {"nome": "Observacao", "nivel_aplicacao": "campanha", "tipo_dado": "string"},
+            ],
+        })
+        step(f"POST /estudos ({nome_estudo})", code, est_extra)
+        code, conv_extra = http("POST", f"/estudos/{est_extra['id']}/convites", token_dono,
+                                {"email_convidado": DONO_PRINCIPAL["email"]})
+        step(f"POST convite Joao -> {nome_estudo} (pendente)", code, conv_extra)
+
+    # Sanidade: Joao deve ter 4 convites pendentes
+    code, convites_joao = http("GET", "/convites", joao)
+    step("GET /convites recebidos (Joao)", code, convites_joao)
 
     # ------------------------------------------------------------------ ESTUDOS - GETs/filtros
     print("\n[9] Listagens e filtros de estudos")
@@ -415,50 +439,22 @@ def main(base_url: str) -> int:
     step("GET /dashboard (Maria - colaboradora)", code, _)
 
     # ------------------------------------------------------------------ ANALISES
-    print("\n[11] Analises (varios tipos cobrindo categorias do catalogo)")
-    print("     NOTA: as analises consultam o Data Warehouse, que e populado")
-    print("     pelo DAG do Airflow. Sem o DAG executado, e esperado 422 com")
-    print("     'dados insuficientes'. As chamadas sao feitas para exercitar")
-    print("     o endpoint (rota, autorizacao, validacao de chave).")
-    analises_simples = ["shannon", "simpson", "margalef", "pielou", "berger_parker",
-                        "brillouin", "macintosh", "hurlbert", "mcnaughton",
-                        "chao1", "jackknife1", "jackknife2", "bootstrap", "ace",
-                        "lognormal", "logserie", "geometrica", "vara_quebrada", "rarefacao"]
-    for chave in analises_simples:
-        code, _ = http("POST", f"/estudos/{estudo_id}/analises/executar", joao, {"chave": chave})
-        step(f"analise {chave}", code, _)
-
-    analises_amostra = ["chao2", "ice", "jaccard", "bray_curtis", "morisita", "sorensen", "nmds", "pca"]
-    for chave in analises_amostra:
-        code, _ = http("POST", f"/estudos/{estudo_id}/analises/executar", joao, {"chave": chave})
-        step(f"analise {chave}", code, _)
-
-    # Vetor unico (Shapiro)
-    code, _ = http("POST", f"/estudos/{estudo_id}/analises/executar", joao,
-                   {"chave": "shapiro", "variavel_id": var_temperatura})
-    step("analise shapiro", code, _)
-
-    # Dois vetores (Pearson, Spearman, Kendall, regressao_linear, GLMs)
-    for chave in ["pearson", "spearman", "kendall", "regressao_linear",
-                  "modelo_gaussiano", "modelo_gamma", "modelo_poisson", "modelo_binomial_negativa"]:
-        code, _ = http("POST", f"/estudos/{estudo_id}/analises/executar", joao,
-                       {"chave": chave, "variavel_x_id": var_temperatura, "variavel_y_id": var_precipitacao})
-        step(f"analise {chave}", code, _)
-
-    # Multiplos grupos (ANOVA / Kruskal) - agrupar por campanha
-    for chave in ["anova", "kruskal"]:
-        code, _ = http("POST", f"/estudos/{estudo_id}/analises/executar", joao,
-                       {"chave": chave, "variavel_id": var_temperatura, "agrupar_por": "campanha"})
-        step(f"analise {chave} (por campanha)", code, _)
+    # As analises consultam o Data Warehouse populado pelo DAG do Airflow.
+    # Sem o DAG executado, todas falham com 422 ("dados insuficientes"), entao
+    # foram retiradas do seed para nao gerar ruido. Para exercita-las, rode os
+    # DAGs `extract_staging` e `transform_star_schema` antes e use um script
+    # dedicado de smoke test.
 
     # ------------------------------------------------------------------ EXPORTACAO
-    print("\n[12] Exportacao em todos os agrupamentos")
+    print("\n[11] Exportacao em todos os agrupamentos")
     for agrup in ["registro_ocorrencia", "evento_amostragem", "unidade_amostral", "campanha", "especie"]:
-        code, _ = http("GET", f"/estudos/{estudo_id}/exportar_dados?agrupamento={agrup}", joao)
-        step(f"exportar_dados agrupamento={agrup}", code, _)
+        code, _ = http("GET", f"/estudos/{estudo_id}/exportar_dados?formato=csv&agrupamento={agrup}", joao)
+        step(f"exportar_dados csv agrupamento={agrup}", code, _)
+    code, _ = http("GET", f"/estudos/{estudo_id}/exportar_dados?formato=xml", joao)
+    step("exportar_dados xml", code, _)
 
     # ------------------------------------------------------------------ DELETES (soft)
-    print("\n[13] Soft deletes para deixar entidades no estado 'excluido'")
+    print("\n[12] Soft deletes para deixar entidades no estado 'excluido'")
     # Deletar uma especie (a ultima)
     code, _ = http("DELETE", f"/estudos/{estudo_id}/especies/{especies_ids[-1]}", joao)
     step("DELETE especie[-1]", code, _)
@@ -476,7 +472,7 @@ def main(base_url: str) -> int:
     step("DELETE unidade[-1]", code, _)
 
     # ------------------------------------------------------------------ DASHBOARD final
-    print("\n[14] Resumo")
+    print("\n[13] Resumo")
     code, _ = http("GET", "/dashboard", joao)
     step("GET /dashboard final", code, _)
     code, lista_final = http("GET", "/estudos", joao)
@@ -486,6 +482,7 @@ def main(base_url: str) -> int:
     print(f"Login: email={DONO_PRINCIPAL['email']}  senha={DONO_PRINCIPAL['senha']}")
     print(f"Estudo principal id={estudo_id}  '{est1['nome']}'")
     print(f"Estudo secundario id={estudo2_id} '{est2['nome']}'")
+    print(f"Convites pendentes para {DONO_PRINCIPAL['email']}: 4 (aceitar/recusar)")
     return 0
 
 
