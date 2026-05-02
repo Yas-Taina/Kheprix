@@ -19,6 +19,8 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
 import com.kheprix.db.OfflineRepository
 import com.kheprix.models.UnidadeRequest
+import com.kheprix.models.UnidadeResponse
+import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 
@@ -57,6 +59,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private val variaveis = mutableListOf<VariavelResponse>()
     /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
+
+    /** Unidade carregada em modo edição — usada para preencher campos e
+     *  recuperar os ids dos valores_variaveis existentes ao salvar. */
+    private var unidadeCarregada: UnidadeResponse? = null
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -203,6 +209,31 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             }
             binding.layoutVariaveis.addView(linha)
         }
+
+        // Em modo edição, se a unidade já chegou, preencher imediatamente.
+        aplicarValoresVariaveis()
+    }
+
+    /** Aplica os valores das variáveis da unidade carregada nos campos
+     *  renderizados. Idempotente — chamado tanto após renderizar quanto
+     *  após carregar a unidade, pois os fluxos são assíncronos. */
+    private fun aplicarValoresVariaveis() {
+        val u = unidadeCarregada ?: return
+        if (camposVariavel.isEmpty()) return
+        u.valoresVariaveis?.forEach { vv ->
+            when (val view = camposVariavel[vv.variavelId]) {
+                is Spinner -> {
+                    val idx = when (vv.valor.trim().lowercase()) {
+                        "true", "verdadeiro" -> 1
+                        "false", "falso"     -> 2
+                        else                 -> 0
+                    }
+                    view.setSelection(idx)
+                }
+                is EditText -> view.setText(vv.valor)
+                else -> { /* tipo desconhecido: ignora */ }
+            }
+        }
     }
 
     private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
@@ -246,12 +277,15 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                 )
                 resp.body()?.let { u ->
+                    unidadeCarregada = u
+                    binding.etNomeUnidade.setText(u.nome)
                     latDecimal = u.latitude; lonDecimal = u.longitude
                     binding.etLatitude.setText(decimalToDms(u.latitude))
                     binding.etLongitude.setText(decimalToDms(u.longitude))
                     binding.etRaio.setText(u.raio?.toString() ?: "")
                     binding.etMetodoColeta.setText(u.metodoColeta ?: "")
                     binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+                    aplicarValoresVariaveis()
                 }
             } catch (_: Exception) {}
         }
@@ -319,8 +353,50 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             latitude = finalLat, longitude = finalLon,
             raio = binding.etRaio.text.toString().trim().toDoubleOrNull(),
             metodoColeta = binding.etMetodoColeta.text.toString().trim().ifEmpty { null },
-            esforcoAmostral = binding.etEsforcoAmostral.text.toString().trim().ifEmpty { null }
+            esforcoAmostral = binding.etEsforcoAmostral.text.toString().trim().ifEmpty { null },
+            valoresVariaveis = coletarValoresVariaveis()
         )
+    }
+
+    /** Monta os valores_variaveis a enviar.
+     *
+     * Em criação: cada item carrega `variavel_id` + `valor`.
+     * Em edição: o backend (`sincronizar_valores_variaveis`) só atualiza
+     * registros existentes, identificados por `id`. Para variáveis sem
+     * valor prévio salvo na unidade, ainda enviamos `variavel_id` (que o
+     * backend ignora no PATCH); itens com valor preenchido e id existente
+     * são atualizados; itens omitidos são removidos via soft delete.
+     */
+    private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
+        if (camposVariavel.isEmpty()) return null
+        val idPorVariavel: Map<Int, Int> =
+            unidadeCarregada?.valoresVariaveis
+                ?.mapNotNull { vv -> vv.id?.let { vv.variavelId to it } }
+                ?.toMap()
+                ?: emptyMap()
+
+        val itens = camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+
+            if (modoEdicao) {
+                val existenteId = idPorVariavel[varId]
+                if (existenteId != null)
+                    ValorVariavelRequest(id = existenteId, variavelId = varId, valor = valor)
+                else
+                    ValorVariavelRequest(variavelId = varId, valor = valor)
+            } else {
+                ValorVariavelRequest(variavelId = varId, valor = valor)
+            }
+        }
+        return itens.ifEmpty { null }
     }
 
     /**

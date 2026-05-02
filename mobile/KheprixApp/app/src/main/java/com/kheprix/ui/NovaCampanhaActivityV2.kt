@@ -63,9 +63,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
 
         if (modoEdicao) {
             binding.etNome.setText(intent.getStringExtra("campanha_nome") ?: "")
-            intent.getStringExtra("campanha_data_inicio")?.let { iso ->
-                binding.etDataInicio.setText(isoParaBr(iso))
-            }
         }
 
         // Campo e ícone calendário: abrem DatePickerDialog
@@ -119,12 +116,15 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                 val resp = RetrofitClient.apiService.getCampanha(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                 )
-                if (resp.isSuccessful) {
-                    resp.body()?.valoresVariaveis?.forEach { vv ->
+                resp.body()?.let { c ->
+                    binding.etNome.setText(c.nome)
+                    binding.etDataInicio.setText(isoParaBr(c.dataInicio))
+                    binding.etDescricao.setText(c.descricao ?: "")
+                    c.valoresVariaveis?.forEach { vv ->
                         aplicarValorNoCampo(vv.variavelId, vv.valor)
                     }
                 }
-            } catch (_: Exception) { /* offline: valores não pré-preenchidos */ }
+            } catch (_: Exception) { /* offline: campos mantêm valor do intent */ }
         }
     }
 
@@ -287,8 +287,8 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         return camposVariavel.entries.mapNotNull { (varId, view) ->
             val valor = when (view) {
                 is Spinner -> when (view.selectedItem?.toString()) {
-                    "Verdadeiro" -> "True"
-                    "Falso"      -> "False"
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
                     else         -> null
                 }
                 is EditText -> view.text.toString().trim().ifEmpty { null }

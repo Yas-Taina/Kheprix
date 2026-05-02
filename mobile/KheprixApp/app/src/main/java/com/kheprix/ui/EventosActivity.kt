@@ -25,6 +25,7 @@ import com.kheprix.db.OfflineRepository
 import com.kheprix.db.UnidadeDao
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
+import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -99,7 +100,11 @@ class EventosActivity : BaseDrawerActivity() {
         carregarEventos()
     }
 
-    override fun onResume() { super.onResume(); carregarEventos() }
+    override fun onResume() {
+        super.onResume()
+        carregarDetalhes()
+        carregarEventos()
+    }
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
@@ -110,6 +115,8 @@ class EventosActivity : BaseDrawerActivity() {
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                     )
                     resp.body()?.let { u ->
+                        unidadeNome = u.nome
+                        binding.tvUnidadeNome.text = u.nome
                         preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral)
                         return@launch
                     }
@@ -325,12 +332,12 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private var dataInicio = ""
     private var horaInicio = ""
-    private var dataFim = ""
-    private var horaFim = ""
 
     private val variaveis = mutableListOf<VariavelResponse>()
     /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
+
+    private var eventoCarregado: EventoResponse? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -345,12 +352,9 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
         binding.tvTitulo.text = if (modoEdicao) "Editar Evento" else "Novo Evento de Amostragem"
 
-        binding.ivCalendario.setOnClickListener { abrirDatePicker(inicio = true) }
-        binding.etDataInicio.setOnClickListener { abrirDatePicker(inicio = true) }
-        binding.etHoraInicio.setOnClickListener { abrirTimePicker(inicio = true) }
-        binding.ivCalendarioFim.setOnClickListener { abrirDatePicker(inicio = false) }
-        binding.etDataFim.setOnClickListener { abrirDatePicker(inicio = false) }
-        binding.etHoraFim.setOnClickListener { abrirTimePicker(inicio = false) }
+        binding.ivCalendario.setOnClickListener { abrirDatePicker() }
+        binding.etDataInicio.setOnClickListener { abrirDatePicker() }
+        binding.etHoraInicio.setOnClickListener { abrirTimePicker() }
 
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarEvento() else criarEvento()
@@ -365,23 +369,19 @@ class NovoEventoActivity : BaseDrawerActivity() {
         carregarVariaveis()
     }
 
-    private fun abrirDatePicker(inicio: Boolean) {
+    private fun abrirDatePicker() {
         val cal = Calendar.getInstance()
         DatePickerDialog(this, { _, y, m, d ->
-            val iso = "%04d-%02d-%02d".format(y, m + 1, d)
-            val br  = "%02d/%02d/%04d".format(d, m + 1, y)
-            if (inicio) { dataInicio = iso; binding.etDataInicio.setText(br) }
-            else        { dataFim = iso;    binding.etDataFim.setText(br) }
+            dataInicio = "%04d-%02d-%02d".format(y, m + 1, d)
+            binding.etDataInicio.setText("%02d/%02d/%04d".format(d, m + 1, y))
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    private fun abrirTimePicker(inicio: Boolean) {
+    private fun abrirTimePicker() {
         val cal = Calendar.getInstance()
         TimePickerDialog(this, { _, h, m ->
-            val iso = "%02d:%02d:00".format(h, m)
-            val exib = "%02d:%02d".format(h, m)
-            if (inicio) { horaInicio = iso; binding.etHoraInicio.setText(exib) }
-            else        { horaFim = iso;    binding.etHoraFim.setText(exib) }
+            horaInicio = "%02d:%02d:00".format(h, m)
+            binding.etHoraInicio.setText("%02d:%02d".format(h, m))
         }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
 
@@ -431,6 +431,24 @@ class NovoEventoActivity : BaseDrawerActivity() {
             }
             binding.layoutVariaveis.addView(linha)
         }
+
+        aplicarValoresVariaveis()
+    }
+
+    private fun aplicarValoresVariaveis() {
+        val e = eventoCarregado ?: return
+        if (camposVariavel.isEmpty()) return
+        e.valoresVariaveis?.forEach { vv ->
+            when (val view = camposVariavel[vv.variavelId]) {
+                is Spinner -> view.setSelection(when (vv.valor.trim().lowercase()) {
+                    "true", "verdadeiro" -> 1
+                    "false", "falso"     -> 2
+                    else                 -> 0
+                })
+                is EditText -> view.setText(vv.valor)
+                else -> {}
+            }
+        }
     }
 
     /** Cria a view de entrada adequada ao tipoDado da variável. */
@@ -469,9 +487,10 @@ class NovoEventoActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                 )
                 resp.body()?.let { e ->
-                    preencherDataHora(e.horarioInicio, inicio = true)
-                    e.horarioFim?.let { preencherDataHora(it, inicio = false) }
+                    eventoCarregado = e
+                    preencherDataHora(e.horarioInicio)
                     binding.etEsforcoReal.setText(e.esforcoReal ?: "")
+                    aplicarValoresVariaveis()
                 }
             } catch (_: Exception) {}
         }
@@ -543,20 +562,47 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun coletarFormulario(): EventoRequest? {
         val iniIso = montarIso(dataInicio, horaInicio, binding.etDataInicio.text.toString().trim(), binding.etHoraInicio.text.toString().trim())
-        val fimIso = montarIso(dataFim, horaFim, binding.etDataFim.text.toString().trim(), binding.etHoraFim.text.toString().trim())
         if (iniIso == null) {
             Toast.makeText(this, "Preencha data e hora de início", Toast.LENGTH_SHORT).show()
             return null
         }
-        if (fimIso == null) {
-            Toast.makeText(this, "Preencha data e hora de fim", Toast.LENGTH_SHORT).show()
-            return null
-        }
         return EventoRequest(
             horarioInicio = iniIso,
-            horarioFim = fimIso,
-            esforcoReal = binding.etEsforcoReal.text.toString().trim().ifEmpty { null }
+            horarioFim = null,
+            esforcoReal = binding.etEsforcoReal.text.toString().trim().ifEmpty { null },
+            valoresVariaveis = coletarValoresVariaveis()
         )
+    }
+
+    private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
+        if (camposVariavel.isEmpty()) return null
+        val idPorVariavel: Map<Int, Int> =
+            eventoCarregado?.valoresVariaveis
+                ?.mapNotNull { vv -> vv.id?.let { vv.variavelId to it } }
+                ?.toMap() ?: emptyMap()
+
+        val itens = camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+
+            if (modoEdicao) {
+                val existingId = idPorVariavel[varId]
+                if (existingId != null)
+                    ValorVariavelRequest(id = existingId, variavelId = varId, valor = valor)
+                else
+                    ValorVariavelRequest(variavelId = varId, valor = valor)
+            } else {
+                ValorVariavelRequest(variavelId = varId, valor = valor)
+            }
+        }
+        return itens.ifEmpty { null }
     }
 
     /** Combina data/hora em ISO "yyyy-MM-ddTHH:mm:ss"; retorna null se faltar algum. */
@@ -572,22 +618,15 @@ class NovoEventoActivity : BaseDrawerActivity() {
         return "${dataFinal}T${horaFinal}"
     }
 
-    /** Pré-preenche campos a partir de string ISO do backend. */
-    private fun preencherDataHora(iso: String, inicio: Boolean) {
+    /** Pré-preenche data/hora de início a partir de string ISO do backend. */
+    private fun preencherDataHora(iso: String) {
         val partes = iso.split("T")
         if (partes.size < 2) return
         val dp = partes[0].split("-")
         if (dp.size != 3) return
-        val br = "${dp[2]}/${dp[1]}/${dp[0]}"
-        val horaIsoStr = partes[1].take(8)
-        val horaExib = partes[1].take(5)
-        if (inicio) {
-            dataInicio = partes[0]; horaInicio = horaIsoStr
-            binding.etDataInicio.setText(br); binding.etHoraInicio.setText(horaExib)
-        } else {
-            dataFim = partes[0]; horaFim = horaIsoStr
-            binding.etDataFim.setText(br); binding.etHoraFim.setText(horaExib)
-        }
+        dataInicio = partes[0]; horaInicio = partes[1].take(8)
+        binding.etDataInicio.setText("${dp[2]}/${dp[1]}/${dp[0]}")
+        binding.etHoraInicio.setText(partes[1].take(5))
     }
 
     private fun setLoading(loading: Boolean) {

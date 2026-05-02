@@ -99,6 +99,7 @@ class UnidadesActivity : BaseDrawerActivity() {
 
     override fun onResume() {
         super.onResume()
+        carregarDetalhes()
         carregarUnidades()
     }
 
@@ -111,7 +112,6 @@ class UnidadesActivity : BaseDrawerActivity() {
                 resp.body()?.let { c ->
                     binding.tvDetalheNome.text      = c.nome
                     binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
-                    binding.tvDetalheFim.text       = if (c.dataFim != null) formatarData(c.dataFim) else "—"
                     binding.tvDetalheDescricao.text = c.descricao ?: "—"
                 }
             } catch (_: Exception) {}

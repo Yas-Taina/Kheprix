@@ -75,46 +75,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Data e Hora de Fim (2 colunas) -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="12dp">
-
-                <LinearLayout android:layout_width="0dp" android:layout_weight="1"
-                    android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="8dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Data de Fim:" android:textSize="14sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent" android:layout_height="48dp"
-                        android:background="@drawable/bg_field_green" android:layout_marginTop="4dp">
-                        <EditText android:id="@+id/etDataFim"
-                            android:layout_width="0dp" android:layout_height="match_parent"
-                            android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="31/12/2026" android:focusable="false"
-                            android:textCursorDrawable="@null"
-                            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-                        <ImageView android:id="@+id/ivCalendarioFim"
-                            android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
-                            android:contentDescription="Calendário fim" android:clickable="true" android:focusable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="4dp"/>
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-                </LinearLayout>
-
-                <LinearLayout android:layout_width="0dp" android:layout_weight="1"
-                    android:layout_height="wrap_content" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Hora de Fim:" android:textSize="14sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <EditText android:id="@+id/etHoraFim"
-                        android:layout_width="match_parent" android:layout_height="48dp"
-                        android:background="@drawable/bg_field_green" android:paddingStart="10dp" android:paddingEnd="10dp"
-                        android:textColor="#4A5240" android:hint="23:59" android:inputType="time" android:focusable="false"
-                        android:layout_marginTop="4dp"/>
-                </LinearLayout>
-            </LinearLayout>
-
             <!-- Esforço Real -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Esforço Real:" android:textSize="14sp" android:textColor="#6B7A5E"

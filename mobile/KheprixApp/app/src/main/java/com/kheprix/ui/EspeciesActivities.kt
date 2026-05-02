@@ -1,7 +1,9 @@
 package com.kheprix.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -9,8 +11,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -243,6 +247,12 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     private var fotoBase64: String? = null
     private var cameraImageUri: Uri? = null
 
+    private val cameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) abrirCamera()
+            else Toast.makeText(this, "Permissão de câmera necessária", Toast.LENGTH_SHORT).show()
+        }
+
     companion object {
         private const val REQ_GALERIA = 101
         private const val REQ_CAMERA  = 102
@@ -292,14 +302,23 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
         // Ícone câmera → câmera
         binding.ivAbrirCamera.setOnClickListener {
-            val arquivo = File.createTempFile("foto_", ".jpg", cacheDir)
-            cameraImageUri = FileProvider.getUriForFile(
-                this, "${packageName}.provider", arquivo
-            )
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
-            startActivityForResult(intent, REQ_CAMERA)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+                abrirCamera()
+            } else {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
         }
+    }
+
+    private fun abrirCamera() {
+        val arquivo = File.createTempFile("foto_", ".jpg", cacheDir)
+        cameraImageUri = FileProvider.getUriForFile(
+            this, "${packageName}.provider", arquivo
+        )
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
+        startActivityForResult(intent, REQ_CAMERA)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
