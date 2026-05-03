@@ -19,12 +19,15 @@ import com.kheprix.db.DatabaseHelper.Companion.TABLE_VARIAVEIS
 import com.kheprix.models.CampanhaRequest
 import com.kheprix.models.CampanhaResponse
 import com.kheprix.models.EspecieRequest
+import com.kheprix.models.EspeciePatchRequest
 import com.kheprix.models.EspecieResponse
 import com.kheprix.models.EstudoRequest
 import com.kheprix.models.EstudoResponse
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
+import com.kheprix.models.RegistroPatchRequest
 import com.kheprix.models.RegistroRequest
+import com.kheprix.models.RegistroResponse
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
 
@@ -179,6 +182,53 @@ class OfflineRepository(context: Context) {
         })
     }
 
+    /**
+     * Atualiza registro no SQLite com sincronizado=0 (preservando remote_id).
+     * Foto null/vazia preserva a existente.
+     */
+    fun editarRegistroOffline(localId: Long, req: RegistroPatchRequest, especieLocalId: Long? = null) {
+        val db = dbHelper.writableDatabase
+        val cv = ContentValues().apply {
+            req.especieId?.let { put("especie_remote_id", it) }
+            especieLocalId?.let { put("especie_local_id", it) }
+            req.data?.let { put("data", it) }
+            req.hora?.let { put("hora", it) }
+            req.latitude?.let { put("latitude", it) }
+            req.longitude?.let { put("longitude", it) }
+            req.qtdeIndividuos?.let { put("qtde_individuos", it) }
+            req.ausenciaEspecie?.let { put("ausencia_especie", if (it) 1 else 0) }
+            if (!req.foto.isNullOrBlank()) put("foto", req.foto)
+            put(COL_SINCRONIZADO, 0)
+        }
+        db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
+    }
+
+    fun cacheRegistro(eventoLocalId: Long, especieLocalId: Long, r: RegistroResponse): Long {
+        val db = dbHelper.writableDatabase
+        val existing = findLocalIdByRemote(db, TABLE_REGISTROS, r.id, "evento_local_id", eventoLocalId)
+        val cv = ContentValues().apply {
+            put(COL_REMOTE_ID, r.id)
+            put(COL_SINCRONIZADO, 1)
+            put("evento_local_id", eventoLocalId)
+            put("especie_local_id", especieLocalId)
+            put("especie_remote_id", r.especieId)
+            put("data", r.data)
+            put("hora", r.hora)
+            put("latitude", r.latitude)
+            put("longitude", r.longitude)
+            put("qtde_individuos", r.qtdeIndividuos)
+            put("foto", r.foto)
+            put("ausencia_especie", r.ausenciaEspecie?.let { if (it) 1 else 0 })
+            put(COL_CREATED_AT, r.createdAt)
+        }
+        return if (existing != null) {
+            db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+            existing
+        } else {
+            db.insertOrThrow(TABLE_REGISTROS, null, cv)
+        }
+    }
+
     fun criarRegistroOffline(
         eventoLocalId: Long,
         especieLocalId: Long,
@@ -201,6 +251,30 @@ class OfflineRepository(context: Context) {
             put("ausencia_especie", req.ausenciaEspecie?.let { if (it) 1 else 0 })
             put(COL_CREATED_AT, nowIso())
         })
+    }
+
+    /**
+     * Atualiza uma espécie no SQLite e marca sincronizado=0 (preservando o
+     * remote_id). O sync posterior usa o remote_id para PATCH em vez de POST.
+     *
+     * Se [req.foto] for null/vazio, NÃO sobrescreve a foto existente — assim
+     * uma edição que não troca a foto preserva a URL/Base64 atual.
+     */
+    fun editarEspecieOffline(localId: Long, req: EspeciePatchRequest) {
+        val db = dbHelper.writableDatabase
+        val cv = ContentValues().apply {
+            req.classe?.let { put("classe", it) }
+            req.ordem?.let { put("ordem", it) }
+            req.familia?.let { put("familia", it) }
+            req.genero?.let { put("genero", it) }
+            req.especie?.let { put("especie", it) }
+            req.endemismo?.let { put("endemismo", if (it) 1 else 0) }
+            req.nomePopular?.let { put("nome_popular", it) }
+            req.statusConservacao?.let { put("status_conservacao", it) }
+            if (!req.foto.isNullOrBlank()) put("foto", req.foto)
+            put(COL_SINCRONIZADO, 0)
+        }
+        db.update(TABLE_ESPECIES, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
     }
 
     fun criarEspecieOffline(estudoLocalId: Long, req: EspecieRequest): Long {
