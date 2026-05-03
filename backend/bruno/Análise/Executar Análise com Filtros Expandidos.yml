@@ -1,0 +1,36 @@
+info:
+  name: Executar Análise com Filtros Expandidos
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "chao1",
+        "unidade_ids": [1, 2, 3],
+        "evento_ids": [1, 2],
+        "data_inicio": "2025-02-01",
+        "data_fim": "2025-03-31",
+        "latitude_min": -25.45,
+        "latitude_max": -25.42,
+        "longitude_min": -49.30,
+        "longitude_max": -49.26
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

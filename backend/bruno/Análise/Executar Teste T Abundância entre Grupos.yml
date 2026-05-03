@@ -1,0 +1,33 @@
+info:
+  name: Executar Teste T Abundância entre Grupos
+  type: http
+  seq: 10
+
+http:
+  method: post
+  url: http://localhost:3000/estudos/:estudo_id/analises/executar
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: estudo_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |
+      {
+        "chave": "teste_t",
+        "fonte": "abundancia",
+        "grupo1_ids": [1, 2, 3],
+        "grupo2_ids": [4, 5, 6],
+        "nome_grupo1": "Área úmida",
+        "nome_grupo2": "Área seca"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
