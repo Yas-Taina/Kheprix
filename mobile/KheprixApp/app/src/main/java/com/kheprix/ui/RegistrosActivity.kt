@@ -730,33 +730,61 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     // ── Preencher edição ──────────────────────────────────────────────────
 
     private fun preencherEdicao() {
-        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) return
-        lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getRegistro(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
-                )
-                resp.body()?.let { r ->
-                    registroCarregado = r
-                    val dp = r.data.split("-")
-                    dataStr = r.data
-                    binding.etData.setText(if (dp.size == 3) "${dp[2]}/${dp[1]}/${dp[0]}" else r.data)
-                    horaStr = r.hora
-                    binding.etHora.setText(r.hora.take(5))
-                    latDecimal = r.latitude; lonDecimal = r.longitude
-                    binding.etLatitude.setText(decimalToDms(r.latitude))
-                    binding.etLongitude.setText(decimalToDms(r.longitude))
-                    binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
-                    // fotoBase64 permanece null: se o usuário não escolher nova
-                    // foto, o patch omite o campo e o backend preserva a atual.
-                    if (r.foto != null) binding.tvNomeFoto.text = "foto_atual.jpg"
-                    // Selecionar espécie no spinner
-                    val idx = especies.indexOfFirst { it.id == r.especieId }
-                    if (idx >= 0) binding.spinnerEspecie.setSelection(idx + 1)
-                    aplicarValoresVariaveis()
-                }
-            } catch (_: Exception) {}
+        // Online com IDs válidos: API. Senão: SQLite.
+        if (estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 && eventoId > 0 && registroId > 0) {
+            lifecycleScope.launch {
+                try {
+                    val resp = RetrofitClient.apiService.getRegistro(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                    )
+                    val r = resp.body()
+                    if (r != null) preencherForm(r) else preencherFormOffline()
+                } catch (_: Exception) { preencherFormOffline() }
+            }
+        } else {
+            preencherFormOffline()
         }
+    }
+
+    private fun preencherFormOffline() {
+        val localId = if (registroId < 0) (-registroId).toLong()
+            else if (eventoLocalId > 0)
+                RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
+            else null
+        if (localId == null) return
+        val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
+        val r = RegistroResponse(
+            id = off.remoteId ?: -off.localId.toInt(),
+            eventoAmostragemId = off.eventoLocalId.toInt(),
+            especieId = off.especieRemoteId,
+            data = off.data,
+            hora = off.hora,
+            latitude = off.latitude,
+            longitude = off.longitude,
+            qtdeIndividuos = off.qtdeIndividuos,
+            foto = off.foto,
+            ausenciaEspecie = off.ausenciaEspecie,
+            createdAt = off.createdAt ?: "",
+            valoresVariaveis = null
+        )
+        preencherForm(r)
+    }
+
+    private fun preencherForm(r: RegistroResponse) {
+        registroCarregado = r
+        val dp = r.data.split("-")
+        dataStr = r.data
+        binding.etData.setText(if (dp.size == 3) "${dp[2]}/${dp[1]}/${dp[0]}" else r.data)
+        horaStr = r.hora
+        binding.etHora.setText(r.hora.take(5))
+        latDecimal = r.latitude; lonDecimal = r.longitude
+        binding.etLatitude.setText(decimalToDms(r.latitude))
+        binding.etLongitude.setText(decimalToDms(r.longitude))
+        binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
+        if (r.foto != null) binding.tvNomeFoto.text = "foto_atual.jpg"
+        val idx = especies.indexOfFirst { it.id == r.especieId }
+        if (idx >= 0) binding.spinnerEspecie.setSelection(idx + 1)
+        aplicarValoresVariaveis()
     }
 
     // ── API ───────────────────────────────────────────────────────────────
@@ -788,21 +816,22 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun editarRegistro() {
         val form = coletarFormulario() ?: return
+        val patchReq = RegistroPatchRequest(
+            especieId = form.especieId, data = form.data, hora = form.hora,
+            latitude = form.latitude, longitude = form.longitude,
+            qtdeIndividuos = form.qtdeIndividuos, foto = form.foto,
+            valoresVariaveis = form.valoresVariaveis
+        )
+        // Sem ids remotos válidos: edita direto no SQLite.
         if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) {
-            Toast.makeText(this, "Edição offline ainda não suportada para registros offline-only.", Toast.LENGTH_LONG).show()
+            salvarEdicaoOffline(patchReq, "Registro atualizado offline.")
             return
         }
         setLoading(true)
         lifecycleScope.launch {
             try {
-                val req = RegistroPatchRequest(
-                    especieId = form.especieId, data = form.data, hora = form.hora,
-                    latitude = form.latitude, longitude = form.longitude,
-                    qtdeIndividuos = form.qtdeIndividuos, foto = form.foto,
-                    valoresVariaveis = form.valoresVariaveis
-                )
                 val resp = RetrofitClient.apiService.patchRegistro(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId, req
+                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId, patchReq
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@NovoRegistroActivity, "Registro atualizado!", Toast.LENGTH_SHORT).show()
@@ -811,8 +840,37 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     Toast.makeText(this@NovoRegistroActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                mostrarDialogOffline(null)
+                salvarEdicaoOffline(patchReq, "Sem conexão — alterações salvas offline.")
             } finally { setLoading(false) }
+        }
+    }
+
+    /**
+     * Persiste a edição no SQLite com sincronizado=0 e remote_id preservado.
+     * O sync posterior detecta remote_id != null + sincronizado=0 → PATCH.
+     */
+    private fun salvarEdicaoOffline(req: RegistroPatchRequest, msg: String) {
+        val repo = OfflineRepository(this)
+        val localId = if (registroId < 0) (-registroId).toLong()
+            else if (eventoLocalId > 0) RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
+            else null
+        if (localId == null) {
+            Toast.makeText(this, "Registro não encontrado offline.", Toast.LENGTH_LONG).show()
+            return
+        }
+        // Resolve novo especie_local_id se a espécie foi trocada.
+        val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+        val novoEspecieLocalId = req.especieId?.let { eid ->
+            resolvedEstudoLocal?.let { repo.resolveEspecieLocalId(it, eid) }
+        }
+        try {
+            repo.editarRegistroOffline(localId, req, novoEspecieLocalId)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -955,9 +1013,13 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosDetalheBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var eventoId       = -1
+    private var eventoLocalId  = -1L
     private var registroId     = -1
 
     private var registroCarregado: RegistroResponse? = null
@@ -969,17 +1031,28 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         eventoId       = intent.getIntExtra("evento_id", -1)
+        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
         registroId     = intent.getIntExtra("registro_id", -1)
 
         binding.ivEditar.setOnClickListener {
             startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
                 putExtra("evento_id", eventoId)
+                putExtra("evento_local_id", eventoLocalId)
                 putExtra("registro_id", registroId)
             })
         }
@@ -998,53 +1071,105 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun carregarRegistro() {
+        // Registro offline-only ou pais offline-only: vai direto pro SQLite.
+        if (registroId <= 0 || estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
+            carregarRegistroOffline()
+            return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getRegistro(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
                 )
-                resp.body()?.let { r ->
-                    registroCarregado = r
-                    binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
-                    binding.tvLatitude.text  = r.latitude.toString()
-                    binding.tvLongitude.text = r.longitude.toString()
-                    binding.tvData.text      = r.data.split("-").let { p ->
-                        if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
-                    }
-                    binding.tvHora.text = r.hora.take(5)
-
-                    ImagemLoader.load(
-                        scope = lifecycleScope,
-                        target = binding.ivFoto,
-                        url = r.foto,
-                        placeholder = R.drawable.ic_placeholder_beetle
-                    )
-
-                    carregarEspecie(r.especieId)
-                    renderizarVariaveis()
-                }
-            } catch (_: Exception) {
-                Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
-            }
+                val r = resp.body()
+                if (r != null) preencherRegistro(r) else carregarRegistroOffline()
+            } catch (_: Exception) { carregarRegistroOffline() }
         }
+    }
+
+    private fun carregarRegistroOffline() {
+        val localId = if (registroId < 0) (-registroId).toLong()
+            else if (eventoLocalId > 0)
+                RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
+            else null
+        if (localId == null) return
+        val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
+        // Adapta RegistroOffline → RegistroResponse para reuso de preencher.
+        val r = RegistroResponse(
+            id = off.remoteId ?: -off.localId.toInt(),
+            eventoAmostragemId = off.eventoLocalId.toInt(),
+            especieId = off.especieRemoteId,
+            data = off.data,
+            hora = off.hora,
+            latitude = off.latitude,
+            longitude = off.longitude,
+            qtdeIndividuos = off.qtdeIndividuos,
+            foto = off.foto,
+            ausenciaEspecie = off.ausenciaEspecie,
+            createdAt = off.createdAt ?: "",
+            valoresVariaveis = null  // valores não persistidos no schema atual
+        )
+        preencherRegistro(r)
+    }
+
+    private fun preencherRegistro(r: RegistroResponse) {
+        registroCarregado = r
+        binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
+        binding.tvLatitude.text  = r.latitude.toString()
+        binding.tvLongitude.text = r.longitude.toString()
+        binding.tvData.text      = r.data.split("-").let { p ->
+            if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
+        }
+        binding.tvHora.text = r.hora.take(5)
+
+        ImagemLoader.load(
+            scope = lifecycleScope,
+            target = binding.ivFoto,
+            url = r.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
+
+        carregarEspecie(r.especieId)
+        renderizarVariaveis()
     }
 
     private fun carregarEspecie(especieId: Int) {
-        lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getEspecie(
-                    SessionManager.getAuthHeader(), estudoRemoteId, especieId
-                )
-                resp.body()?.let { e ->
-                    binding.tvTitulo.text         = "${e.genero} ${e.especie}"
-                    binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
-                    binding.tvNomePopular.text    = e.nomePopular ?: "—"
-                }
-            } catch (_: Exception) { }
+        // Online com IDs válidos: API. Senão: SQLite.
+        if (estudoRemoteId > 0 && especieId > 0) {
+            lifecycleScope.launch {
+                try {
+                    val resp = RetrofitClient.apiService.getEspecie(
+                        SessionManager.getAuthHeader(), estudoRemoteId, especieId
+                    )
+                    val e = resp.body()
+                    if (e != null) preencherEspecie(e) else carregarEspecieOffline(especieId)
+                } catch (_: Exception) { carregarEspecieOffline(especieId) }
+            }
+        } else {
+            carregarEspecieOffline(especieId)
         }
     }
 
+    private fun carregarEspecieOffline(especieId: Int) {
+        val repo = OfflineRepository(this)
+        val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+        if (resolvedEstudoLocal == null) return
+        val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
+            .firstOrNull { it.id == especieId }
+            ?: return
+        preencherEspecie(match)
+    }
+
+    private fun preencherEspecie(e: com.kheprix.models.EspecieResponse) {
+        binding.tvTitulo.text         = "${e.genero} ${e.especie}"
+        binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
+        binding.tvNomePopular.text    = e.nomePopular ?: "—"
+    }
+
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -1054,9 +1179,33 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) { }
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'registro'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -1107,6 +1256,17 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
             .setTitle("Deletar registro")
             .setMessage("Tem certeza?")
             .setPositiveButton("Deletar") { _, _ ->
+                if (registroId < 0 || estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
+                    val localId = if (registroId < 0) (-registroId).toLong()
+                        else if (eventoLocalId > 0) RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
+                        else null
+                    if (localId != null) {
+                        com.kheprix.db.DatabaseHelper(this).writableDatabase
+                            .delete("registros_ocorrencia", "local_id = ?", arrayOf(localId.toString()))
+                    }
+                    finish()
+                    return@setPositiveButton
+                }
                 lifecycleScope.launch {
                     try {
                         RetrofitClient.apiService.deleteRegistro(

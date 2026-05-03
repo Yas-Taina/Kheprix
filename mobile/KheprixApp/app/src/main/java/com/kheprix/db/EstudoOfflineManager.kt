@@ -168,21 +168,49 @@ class EstudoOfflineManager(context: Context) {
         val especies = queryUnsyncedEspecies(db, estudoLocalId)
         val espLocalToRemote = mutableMapOf<Long, Int>()
         especies.forEach { e ->
-            val req = EspecieRequest(
-                classe = e.classe,
-                ordem = e.ordem,
-                familia = e.familia,
-                genero = e.genero,
-                especie = e.especie,
-                endemismo = e.endemismo,
-                foto = e.foto,
-                nomePopular = e.nomePopular,
-                statusConservacao = e.statusConservacao
-            )
-            val resp = api.postEspecie(token, remoteEstudoId, req).body()
-                ?: error("Erro ao criar espécie")
-            espLocalToRemote[e.localId] = resp.id
-            markSynced(db, TABLE_ESPECIES, e.localId, resp.id)
+            // Foto que não é Base64 (URL ou path do servidor) NÃO deve ser
+            // reenviada, senão o backend rejeita ou tenta decodificar como Base64.
+            val fotoEnvio = e.foto?.takeIf { f ->
+                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+            }
+
+            if (e.remoteId != null && e.remoteId > 0) {
+                // Edição offline de espécie já sincronizada → PATCH.
+                val patchReq = EspeciePatchRequest(
+                    classe = e.classe,
+                    ordem = e.ordem,
+                    familia = e.familia,
+                    genero = e.genero,
+                    especie = e.especie,
+                    endemismo = e.endemismo,
+                    foto = fotoEnvio,
+                    nomePopular = e.nomePopular,
+                    statusConservacao = e.statusConservacao
+                )
+                val resp = api.patchEspecie(token, remoteEstudoId, e.remoteId, patchReq)
+                if (!resp.isSuccessful) {
+                    error("Erro ao atualizar espécie ${e.remoteId} (HTTP ${resp.code()})")
+                }
+                espLocalToRemote[e.localId] = e.remoteId
+                markSynced(db, TABLE_ESPECIES, e.localId, e.remoteId)
+            } else {
+                // Espécie criada offline → POST.
+                val req = EspecieRequest(
+                    classe = e.classe,
+                    ordem = e.ordem,
+                    familia = e.familia,
+                    genero = e.genero,
+                    especie = e.especie,
+                    endemismo = e.endemismo,
+                    foto = fotoEnvio,
+                    nomePopular = e.nomePopular,
+                    statusConservacao = e.statusConservacao
+                )
+                val resp = api.postEspecie(token, remoteEstudoId, req).body()
+                    ?: error("Erro ao criar espécie")
+                espLocalToRemote[e.localId] = resp.id
+                markSynced(db, TABLE_ESPECIES, e.localId, resp.id)
+            }
         }
 
         // Also load already-synced species for use in records
@@ -301,21 +329,49 @@ class EstudoOfflineManager(context: Context) {
                         if (registro.sincronizado == 0) {
                             val especieRemoteId = espLocalToRemote[registro.especieLocalId]
                                 ?: error("Espécie remota para registro ${registro.localId} não encontrada")
-                            val req = RegistroRequest(
-                                especieId = especieRemoteId,
-                                data = registro.data,
-                                hora = registro.hora,
-                                latitude = registro.latitude,
-                                longitude = registro.longitude,
-                                qtdeIndividuos = registro.qtdeIndividuos,
-                                foto = registro.foto,
-                                ausenciaEspecie = registro.ausenciaEspecie
-                            )
-                            val resp = api.postRegistro(
-                                token, remoteEstudoId, remoteCampanhaId,
-                                remoteUnidadeId, remoteEventoId, req
-                            ).body() ?: error("Erro ao criar registro de ocorrência")
-                            markSynced(db, TABLE_REGISTROS, registro.localId, resp.id)
+                            // Foto que não é Base64 (URL/path do servidor) não é reenviada.
+                            val fotoEnvio = registro.foto?.takeIf { f ->
+                                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+                            }
+
+                            if (registro.remoteId != null && registro.remoteId > 0) {
+                                // Edição offline de registro já sincronizado → PATCH.
+                                val patchReq = RegistroPatchRequest(
+                                    especieId = especieRemoteId,
+                                    data = registro.data,
+                                    hora = registro.hora,
+                                    latitude = registro.latitude,
+                                    longitude = registro.longitude,
+                                    qtdeIndividuos = registro.qtdeIndividuos,
+                                    foto = fotoEnvio,
+                                    ausenciaEspecie = registro.ausenciaEspecie
+                                )
+                                val resp = api.patchRegistro(
+                                    token, remoteEstudoId, remoteCampanhaId,
+                                    remoteUnidadeId, remoteEventoId, registro.remoteId, patchReq
+                                )
+                                if (!resp.isSuccessful) {
+                                    error("Erro ao atualizar registro ${registro.remoteId} (HTTP ${resp.code()})")
+                                }
+                                markSynced(db, TABLE_REGISTROS, registro.localId, registro.remoteId)
+                            } else {
+                                // Registro criado offline → POST.
+                                val req = RegistroRequest(
+                                    especieId = especieRemoteId,
+                                    data = registro.data,
+                                    hora = registro.hora,
+                                    latitude = registro.latitude,
+                                    longitude = registro.longitude,
+                                    qtdeIndividuos = registro.qtdeIndividuos,
+                                    foto = fotoEnvio,
+                                    ausenciaEspecie = registro.ausenciaEspecie
+                                )
+                                val resp = api.postRegistro(
+                                    token, remoteEstudoId, remoteCampanhaId,
+                                    remoteUnidadeId, remoteEventoId, req
+                                ).body() ?: error("Erro ao criar registro de ocorrência")
+                                markSynced(db, TABLE_REGISTROS, registro.localId, resp.id)
+                            }
                         }
                     }
                 }
