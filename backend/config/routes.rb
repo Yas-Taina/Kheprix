@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   post "autenticacao/solicitar_redefinicao", to: "autenticacao#solicitar_redefinicao"
   post "autenticacao/redefinir_senha", to: "autenticacao#redefinir_senha"
   post "autenticacao/validar_token_redefinicao", to: "autenticacao#validar_token_redefinicao"
+  post "autenticacao/validar_token", to: "autenticacao#validar_token"
 
   post "usuarios/autocadastro", to: "usuarios#autocadastro"
 

@@ -64,4 +64,17 @@ class AutenticacaoController < ApplicationController
       render json: { erro: "Token inválido ou expirado" }, status: :unauthorized
     end
   end
+
+  def validar_token
+    dto = ValidarTokenJwtDto.new(params)
+
+    unless dto.valid?
+      render json: { erros: dto.errors.full_messages }, status: :unprocessable_entity
+      return
+    end
+
+    usuario = ServicoAutenticacao.new.verificar_token(token: dto.token)
+
+    render json: { valido: usuario.present? }, status: :ok
+  end
 end
