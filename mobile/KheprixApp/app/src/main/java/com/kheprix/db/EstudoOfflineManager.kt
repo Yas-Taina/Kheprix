@@ -196,16 +196,60 @@ class EstudoOfflineManager(context: Context) {
             var campanhaRemoteId = campanha.remoteId
 
             if (campanha.sincronizado == 0) {
+                // Coleta valores_variaveis da campanha; resolve variavel_id remoto
+                // a partir do varLocalToRemote (variáveis recém-sincronizadas) ou
+                // do próprio variavel_remote_id armazenado.
+                val valoresLocais = queryUnsyncedValoresVariaveisDeCampanha(db, campanha.localId)
+                val valoresReq = valoresLocais.mapNotNull { vv ->
+                    val varRemoteId = varLocalToRemote[vv.variavelLocalId]
+                        ?: vv.variavelRemoteId
+                        ?: queryVariavelRemoteId(db, vv.variavelLocalId)
+                    if (varRemoteId != null && varRemoteId > 0)
+                        ValorVariavelRequest(variavelId = varRemoteId, valor = vv.valor)
+                    else null
+                }
+
                 val req = CampanhaRequest(
                     nome = campanha.nome,
                     dataInicio = campanha.dataInicio,
                     dataFim = campanha.dataFim,
-                    descricao = campanha.descricao
+                    descricao = campanha.descricao,
+                    valoresVariaveis = valoresReq.ifEmpty { null }
                 )
                 val resp = api.postCampanha(token, remoteEstudoId, req).body()
                     ?: error("Erro ao criar campanha")
                 campanhaRemoteId = resp.id
                 markSynced(db, TABLE_CAMPANHAS, campanha.localId, resp.id)
+                markValoresVariaveisCampanhaSynced(db, campanha.localId)
+            } else if (campanhaRemoteId != null && campanhaRemoteId > 0) {
+                // Campanha já sincronizada, mas pode ter valores_variaveis órfãos
+                // (criados offline em sync anterior antes do fix). Faz PATCH.
+                val orfaos = queryUnsyncedValoresVariaveisDeCampanha(db, campanha.localId)
+                if (orfaos.isNotEmpty()) {
+                    val valoresReq = orfaos.mapNotNull { vv ->
+                        val varRemoteId = varLocalToRemote[vv.variavelLocalId]
+                            ?: vv.variavelRemoteId
+                            ?: queryVariavelRemoteId(db, vv.variavelLocalId)
+                        if (varRemoteId != null && varRemoteId > 0)
+                            ValorVariavelRequest(variavelId = varRemoteId, valor = vv.valor)
+                        else null
+                    }
+                    if (valoresReq.isNotEmpty()) {
+                        val patchReq = CampanhaRequest(
+                            nome = campanha.nome,
+                            dataInicio = campanha.dataInicio,
+                            dataFim = campanha.dataFim,
+                            descricao = campanha.descricao,
+                            valoresVariaveis = valoresReq
+                        )
+                        val patchResp = api.patchCampanha(token, remoteEstudoId, campanhaRemoteId, patchReq)
+                        if (patchResp.isSuccessful) {
+                            markValoresVariaveisCampanhaSynced(db, campanha.localId)
+                        } else {
+                            error("Erro ao enviar valores_variaveis pendentes da campanha (HTTP ${patchResp.code()})")
+                        }
+                    }
+                }
             }
 
             val remoteCampanhaId = campanhaRemoteId ?: error("Campanha remota não disponível")
@@ -357,6 +401,94 @@ class EstudoOfflineManager(context: Context) {
             "SELECT 1 FROM $TABLE_VARIAVEIS WHERE estudo_local_id = ? LIMIT 1",
             arrayOf(estudoLocalId.toString())
         ).use { it.moveToFirst() }
+    }
+
+    /**
+     * Diagnóstico: lista descrições legíveis de cada linha com sincronizado=0
+     * dentro do estudo. Útil para mostrar ao usuário "quem" ainda está pendente
+     * após uma tentativa de sincronização que reportou sucesso mas deixou contagem > 0.
+     */
+    fun listarRegistrosOfflinePendentes(estudoLocalId: Long): List<String> {
+        val db = dbHelper.readableDatabase
+        val items = mutableListOf<String>()
+
+        db.rawQuery(
+            "SELECT nome FROM $TABLE_ESTUDOS WHERE $COL_LOCAL_ID = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(estudoLocalId.toString())
+        ).use { if (it.moveToFirst()) items.add("Estudo: ${it.getString(0)}") }
+
+        db.rawQuery(
+            "SELECT nome FROM $TABLE_VARIAVEIS WHERE estudo_local_id = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(estudoLocalId.toString())
+        ).use { while (it.moveToNext()) items.add("Variável: ${it.getString(0)}") }
+
+        db.rawQuery(
+            "SELECT genero, especie FROM $TABLE_ESPECIES WHERE estudo_local_id = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(estudoLocalId.toString())
+        ).use { while (it.moveToNext()) items.add("Espécie: ${it.getString(0)} ${it.getString(1)}") }
+
+        val campanhas = mutableListOf<Triple<Long, String, Int>>()
+        db.rawQuery(
+            "SELECT $COL_LOCAL_ID, nome, $COL_SINCRONIZADO FROM $TABLE_CAMPANHAS WHERE estudo_local_id = ?",
+            arrayOf(estudoLocalId.toString())
+        ).use {
+            while (it.moveToNext()) {
+                campanhas.add(Triple(it.getLong(0), it.getString(1), it.getInt(2)))
+            }
+        }
+
+        campanhas.forEach { (campanhaLocalId, nomeCamp, sincCamp) ->
+            if (sincCamp == 0) items.add("Campanha: $nomeCamp")
+
+            db.rawQuery(
+                "SELECT v.nome, vv.valor FROM $TABLE_VALORES_VARIAVEIS vv " +
+                        "JOIN $TABLE_VARIAVEIS v ON v.$COL_LOCAL_ID = vv.variavel_local_id " +
+                        "WHERE vv.campanha_local_id = ? AND vv.$COL_SINCRONIZADO = 0",
+                arrayOf(campanhaLocalId.toString())
+            ).use {
+                while (it.moveToNext()) {
+                    items.add("Valor de variável da campanha '$nomeCamp' → '${it.getString(0)}' = ${it.getString(1)}")
+                }
+            }
+
+            val unidades = mutableListOf<Triple<Long, String, Int>>()
+            db.rawQuery(
+                "SELECT $COL_LOCAL_ID, nome, $COL_SINCRONIZADO FROM $TABLE_UNIDADES WHERE campanha_local_id = ?",
+                arrayOf(campanhaLocalId.toString())
+            ).use {
+                while (it.moveToNext()) {
+                    unidades.add(Triple(it.getLong(0), it.getString(1), it.getInt(2)))
+                }
+            }
+
+            unidades.forEach { (unidadeLocalId, nomeU, sincU) ->
+                if (sincU == 0) items.add("Unidade: $nomeU (campanha: $nomeCamp)")
+
+                val eventos = mutableListOf<Triple<Long, String, Int>>()
+                db.rawQuery(
+                    "SELECT $COL_LOCAL_ID, horario_inicio, $COL_SINCRONIZADO FROM $TABLE_EVENTOS WHERE unidade_local_id = ?",
+                    arrayOf(unidadeLocalId.toString())
+                ).use {
+                    while (it.moveToNext()) {
+                        eventos.add(Triple(it.getLong(0), it.getString(1), it.getInt(2)))
+                    }
+                }
+
+                eventos.forEach { (eventoLocalId, horario, sincE) ->
+                    if (sincE == 0) items.add("Evento: $horario (unidade: $nomeU)")
+                    db.rawQuery(
+                        "SELECT data, hora FROM $TABLE_REGISTROS WHERE evento_local_id = ? AND $COL_SINCRONIZADO = 0",
+                        arrayOf(eventoLocalId.toString())
+                    ).use {
+                        while (it.moveToNext()) {
+                            items.add("Registro: ${it.getString(0)} ${it.getString(1)} (evento: $horario)")
+                        }
+                    }
+                }
+            }
+        }
+
+        return items
     }
 
     fun contarRegistrosOffline(estudoLocalId: Long): Int {
@@ -762,6 +894,46 @@ class EstudoOfflineManager(context: Context) {
         return list
     }
 
+    private fun queryUnsyncedValoresVariaveisDeCampanha(
+        db: android.database.sqlite.SQLiteDatabase, campanhaLocalId: Long
+    ): List<LocalValorVariavel> {
+        val list = mutableListOf<LocalValorVariavel>()
+        db.rawQuery(
+            "SELECT $COL_LOCAL_ID, variavel_local_id, variavel_remote_id, valor FROM $TABLE_VALORES_VARIAVEIS WHERE campanha_local_id = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(campanhaLocalId.toString())
+        ).use {
+            while (it.moveToNext()) {
+                list.add(LocalValorVariavel(
+                    localId = it.getLong(0),
+                    variavelLocalId = it.getLong(1),
+                    variavelRemoteId = if (it.isNull(2)) null else it.getInt(2),
+                    valor = it.getString(3)
+                ))
+            }
+        }
+        return list
+    }
+
+    private fun queryVariavelRemoteId(
+        db: android.database.sqlite.SQLiteDatabase, variavelLocalId: Long
+    ): Int? {
+        return db.rawQuery(
+            "SELECT $COL_REMOTE_ID FROM $TABLE_VARIAVEIS WHERE $COL_LOCAL_ID = ?",
+            arrayOf(variavelLocalId.toString())
+        ).use { if (it.moveToFirst() && !it.isNull(0)) it.getInt(0) else null }
+    }
+
+    private fun markValoresVariaveisCampanhaSynced(
+        db: android.database.sqlite.SQLiteDatabase, campanhaLocalId: Long
+    ) {
+        val cv = ContentValues().apply { put(COL_SINCRONIZADO, 1) }
+        db.update(
+            TABLE_VALORES_VARIAVEIS, cv,
+            "campanha_local_id = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(campanhaLocalId.toString())
+        )
+    }
+
     private fun queryEstudoByLocalId(db: android.database.sqlite.SQLiteDatabase, localId: Long): LocalEstudo {
         val cursor = db.rawQuery(
             "SELECT $COL_LOCAL_ID, $COL_REMOTE_ID, $COL_SINCRONIZADO, nome, observacoes FROM $TABLE_ESTUDOS WHERE $COL_LOCAL_ID = ?",
@@ -790,4 +962,5 @@ class EstudoOfflineManager(context: Context) {
     private data class LocalUnidade(val localId: Long, val remoteId: Int?, val sincronizado: Int, val nome: String, val latitude: Double, val longitude: Double, val raio: Double?, val metodoColeta: String?, val esforcoAmostral: String?)
     private data class LocalEvento(val localId: Long, val remoteId: Int?, val sincronizado: Int, val horarioInicio: String, val horarioFim: String?, val esforcoReal: String?)
     private data class LocalRegistro(val localId: Long, val remoteId: Int?, val sincronizado: Int, val especieLocalId: Long, val data: String, val hora: String, val latitude: Double, val longitude: Double, val qtdeIndividuos: Int?, val foto: String?, val ausenciaEspecie: Boolean?)
+    private data class LocalValorVariavel(val localId: Long, val variavelLocalId: Long, val variavelRemoteId: Int?, val valor: String)
 }

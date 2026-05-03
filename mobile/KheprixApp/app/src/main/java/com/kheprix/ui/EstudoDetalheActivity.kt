@@ -74,8 +74,13 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             lifecycleScope.launch {
                 offlineManager.sincronizarDadosEstudo(estudoLocalId)
                     .onSuccess {
-                        Toast.makeText(this@EstudoDetalheActivity, "Sincronizado!", Toast.LENGTH_SHORT).show()
                         atualizarContadorOffline()
+                        val pendentes = offlineManager.listarRegistrosOfflinePendentes(estudoLocalId)
+                        if (pendentes.isEmpty()) {
+                            Toast.makeText(this@EstudoDetalheActivity, "Sincronizado!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            mostrarPendentes(pendentes)
+                        }
                     }
                     .onFailure {
                         Toast.makeText(this@EstudoDetalheActivity, "Erro: ${it.message}", Toast.LENGTH_LONG).show()
@@ -158,5 +163,15 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
 
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+    }
+
+    private fun mostrarPendentes(pendentes: List<String>) {
+        val msg = "${pendentes.size} item(ns) ainda não sincronizados:\n\n" +
+                pendentes.joinToString("\n") { "• $it" }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Pendências offline")
+            .setMessage(msg)
+            .setPositiveButton("OK", null)
+            .show()
     }
 }
