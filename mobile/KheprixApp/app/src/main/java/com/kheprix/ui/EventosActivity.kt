@@ -46,8 +46,11 @@ class EventosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEventosBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var unidadeNome    = ""
     private val eventos = mutableListOf<EventoResponse>()
 
@@ -57,8 +60,13 @@ class EventosActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         unidadeNome    = intent.getStringExtra("unidade_nome") ?: ""
 
         binding.tvUnidadeNome.text = unidadeNome
@@ -73,8 +81,11 @@ class EventosActivity : BaseDrawerActivity() {
         binding.btnAdicionarEvento.setOnClickListener {
             startActivity(Intent(this, NovoEventoActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
             })
         }
 
@@ -86,8 +97,11 @@ class EventosActivity : BaseDrawerActivity() {
         binding.btnEditarUnidade.setOnClickListener {
             startActivity(Intent(this, NovaUnidadeActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
             })
         }
 
@@ -109,7 +123,7 @@ class EventosActivity : BaseDrawerActivity() {
     private fun carregarDetalhes() {
         lifecycleScope.launch {
             // Tenta API quando temos remote id da unidade.
-            if (unidadeId > 0) {
+            if (unidadeId > 0 && estudoRemoteId > 0 && campanhaId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getUnidade(
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
@@ -166,13 +180,20 @@ class EventosActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEventos() {
-        // Se unidade_id == -1, é offline-only: buscar via SQLite
-        if (unidadeId == -1) {
-            val unidadeDao = UnidadeDao(this)
-            val campanhaDao = CampanhaDao(this)
-            val campanha = campanhaDao.listarTodos().firstOrNull { it.remoteId == campanhaId || (campanhaId == -1) } ?: return
-            val unidade = unidadeDao.listarPorCampanhaLocal(campanha.localId).firstOrNull { it.nome == unidadeNome } ?: return
-            carregarEventosOffline(unidade.localId)
+        // Unidade offline-only: lista do SQLite.
+        if (unidadeId <= 0) {
+            val localId = if (unidadeLocalId > 0) unidadeLocalId
+                else {
+                    val campanha = CampanhaDao(this).listarTodos()
+                        .firstOrNull { it.remoteId == campanhaId || (campanhaId <= 0) }
+                    campanha?.let {
+                        UnidadeDao(this).listarPorCampanhaLocal(it.localId).firstOrNull { u -> u.nome == unidadeNome }?.localId
+                    }
+                }
+            if (localId != null) {
+                unidadeLocalId = localId
+                carregarEventosOffline(localId)
+            }
             return
         }
 
@@ -243,11 +264,18 @@ class EventosActivity : BaseDrawerActivity() {
     }
 
     private fun abrirRegistros(e: EventoResponse) {
+        val eventoLocalId = if (e.id < 0) (-e.id).toLong()
+            else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(e.id, unidadeLocalId)?.localId ?: -1L
+            else -1L
         startActivity(Intent(this, RegistrosActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
+            putExtra("estudo_local_id", estudoLocalId)
             putExtra("campanha_id", campanhaId)
+            putExtra("campanha_local_id", campanhaLocalId)
             putExtra("unidade_id", unidadeId)
+            putExtra("unidade_local_id", unidadeLocalId)
             putExtra("evento_id", e.id)
+            putExtra("evento_local_id", eventoLocalId)
             putExtra("evento_nome", e.horarioInicio)
         })
     }
@@ -257,6 +285,17 @@ class EventosActivity : BaseDrawerActivity() {
             .setTitle("Deletar evento")
             .setMessage("Deletar evento iniciado em ${e.horarioInicio}?")
             .setPositiveButton("Deletar") { _, _ ->
+                if (e.id < 0 || unidadeId <= 0 || campanhaId <= 0 || estudoRemoteId <= 0) {
+                    val localId = if (e.id < 0) (-e.id).toLong()
+                        else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(e.id, unidadeLocalId)?.localId
+                        else null
+                    if (localId != null) {
+                        com.kheprix.db.DatabaseHelper(this).writableDatabase
+                            .delete("eventos_amostragem", "local_id = ?", arrayOf(localId.toString()))
+                        carregarEventos()
+                    }
+                    return@setPositiveButton
+                }
                 lifecycleScope.launch {
                     try {
                         RetrofitClient.apiService.deleteEvento(
@@ -325,8 +364,11 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEventoBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var eventoId       = -1
     private var modoEdicao     = false
 
@@ -345,8 +387,13 @@ class NovoEventoActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         eventoId       = intent.getIntExtra("evento_id", -1)
         modoEdicao     = eventoId != -1
 
@@ -386,6 +433,7 @@ class NovoEventoActivity : BaseDrawerActivity() {
     }
 
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -395,9 +443,33 @@ class NovoEventoActivity : BaseDrawerActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) {}
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'evento'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -481,6 +553,7 @@ class NovoEventoActivity : BaseDrawerActivity() {
     }
 
     private fun preencherEdicao() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getEvento(
@@ -498,6 +571,11 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun criarEvento() {
         val req = coletarFormulario() ?: return
+        // Pais offline-only: salva direto no SQLite.
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) {
+            salvarEventoOffline(req)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -522,18 +600,23 @@ class NovoEventoActivity : BaseDrawerActivity() {
      */
     private fun salvarEventoOffline(req: EventoRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
-            Toast.makeText(this, "Sem conexão — estudo não salvo offline.", Toast.LENGTH_LONG).show(); return
+        val unidadeResolved = when {
+            unidadeLocalId > 0 -> unidadeLocalId
+            estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 ->
+                repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                    repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                        repo.unidadeLocalIdFromRemote(cL, unidadeId)
+                    }
+                }
+            else -> null
         }
-        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
-            Toast.makeText(this, "Sem conexão — campanha não salva offline.", Toast.LENGTH_LONG).show(); return
-        }
-        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
-            Toast.makeText(this, "Sem conexão — unidade não salva offline.", Toast.LENGTH_LONG).show(); return
+        if (unidadeResolved == null) {
+            Toast.makeText(this, "Unidade não está salva offline.", Toast.LENGTH_LONG).show()
+            return
         }
         try {
-            repo.criarEventoOffline(unidadeLocalId, req)
-            Toast.makeText(this, "Sem conexão — evento salvo offline.", Toast.LENGTH_LONG).show()
+            repo.criarEventoOffline(unidadeResolved, req)
+            Toast.makeText(this, "Evento salvo offline.", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: Exception) {
             Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()

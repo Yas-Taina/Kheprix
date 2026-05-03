@@ -94,6 +94,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardCampanhas.setOnClickListener {
             val intent = Intent(this, CampanhasActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
@@ -102,6 +103,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardEspecies.setOnClickListener {
             val intent = Intent(this, EspeciesActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
@@ -110,6 +112,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardCadastrarEspecie.setOnClickListener {
             val intent = Intent(this, CadastroEspecieActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             startActivity(intent)
         }
 
