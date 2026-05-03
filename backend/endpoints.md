@@ -168,7 +168,7 @@ Neste caso o sistema assume extensão `.png` por padrão.
 
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
-| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null), urlArquivo(string URL\|null) }. 422: chave inválida ou dados insuficientes. 403: não é colaborador do estudo. 404: estudo não encontrado. |
+| POST /estudos/:estudo_id/analises/executar | chave(string, obrigatório), variavel_ids(array int, opcional), variavel_x_id(int, opcional), variavel_y_id(int, opcional), variavel_id(int, opcional), agrupar_por(string, opcional: campanha \| unidade_amostral \| evento \| mes \| ano \| estacao), grupo1_ids(array int, opcional), grupo2_ids(array int, opcional), nome_grupo1(string, opcional), nome_grupo2(string, opcional), campanha_ids(array int, opcional), unidade_ids(array int, opcional), evento_ids(array int, opcional), data_inicio(string ISO8601, opcional), data_fim(string ISO8601, opcional), latitude_min(decimal, opcional), latitude_max(decimal, opcional), longitude_min(decimal, opcional), longitude_max(decimal, opcional), fonte(string, opcional: variavel \| abundancia \| riqueza), fonte_x(string, opcional: idem fonte), fonte_y(string, opcional: idem fonte), nivel_agregacao(string, opcional: campanha \| unidade_amostral \| evento) | 200: { analise(string), nome(string), valor(object\|null), grafico(string html\|null), urlArquivo(string URL\|null) }. 422: chave inválida, dados insuficientes ou parâmetro inválido (fonte/agrupar_por/nivel_agregacao/bounding box). 403: não é colaborador do estudo. 404: estudo não encontrado. |
 | GET /analises/estudos/:estudo_id/:chave/:arquivo | — | 200 arquivo ZIP (Content-Type: application/zip) contendo `resultado.json` (sempre), `resultado.xml` (sempre) e `resultado.html` (somente quando a análise retorna gráfico). 401 sem token. 403 não é colaborador do estudo. 404 arquivo ou estudo inexistente. |
 
 ### Chaves de análise disponíveis
@@ -256,15 +256,42 @@ const CATALOGO_ANALISES: readonly Analise[] = [
 ];
 ```
 
-Parâmetros esperados no body de `executar` conforme o `tipo_dado` da análise escolhida. Os filtros globais `campanha_ids`, `data_inicio` e `data_fim` são sempre opcionais — servem pra recortar o universo de registros que entra na análise.
+### Filtros globais
 
-| tipo_dado | Parâmetros obrigatórios | Filtros globais opcionais |
-|-----------|-------------------------|---------------------------|
-| abundancias | — | campanha_ids, data_inicio, data_fim |
-| abundancias_por_amostra | — | campanha_ids, data_inicio, data_fim |
-| matriz_acumulacao | — | campanha_ids, data_inicio, data_fim |
-| abundancias_com_variaveis | variavel_ids | campanha_ids, data_inicio, data_fim |
-| dois_vetores | variavel_x_id, variavel_y_id | — |
-| vetor_unico | variavel_id | — |
-| dois_grupos | variavel_id, grupo1_ids, grupo2_ids (nome_grupo1, nome_grupo2 opcionais) | — |
-| multiplos_grupos | variavel_id, agrupar_por (campanha \| unidade_amostral \| evento_amostragem) | — |
+Todos os filtros abaixo são opcionais e aditivos (AND). Aplicam-se a qualquer `tipo_dado`, restringindo o universo de registros que entra na análise.
+
+| Filtro | Tipo | Descrição |
+|--------|------|-----------|
+| `campanha_ids` | array int | Restringe a essas campanhas. |
+| `unidade_ids` | array int | Restringe a essas unidades amostrais. |
+| `evento_ids` | array int | Restringe a esses eventos de amostragem. |
+| `data_inicio`, `data_fim` | ISO8601 | Janela de datas do registro (`data_registro`). |
+| `latitude_min`, `latitude_max`, `longitude_min`, `longitude_max` | decimal | Bounding box geográfico aplicado sobre `dim_unidade_amostral`. Cada coordenada é opcional (podem ser usadas isoladamente). |
+
+### Fontes derivadas
+
+Análises numéricas (`vetor_unico`, `dois_vetores`, `dois_grupos`, `multiplos_grupos`) aceitam, além de variáveis customizadas, fontes derivadas dos registros:
+
+- `abundancia` → `SUM(abundancia)` agrupada por `nivel_agregacao`.
+- `riqueza` → `COUNT(DISTINCT especie)` agrupada por `nivel_agregacao`, excluindo ausências (`abundancia <= 0`).
+- `variavel` (default) → valor da variável customizada (`variavel_id`, `variavel_x_id`, `variavel_y_id`).
+
+`nivel_agregacao` aceita `campanha`, `unidade_amostral` (default) e `evento`. Em `multiplos_grupos` com fonte derivada, cada evento vira uma observação e o grupo vem do `agrupar_por`.
+
+### Parâmetros por tipo_dado
+
+| tipo_dado | Parâmetros obrigatórios (fonte=variavel) | Parâmetros obrigatórios (fonte derivada) |
+|-----------|------------------------------------------|------------------------------------------|
+| abundancias | — | (n/a, sempre usa registros) |
+| abundancias_por_amostra | — | (n/a) |
+| matriz_acumulacao | — | (n/a) |
+| abundancias_com_variaveis | variavel_ids | (n/a) |
+| dois_vetores | variavel_x_id, variavel_y_id | — (fonte_x/fonte_y) — **caso misto suportado**: fonte_x=variavel exige variavel_x_id, fonte_y=abundancia/riqueza usa nivel_agregacao do request. Cada perna é independente. As duas pernas precisam resolver pra mesma dimensão DW (campanha/unidade/evento) — senão 422. |
+| vetor_unico | variavel_id | — (fonte) |
+| dois_grupos | variavel_id, grupo1_ids, grupo2_ids (nome_grupo1, nome_grupo2 opcionais) | grupo1_ids, grupo2_ids (fonte) |
+| multiplos_grupos | variavel_id, agrupar_por | agrupar_por (fonte) |
+
+Valores aceitos em `agrupar_por`:
+
+- **Hierárquicos**: `campanha`, `unidade_amostral`, `evento`
+- **Temporais**: `mes` (`YYYY-MM`), `ano` (`YYYY`), `estacao` (Verão/Outono/Inverno/Primavera do hemisfério sul; dezembro cai no verão do ano seguinte). Aceitos apenas com `fonte=abundancia`/`riqueza` ou com `fonte=variavel` quando a variável é a nível registro/evento — variáveis a nível campanha/unidade são rejeitadas porque não têm granularidade temporal.
