@@ -39,6 +39,7 @@ class CampanhasActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCampanhasBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var estudoNome     = ""
     private val campanhas = mutableListOf<CampanhaResponse>()
 
@@ -48,6 +49,7 @@ class CampanhasActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
 
         binding.tvEstudoNome.text = estudoNome
@@ -68,8 +70,10 @@ class CampanhasActivity : BaseDrawerActivity() {
             onItemClick = { campanha ->
                 val intent = Intent(this, UnidadesActivity::class.java)
                 intent.putExtra("estudo_remote_id", estudoRemoteId)
+                intent.putExtra("estudo_local_id", estudoLocalId)
                 intent.putExtra("estudo_nome", estudoNome)
                 intent.putExtra("campanha_id", campanha.id)
+                intent.putExtra("campanha_local_id", resolveCampanhaLocalId(campanha.id))
                 intent.putExtra("campanha_nome", campanha.nome)
                 startActivity(intent)
             },
@@ -77,10 +81,22 @@ class CampanhasActivity : BaseDrawerActivity() {
         )
     }
 
+    /**
+     * Resolve o local_id da campanha para passar adiante na navegação.
+     * - id < 0: já é -localId (campanha offline-only) → retorna abs(id).
+     * - id > 0: é remote_id → consulta no SQLite (pode retornar -1 se não cacheada).
+     */
+    private fun resolveCampanhaLocalId(campanhaId: Int): Long {
+        if (campanhaId < 0) return (-campanhaId).toLong()
+        if (estudoLocalId <= 0) return -1L
+        return CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, estudoLocalId)?.localId ?: -1L
+    }
+
     private fun setupListeners() {
         binding.btnAdicionarCampanha.setOnClickListener {
             val intent = Intent(this, NovaCampanhaActivityV2::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
@@ -91,11 +107,13 @@ class CampanhasActivity : BaseDrawerActivity() {
     }
 
     private fun carregarCampanhas() {
-        // Se estudo_remote_id == -1, é offline-only: buscar via SQLite
-        if (estudoRemoteId == -1) {
-            val estudo = EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }
-            if (estudo != null) {
-                carregarCampanhasOffline(estudo.localId)
+        // Estudo offline-only: id codifica -localId. Pula API e lista do SQLite.
+        if (estudoRemoteId <= 0) {
+            val estudoLocal = if (estudoLocalId > 0) estudoLocalId
+                else EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }?.localId
+            if (estudoLocal != null) {
+                estudoLocalId = estudoLocal
+                carregarCampanhasOffline(estudoLocal)
             }
             return
         }
@@ -144,7 +162,7 @@ class CampanhasActivity : BaseDrawerActivity() {
             offline.forEach { off ->
                 if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
                     campanhas.add(CampanhaResponse(
-                        id = off.remoteId ?: -1,
+                        id = off.remoteId ?: -off.localId.toInt(),
                         nome = off.nome,
                         dataInicio = off.dataInicio,
                         dataFim = off.dataFim,
@@ -165,7 +183,7 @@ class CampanhasActivity : BaseDrawerActivity() {
         campanhas.clear()
         campanhas.addAll(campanhaDao.listarPorEstudoLocal(estudoLocalId).map { off ->
             CampanhaResponse(
-                id = off.remoteId ?: -1,
+                id = off.remoteId ?: -off.localId.toInt(),
                 nome = off.nome,
                 dataInicio = off.dataInicio,
                 dataFim = off.dataFim,
@@ -183,6 +201,17 @@ class CampanhasActivity : BaseDrawerActivity() {
             .setTitle("Deletar campanha")
             .setMessage("Deletar \"${campanha.nome}\"?")
             .setPositiveButton("Deletar") { _, _ ->
+                if (campanha.id < 0 || estudoRemoteId <= 0) {
+                    // Campanha offline-only: deleta apenas no SQLite.
+                    val localId = if (campanha.id < 0) (-campanha.id).toLong()
+                        else CampanhaDao(this).listarTodos().firstOrNull { it.remoteId == campanha.id }?.localId
+                    if (localId != null) {
+                        com.kheprix.db.DatabaseHelper(this).writableDatabase
+                            .delete("campanhas", "local_id = ?", arrayOf(localId.toString()))
+                        carregarCampanhas()
+                    }
+                    return@setPositiveButton
+                }
                 lifecycleScope.launch {
                     try {
                         RetrofitClient.apiService.deleteCampanha(

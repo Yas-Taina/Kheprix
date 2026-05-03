@@ -49,7 +49,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
     private var modoEdicao     = false
 
@@ -82,7 +84,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
         modoEdicao     = unidadeId != -1
 
@@ -161,6 +166,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Variáveis dinâmicas (nível unidade) ───────────────────────────────
 
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -170,9 +176,33 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) {}
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'unidade'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -271,6 +301,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Edição ────────────────────────────────────────────────────────────
 
     private fun preencherDadosEdicao() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getUnidade(
@@ -295,6 +326,11 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private fun criarUnidade() {
         val req = coletarFormulario() ?: return
+        // Pais offline-only: salva direto no SQLite (sem chamar API).
+        if (estudoRemoteId <= 0 || campanhaId <= 0) {
+            salvarOffline(req)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -405,38 +441,24 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
      */
     private fun salvarOffline(req: UnidadeRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-        if (estudoLocalId == null) {
-            Toast.makeText(
-                this,
-                "Sem conexão — este estudo não está salvo offline.",
-                Toast.LENGTH_LONG
-            ).show()
-            return
+        val campanhaResolved = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            estudoRemoteId > 0 && campanhaId > 0 ->
+                repo.estudoLocalIdFromRemote(estudoRemoteId)?.let {
+                    repo.campanhaLocalIdFromRemote(it, campanhaId)
+                }
+            else -> null
         }
-        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId)
-        if (campanhaLocalId == null) {
-            Toast.makeText(
-                this,
-                "Sem conexão — esta campanha não está salva offline.",
-                Toast.LENGTH_LONG
-            ).show()
+        if (campanhaResolved == null) {
+            Toast.makeText(this, "Campanha não está salva offline.", Toast.LENGTH_LONG).show()
             return
         }
         try {
-            repo.criarUnidadeOffline(campanhaLocalId, req)
-            Toast.makeText(
-                this,
-                "Sem conexão — unidade salva offline.",
-                Toast.LENGTH_LONG
-            ).show()
+            repo.criarUnidadeOffline(campanhaResolved, req)
+            Toast.makeText(this, "Unidade salva offline.", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                "Erro ao salvar offline: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

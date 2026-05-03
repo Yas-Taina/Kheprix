@@ -192,22 +192,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b60164b0-f9c1-4759-9589-19f0247a5e37" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../.claude/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../.claude/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/app/dtos/valida_valores_variaveis.rb" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/app/dtos/valida_valores_variaveis.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/app/services/gerencia_valores_variaveis.rb" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/app/services/gerencia_valores_variaveis.rb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/db/schema.rb" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/db/schema.rb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/models/Models.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/CampanhasActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/CampanhasActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EspeciesActivities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudoDetalheActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudoDetalheActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EstudosActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EventosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/EventosActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/NovaCampanhaActivityV2.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/NovaCampanhaActivityV2.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/NovaUnidadeActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/NovaUnidadeActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/RegistrosActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/UnidadesActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kheprix/ui/UnidadesActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_novo_evento.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_novo_evento.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_registros.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_registros.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_unidades.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_unidades.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../seed_organico.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../seed_organico.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -217,7 +211,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=PhysicalDevice, isTemplate=false, identifier=serial=RQ8R908YYTT)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=LocalEmulator, isTemplate=false, identifier=path=C:\Users\chris\.android\avd\Medium_Phone_API_35.avd)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />

@@ -60,9 +60,13 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var eventoId       = -1
+    private var eventoLocalId  = -1L
     private var eventoNome     = ""
 
     private val registros     = mutableListOf<RegistroResponse>()
@@ -76,9 +80,16 @@ class RegistrosActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         eventoId       = intent.getIntExtra("evento_id", -1)
+        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
         eventoNome     = intent.getStringExtra("evento_nome") ?: ""
 
         binding.tvEventoNome.text = eventoNome
@@ -93,9 +104,13 @@ class RegistrosActivity : BaseDrawerActivity() {
         binding.btnAdicionarRegistro.setOnClickListener {
             startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
                 putExtra("evento_id", eventoId)
+                putExtra("evento_local_id", eventoLocalId)
             })
         }
 
@@ -107,9 +122,13 @@ class RegistrosActivity : BaseDrawerActivity() {
         binding.btnEditarEvento.setOnClickListener {
             startActivity(Intent(this, NovoEventoActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
                 putExtra("evento_id", eventoId)
+                putExtra("evento_local_id", eventoLocalId)
             })
         }
 
@@ -136,22 +155,26 @@ class RegistrosActivity : BaseDrawerActivity() {
     private fun carregarEspecies() {
         lifecycleScope.launch {
             val online = mutableListOf<EspecieResponse>()
-            try {
-                val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
-                if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
-            } catch (_: Exception) { }
+            if (estudoRemoteId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
+                    if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
+                } catch (_: Exception) { }
+            }
 
             val repo = OfflineRepository(this@RegistrosActivity)
-            val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-            estudoLocalId?.let { id ->
+            val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+            resolvedEstudoLocal?.let { id ->
                 online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
             }
 
             especies.clear()
             especies.addAll(online)
-            if (estudoLocalId != null) {
+            if (resolvedEstudoLocal != null) {
                 val remoteIds = online.map { it.id }.toSet()
-                repo.listarEspeciesPorEstudoLocal(estudoLocalId).forEach { off ->
+                repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal).forEach { off ->
                     if (off.id < 0 || !remoteIds.contains(off.id)) especies.add(off)
                 }
             }
@@ -161,8 +184,8 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            // Tenta API se o evento tem remote id; senão, vai direto ao SQLite.
-            if (eventoId > 0) {
+            // Tenta API se todos os pais têm remote ids válidos.
+            if (eventoId > 0 && estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getEvento(
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
@@ -195,14 +218,18 @@ class RegistrosActivity : BaseDrawerActivity() {
     private fun carregarRegistros() {
         // Evento offline-only: id < 0 codifica -localId. id == -1 é o marcador
         // antigo (sem localId disponível); cai no lookup por horárioInicio.
-        if (eventoId == -1) {
-            val eventoDao = EventoDao(this)
-            val evento = eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome } ?: return
-            carregarRegistrosOffline(evento.localId)
+        if (eventoId <= 0) {
+            val localId = if (eventoLocalId > 0) eventoLocalId
+                else if (eventoId < 0) (-eventoId).toLong()
+                else EventoDao(this).listarTodos().firstOrNull { it.horarioInicio == eventoNome }?.localId
+            if (localId != null) {
+                eventoLocalId = localId
+                carregarRegistrosOffline(localId)
+            }
             return
         }
-        if (eventoId < 0) {
-            carregarRegistrosOffline((-eventoId).toLong())
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) {
+            if (eventoLocalId > 0) carregarRegistrosOffline(eventoLocalId)
             return
         }
 
@@ -243,7 +270,7 @@ class RegistrosActivity : BaseDrawerActivity() {
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
                         registros.add(RegistroResponse(
-                            id = off.remoteId ?: -1,
+                            id = off.remoteId ?: -off.localId.toInt(),
                             especieId = off.especieRemoteId,
                             eventoAmostragemId = off.eventoLocalId.toInt(),
                             data = off.data,
@@ -268,7 +295,7 @@ class RegistrosActivity : BaseDrawerActivity() {
         registros.clear()
         registros.addAll(registroDao.listarPorEventoLocal(eventoLocalId).map { off ->
             RegistroResponse(
-                id = off.remoteId ?: -1,
+                id = off.remoteId ?: -off.localId.toInt(),
                 especieId = off.especieRemoteId,
                 eventoAmostragemId = off.eventoLocalId.toInt(),
                 data = off.data,
@@ -309,9 +336,13 @@ class RegistrosActivity : BaseDrawerActivity() {
     private fun abrirDetalhe(r: RegistroResponse) {
         startActivity(Intent(this, RegistroDetalheActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
+            putExtra("estudo_local_id", estudoLocalId)
             putExtra("campanha_id", campanhaId)
+            putExtra("campanha_local_id", campanhaLocalId)
             putExtra("unidade_id", unidadeId)
+            putExtra("unidade_local_id", unidadeLocalId)
             putExtra("evento_id", eventoId)
+            putExtra("evento_local_id", eventoLocalId)
             putExtra("registro_id", r.id)
         })
     }
@@ -376,9 +407,13 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     private lateinit var binding: ActivityNovoRegistroBinding
 
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var eventoId       = -1
+    private var eventoLocalId  = -1L
     private var registroId     = -1
     private var modoEdicao     = false
 
@@ -422,9 +457,16 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         eventoId       = intent.getIntExtra("evento_id", -1)
+        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
         registroId     = intent.getIntExtra("registro_id", -1)
         modoEdicao     = registroId != -1
 
@@ -539,23 +581,26 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     private fun carregarEspecies() {
         lifecycleScope.launch {
             val online = mutableListOf<EspecieResponse>()
-            try {
-                val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
-                if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
-            } catch (_: Exception) { }
+            if (estudoRemoteId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
+                    if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
+                } catch (_: Exception) { }
+            }
 
             val repo = OfflineRepository(this@NovoRegistroActivity)
-            val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-            estudoLocalId?.let { id ->
+            val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+            resolvedEstudoLocal?.let { id ->
                 online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
             }
 
             especies.clear()
             especies.addAll(online)
-            // Mescla com espécies criadas/cacheadas offline (inclui id = -1).
-            if (estudoLocalId != null) {
+            if (resolvedEstudoLocal != null) {
                 val remoteIds = online.map { it.id }.toSet()
-                repo.listarEspeciesPorEstudoLocal(estudoLocalId).forEach { off ->
+                repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal).forEach { off ->
                     if (off.id < 0 || !remoteIds.contains(off.id)) especies.add(off)
                 }
             }
@@ -570,6 +615,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     // ── Variáveis nível registro ──────────────────────────────────────────
 
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -578,9 +624,33 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     variaveis.clear(); variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) {}
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'registro'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -660,6 +730,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     // ── Preencher edição ──────────────────────────────────────────────────
 
     private fun preencherEdicao() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getRegistro(
@@ -692,6 +763,11 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun criarRegistro() {
         val req = coletarFormulario() ?: return
+        // Pais offline-only: salva direto no SQLite.
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
+            mostrarDialogOffline(req)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -705,7 +781,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     Toast.makeText(this@NovoRegistroActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                // Offline: mostra dialog e salva localmente
                 mostrarDialogOffline(req)
             } finally { setLoading(false) }
         }
@@ -713,6 +788,10 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun editarRegistro() {
         val form = coletarFormulario() ?: return
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) {
+            Toast.makeText(this, "Edição offline ainda não suportada para registros offline-only.", Toast.LENGTH_LONG).show()
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -819,23 +898,34 @@ class NovoRegistroActivity : BaseDrawerActivity() {
      */
     private fun salvarRegistroOffline(req: RegistroRequest): Boolean {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
-            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        // Resolve evento_local_id: prefere o passado pelo Intent.
+        val eventoResolved = when {
+            eventoLocalId > 0 -> eventoLocalId
+            estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 && eventoId > 0 ->
+                repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                    repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                        repo.unidadeLocalIdFromRemote(cL, unidadeId)?.let { uL ->
+                            repo.resolveEventoLocalId(uL, eventoId)
+                        }
+                    }
+                }
+            else -> null
         }
-        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
-            Toast.makeText(this, "Campanha não está salva offline.", Toast.LENGTH_LONG).show(); return false
-        }
-        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
-            Toast.makeText(this, "Unidade não está salva offline.", Toast.LENGTH_LONG).show(); return false
-        }
-        val eventoLocalId = repo.resolveEventoLocalId(unidadeLocalId, eventoId) ?: run {
+        if (eventoResolved == null) {
             Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG).show(); return false
         }
-        val especieLocalId = repo.resolveEspecieLocalId(estudoLocalId, req.especieId) ?: run {
+        // Resolve espécie: precisa do estudo_local_id.
+        val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+        if (resolvedEstudoLocal == null) {
+            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+        }
+        val especieLocalId = repo.resolveEspecieLocalId(resolvedEstudoLocal, req.especieId) ?: run {
             Toast.makeText(this, "Espécie não está salva offline.", Toast.LENGTH_LONG).show(); return false
         }
         return try {
-            repo.criarRegistroOffline(eventoLocalId, especieLocalId, req)
+            repo.criarRegistroOffline(eventoResolved, especieLocalId, req)
             true
         } catch (e: Exception) {
             Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
