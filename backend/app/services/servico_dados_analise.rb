@@ -1,10 +1,23 @@
 # frozen_string_literal: true
 
 class ServicoDadosAnalise
+  # Levantada quando dois_vetores recebe x e y em dimensões DW diferentes
+  # (ex.: variavel a nivel campanha + fonte=abundancia a nivel unidade). Sem essa
+  # validação, hash_x.keys & hash_y.keys faria interseção crua de Integer entre
+  # espaços de IDs incompatíveis e produziria correlações inventadas quando
+  # IDs colidissem por acaso entre campanha e unidade.
+  class NivelIncompativel < StandardError; end
+
   def montar_dados(estudo_id:, tipo_dado:, params:)
     @campanha_ids = params[:campanha_ids].presence
+    @unidade_ids = params[:unidade_ids].presence
+    @evento_ids = params[:evento_ids].presence
     @data_inicio = params[:data_inicio].presence
     @data_fim = params[:data_fim].presence
+    @latitude_min = params[:latitude_min]
+    @latitude_max = params[:latitude_max]
+    @longitude_min = params[:longitude_min]
+    @longitude_max = params[:longitude_max]
 
     case tipo_dado
     when "abundancias"
@@ -93,7 +106,7 @@ class ServicoDadosAnalise
     nome_index = {}
 
     variavel_ids.each do |vid|
-      valores_variavel_unicos(estudo_id: estudo_id, variavel_id: vid).each do |r|
+      valores_por_unidade(estudo_id: estudo_id, variavel_id: vid).each do |r|
         var_index[[ r.fk_unidade_amostral, r.id_variavel ]] = r.valor_numerico&.to_f || 0.0
         nome_index[r.id_variavel] ||= r.nome_variavel
       end
@@ -119,26 +132,38 @@ class ServicoDadosAnalise
   # ==================== Dois Vetores ====================
 
   def montar_dois_vetores(estudo_id:, params:)
-    variavel_x_id = params[:variavel_x_id]
-    variavel_y_id = params[:variavel_y_id]
-    return nil if variavel_x_id.blank? || variavel_y_id.blank?
+    fonte_x = (params[:fonte_x] || "variavel").to_s
+    fonte_y = (params[:fonte_y] || "variavel").to_s
+    nivel = params[:nivel_agregacao] || "unidade_amostral"
 
-    hash_x = {}
-    hash_y = {}
-    nome_x = nil
-    nome_y = nil
-
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_x_id).each do |r|
-      next unless r.valor_numerico
-      hash_x[r.fk_unidade_amostral] = r.valor_numerico.to_f
-      nome_x ||= r.nome_variavel
+    # Quando fonte é variavel, a variavel_id correspondente é obrigatória. Sem
+    # essa validação, dimensao_efetiva retorna nil pra essa perna, o cross-nivel
+    # check é pulado (col_x && col_y && ...), e o request cai em "dados
+    # insuficientes" genérico — UX ruim, esconde a causa real.
+    if fonte_x == "variavel" && params[:variavel_x_id].blank?
+      raise NivelIncompativel, "variavel_x_id é obrigatório quando fonte_x=variavel"
+    end
+    if fonte_y == "variavel" && params[:variavel_y_id].blank?
+      raise NivelIncompativel, "variavel_y_id é obrigatório quando fonte_y=variavel"
     end
 
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_y_id).each do |r|
-      next unless r.valor_numerico
-      hash_y[r.fk_unidade_amostral] = r.valor_numerico.to_f
-      nome_y ||= r.nome_variavel
+    col_x = dimensao_efetiva(estudo_id: estudo_id, fonte: fonte_x, variavel_id: params[:variavel_x_id], nivel: nivel)
+    col_y = dimensao_efetiva(estudo_id: estudo_id, fonte: fonte_y, variavel_id: params[:variavel_y_id], nivel: nivel)
+    if col_x && col_y && col_x != col_y
+      raise NivelIncompativel,
+            "x (#{fonte_x}: #{col_x}) e y (#{fonte_y}: #{col_y}) precisam estar na mesma dimensão. " \
+            "Ajuste nivel_agregacao ou escolha variáveis no mesmo nível."
     end
+
+    hash_x, nome_x = hash_bivariado(
+      estudo_id: estudo_id, fonte: fonte_x,
+      variavel_id: params[:variavel_x_id], nivel: nivel,
+    )
+    hash_y, nome_y = hash_bivariado(
+      estudo_id: estudo_id, fonte: fonte_y,
+      variavel_id: params[:variavel_y_id], nivel: nivel,
+    )
+    return nil if hash_x.empty? || hash_y.empty?
 
     ids_comuns = hash_x.keys & hash_y.keys
     return nil if ids_comuns.empty?
@@ -154,23 +179,50 @@ class ServicoDadosAnalise
   # ==================== Dois Grupos ====================
 
   def montar_dois_grupos(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
-
+    fonte = (params[:fonte] || "variavel").to_s
     grupo1_ids = params[:grupo1_ids]
     grupo2_ids = params[:grupo2_ids]
     return nil if grupo1_ids.blank? || grupo2_ids.blank?
 
-    valores_g1 = valores_variavel_por_unidade(
-      estudo_id: estudo_id,
-      variavel_id: variavel_id,
-      unidade_ids: grupo1_ids,
-    )
-    valores_g2 = valores_variavel_por_unidade(
-      estudo_id: estudo_id,
-      variavel_id: variavel_id,
-      unidade_ids: grupo2_ids,
-    )
+    if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
+      valores_g1 = valores_variavel_por_unidade(
+        estudo_id: estudo_id, variavel_id: variavel_id, unidade_ids: grupo1_ids,
+      )
+      valores_g2 = valores_variavel_por_unidade(
+        estudo_id: estudo_id, variavel_id: variavel_id, unidade_ids: grupo2_ids,
+      )
+    else
+      nivel = params[:nivel_agregacao] || "unidade_amostral"
+      por_dimensao = dados_derivados(
+        estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel,
+      )
+      valores_g1 = grupo1_ids.filter_map { |id| por_dimensao[id]&.to_f }
+      valores_g2 = grupo2_ids.filter_map { |id| por_dimensao[id]&.to_f }
+
+      # Detecta IDs que não retornaram dados pra dimensão escolhida. Sem detectar,
+      # tanto o caso "todos errados" quanto o caso "alguns errados (lookup parcial)"
+      # caíam em mensagens genéricas — pior, lookup parcial com IDs colidindo por
+      # acaso entre dimensões fazia o teste t rodar com vetores corrompidos sem
+      # aviso. Agora distinguimos: total = 0 ⇒ todos errados; total < esperado ⇒
+      # alguns errados (parcial). Mensagem diferente em cada caso.
+      total_obtido = valores_g1.size + valores_g2.size
+      total_esperado = grupo1_ids.size + grupo2_ids.size
+      if por_dimensao.any? && total_obtido < total_esperado
+        if total_obtido.zero?
+          raise NivelIncompativel,
+                "Nenhum dos IDs em grupo1_ids/grupo2_ids corresponde a #{nivel} no estudo. " \
+                "Para fonte=#{fonte} com nivel_agregacao=#{nivel}, os grupo*_ids precisam " \
+                "ser IDs de #{nivel}."
+        else
+          raise NivelIncompativel,
+                "Alguns IDs em grupo1_ids/grupo2_ids não retornaram dados para #{nivel} " \
+                "(#{total_obtido}/#{total_esperado} encontrados). Verifique se são IDs de " \
+                "#{nivel} válidos com registros após os filtros aplicados."
+        end
+      end
+    end
 
     return nil if valores_g1.empty? || valores_g2.empty?
 
@@ -184,70 +236,67 @@ class ServicoDadosAnalise
 
   # ==================== Múltiplos Grupos ====================
 
+  AGRUPAMENTOS_VALIDOS = %w[campanha unidade_amostral evento mes ano estacao].freeze
+
+  AGRUPAMENTOS_TEMPORAIS = %w[mes ano estacao].freeze
+
   def montar_multiplos_grupos(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
-
+    fonte = (params[:fonte] || "variavel").to_s
     agrupar_por = params[:agrupar_por] || "unidade_amostral"
+    return nil unless AGRUPAMENTOS_VALIDOS.include?(agrupar_por)
 
-    grupo_col = case agrupar_por
-    when "campanha" then :fk_campanha
-    when "unidade_amostral" then :fk_unidade_amostral
-    when "evento_amostragem" then :fk_evento
-    else return nil
-    end
+    rows = if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
 
-    rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
-    data = rows.map { |r| [ r.send(grupo_col), r.valor_numerico, r.nome_variavel ] }
-    return nil if data.empty?
-
-    if agrupar_por == "campanha"
-      ids = data.map(&:first).uniq
-      labels = base_analises(estudo_id)
-        .where(fk_campanha: ids)
-        .distinct
-        .pluck(:fk_campanha, :nome_campanha)
-        .to_h
-      label_fn = ->(id) { labels[id] || "Campanha #{id}" }
-    elsif agrupar_por == "unidade_amostral"
-      ids = data.map(&:first).uniq
-      unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
-      label_fn = ->(id) { unidades[id]&.nome_unidade_amostral || "Unidade #{id}" }
+      validar_compatibilidade_temporal!(estudo_id: estudo_id, variavel_id: variavel_id, agrupar_por: agrupar_por)
+      rows_variavel_para_grupos(estudo_id: estudo_id, variavel_id: variavel_id)
     else
-      label_fn = ->(id) { "Evento #{id}" }
+      rows_derivadas_para_grupos(estudo_id: estudo_id, fonte: fonte)
     end
+    return nil if rows.empty?
+
+    label_fn = construir_label_fn(estudo_id: estudo_id, agrupar_por: agrupar_por, rows: rows)
+    nome_variavel = rows.first[:nome] || "Variável"
 
     valores = []
     grupos = []
-    nome_variavel = nil
 
-    data.each do |grupo_id, valor_num, nome_var|
-      next unless valor_num
-      nome_variavel ||= nome_var
-      valores << valor_num.to_f
-      grupos << label_fn.call(grupo_id)
+    rows.each do |row|
+      next if row[:valor].nil?
+      label = label_fn.call(row)
+      next if label.nil?
+      valores << row[:valor].to_f
+      grupos << label
     end
 
     return nil if valores.empty?
 
-    { valores: valores, grupos: grupos, nome_variavel: nome_variavel || "Variável" }
+    { valores: valores, grupos: grupos, nome_variavel: nome_variavel }
   end
 
   # ==================== Vetor Único ====================
 
   def montar_vetor_unico(estudo_id:, params:)
-    variavel_id = params[:variavel_id]
-    return nil if variavel_id.blank?
+    fonte = (params[:fonte] || "variavel").to_s
 
-    rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+    if fonte == "variavel"
+      variavel_id = params[:variavel_id]
+      return nil if variavel_id.blank?
 
-    dados = []
-    nome_variavel = nil
-
-    rows.each do |r|
-      next unless r.valor_numerico
-      nome_variavel ||= r.nome_variavel
-      dados << r.valor_numerico.to_f
+      rows = valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+      dados = []
+      nome_variavel = nil
+      rows.each do |r|
+        next unless r.valor_numerico
+        nome_variavel ||= r.nome_variavel
+        dados << r.valor_numerico.to_f
+      end
+    else
+      nivel = params[:nivel_agregacao] || "unidade_amostral"
+      valores = dados_derivados(estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel)
+      dados = valores.values.map(&:to_f)
+      nome_variavel = "#{fonte.capitalize} por #{nivel}"
     end
 
     return nil if dados.empty?
@@ -293,31 +342,281 @@ class ServicoDadosAnalise
   def base_analises(estudo_id)
     escopo = Dw::AnaliseEstatistica.do_estudo(estudo_id)
     escopo = escopo.where(fk_campanha: @campanha_ids) if @campanha_ids.present?
+    escopo = escopo.where(fk_unidade_amostral: @unidade_ids) if @unidade_ids.present?
+    escopo = escopo.where(fk_evento: @evento_ids) if @evento_ids.present?
     if @data_inicio.present? || @data_fim.present?
       escopo = escopo.where(data_registro: @data_inicio..@data_fim)
     end
+
+    ids_bounding_box = unidades_no_bounding_box
+    escopo = escopo.where(fk_unidade_amostral: ids_bounding_box) if ids_bounding_box
+
     escopo
+  end
+
+  # Retorna IDs de unidades amostrais dentro do bounding box, ou nil se nenhum
+  # parâmetro geográfico foi passado (aí o filtro não se aplica). Consulta o DW
+  # (`dim_unidade_amostral`) porque `analises_estatisticas` não tem lat/long.
+  def unidades_no_bounding_box
+    return nil if @latitude_min.nil? && @latitude_max.nil? &&
+                  @longitude_min.nil? && @longitude_max.nil?
+
+    query = Dw::DimUnidadeAmostral.all
+    query = query.where("latitude >= ?", @latitude_min) if @latitude_min
+    query = query.where("latitude <= ?", @latitude_max) if @latitude_max
+    query = query.where("longitude >= ?", @longitude_min) if @longitude_min
+    query = query.where("longitude <= ?", @longitude_max) if @longitude_max
+    query.pluck(:id_unidade)
   end
 
   def registros_unicos(estudo_id)
     subquery = base_analises(estudo_id)
-      .select("DISTINCT ON (id_registro) id_registro, especie, abundancia, fk_unidade_amostral, fk_evento, fk_campanha, nome_campanha, data_registro")
+      .select("DISTINCT ON (id_registro) id_registro, especie, abundancia, fk_unidade_amostral, fk_evento, fk_campanha, nome_campanha, data_registro, ano, mes")
       .order(:id_registro)
       .to_sql
     Dw::AnaliseEstatistica.from("(#{subquery}) AS analises_estatisticas")
   end
 
   def valores_variavel_unicos(estudo_id:, variavel_id:)
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+
     base_analises(estudo_id)
       .where(id_variavel: variavel_id)
-      .select("DISTINCT ON (fk_unidade_amostral) fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_variavel, nome_variavel, valor_numerico")
-      .order(:fk_unidade_amostral)
+      .select("DISTINCT ON (#{coluna}) id_registro, fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_variavel, nome_variavel, nivel_variavel, valor_numerico")
+      .order(coluna)
   end
 
   def valores_variavel_por_unidade(estudo_id:, variavel_id:, unidade_ids:)
-    valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id)
+    valores_por_unidade(estudo_id: estudo_id, variavel_id: variavel_id)
       .where(fk_unidade_amostral: unidade_ids)
       .map { |r| r.valor_numerico&.to_f }
       .compact
+  end
+
+  # Sempre 1 linha por unidade amostral, com o valor da variável replicado quando
+  # ela é a nível campanha (que tem 1 valor por campanha estendido a todas as unidades
+  # daquela campanha pelo DW). Usado por callers que precisam de matriz unit-keyed
+  # (RDA/CCA, dois_grupos com fonte=variavel) — sem isso, variável a nível campanha
+  # devolveria 1 unidade arbitrária por campanha e o resto cairia em 0.0.
+  #
+  # Limitação: pra variáveis a nível EVENTO ou REGISTRO, há
+  # múltiplos valores por unidade (cada evento/registro tem o seu). O DISTINCT ON
+  # devolve UM valor — agora determinístico por causa do tiebreaker `id_registro`,
+  # mas ainda é "1 valor arbitrário entre vários", não uma agregação. Pra esses
+  # níveis, considere usar fonte=abundancia/riqueza com nivel_agregacao apropriado,
+  # ou aceite que a matriz reflete o registro de menor id por unidade.
+  def valores_por_unidade(estudo_id:, variavel_id:)
+    base_analises(estudo_id)
+      .where(id_variavel: variavel_id)
+      .select("DISTINCT ON (fk_unidade_amostral) fk_unidade_amostral, fk_campanha, nome_campanha, fk_evento, id_registro, id_variavel, nome_variavel, valor_numerico")
+      .order(:fk_unidade_amostral, :id_registro)
+  end
+
+  # Escolhe a coluna do DISTINCT ON conforme o nivel_variavel da variável solicitada.
+  # Variáveis CAMPANHA/UNIDADE/EVENTO/REGISTRO precisam ser consultadas na dimensão
+  # nativa — normalizar tudo por fk_unidade_amostral perde dados de eventos/registros
+  # distintos na mesma unidade e replica valor por unidade no caso de campanha.
+  # O retorno é whitelist, então é seguro interpolar no SQL.
+  # Memoizado por instância pra evitar N+1 quando vários callers consultam a mesma variável.
+  def coluna_do_nivel_variavel(estudo_id:, variavel_id:)
+    @nivel_cache ||= {}
+    @nivel_cache[variavel_id] ||= begin
+      nivel = base_analises(estudo_id)
+        .where(id_variavel: variavel_id)
+        .limit(1)
+        .pluck(:nivel_variavel)
+        .first
+
+      case nivel.to_s.downcase
+      when "campanha" then "fk_campanha"
+      when "evento"   then "fk_evento"
+      when "registro" then "id_registro"
+      else "fk_unidade_amostral"
+      end
+    end
+  end
+
+  # ==================== Helpers de Fonte Derivada ====================
+
+  # Retorna hash {chave_dimensao => valor_float} para fonte abundancia/riqueza
+  # agrupado pela dimensão escolhida.
+  # - abundancia = SUM(abundancia)
+  # - riqueza    = COUNT(DISTINCT especie) (exclui ausências com abundancia <= 0)
+  def dados_derivados(estudo_id:, fonte:, nivel_agregacao:)
+    coluna = coluna_nivel_agregacao(nivel_agregacao)
+    base = registros_unicos(estudo_id)
+
+    case fonte
+    when "abundancia"
+      base.group(coluna).sum(:abundancia)
+    when "riqueza"
+      base.where("abundancia > 0").group(coluna).distinct.count(:especie)
+    else
+      {}
+    end
+  end
+
+  def hash_bivariado(estudo_id:, fonte:, variavel_id:, nivel:)
+    if fonte == "variavel"
+      return [ {}, nil ] if variavel_id.blank?
+
+      hash = {}
+      nome = nil
+      valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id).each do |r|
+        next unless r.valor_numerico
+        chave = chave_nivel_nativo(r)
+        hash[chave] = r.valor_numerico.to_f
+        nome ||= r.nome_variavel
+      end
+      [ hash, nome ]
+    else
+      valores = dados_derivados(estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel)
+      [ valores.transform_values(&:to_f), "#{fonte.capitalize} por #{nivel}" ]
+    end
+  end
+
+  def chave_nivel_nativo(row)
+    case row.nivel_variavel.to_s.downcase
+    when "campanha" then row.fk_campanha
+    when "evento"   then row.fk_evento
+    when "registro" then row.id_registro
+    else row.fk_unidade_amostral
+    end
+  end
+
+  def coluna_nivel_agregacao(nivel_agregacao)
+    case nivel_agregacao.to_s
+    when "campanha" then :fk_campanha
+    when "evento"   then :fk_evento
+    else :fk_unidade_amostral
+    end
+  end
+
+  # Devolve a coluna DW que vai chavear o hash de cada perna do dois_vetores.
+  # fonte=variavel usa o nivel_variavel da própria variável (via coluna_do_nivel_variavel),
+  # fonte derivada usa o nivel_agregacao do request. Retorna nil quando a perna ainda
+  # não tem variavel_id pra resolver — caso em que deixa o caller decidir como tratar.
+  def dimensao_efetiva(estudo_id:, fonte:, variavel_id:, nivel:)
+    return nil if fonte == "variavel" && variavel_id.blank?
+
+    if fonte == "variavel"
+      coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    else
+      coluna_nivel_agregacao(nivel).to_s
+    end
+  end
+
+  # Agrupar por mes/ano/estacao em multiplos_grupos com fonte=variavel só faz sentido
+  # quando a variável tem 1:1 com data: nivel=registro (cada registro tem sua data) ou
+  # nivel=evento (cada evento tem sua data, todos os registros do evento compartilham).
+  # Pra nivel=campanha ou nivel=unidade, o DISTINCT ON pega ano/mes do id_registro
+  # arbitrário escolhido pelo Postgres — ANOVA/Kruskal acabam com 1 observação por grupo.
+  # Rejeita explicitamente em vez de devolver resultado silenciosamente errado.
+  def validar_compatibilidade_temporal!(estudo_id:, variavel_id:, agrupar_por:)
+    return unless AGRUPAMENTOS_TEMPORAIS.include?(agrupar_por)
+
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    return if %w[id_registro fk_evento].include?(coluna)
+
+    nivel_legivel = case coluna
+    when "fk_campanha" then "campanha"
+    when "fk_unidade_amostral" then "unidade"
+    else coluna
+    end
+
+    raise NivelIncompativel,
+          "agrupar_por=#{agrupar_por} requer variável a nível registro ou evento " \
+          "(cada registro/evento tem uma data). A variável solicitada é a nível " \
+          "#{nivel_legivel}, que não tem granularidade temporal — ANOVA/Kruskal " \
+          "acabariam com 1 observação por grupo."
+  end
+
+  # ==================== Helpers de Múltiplos Grupos ====================
+
+  def rows_variavel_para_grupos(estudo_id:, variavel_id:)
+    coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
+    base_analises(estudo_id)
+      .where(id_variavel: variavel_id)
+      .select(
+        "DISTINCT ON (#{coluna}) id_registro, fk_unidade_amostral, fk_campanha, " \
+        "nome_campanha, fk_evento, nome_variavel, valor_numerico, ano, mes",
+      )
+      .order(coluna)
+      .map do |r|
+        {
+          valor: r.valor_numerico,
+          nome: r.nome_variavel,
+          fk_campanha: r.fk_campanha,
+          fk_unidade_amostral: r.fk_unidade_amostral,
+          fk_evento: r.fk_evento,
+          nome_campanha: r.nome_campanha,
+          ano: r.ano,
+          mes: r.mes
+        }
+      end
+  end
+
+  def rows_derivadas_para_grupos(estudo_id:, fonte:)
+    base = registros_unicos(estudo_id)
+    cols = %i[fk_evento fk_unidade_amostral fk_campanha nome_campanha ano mes]
+
+    raw = case fonte
+    when "abundancia"
+      base.group(*cols).sum(:abundancia)
+    when "riqueza"
+      base.where("abundancia > 0").group(*cols).distinct.count(:especie)
+    else
+      {}
+    end
+
+    nome = fonte.capitalize
+    raw.map do |(evento_id, unidade_id, campanha_id, nome_campanha, ano, mes), valor|
+      {
+        valor: valor,
+        nome: nome,
+        fk_campanha: campanha_id,
+        fk_unidade_amostral: unidade_id,
+        fk_evento: evento_id,
+        nome_campanha: nome_campanha,
+        ano: ano,
+        mes: mes
+      }
+    end
+  end
+
+  def construir_label_fn(estudo_id:, agrupar_por:, rows:)
+    case agrupar_por
+    when "campanha"
+      ->(row) { row[:nome_campanha] || "Campanha #{row[:fk_campanha]}" }
+    when "unidade_amostral"
+      ids = rows.map { |r| r[:fk_unidade_amostral] }.compact.uniq
+      unidades = Dw::DimUnidadeAmostral.where(id_unidade: ids).index_by(&:id_unidade)
+      ->(row) { unidades[row[:fk_unidade_amostral]]&.nome_unidade_amostral || "Unidade #{row[:fk_unidade_amostral]}" }
+    when "evento"
+      ->(row) { "Evento #{row[:fk_evento]}" }
+    when "ano"
+      ->(row) { row[:ano]&.to_s }
+    when "mes"
+      ->(row) {
+        next nil if row[:ano].nil? || row[:mes].nil?
+        "#{row[:ano]}-#{row[:mes].to_s.rjust(2, "0")}"
+      }
+    when "estacao"
+      ->(row) { estacao_label(mes: row[:mes], ano: row[:ano]) }
+    end
+  end
+
+  # Estações do hemisfério sul. O ano da estação é o ano calendário onde
+  # janeiro/fevereiro caem (ex.: dezembro/2024 + jan/fev/2025 => "Verão 2025").
+  def estacao_label(mes:, ano:)
+    return nil if mes.nil? || ano.nil?
+
+    case mes.to_i
+    when 12       then "Verão #{ano.to_i + 1}"
+    when 1, 2     then "Verão #{ano}"
+    when 3, 4, 5  then "Outono #{ano}"
+    when 6, 7, 8  then "Inverno #{ano}"
+    when 9, 10, 11 then "Primavera #{ano}"
+    end
   end
 end

@@ -5,11 +5,15 @@ class ServicoAnalise
     analise = CatalogoAnalise.buscar(chave)
     return { erro: "Análise '#{chave}' não encontrada no catálogo" } unless analise
 
-    dados = ServicoDadosAnalise.new.montar_dados(
-      estudo_id: estudo_id,
-      tipo_dado: analise[:tipo_dado],
-      params: params,
-    )
+    begin
+      dados = ServicoDadosAnalise.new.montar_dados(
+        estudo_id: estudo_id,
+        tipo_dado: analise[:tipo_dado],
+        params: params,
+      )
+    rescue ServicoDadosAnalise::NivelIncompativel => e
+      return { erro: e.message }
+    end
 
     return { erro: mensagem_sem_dados(analise, params) } unless dados
 
@@ -66,8 +70,14 @@ class ServicoAnalise
   def mensagem_sem_dados(analise, params)
     filtros = []
     filtros << "campanha_ids=#{params[:campanha_ids]}" if params[:campanha_ids].present?
+    filtros << "unidade_ids=#{params[:unidade_ids]}" if params[:unidade_ids].present?
+    filtros << "evento_ids=#{params[:evento_ids]}" if params[:evento_ids].present?
     filtros << "data_inicio=#{params[:data_inicio]}" if params[:data_inicio].present?
     filtros << "data_fim=#{params[:data_fim]}" if params[:data_fim].present?
+    filtros << "latitude_min=#{params[:latitude_min]}" if params[:latitude_min].present?
+    filtros << "latitude_max=#{params[:latitude_max]}" if params[:latitude_max].present?
+    filtros << "longitude_min=#{params[:longitude_min]}" if params[:longitude_min].present?
+    filtros << "longitude_max=#{params[:longitude_max]}" if params[:longitude_max].present?
     contexto = filtros.any? ? " com os filtros #{filtros.join(", ")}" : ""
     "Não foi possível montar os dados para '#{analise[:nome]}'#{contexto}. Verifique se existem dados suficientes."
   end
