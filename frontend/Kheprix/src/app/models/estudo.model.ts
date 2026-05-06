@@ -26,3 +26,6 @@ export type TipoAgrupamento =
   | 'unidade_amostral'
   | 'campanha'
   | 'especie';
+
+
+export type FormatoExportacao = 'csv' | 'xml';

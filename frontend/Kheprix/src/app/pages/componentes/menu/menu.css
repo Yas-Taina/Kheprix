@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  background: var(--verdeclaro);
+  background: var(--color-bg-green-mid);
   padding: 0.5rem 1.5rem;
   position: fixed;
   top: 0;
@@ -10,6 +10,7 @@
   width: 100%;
   height: 15vh;
   z-index: 1100;
+  min-height: 15vh;
   box-sizing: border-box;
 }
 
@@ -24,7 +25,7 @@
   width: 60px;
   height: 60px;
   background: transparent;
-  border: 3px solid var(--cremeclaro);
+  border: 3px solid var(--color-bg-cream);
   border-radius: 50%;
   cursor: pointer;
   padding: 10px;
@@ -36,7 +37,7 @@
   top: 50%;
   width: 30px;
   height: 3px;
-  background: var(--cremeclaro);
+  background: var(--color-bg-cream);
   border-radius: 3px;
   transform: translate(-50%, -50%);
   transition: all 0.3s ease-in-out;
@@ -70,7 +71,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 3px solid var(--cremeclaro);
+  border: 3px solid var(--color-bg-cream);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +79,7 @@
 }
 
 .btnIcon {
-  color: var(--cremeclaro);
+  color: var(--color-bg-cream);
   font-size: 45px;
   line-height: 1;
 }
@@ -92,8 +93,8 @@
   left: 0;
   height: 100vh;
   width: 220px;
-  background: var(--cremeclaro);
-  color: var(--verdeescuro);
+  background: var(--color-bg-cream);
+  color: var(--color-bg-green-dark);
   transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
   z-index: 1000;
@@ -126,7 +127,7 @@
 .menu-links li a {
   display: inline-block;
   padding: 1rem;
-  color: var(--verdeescuro);
+  color: var( --color-bg-green-dark);
   text-decoration: none;
   font-size: 1.5rem;
   text-align: center;
@@ -136,7 +137,7 @@
   width: 60%;
   margin: 1rem auto;
   border: none;
-  border-top: 1px solid var(--verdeescuro);
+  border-top: 1px solid var( --color-bg-green-dark);
 }
 
 @media (max-width: 768px) {

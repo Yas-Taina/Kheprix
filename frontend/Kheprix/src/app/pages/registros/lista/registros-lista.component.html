@@ -19,7 +19,6 @@
         </select>
         <input class="form-control" type="text" [(ngModel)]="busca" placeholder="Digite sua busca..." style="flex:1" />
         <button class="btn-icon" (click)="filtrar()">🔍</button>
-        <button class="btn-icon">🔽</button>
       </div>
 
       <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
@@ -61,7 +60,7 @@
         </div>
         <div class="detail-grid">
           <div class="detail-field"><label>Horário de Início</label><span>{{ util.formatDateTime(eventoDetalhe.horario_inicio) }}</span></div>
-          <div class="detail-field"><label>Horário de Fim</label><span>{{ util.formatDateTime(eventoDetalhe.horario_fim) }}</span></div>
+          <div class="detail-field"><label>Horário de Ultima Alteração</label><span>{{ util.formatDateTime(eventoDetalhe.horario_fim) }}</span></div>
           <div class="detail-field"><label>Esforço Real</label><span>{{ eventoDetalhe.esforco_real || '—' }}</span></div>
           <div class="detail-field"><label>Criado em</label><span>{{ util.formatDate(eventoDetalhe.created_at) }}</span></div>
         </div>
