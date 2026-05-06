@@ -34,7 +34,7 @@ class PerfilActivity : BaseDrawerActivity() {
         exibirDadosUsuario()
         exibirResumoOffline()
 
-        binding.ivBack.setOnClickListener { finish() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
 
         binding.btnLogout.setOnClickListener {
             confirmarLogout()

@@ -310,7 +310,7 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                     }
                 }
             }
-            popularSpinner(binding.spinnerEvento, eventos.map { it.horarioInicio })
+            popularSpinner(binding.spinnerEvento, eventos.map { formatarDataHora(it.horarioInicio) })
         }
     }
 
@@ -327,8 +327,17 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 createdAt = off.createdAt ?: ""
             )
         })
-        popularSpinner(binding.spinnerEvento, eventos.map { it.horarioInicio })
+        popularSpinner(binding.spinnerEvento, eventos.map { formatarDataHora(it.horarioInicio) })
     }
+
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
+    } catch (_: Exception) { iso }
 
     private fun popularSpinner(spinner: Spinner, itens: List<String>) {
         val lista = mutableListOf("Selecione...") + itens

@@ -73,7 +73,7 @@ class NovoEstudoActivity : BaseDrawerActivity() {
             if (modoEdicao) editarEstudo() else criarEstudo()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
+        binding.ivMenuLateral.setOnClickListener { openDrawer() }
     }
 
     // ── Variáveis dinâmicas ───────────────────────────────────────────────

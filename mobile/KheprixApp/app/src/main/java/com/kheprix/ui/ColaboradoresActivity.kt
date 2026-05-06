@@ -57,6 +57,7 @@ class ColaboradoresActivity : BaseDrawerActivity() {
     private lateinit var binding: ActivityColaboradoresBinding
     private var estudoRemoteId = -1
     private val colaboradores = mutableListOf<ColaboradorResponse>()
+    private val todosColaboradores = mutableListOf<ColaboradorResponse>()
     private lateinit var adapter: ColaboradorAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -282,12 +283,12 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId
                 )
                 if (resp.isSuccessful) {
+                    val todos = resp.body() ?: emptyList()
+                    todosColaboradores.clear()
+                    todosColaboradores.addAll(todos)
                     colaboradores.clear()
-                    // Exclui o próprio proprietário da lista
                     val meuId = SessionManager.getUserId()
-                    colaboradores.addAll(
-                        (resp.body() ?: emptyList()).filter { it.idUsuario != meuId }
-                    )
+                    colaboradores.addAll(todos.filter { it.idUsuario != meuId })
                     adapter.notifyDataSetChanged()
                 }
             } catch (_: Exception) { }
@@ -296,7 +297,13 @@ class ColaboradoresActivity : BaseDrawerActivity() {
 
     // ── Ações sobre colaboradores ─────────────────────────────────────────
 
+    private fun totalProprietarios() = todosColaboradores.count { it.perfil == "proprietario" }
+
     private fun alterarAcesso(colab: ColaboradorResponse, novoPerfil: String) {
+        if (colab.perfil == "proprietario" && novoPerfil != "Proprietário" && totalProprietarios() <= 1) {
+            Toast.makeText(this, "Não é possível alterar o acesso do único proprietário do estudo", Toast.LENGTH_SHORT).show()
+            return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.patchColaborador(
@@ -315,6 +322,10 @@ class ColaboradoresActivity : BaseDrawerActivity() {
     }
 
     private fun confirmarDeletar(colab: ColaboradorResponse) {
+        if (colab.perfil == "proprietario" && totalProprietarios() <= 1) {
+            Toast.makeText(this, "Não é possível remover o único proprietário do estudo", Toast.LENGTH_SHORT).show()
+            return
+        }
         AlertDialog.Builder(this)
             .setTitle("Remover colaborador")
             .setMessage("Remover ${colab.nome} do estudo?")

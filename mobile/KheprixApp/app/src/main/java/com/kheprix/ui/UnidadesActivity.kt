@@ -129,6 +129,7 @@ class UnidadesActivity : BaseDrawerActivity() {
                     binding.tvDetalheNome.text      = c.nome
                     binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
                     binding.tvDetalheDescricao.text = c.descricao ?: "—"
+                    binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
                 } ?: preencherDetalhesOffline()
             } catch (_: Exception) { preencherDetalhesOffline() }
         }
@@ -140,6 +141,7 @@ class UnidadesActivity : BaseDrawerActivity() {
         binding.tvDetalheNome.text      = c.nome
         binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
         binding.tvDetalheDescricao.text = c.descricao ?: "—"
+        binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
     }
 
     private fun carregarUnidades() {
@@ -294,6 +296,15 @@ class UnidadesActivity : BaseDrawerActivity() {
 
     private fun formatarData(iso: String) = try {
         val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
+    } catch (_: Exception) { iso }
+
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
     } catch (_: Exception) { iso }
 }
 

@@ -101,11 +101,13 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             if (modoEdicao) editarUnidade() else criarUnidade()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
+
+        aplicarMascaraDms(binding.etLatitude)
+        aplicarMascaraDms(binding.etLongitude)
 
         if (modoEdicao) preencherDadosEdicao()
         carregarVariaveis()
@@ -144,7 +146,42 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         val neg = dec < 0; val abs = Math.abs(dec)
         val deg = abs.toInt(); val minD = (abs - deg) * 60
         val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
-        return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
+        return "${if (neg) "-" else ""}%02d°%02d'%02d\"".format(deg, min, sec)
+    }
+
+    private fun aplicarMascaraDms(et: android.widget.EditText) {
+        et.addTextChangedListener(object : android.text.TextWatcher {
+            private var editing = false
+            private var prevLen = 0
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (editing || s == null) return
+                editing = true
+                val deleting = s.length < prevLen
+                prevLen = s.length
+                if (!deleting) {
+                    val raw = s.toString()
+                    val neg = raw.startsWith("-")
+                    val digits = raw.filter { it.isDigit() }.take(6)
+                    val sb = StringBuilder()
+                    if (neg) sb.append("-")
+                    digits.forEachIndexed { i, c ->
+                        sb.append(c)
+                        if (i == 1 && digits.length > 1) sb.append("°")
+                        else if (i == 3 && digits.length > 3) sb.append("'")
+                        else if (i == 5) sb.append("\"")
+                    }
+                    val result = sb.toString()
+                    if (result != raw) {
+                        s.replace(0, s.length, result)
+                        prevLen = result.length
+                        try { et.setSelection(result.length) } catch (_: Exception) {}
+                    }
+                }
+                editing = false
+            }
+        })
     }
 
     /** Tenta fazer parse de DMS ou decimal puro digitado pelo usuário */

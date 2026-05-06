@@ -18,10 +18,10 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
-        <ImageView android:id="@+id/ivBack"
+        <ImageView android:id="@+id/ivMenuLateral"
             android:layout_width="52dp" android:layout_height="52dp"
             android:src="@drawable/ic_placeholder_beetle"
-            android:scaleType="fitCenter" android:contentDescription="Voltar"
+            android:scaleType="fitCenter" android:contentDescription="Menu"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:layout_constraintStart_toStartOf="parent"

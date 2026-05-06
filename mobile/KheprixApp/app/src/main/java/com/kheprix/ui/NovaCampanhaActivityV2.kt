@@ -75,7 +75,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             if (modoEdicao) editarCampanha() else criarCampanha()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
