@@ -92,7 +92,7 @@ class RegistrosActivity : BaseDrawerActivity() {
         if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
         eventoNome     = intent.getStringExtra("evento_nome") ?: ""
 
-        binding.tvEventoNome.text = eventoNome
+        binding.tvEventoNome.text = formatarDataHora(eventoNome)
 
         adapter = RegistroAdapter(registrosFiltrados, lifecycleScope,
             onItemClick = { r -> abrirDetalhe(r) },
@@ -191,7 +191,7 @@ class RegistrosActivity : BaseDrawerActivity() {
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                     )
                     resp.body()?.let { e ->
-                        preencherCardEvento(e.horarioInicio, e.esforcoReal)
+                        preencherCardEvento(e.horarioInicio, e.esforcoReal, e.updatedAt)
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -200,10 +200,20 @@ class RegistrosActivity : BaseDrawerActivity() {
         }
     }
 
-    private fun preencherCardEvento(inicio: String, esforco: String?) {
-        binding.tvDetalheInicio.text  = inicio.replace("T", " ").take(16)
-        binding.tvDetalheEsforco.text = esforco ?: "—"
+    private fun preencherCardEvento(inicio: String, esforco: String?, updatedAt: String? = null) {
+        binding.tvDetalheInicio.text    = formatarDataHora(inicio)
+        binding.tvDetalheEsforco.text   = esforco ?: "—"
+        binding.tvDetalheUpdatedAt.text = updatedAt?.let { formatarDataHora(it) } ?: "—"
     }
+
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
+    } catch (_: Exception) { iso }
 
     private fun preencherDetalhesEventoOffline() {
         val eventoDao = EventoDao(this)
@@ -484,11 +494,13 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarRegistro() else criarRegistro()
         }
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
+
+        aplicarMascaraDms(binding.etLatitude)
+        aplicarMascaraDms(binding.etLongitude)
 
         carregarEspecies()
         carregarVariaveis()
@@ -547,7 +559,42 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         val neg = dec < 0; val abs = Math.abs(dec)
         val deg = abs.toInt(); val minD = (abs - deg) * 60
         val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
-        return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
+        return "${if (neg) "-" else ""}%02d°%02d'%02d\"".format(deg, min, sec)
+    }
+
+    private fun aplicarMascaraDms(et: android.widget.EditText) {
+        et.addTextChangedListener(object : android.text.TextWatcher {
+            private var editing = false
+            private var prevLen = 0
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (editing || s == null) return
+                editing = true
+                val deleting = s.length < prevLen
+                prevLen = s.length
+                if (!deleting) {
+                    val raw = s.toString()
+                    val neg = raw.startsWith("-")
+                    val digits = raw.filter { it.isDigit() }.take(6)
+                    val sb = StringBuilder()
+                    if (neg) sb.append("-")
+                    digits.forEachIndexed { i, c ->
+                        sb.append(c)
+                        if (i == 1 && digits.length > 1) sb.append("°")
+                        else if (i == 3 && digits.length > 3) sb.append("'")
+                        else if (i == 5) sb.append("\"")
+                    }
+                    val result = sb.toString()
+                    if (result != raw) {
+                        s.replace(0, s.length, result)
+                        prevLen = result.length
+                        try { et.setSelection(result.length) } catch (_: Exception) {}
+                    }
+                }
+                editing = false
+            }
+        })
     }
 
     private fun parseCoordenada(texto: String): Double? {
@@ -1120,7 +1167,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         binding.tvData.text      = r.data.split("-").let { p ->
             if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
         }
-        binding.tvHora.text = r.hora.take(5)
+        binding.tvHora.text = "${r.hora.take(5)}h"
 
         ImagemLoader.load(
             scope = lifecycleScope,

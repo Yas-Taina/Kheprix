@@ -8,18 +8,15 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent" android:layout_height="96dp"
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
-        <ImageView android:id="@+id/ivBack" android:layout_width="52dp" android:layout_height="52dp"
+        <ImageView android:id="@+id/ivMenuLateral" android:layout_width="52dp" android:layout_height="52dp"
             android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Voltar"
+            android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Menu"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
         <ImageView android:layout_width="80dp" android:layout_height="80dp"
             android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7" android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:id="@+id/ivMenuLateral" android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter" android:contentDescription="Perfil"
-            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
         <View android:id="@+id/ivPerfil" android:layout_width="0dp" android:layout_height="0dp"
             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -326,6 +326,7 @@ data class EventoResponse(
     @SerializedName("horario_fim") val horarioFim: String?,
     @SerializedName("esforco_real") val esforcoReal: String?,
     @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String? = null,
     @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )
 

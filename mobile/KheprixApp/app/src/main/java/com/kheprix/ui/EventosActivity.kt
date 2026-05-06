@@ -131,7 +131,7 @@ class EventosActivity : BaseDrawerActivity() {
                     resp.body()?.let { u ->
                         unidadeNome = u.nome
                         binding.tvUnidadeNome.text = u.nome
-                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral)
+                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral, u.updatedAt)
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -143,14 +143,15 @@ class EventosActivity : BaseDrawerActivity() {
 
     private fun preencherCardUnidade(
         nome: String, lat: Double, lon: Double,
-        raio: Double?, metodo: String?, esforco: String?
+        raio: Double?, metodo: String?, esforco: String?, updatedAt: String? = null
     ) {
-        binding.tvDetalheNome.text   = nome
-        binding.tvDetalheLat.text    = decimalToDms(lat)
-        binding.tvDetalheLon.text    = decimalToDms(lon)
-        binding.tvDetalheRaio.text   = raio?.let { "${it}m" } ?: "—"
-        binding.tvDetalheMetodo.text = metodo ?: "—"
-        binding.tvDetalheEsforco.text = esforco ?: "—"
+        binding.tvDetalheNome.text      = nome
+        binding.tvDetalheLat.text       = decimalToDms(lat)
+        binding.tvDetalheLon.text       = decimalToDms(lon)
+        binding.tvDetalheRaio.text      = raio?.let { "${it}m" } ?: "—"
+        binding.tvDetalheMetodo.text    = metodo ?: "—"
+        binding.tvDetalheEsforco.text   = esforco ?: "—"
+        binding.tvDetalheUpdatedAt.text = updatedAt?.let { formatarDataHora(it) } ?: "—"
     }
 
     private fun preencherDetalhesOffline() {
@@ -175,7 +176,7 @@ class EventosActivity : BaseDrawerActivity() {
 
         preencherCardUnidade(
             unidade.nome, unidade.latitude, unidade.longitude,
-            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral
+            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral, unidade.updatedAt
         )
     }
 
@@ -314,6 +315,15 @@ class EventosActivity : BaseDrawerActivity() {
         val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
         return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
     }
+
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
+    } catch (_: Exception) { iso }
 }
 
 class EventoAdapter(
@@ -341,8 +351,13 @@ class EventoAdapter(
 
     override fun getItemCount() = items.size
 
-    private fun formatarDataHora(iso: String) = try {
-        val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
     } catch (_: Exception) { iso }
 }
 
@@ -406,7 +421,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarEvento() else criarEvento()
         }
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
