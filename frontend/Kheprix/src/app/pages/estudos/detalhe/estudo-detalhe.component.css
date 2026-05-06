@@ -1,13 +1,18 @@
+  
+
+/* ── Faixa de estatísticas rápidas ──────────────────────────────────────── */
 .db-stats-row {
   display: flex;
   gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
+/* Reutiliza .stat-card do global; aqui só ajustamos flex para crescer igual */
 .db-stats-row .stat-card {
   flex: 1 1 120px;
 }
 
+/* ── Grid principal: coluna de gráficos + mapa ───────────────────────────── */
 .db-grid {
   display: grid;
   grid-template-columns: 1fr 1.4fr;
@@ -22,6 +27,8 @@
   gap: var(--space-md);
 }
 
+/* ── Cards de gráfico ────────────────────────────────────────────────────── */
+/* Reutiliza .card do global; aqui só adicionamos o padding menor */
 .db-chart-card {
   padding: var(--space-md) var(--space-lg);
 }
@@ -44,36 +51,37 @@
   color: var(--color-text-primary);
 }
 
+/* ── Select dentro de cards (sobrescreve width do form-control global) ───── */
 .db-select {
   margin-bottom: var(--space-sm);
   font-size: 0.9rem;
 }
 
+/* ── Wrappers de canvas ──────────────────────────────────────────────────── */
 .db-chart-wrap          { position: relative; }
 .db-chart-wrap--line    { height: 155px; }
 .db-chart-wrap--donut   { height: 200px; }
 .db-chart-wrap--barh    { height: 100px; }
 .db-chart-wrap--barh-tall { height: 160px; }
+
+/* ── Mapa Leaflet ────────────────────────────────────────────────────────── */
+
+
+/* Reutiliza .card do global; padding zerado para o mapa ocupar tudo */
 .db-mapa-card {
   padding: 0;
   overflow: hidden;
 }
 
 .db-mapa {
-  height: 520px;
+  /* Altura fixa e explícita — obrigatório para o Leaflet renderizar corretamente */
+  height: 480px;
   width: 100%;
+  display: block;
   border-radius: var(--border-radius-md);
 }
 
-.mapa-ponto {
-  width: 10px;
-  height: 10px;
-  background: #C8722A;
-  border-radius: 50%;
-  border: 1.5px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-}
-
+/* ── Seleção de formato de exportação ────────────────────────────────────── */
 .db-formato-grupo {
   display: flex;
   gap: var(--space-sm);
@@ -94,6 +102,7 @@
 }
 
 .db-formato-opcao input[type="radio"] {
+  /* esconde o radio nativo; o estado é sinalizado pela borda */
   position: absolute;
   opacity: 0;
   pointer-events: none;
@@ -124,6 +133,7 @@
   line-height: 1.3;
 }
 
+/* ── Responsividade ──────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .db-grid {
     grid-template-columns: 1fr;
