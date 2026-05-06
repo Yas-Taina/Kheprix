@@ -1,67 +1,189 @@
-    <!-- Topbar de links -->
-    <div class="study-topbar">
-      <div class="study-topbar-item" (click)="irParaCampanhas()">
-        <!-- PLACEHOLDER: Ícone de borboleta. Substituir por <img src="/assets/images/insect-butterfly.png"> -->
-        <div style="font-size:2rem">🦋</div>
-        <span>Campanhas de<br>Coleta de Dados</span>
+<div class="study-topbar">
+  <div class="study-topbar-item" (click)="irParaCampanhas()">
+    <div style="font-size:2rem">🦋</div>
+    <span>Campanhas de<br>Coleta de Dados</span>
+  </div>
+  <div class="study-topbar-item" (click)="irParaNovaEspecie()">
+    <div style="font-size:2rem">🐞</div>
+    <span>Cadastrar<br>Espécies</span>
+  </div>
+  <div class="study-topbar-item" (click)="irParaEspecies()">
+    <div style="font-size:2rem">🦗</div>
+    <span>Ver Todas as<br>Espécies</span>
+  </div>
+  <div class="study-topbar-item" (click)="irParaAnalises()">
+    <div style="font-size:2rem">🦋</div>
+    <span>Análise de<br>Dados</span>
+  </div>
+</div>
+
+<div *ngIf="loading" class="page-container">
+  <div class="loading-overlay"><div class="spinner"></div></div>
+</div>
+
+<div class="page-container" *ngIf="!loading && estudo">
+  <div *ngIf="dashboardLoading()" class="card mt-md" style="text-align:center;padding:var(--space-2xl)">
+    <div class="spinner" style="margin:0 auto"></div>
+  </div>
+
+  <div *ngIf="dashboardError() && !dashboardLoading()" class="alert alert-error mt-md">
+    {{ dashboardError() }}
+    <button class="btn btn-secondary btn-sm" style="margin-left:var(--space-md)" (click)="carregarDashboard()">
+      Tentar novamente
+    </button>
+  </div>
+  <div class="card">
+    <div class="db-grid mt-md">
+    <div class="db-col-esquerda">
+      <div class="estudo-info-left" style="text-align:right">
+        <h1 class="page-title" style="text-align:right;font-size:1.6rem">{{ estudo!.nome }}</h1>
+        <p class="text-muted" style="margin-top:4px">Editado em {{ util.formatDate(estudo!.updated_at) }}</p>
       </div>
-      <div class="study-topbar-item" (click)="irParaNovaEspecie()">
-        <!-- PLACEHOLDER: Ícone de joaninha. Substituir por <img src="/assets/images/insect-ladybug.png"> -->
-        <div style="font-size:2rem">🐞</div>
-        <span>Cadastrar<br>Espécies</span>
+    </div>
+    <div class="db-col-direita">
+        <ng-container *ngIf="dashboard() as d">
+      <div class="card db-chart-card">
+        
+          <p class="db-chart-subtitle">
+            Total de Registros de Ocorrência: <strong>{{ d.resumo.total_registros }}</strong>
+          </p>
+          <div class="db-chart-wrap db-chart-wrap--line">
+            <canvas id="chart-registros-data"></canvas>
+          </div>
+        </div>
+        </ng-container>
+        </div>
+    </div>
+            <div class="d-flex gap-sm mt-md" style="flex-wrap:wrap; justify-content: space-evenly;">
+          <button class="btn btn-primary btn-sm" (click)="irParaEditar()">Visualizar Detalhes</button>
+          <button class="btn btn-secondary btn-sm" (click)="abrirExportar()">Exportar Dados</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="dashboard() as d">
+
+
+    <div class="db-grid mt-md">
+      <div class="db-col-esquerda">
+        
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">Ocorrências por Espécie</h3>
+          <div class="db-chart-wrap db-chart-wrap--donut">
+            <canvas id="chart-ocorrencias"></canvas>
+          </div>
+        </div>
+
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">Registros por Espécie ao Longo do Tempo</h3>
+          <select
+            class="form-control db-select"
+            [ngModel]="selectedEspecie()"
+            (ngModelChange)="selectedEspecie.set($event); onEspecieChange()"
+          >
+            <option value="">Selecione uma Espécie</option>
+            <option *ngFor="let esp of especiesDisponiveis()" [value]="esp">{{ esp }}</option>
+          </select>
+          <div class="db-chart-wrap db-chart-wrap--line">
+            <canvas id="chart-especie-tempo"></canvas>
+          </div>
+        </div>
+
+        <div class="card db-chart-card">
+          <div class="db-chart-wrap db-chart-wrap--barh">
+            <canvas id="chart-nativas-invasoras"></canvas>
+          </div>
+        </div>
+
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">Quantidade de Espécies Distintas</h3>
+          <select
+            class="form-control db-select"
+            [ngModel]="selectedAgrupamento()"
+            (ngModelChange)="selectedAgrupamento.set($event); onAgrupamentoChange()"
+          >
+            <option value="mes">Por mês</option>
+            <option value="ano">Por ano</option>
+          </select>
+          <div class="db-chart-wrap db-chart-wrap--barh db-chart-wrap--barh-tall">
+            <canvas id="chart-especies-distintas"></canvas>
+          </div>
+        </div>
+
       </div>
-      <div class="study-topbar-item" (click)="irParaEspecies()">
-        <!-- PLACEHOLDER: Ícone de mariposa. Substituir por <img src="/assets/images/insect-moth.png"> -->
-        <div style="font-size:2rem">🦗</div>
-        <span>Ver Todas as<br>Espécies</span>
+
+      <div class="db-col-direita">
+ 
+        <!-- Mapa -->
+        <div class="card db-mapa-card">
+          <div id="mapa-registros" class="db-mapa"></div>
+        </div>
+ 
+        <!-- Quantidade de espécies distintas ao longo do tempo (linha) -->
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">Quantidade de Espécies Distintas ao Longo do Tempo</h3>
+          <div class="db-chart-wrap db-chart-wrap--line">
+            <canvas id="chart-especies-distintas-tempo"></canvas>
+          </div>
+        </div>
+ 
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>
+
+<div class="modal-backdrop" *ngIf="showExportar" (click)="fecharExportar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div style="background:var(--color-bg-green-light);padding:var(--space-md);border-radius:var(--border-radius-md) var(--border-radius-md) 0 0;margin:calc(-1 * var(--space-2xl)) calc(-1 * var(--space-2xl)) var(--space-xl);display:flex;align-items:center;justify-content:space-between">
+      <h2 class="page-title" style="color:var(--color-text-on-green)">Estudos</h2>
+      <button class="modal-close" (click)="fecharExportar()">✕</button>
+    </div>
+
+    <h3 class="page-title" style="font-size:1.4rem">Exportar Dados</h3>
+    <div class="ornament-divider"><span>⸙</span></div>
+
+    <div class="form-group">
+      <label class="form-label">Salvar resultado como:</label>
+      <div class="db-formato-grupo">
+        <label
+          class="db-formato-opcao"
+          [class.db-formato-opcao--ativo]="formato === 'csv'"
+        >
+          <input type="radio" name="formato" value="csv" [(ngModel)]="formato" />
+          <span class="db-formato-label">CSV</span>
+          <span class="db-formato-desc">Compatível com Excel e planilhas</span>
+        </label>
+        <label
+          class="db-formato-opcao"
+          [class.db-formato-opcao--ativo]="formato === 'xml'"
+        >
+          <input type="radio" name="formato" value="xml" [(ngModel)]="formato" />
+          <span class="db-formato-label">XML</span>
+          <span class="db-formato-desc">Estruturado para integração de sistemas</span>
+        </label>
       </div>
     </div>
 
-    <div class="page-container" *ngIf="estudo">
-      <!-- Card do estudo -->
-      <div class="card">
-        <div class="estudo-header-row">
-          <div class="estudo-info-left">
-            <h1 class="page-title" style="text-align:left;font-size:1.6rem">{{ estudo.nome }}</h1>
-            <p class="text-muted" style="margin-top:4px">Editado em {{ util.formatDate(estudo.updated_at) }}</p>
-            <div class="d-flex gap-sm mt-md" style="flex-wrap:wrap">
-              <button class="btn btn-primary btn-sm" (click)="irParaEditar()">Visualizar Detalhes</button>
-              <button class="btn btn-secondary btn-sm" (click)="abrirExportar()">Exportar Dados</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal exportar -->
-      <div class="modal-backdrop" *ngIf="showExportar" (click)="fecharExportar()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div style="background:var(--color-bg-green-light);padding:var(--space-md);border-radius:var(--border-radius-md) var(--border-radius-md) 0 0;margin:-var(--space-2xl) -var(--space-2xl) var(--space-xl);display:flex;align-items:center;justify-content:space-between">
-            <h2 class="page-title" style="color:var(--color-text-on-green)">Estudos</h2>
-            <button class="modal-close" (click)="fecharExportar()">✕</button>
-          </div>
-          <h3 class="page-title" style="font-size:1.4rem">Exportar Dados</h3>
-          <div class="ornament-divider"><span>⸙</span></div>
-          <div class="form-group">
-            <label class="form-label">Salvar resultado como:</label>
-            <input class="form-control" value="Csv" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Agrupar por:</label>
-            <select class="form-control" [(ngModel)]="agrupamento">
-              <option value="registro_ocorrencia">Registro de ocorrência</option>
-              <option value="evento_amostragem">Evento de amostragem</option>
-              <option value="unidade_amostral">Unidade amostral</option>
-              <option value="campanha">Campanha</option>
-              <option value="especie">Espécie</option>
-            </select>
-          </div>
-          <div *ngIf="exportLoading" class="loading-overlay"><div class="spinner"></div></div>
-          <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
-          <div class="text-center mt-lg">
-            <button class="btn btn-primary" (click)="exportar()" [disabled]="exportLoading">Baixar</button>
-          </div>
-        </div>
-      </div>
+    <div class="form-group">
+      <label class="form-label">Agrupar por:</label>
+      <select class="form-control" [(ngModel)]="agrupamento">
+        <option value="registro_ocorrencia">Registro de ocorrência</option>
+        <option value="evento_amostragem">Evento de amostragem</option>
+        <option value="unidade_amostral">Unidade amostral</option>
+        <option value="campanha">Campanha</option>
+        <option value="especie">Espécie</option>
+      </select>
     </div>
 
-    <div *ngIf="loading" class="page-container"><div class="loading-overlay"><div class="spinner"></div></div></div>
+    <div *ngIf="exportLoading" class="loading-overlay"><div class="spinner"></div></div>
+    <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
+
+    <div class="text-center mt-lg">
+      <button class="btn btn-primary" (click)="exportar()" [disabled]="exportLoading">Baixar</button>
+    </div>
+
+  </div>
+</div>

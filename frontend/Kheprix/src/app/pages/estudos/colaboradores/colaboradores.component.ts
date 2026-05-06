@@ -6,6 +6,7 @@ import { ColaboradorService } from '../../../core/services/colaborador.service';
 import { ConviteService } from '../../../core/services/convite.service';
 import { CodigoAcessoService } from '../../../core/services/codigo-acesso.service';
 import { Colaborador, CodigoAcesso, PerfilColaborador } from '../../../models';
+import QRCode from 'qrcode';
 
 @Component({
   selector: 'app-colaboradores',
@@ -50,22 +51,21 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
   }
 
   gerarQrCode() {
-    if (!this.qrCanvas || !this.codigoAcesso) return;
-    const canvas = this.qrCanvas.nativeElement;
-    const ctx = canvas.getContext('2d')!;
-    // PLACEHOLDER: Integrar biblioteca de QR Code (ex: qrcode.js ou ngx-qrcode)
-    // Substituir este bloco pelo código de geração real:
-    // import QRCode from 'qrcode';
-    // QRCode.toCanvas(canvas, this.codigoAcesso.codigo, { width: 150 });
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, 150, 150);
-    ctx.fillStyle = '#333';
-    ctx.font = '10px monospace';
-    ctx.fillText('QR Code Placeholder', 10, 75);
-    ctx.fillText(this.codigoAcesso.codigo, 10, 90);
-    ctx.strokeStyle = '#888';
-    ctx.strokeRect(5, 5, 140, 140);
-  }
+  if (!this.qrCanvas || !this.codigoAcesso?.codigo) return;
+
+  const canvas = this.qrCanvas.nativeElement;
+  const valor = this.codigoAcesso.codigo;
+
+
+  QRCode.toCanvas(canvas, valor, { 
+    width: 150,
+    margin: 2,
+    color: {
+      dark: '#333333',
+      light: '#FFFFFF'
+    }
+  }).catch(err => console.error(err));
+}
 
   convidar() {
     if (!this.emailConvite) { this.erroConvite = 'Informe o e-mail.'; return; }
