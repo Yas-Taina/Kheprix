@@ -1,10 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Menu } from './pages/componentes/menu/menu';
+import { Footer } from './pages/componentes/footer/footer';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  template: `<router-outlet />`,
+  selector: 'app-root',
+  imports: [RouterOutlet, CommonModule, Menu, Footer],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
 })
-export class AppComponent {}
+export class App {
+  protected readonly title = signal('Kheprix');
+}

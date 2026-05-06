@@ -51,4 +51,8 @@ export class AuthService extends BaseService {
   redefinirSenha(token: string, nova_senha: string): Observable<{ mensagem: string }> {
     return this.post<{ mensagem: string }>('/autenticacao/redefinir_senha', { token, nova_senha });
   }
+
+  validarToken(token: string): Observable<{valido: boolean}> {
+   return this.post<{ valido: boolean }>('/autenticacao/validar_token', { token });
+  }
 }

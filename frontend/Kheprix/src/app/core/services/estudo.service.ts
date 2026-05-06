@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseService } from './base.service';
-import { Estudo, EstudoCreate, EstudoUpdate, TipoAgrupamento } from '../../models';
+import { Estudo, EstudoCreate, EstudoUpdate, TipoAgrupamento, FormatoExportacao } from '../../models';
 
 @Injectable({ providedIn: 'root' })
 export class EstudoService extends BaseService {
@@ -35,7 +35,7 @@ export class EstudoService extends BaseService {
   exportarDados(
     id: number,
     agrupamento?: TipoAgrupamento,
-    formato: string = 'csv'
+    formato: FormatoExportacao = 'csv'
   ): Observable<Blob> {
     const params: Record<string, string> = { formato };
     if (agrupamento) params['agrupamento'] = agrupamento;
