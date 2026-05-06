@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { ConviteRecebidoService } from '../../core/services/convite.service';
 import { CodigoAcessoService } from '../../core/services/codigo-acesso.service';
 import { ConviteRecebido } from '../../models';
 import { UtilService } from '../../core/services/util.service';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 
 @Component({
   selector: 'app-convites',
@@ -20,6 +21,12 @@ export class ConvitesComponent implements OnInit {
   msgConvite = ''; erroConvite = '';
   codigoAcesso = ''; senhaAcesso = '';
   loadingAcesso = false; erroAcesso = ''; msgAcesso = '';
+
+  @ViewChild('video') video!: ElementRef<HTMLVideoElement>;
+
+  scannerAtivo = false;
+  private codeReader = new BrowserMultiFormatReader();
+  private controls: any;
 
   constructor(
     private conviteService: ConviteRecebidoService,
@@ -36,33 +43,83 @@ export class ConvitesComponent implements OnInit {
   }
 
   aceitar(c: ConviteRecebido) {
-    // Os convites recebidos precisam de token — buscamos pelo id do convite
-    // Aqui usamos o id como identificador para construir ação
     this.conviteService.aceitar(String(c.id)).subscribe({
-      next: (r) => { this.msgConvite = r.mensagem; this.convites = this.convites.filter(x => x.id !== c.id); },
+      next: (r) => {
+        this.msgConvite = r.mensagem;
+        this.convites = this.convites.filter(x => x.id !== c.id);
+      },
       error: () => this.erroConvite = 'Erro ao aceitar convite.',
     });
   }
 
   recusar(c: ConviteRecebido) {
     this.conviteService.recusar(String(c.id)).subscribe({
-      next: (r) => { this.msgConvite = r.mensagem; this.convites = this.convites.filter(x => x.id !== c.id); },
+      next: (r) => {
+        this.msgConvite = r.mensagem;
+        this.convites = this.convites.filter(x => x.id !== c.id);
+      },
       error: () => this.erroConvite = 'Erro ao recusar convite.',
     });
   }
 
   ingressarEstudo() {
-    if (!this.codigoAcesso || !this.senhaAcesso) { this.erroAcesso = 'Preencha código e senha.'; return; }
-    this.loadingAcesso = true; this.erroAcesso = '';
-    this.codigoService.ingressar({ codigo: this.codigoAcesso, senha_autocadastro: this.senhaAcesso }).subscribe({
-      next: (r) => { this.msgAcesso = `Ingressou em "${r.nome_estudo}" como ${r.perfil}.`; this.loadingAcesso = false; this.codigoAcesso = ''; this.senhaAcesso = ''; },
-      error: () => { this.erroAcesso = 'Código ou senha inválidos.'; this.loadingAcesso = false; },
+    if (!this.codigoAcesso || !this.senhaAcesso) {
+      this.erroAcesso = 'Preencha código e senha.';
+      return;
+    }
+
+    this.loadingAcesso = true;
+    this.erroAcesso = '';
+
+    this.codigoService.ingressar({
+      codigo: this.codigoAcesso,
+      senha_autocadastro: this.senhaAcesso
+    }).subscribe({
+      next: (r) => {
+        this.msgAcesso = `Ingressou em "${r.nome_estudo}" como ${r.perfil}.`;
+        this.loadingAcesso = false;
+        this.codigoAcesso = '';
+        this.senhaAcesso = '';
+      },
+      error: () => {
+        this.erroAcesso = 'Código ou senha inválidos.';
+        this.loadingAcesso = false;
+      },
     });
   }
 
   lerQrCode() {
-    // PLACEHOLDER: Integrar biblioteca de leitura de QR Code (ex: ngx-scanner-qrcode)
-    // Após leitura, preencher this.codigoAcesso com o resultado
-    alert('PLACEHOLDER: Integrar leitor de QR Code.\nSubstituir este alert pela abertura do scanner de câmera.\nBiblioteca sugerida: ngx-scanner-qrcode');
+    this.scannerAtivo = true;
+
+    setTimeout(() => {
+      this.iniciarScanner();
+    }, 0);
   }
+
+  async iniciarScanner() {
+  try {
+    const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+    const deviceId = devices[0]?.deviceId;
+
+    this.codeReader.decodeFromVideoDevice(
+      deviceId,
+      this.video.nativeElement,
+      (result, err) => {
+        if (result) {
+          this.codigoAcesso = result.getText(); // mantém seu fluxo
+          this.fecharScanner();
+        }
+      }
+    );
+  } catch (err) {
+    console.error('Erro ao acessar câmera:', err);
+  }
+}
+
+fecharScanner() {
+  if (this.controls) {
+    this.controls.stop(); // 🔥 esse é o método correto universal
+  }
+  this.scannerAtivo = false;
+}
 }

@@ -48,6 +48,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'estudos/:estudo_id/analises',
+    loadComponent: () => import('./pages/estudos/analise/analise.component').then(m => m.AnalisesComponent),
+    //canActivate: [authGuard],
+  },
+  {
     path: 'estudos/novo',
     loadComponent: () => import('./pages/estudos/novo/estudo-novo.component').then(m => m.EstudoNovoComponent),
     canActivate: [authGuard],
