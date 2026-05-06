@@ -22,6 +22,14 @@ class ColaboradoresController < ApplicationController
       return
     end
 
+    if @colaborador.usuario_id == usuario_atual.id &&
+       dto.perfil == "colaborador" &&
+       Colaborador.where(estudo_id: @estudo.id, perfil: :proprietario).count == 1
+      render json: { erro: "Não é possível rebaixar a si mesmo sendo o único proprietário do estudo" },
+             status: :unprocessable_entity
+      return
+    end
+
     servico.alterar_perfil(colaborador: @colaborador, perfil: dto.perfil)
     render json: @colaborador.reload, status: :ok
   end
