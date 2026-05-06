@@ -105,6 +105,7 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
   irParaNovaEspecie() { this.router.navigate(['/estudos', this.estudoId, 'especies', 'novo']); }
   irParaEspecies()    { this.router.navigate(['/estudos', this.estudoId, 'especies']); }
   irParaEditar()      { this.router.navigate(['/estudos', this.estudoId, 'editar']); }
+  irParaAnalises()      { this.router.navigate(['/estudos', this.estudoId, 'analises']); }
 
   // ── Exportação ─────────────────────────────────
   abrirExportar()  { this.showExportar = true; this.exportMsg = ''; }
