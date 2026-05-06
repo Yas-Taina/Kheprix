@@ -3,10 +3,11 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
+  standalone: true,
   selector: 'app-menu',
   imports: [CommonModule, RouterModule],
   templateUrl: './menu.html',
-  styleUrl: './menu.css',
+  styleUrls: ['./menu.css'],
 })
 export class Menu {
   isOpen = false;
