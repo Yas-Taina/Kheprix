@@ -29,7 +29,7 @@ import {
 
 // ─── Interfaces locais ────────────────────────────────────────────────────────
 
-interface VariavelItem { id: number; nome: string; metrica?: string; }
+interface VariavelItem { id: number; nome: string; metrica?: string; tipo_dado?: string; }
 interface CampanhaItem { id: number; nome: string; }
 interface UnidadeItem  { id: number; nome: string; campanha_id: number; }
 interface OpcaoItem    { id: number; label: string; }
@@ -95,13 +95,13 @@ export class AnalisesComponent implements OnInit {
   // dois_vetores
   fonteX: FonteAnalise = 'variavel';
   fonteY: FonteAnalise = 'variavel';
-  variavelXId?: number;
-  variavelYId?: number;
+  variavelXId: number | undefined = undefined;
+  variavelYId: number | undefined = undefined;
   nivelAgregacao: NivelAgregacao = 'unidade_amostral';
 
   // vetor_unico / dois_grupos / multiplos_grupos
   fonte: FonteAnalise = 'variavel';
-  variavelId?: number;
+  variavelId: number | undefined = undefined;
   agruparPor: AgruparPor = 'unidade_amostral';
 
   // dois_grupos
@@ -114,16 +114,16 @@ export class AnalisesComponent implements OnInit {
   variavelIdsAmbientais: number[] = [];
 
   // ── Filtros ───────────────────────────────────────────────────────────────
-  escopoCampanhaId?: number;   // undefined = todo o estudo
+  escopoCampanhaId: number | undefined = undefined;   // undefined = todo o estudo
   dataInicio = '';
   dataFim    = '';
   // bounding box
   latMinMask = ''; latMaxMask = '';
   lngMinMask = ''; lngMaxMask = '';
-  latMin?: number; latMax?: number;
-  lngMin?: number; lngMax?: number;
-  // nível hierárquico (para fontes derivadas sem unidade amostral)
-  nivelFiltro: NivelAgregacao = 'unidade_amostral';
+  latMin: number | undefined = undefined;
+  latMax: number | undefined = undefined;
+  lngMin: number | undefined = undefined;
+  lngMax: number | undefined = undefined;
 
   // ── UI ────────────────────────────────────────────────────────────────────
   loading  = false;
@@ -138,12 +138,10 @@ export class AnalisesComponent implements OnInit {
     return TIPOS_COM_AMOSTRA.has(this.tipoDado);
   }
 
-  /** Tipos que dependem de vários locais distintos e portanto o escopo por campanha é relevante */
   get mostraFiltroCampanha(): boolean {
     return this.usaAmostra || this.tipoDado === 'abundancias';
   }
 
-  /** Bounding box só faz sentido para tipos sem unidade amostral, ou fontes derivadas */
   get mostraBoundingBox(): boolean {
     return !this.usaAmostra;
   }
@@ -162,6 +160,10 @@ export class AnalisesComponent implements OnInit {
     return lista.map(u => ({ id: u.id, label: u.nome }));
   }
 
+  /**
+   * Opções para os checkboxes de dois_grupos.
+   * Dependem de agruparPor: campanha → lista campanhas; qualquer outro → lista unidades.
+   */
   get opcoesDoisGrupos(): OpcaoItem[] {
     return this.agruparPor === 'campanha'
       ? this.campanhas.map(c => ({ id: c.id, label: c.nome }))
@@ -170,15 +172,15 @@ export class AnalisesComponent implements OnInit {
 
   get opcoesAgruparPor(): { valor: AgruparPor; label: string }[] {
     const base = [
-      { valor: 'campanha'        as AgruparPor, label: 'Campanha' },
-      { valor: 'unidade_amostral'as AgruparPor, label: 'Unidade amostral' },
-      { valor: 'evento'          as AgruparPor, label: 'Evento de amostragem' },
+      { valor: 'campanha'         as AgruparPor, label: 'Campanha' },
+      { valor: 'unidade_amostral' as AgruparPor, label: 'Unidade amostral' },
+      { valor: 'evento'           as AgruparPor, label: 'Evento de amostragem' },
     ];
     if (this.fonte !== 'variavel') {
       base.push(
-        { valor: 'mes'    as AgruparPor, label: 'Mês' },
-        { valor: 'ano'    as AgruparPor, label: 'Ano' },
-        { valor: 'estacao'as AgruparPor, label: 'Estação do ano' },
+        { valor: 'mes'     as AgruparPor, label: 'Mês' },
+        { valor: 'ano'     as AgruparPor, label: 'Ano' },
+        { valor: 'estacao' as AgruparPor, label: 'Estação do ano' },
       );
     }
     return base;
@@ -200,7 +202,7 @@ export class AnalisesComponent implements OnInit {
       variaveis: this.variavelService.listar(this.estudoId).pipe(catchError(() => of([]))),
       campanhas: this.campanhaService.listar(this.estudoId).pipe(catchError(() => of([]))),
     }).subscribe(({ variaveis, campanhas }) => {
-      this.variaveis = variaveis as VariavelItem[];
+      this.variaveis = (variaveis as VariavelItem[]).filter(v.tipo_dado === 'numerico');
       this.campanhas = campanhas as CampanhaItem[];
 
       if ((campanhas as CampanhaItem[]).length) {
@@ -236,8 +238,20 @@ export class AnalisesComponent implements OnInit {
   onFonteChange(): void {
     // Se fonte não é variável, limpa a seleção de variável
     if (this.fonte !== 'variavel') this.variavelId = undefined;
-    // Reseta agrupar_por para evitar estado inválido
+    // Reseta agrupar_por para evitar estado inválido com opções temporais
     if (this.fonte === 'variavel') this.agruparPor = 'unidade_amostral';
+    // Limpa os grupos pois as opções podem mudar
+    this.grupo1Ids = [];
+    this.grupo2Ids = [];
+  }
+
+  /**
+   * Chamado quando agruparPor muda em dois_grupos.
+   * Limpa os grupos selecionados pois as opções mudam (campanhas vs unidades).
+   */
+  onAgruparPorDoisGruposChange(): void {
+    this.grupo1Ids = [];
+    this.grupo2Ids = [];
   }
 
   private resetFormulario(): void {
@@ -317,11 +331,14 @@ export class AnalisesComponent implements OnInit {
     };
 
     switch (this.tipoDado) {
+
       case 'abundancias_com_variaveis':
+        // variavel_ids são os IDs das variáveis ambientais preditoras (RDA/CCA)
         payload.variavel_ids = this.variavelIdsAmbientais;
         break;
 
       case 'dois_vetores':
+        // Cada perna (X e Y) é independente; nivel_agregacao define a granularidade das fontes derivadas
         payload.fonte_x = this.fonteX;
         payload.fonte_y = this.fonteY;
         if (this.fonteX === 'variavel') payload.variavel_x_id = this.variavelXId;
@@ -330,14 +347,17 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case 'vetor_unico':
+        // fonte=variavel exige variavel_id; fontes derivadas usam nivel_agregacao
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
         payload.nivel_agregacao = this.nivelAgregacao;
         break;
 
       case 'dois_grupos':
+        // agrupar_por define se grupo*_ids são IDs de campanhas ou de unidades amostrais
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
+        payload.agrupar_por = this.agruparPor;
         payload.grupo1_ids = this.grupo1Ids;
         payload.grupo2_ids = this.grupo2Ids;
         if (this.nomeGrupo1) payload.nome_grupo1 = this.nomeGrupo1;
@@ -345,17 +365,20 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case 'multiplos_grupos':
+        // agrupar_por define a granularidade dos grupos; nivel_agregacao NÃO se aplica aqui
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
         payload.agrupar_por = this.agruparPor;
-        payload.nivel_agregacao = this.nivelFiltro;
         break;
+
+      // abundancias, abundancias_por_amostra, matriz_acumulacao:
+      // sem parâmetros obrigatórios além de chave — apenas filtros globais abaixo
     }
 
-    // Filtros contextuais
+    // ── Filtros globais (opcionais, aditivos) ─────────────────────────────
     if (this.escopoCampanhaId) payload.campanha_ids = [this.escopoCampanhaId];
-    if (this.dataInicio) payload.data_inicio = this.dataInicio;
-    if (this.dataFim)    payload.data_fim    = this.dataFim;
+    if (this.dataInicio)       payload.data_inicio  = this.dataInicio;
+    if (this.dataFim)          payload.data_fim     = this.dataFim;
     if (this.latMin !== undefined) payload.latitude_min  = this.latMin;
     if (this.latMax !== undefined) payload.latitude_max  = this.latMax;
     if (this.lngMin !== undefined) payload.longitude_min = this.lngMin;
@@ -368,7 +391,7 @@ export class AnalisesComponent implements OnInit {
     this.analiseService.executar(this.estudoId, payload).subscribe({
       next: res => { this.resultado = res; this.loading = false; },
       error: err => {
-        this.erro = err?.error?.erro ?? 'Erro ao executar a análise. Verifique os parâmetros.';
+        this.erro = err?.error?.erro ?? err?.error?.message ?? 'Erro ao executar a análise. Verifique os parâmetros.';
         this.loading = false;
       },
     });
