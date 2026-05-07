@@ -29,6 +29,7 @@
   @if (!carregando) {
   <div class="form-wrap">
 
+    <!-- ── Passo 1: Seleção da análise ─────────────────────────────────────── -->
     <section class="step-card">
       <div class="step-label"><span class="step-num">1</span> Selecione a análise</div>
       <div class="select-wrapper">
@@ -48,10 +49,12 @@
       </div>
     </section>
 
+    <!-- ── Passo 2: Parâmetros da análise ──────────────────────────────────── -->
     @if (analiseAtual) {
     <section class="step-card" [@fadeSlide]>
       <div class="step-label"><span class="step-num">2</span> Parâmetros da análise</div>
 
+      <!-- abundancias_com_variaveis: checkboxes de variáveis ambientais preditoras -->
       @if (tipoDado === 'abundancias_com_variaveis') {
         <p class="field-hint">
           Selecione as variáveis que serão usadas como preditoras ambientais na análise.
@@ -71,6 +74,7 @@
         </div>
       }
 
+      <!-- dois_vetores: fonte e variável para cada eixo, + nível de agregação -->
       @if (tipoDado === 'dois_vetores') {
         <p class="field-hint">Escolha o que representará cada eixo da análise.</p>
         <div class="two-col">
@@ -92,7 +96,7 @@
                 <select class="field-select" [(ngModel)]="variavelXId">
                   <option [ngValue]="undefined">— selecione —</option>
                   @for (v of variavelOpcoes; track v.id) {
-                    <option [value]="v.id">{{ v.label }}</option>
+                    <option [ngValue]="v.id">{{ v.label }}</option>
                   }
                 </select>
                 <span class="sel-arrow">▾</span>
@@ -117,7 +121,7 @@
                 <select class="field-select" [(ngModel)]="variavelYId">
                   <option [ngValue]="undefined">— selecione —</option>
                   @for (v of variavelOpcoes; track v.id) {
-                    <option [value]="v.id">{{ v.label }}</option>
+                    <option [ngValue]="v.id">{{ v.label }}</option>
                   }
                 </select>
                 <span class="sel-arrow">▾</span>
@@ -137,6 +141,7 @@
         </div>
       }
 
+      <!-- vetor_unico: fonte, variável e nível de agregação -->
       @if (tipoDado === 'vetor_unico') {
         <p class="field-hint">Escolha o dado que será testado para normalidade.</p>
         <label class="field-label">Fonte dos dados</label>
@@ -154,7 +159,7 @@
             <select class="field-select" [(ngModel)]="variavelId">
               <option [ngValue]="undefined">— selecione —</option>
               @for (v of variavelOpcoes; track v.id) {
-                <option [value]="v.id">{{ v.label }}</option>
+                <option [ngValue]="v.id">{{ v.label }}</option>
               }
             </select>
             <span class="sel-arrow">▾</span>
@@ -171,6 +176,7 @@
         </div>
       }
 
+      <!-- dois_grupos: fonte, variável, agrupar_por e checkboxes de grupos -->
       @if (tipoDado === 'dois_grupos') {
         <p class="field-hint">
           Compare dois grupos de locais ou campanhas entre si.
@@ -191,7 +197,7 @@
             <select class="field-select" [(ngModel)]="variavelId">
               <option [ngValue]="undefined">— selecione —</option>
               @for (v of variavelOpcoes; track v.id) {
-                <option [value]="v.id">{{ v.label }}</option>
+                <option [ngValue]="v.id">{{ v.label }}</option>
               }
             </select>
             <span class="sel-arrow">▾</span>
@@ -200,7 +206,9 @@
 
         <label class="field-label mt-m">Agrupar observações por</label>
         <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="agruparPor">
+          <!-- Ao mudar agrupar_por os checkboxes são limpos, pois as opções mudam -->
+          <select class="field-select" [(ngModel)]="agruparPor"
+            (ngModelChange)="onAgruparPorDoisGruposChange()">
             <option value="campanha">Campanha</option>
             <option value="unidade_amostral">Unidade amostral</option>
           </select>
@@ -251,6 +259,7 @@
         </div>
       }
 
+      <!-- multiplos_grupos: fonte, variável e agrupar_por -->
       @if (tipoDado === 'multiplos_grupos') {
         <p class="field-hint">
           Compare múltiplos grupos — os grupos são formados automaticamente conforme o agrupamento escolhido.
@@ -270,7 +279,7 @@
             <select class="field-select" [(ngModel)]="variavelId">
               <option [ngValue]="undefined">— selecione —</option>
               @for (v of variavelOpcoes; track v.id) {
-                <option [value]="v.id">{{ v.label }}</option>
+                <option [ngValue]="v.id">{{ v.label }}</option>
               }
             </select>
             <span class="sel-arrow">▾</span>
@@ -287,6 +296,7 @@
         </div>
       }
 
+      <!-- abundancias / abundancias_por_amostra / matriz_acumulacao: sem parâmetros extras -->
       @if (['abundancias','abundancias_por_amostra','matriz_acumulacao'].includes(tipoDado)) {
         <p class="field-hint no-params">
           Esta análise usa automaticamente os dados de abundância do estudo.
@@ -296,6 +306,7 @@
 
     </section>}
 
+    <!-- ── Passo 3: Filtros globais ────────────────────────────────────────── -->
     <section class="step-card" [@fadeSlide]>
       <div class="step-label"><span class="step-num">3</span> Filtros <span class="step-opt">(todos opcionais)</span></div>
 
@@ -305,10 +316,11 @@
           <div class="filtro-item full">
             <label class="field-label">Restringir a</label>
             <div class="select-wrapper">
+              <!-- [ngValue] preserva o tipo number; undefined = "Todo o estudo" -->
               <select class="field-select" [(ngModel)]="escopoCampanhaId">
                 <option [ngValue]="undefined">Todo o estudo</option>
                 @for (c of campanhas; track c.id) {
-                  <option [value]="c.id">Campanha: {{ c.nome }}</option>
+                  <option [ngValue]="c.id">Campanha: {{ c.nome }}</option>
                 }
               </select>
               <span class="sel-arrow">▾</span>
@@ -360,11 +372,13 @@
           </div>
         }
 
-      </div></section>
+      </div>
+    </section>
 
+    <!-- ── Botão executar ──────────────────────────────────────────────────── -->
     <div class="confirm-row">
-      <button class="btn-confirmar" (click)="executar()" [disabled]="carregando || !analiseAtual">
-        @if (carregando) {
+      <button class="btn-confirmar" (click)="executar()" [disabled]="loading || !analiseAtual">
+        @if (loading) {
           <span class="spinner"></span> Analisando…
         } @else {
           Confirmar
@@ -379,6 +393,7 @@
   </div>
   }
 
+  <!-- ── Resultado ───────────────────────────────────────────────────────────── -->
   @if (resultado) {
   <section class="resultado-section" [@fadeSlide]>
     <div class="resultado-header">
@@ -386,6 +401,7 @@
       <div class="title-rule"></div>
     </div>
 
+    <!-- Só gráfico -->
     @if (analiseAtual?.tem_grafico && !analiseAtual?.tem_valor && resultado.grafico) {
       <div class="grafico-wrapper">
         <iframe class="grafico-iframe"
@@ -396,12 +412,14 @@
       </div>
     }
 
+    <!-- Só valor -->
     @if (analiseAtual?.tem_valor && !analiseAtual?.tem_grafico && resultado.valor) {
       <div class="valor-block">
         <pre class="valor-pre">{{ resultado.valor | json }}</pre>
       </div>
     }
 
+    <!-- Gráfico + valor -->
     @if (analiseAtual?.tem_grafico && analiseAtual?.tem_valor) {
       @if (resultado.grafico) {
         <div class="grafico-wrapper">
