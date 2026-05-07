@@ -14,7 +14,9 @@
       "Bash(docker restart *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/dashboard)",
       "Bash(tee /tmp/seed_output.txt)",
-      "Bash(./gradlew compileDebugKotlin)"
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(findstr /i \"chart leaflet\")",
+      "Bash(npm install *)"
     ]
   }
 }
