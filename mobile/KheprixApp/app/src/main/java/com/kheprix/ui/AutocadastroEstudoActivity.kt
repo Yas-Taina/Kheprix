@@ -78,32 +78,19 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
     }
 
     private fun iniciarScanQr() {
-        /*
-         * Usa a biblioteca ZXing Android Embedded.
-         * Resultado chega em onActivityResult com requestCode = IntentIntegrator.REQUEST_CODE.
-         * O conteúdo do QR (código do estudo) é colocado no campo etCodigo.
-         *
-         * ATIVAR: descomente o bloco abaixo após adicionar a dependência ZXing.
-         *
-         * IntentIntegrator(this)
-         *     .setPrompt("Aponte para o QR Code do estudo")
-         *     .setBeepEnabled(true)
-         *     .initiateScan()
-         */
-        Toast.makeText(this, "Scanner QR: adicione a dependência ZXing", Toast.LENGTH_LONG).show()
+        IntentIntegrator(this)
+            .setPrompt("Aponte para o QR Code do estudo")
+            .setBeepEnabled(true)
+            .initiateScan()
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        /*
-         * Descomente para capturar o resultado do scanner ZXing:
-         *
-         * val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-         * if (result != null && result.contents != null) {
-         *     binding.etCodigo.setText(result.contents)
-         * }
-         */
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null && result.contents != null) {
+            binding.etCodigo.setText(result.contents)
+        }
     }
 
     // ── API ───────────────────────────────────────────────────────────────

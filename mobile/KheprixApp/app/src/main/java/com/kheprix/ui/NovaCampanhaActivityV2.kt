@@ -40,6 +40,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     private lateinit var binding: ActivityNovaCampanhaV2Binding
 
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
     private var modoEdicao     = false
 
@@ -56,6 +57,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
         modoEdicao     = campanhaId != -1
 
@@ -63,9 +65,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
 
         if (modoEdicao) {
             binding.etNome.setText(intent.getStringExtra("campanha_nome") ?: "")
-            intent.getStringExtra("campanha_data_inicio")?.let { iso ->
-                binding.etDataInicio.setText(isoParaBr(iso))
-            }
         }
 
         // Campo e ícone calendário: abrem DatePickerDialog
@@ -76,7 +75,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             if (modoEdicao) editarCampanha() else criarCampanha()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
@@ -88,6 +86,11 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     // ── Variáveis dinâmicas ───────────────────────────────────────────────
 
     private fun carregarVariaveis() {
+        // Estudo offline-only: lê variáveis do SQLite.
+        if (estudoRemoteId <= 0) {
+            carregarVariaveisOffline()
+            return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -108,23 +111,51 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     renderizarCamposVariaveis()
                 }
             } catch (_: Exception) {
-                renderizarCamposVariaveis()
+                carregarVariaveisOffline()
             }
         }
     }
 
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarCamposVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'campanha'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarCamposVariaveis()
+    }
+
     private fun preencherValoresVariaveis() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getCampanha(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                 )
-                if (resp.isSuccessful) {
-                    resp.body()?.valoresVariaveis?.forEach { vv ->
+                resp.body()?.let { c ->
+                    binding.etNome.setText(c.nome)
+                    binding.etDataInicio.setText(isoParaBr(c.dataInicio))
+                    binding.etDescricao.setText(c.descricao ?: "")
+                    c.valoresVariaveis?.forEach { vv ->
                         aplicarValorNoCampo(vv.variavelId, vv.valor)
                     }
                 }
-            } catch (_: Exception) { /* offline: valores não pré-preenchidos */ }
+            } catch (_: Exception) { /* offline: campos mantêm valor do intent */ }
         }
     }
 
@@ -287,8 +318,8 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         return camposVariavel.entries.mapNotNull { (varId, view) ->
             val valor = when (view) {
                 is Spinner -> when (view.selectedItem?.toString()) {
-                    "Verdadeiro" -> "True"
-                    "Falso"      -> "False"
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
                     else         -> null
                 }
                 is EditText -> view.text.toString().trim().ifEmpty { null }
@@ -322,6 +353,12 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             valoresVariaveis = coletarValoresVariaveis()
         )
 
+        // Estudo pai é offline-only: persistir direto no SQLite (não tente API).
+        if (estudoRemoteId <= 0) {
+            salvarCampanhaOffline(req)
+            return
+        }
+
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -346,22 +383,23 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
      */
     private fun salvarCampanhaOffline(req: CampanhaRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-        if (estudoLocalId == null) {
+        // Resolve localId: prefere o passado pelo Intent; senão tenta lookup pelo remote_id.
+        val resolvedLocalId = when {
+            estudoLocalId > 0 -> estudoLocalId
+            estudoRemoteId > 0 -> repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else -> null
+        }
+        if (resolvedLocalId == null) {
             Toast.makeText(
                 this,
-                "Sem conexão — este estudo não está salvo offline. Salve o estudo primeiro.",
+                "Estudo não está salvo offline. Salve o estudo primeiro.",
                 Toast.LENGTH_LONG
             ).show()
             return
         }
         try {
-            repo.criarCampanhaOffline(estudoLocalId, req)
-            Toast.makeText(
-                this,
-                "Sem conexão — campanha salva offline.",
-                Toast.LENGTH_LONG
-            ).show()
+            repo.criarCampanhaOffline(resolvedLocalId, req)
+            Toast.makeText(this, "Campanha salva offline.", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: Exception) {
             Toast.makeText(

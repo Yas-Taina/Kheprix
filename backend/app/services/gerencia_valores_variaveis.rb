@@ -59,7 +59,10 @@ module GerenciaValoresVariaveis
     return if payload.nil?
 
     agora = Time.zone.now
-    ids_payload = payload.map { |vv| vv[:id].to_i }
+    updates = payload.select { |vv| vv[:id].present? }
+    novos   = payload.reject { |vv| vv[:id].present? }
+
+    ids_payload    = updates.map { |vv| vv[:id].to_i }
     ids_existentes = entidade.valores_variaveis.pluck(:id)
     alterado = false
 
@@ -70,7 +73,7 @@ module GerenciaValoresVariaveis
       alterado = true
     end
 
-    payload.each do |vv|
+    updates.each do |vv|
       existente = entidade.valores_variaveis.find_by(id: vv[:id])
       raise ActiveRecord::RecordNotFound, "valor_variavel #{vv[:id]} não pertence a este recurso" if existente.nil?
 
@@ -84,6 +87,15 @@ module GerenciaValoresVariaveis
         existente.update!(valor: novo_valor)
         alterado = true
       end
+    end
+
+    novos.each do |vv|
+      ValorVariavel.create!(
+        variavel_id:      vv[:variavel_id],
+        id_nivel_aplicacao: entidade.id,
+        valor:            vv[:valor].to_s,
+      )
+      alterado = true
     end
 
     entidade.touch if alterado

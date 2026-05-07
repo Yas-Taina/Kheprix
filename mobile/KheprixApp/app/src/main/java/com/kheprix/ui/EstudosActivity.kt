@@ -157,7 +157,7 @@ class EstudosActivity : BaseDrawerActivity() {
 
                 val offlineCount = offlineManager.contarRegistrosOffline(off.localId)
                 estudos.add(EstudoItem(
-                    remoteId = off.remoteId ?: -1,
+                    remoteId = off.remoteId ?: -off.localId.toInt(),
                     localId = off.localId,
                     nome = off.nome,
                     createdAt = off.createdAt ?: "",

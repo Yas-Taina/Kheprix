@@ -25,12 +25,12 @@
         android:paddingEnd="16dp">
 
         <ImageView
-            android:id="@+id/ivBack"
+            android:id="@+id/ivMenuLateral"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:src="@drawable/ic_placeholder_beetle"
             android:scaleType="fitCenter"
-            android:contentDescription="Voltar"
+            android:contentDescription="Menu"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"

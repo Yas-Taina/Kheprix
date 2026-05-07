@@ -74,8 +74,13 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             lifecycleScope.launch {
                 offlineManager.sincronizarDadosEstudo(estudoLocalId)
                     .onSuccess {
-                        Toast.makeText(this@EstudoDetalheActivity, "Sincronizado!", Toast.LENGTH_SHORT).show()
                         atualizarContadorOffline()
+                        val pendentes = offlineManager.listarRegistrosOfflinePendentes(estudoLocalId)
+                        if (pendentes.isEmpty()) {
+                            Toast.makeText(this@EstudoDetalheActivity, "Sincronizado!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            mostrarPendentes(pendentes)
+                        }
                     }
                     .onFailure {
                         Toast.makeText(this@EstudoDetalheActivity, "Erro: ${it.message}", Toast.LENGTH_LONG).show()
@@ -94,6 +99,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardCampanhas.setOnClickListener {
             val intent = Intent(this, CampanhasActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
@@ -102,6 +108,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardEspecies.setOnClickListener {
             val intent = Intent(this, EspeciesActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             intent.putExtra("estudo_nome", estudoNome)
             startActivity(intent)
         }
@@ -110,6 +117,7 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.cardCadastrarEspecie.setOnClickListener {
             val intent = Intent(this, CadastroEspecieActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
+            intent.putExtra("estudo_local_id", estudoLocalId)
             startActivity(intent)
         }
 
@@ -128,22 +136,43 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
     /** Carrega os dados do estudo do servidor para preencher o card de detalhes */
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            try {
-                val token = SessionManager.getAuthHeader()
-                val response = RetrofitClient.apiService.getEstudos(token)
-                val estudo = response.body()?.firstOrNull { it.id == estudoRemoteId }
+            if (estudoRemoteId > 0) {
+                try {
+                    val token = SessionManager.getAuthHeader()
+                    val response = RetrofitClient.apiService.getEstudos(token)
+                    val estudo = response.body()?.firstOrNull { it.id == estudoRemoteId }
+                    if (estudo != null) {
+                        preencherDetalhes(estudo.nome, estudo.observacoes, estudo.perfil, estudo.createdAt, estudo.updatedAt)
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            preencherDetalhesOffline()
+        }
+    }
 
-                estudo?.let {
-                    binding.tvDetalheNome.text = it.nome
-                    binding.tvDetalheObs.text = it.observacoes ?: "—"
-                    binding.tvDetalhePerfil.text = it.perfil ?: "—"
-                    binding.tvDetalheCriado.text = formatarData(it.createdAt)
-                    binding.tvDetalheAtualizado.text = formatarData(it.updatedAt)
-                }
-            } catch (_: Exception) {
-                // Modo offline: detalhes podem não estar disponíveis
+    private fun preencherDetalhesOffline() {
+        if (estudoLocalId <= 0) return
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        db.rawQuery(
+            "SELECT nome, observacoes, perfil, created_at, updated_at FROM estudos WHERE local_id = ?",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            if (c.moveToFirst()) {
+                preencherDetalhes(
+                    c.getString(0), c.getString(1), c.getString(2),
+                    c.getString(3) ?: "", c.getString(4) ?: ""
+                )
             }
         }
+    }
+
+    private fun preencherDetalhes(nome: String, obs: String?, perfil: String?, createdAt: String, updatedAt: String) {
+        binding.tvDetalheNome.text = nome
+        binding.tvDetalheObs.text = obs ?: "—"
+        binding.tvDetalhePerfil.text = perfil ?: "—"
+        binding.tvDetalheCriado.text = formatarData(createdAt)
+        binding.tvDetalheAtualizado.text = formatarData(updatedAt)
     }
 
     private fun formatarData(iso: String): String {
@@ -155,5 +184,15 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
 
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+    }
+
+    private fun mostrarPendentes(pendentes: List<String>) {
+        val msg = "${pendentes.size} item(ns) ainda não sincronizados:\n\n" +
+                pendentes.joinToString("\n") { "• $it" }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Pendências offline")
+            .setMessage(msg)
+            .setPositiveButton("OK", null)
+            .show()
     }
 }
