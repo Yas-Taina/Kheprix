@@ -19,6 +19,8 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
 import com.kheprix.db.OfflineRepository
 import com.kheprix.models.UnidadeRequest
+import com.kheprix.models.UnidadeResponse
+import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 
@@ -47,7 +49,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
     private var modoEdicao     = false
 
@@ -57,6 +61,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private val variaveis = mutableListOf<VariavelResponse>()
     /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
+
+    /** Unidade carregada em modo edição — usada para preencher campos e
+     *  recuperar os ids dos valores_variaveis existentes ao salvar. */
+    private var unidadeCarregada: UnidadeResponse? = null
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
@@ -76,7 +84,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
         modoEdicao     = unidadeId != -1
 
@@ -90,11 +101,13 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             if (modoEdicao) editarUnidade() else criarUnidade()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
+
+        aplicarMascaraDms(binding.etLatitude)
+        aplicarMascaraDms(binding.etLongitude)
 
         if (modoEdicao) preencherDadosEdicao()
         carregarVariaveis()
@@ -133,7 +146,42 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         val neg = dec < 0; val abs = Math.abs(dec)
         val deg = abs.toInt(); val minD = (abs - deg) * 60
         val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
-        return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
+        return "${if (neg) "-" else ""}%02d°%02d'%02d\"".format(deg, min, sec)
+    }
+
+    private fun aplicarMascaraDms(et: android.widget.EditText) {
+        et.addTextChangedListener(object : android.text.TextWatcher {
+            private var editing = false
+            private var prevLen = 0
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (editing || s == null) return
+                editing = true
+                val deleting = s.length < prevLen
+                prevLen = s.length
+                if (!deleting) {
+                    val raw = s.toString()
+                    val neg = raw.startsWith("-")
+                    val digits = raw.filter { it.isDigit() }.take(6)
+                    val sb = StringBuilder()
+                    if (neg) sb.append("-")
+                    digits.forEachIndexed { i, c ->
+                        sb.append(c)
+                        if (i == 1 && digits.length > 1) sb.append("°")
+                        else if (i == 3 && digits.length > 3) sb.append("'")
+                        else if (i == 5) sb.append("\"")
+                    }
+                    val result = sb.toString()
+                    if (result != raw) {
+                        s.replace(0, s.length, result)
+                        prevLen = result.length
+                        try { et.setSelection(result.length) } catch (_: Exception) {}
+                    }
+                }
+                editing = false
+            }
+        })
     }
 
     /** Tenta fazer parse de DMS ou decimal puro digitado pelo usuário */
@@ -155,6 +203,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Variáveis dinâmicas (nível unidade) ───────────────────────────────
 
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -164,9 +213,33 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) {}
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'unidade'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -202,6 +275,31 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 })
             }
             binding.layoutVariaveis.addView(linha)
+        }
+
+        // Em modo edição, se a unidade já chegou, preencher imediatamente.
+        aplicarValoresVariaveis()
+    }
+
+    /** Aplica os valores das variáveis da unidade carregada nos campos
+     *  renderizados. Idempotente — chamado tanto após renderizar quanto
+     *  após carregar a unidade, pois os fluxos são assíncronos. */
+    private fun aplicarValoresVariaveis() {
+        val u = unidadeCarregada ?: return
+        if (camposVariavel.isEmpty()) return
+        u.valoresVariaveis?.forEach { vv ->
+            when (val view = camposVariavel[vv.variavelId]) {
+                is Spinner -> {
+                    val idx = when (vv.valor.trim().lowercase()) {
+                        "true", "verdadeiro" -> 1
+                        "false", "falso"     -> 2
+                        else                 -> 0
+                    }
+                    view.setSelection(idx)
+                }
+                is EditText -> view.setText(vv.valor)
+                else -> { /* tipo desconhecido: ignora */ }
+            }
         }
     }
 
@@ -240,18 +338,22 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Edição ────────────────────────────────────────────────────────────
 
     private fun preencherDadosEdicao() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getUnidade(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                 )
                 resp.body()?.let { u ->
+                    unidadeCarregada = u
+                    binding.etNomeUnidade.setText(u.nome)
                     latDecimal = u.latitude; lonDecimal = u.longitude
                     binding.etLatitude.setText(decimalToDms(u.latitude))
                     binding.etLongitude.setText(decimalToDms(u.longitude))
                     binding.etRaio.setText(u.raio?.toString() ?: "")
                     binding.etMetodoColeta.setText(u.metodoColeta ?: "")
                     binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+                    aplicarValoresVariaveis()
                 }
             } catch (_: Exception) {}
         }
@@ -261,6 +363,11 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private fun criarUnidade() {
         val req = coletarFormulario() ?: return
+        // Pais offline-only: salva direto no SQLite (sem chamar API).
+        if (estudoRemoteId <= 0 || campanhaId <= 0) {
+            salvarOffline(req)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -319,8 +426,50 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             latitude = finalLat, longitude = finalLon,
             raio = binding.etRaio.text.toString().trim().toDoubleOrNull(),
             metodoColeta = binding.etMetodoColeta.text.toString().trim().ifEmpty { null },
-            esforcoAmostral = binding.etEsforcoAmostral.text.toString().trim().ifEmpty { null }
+            esforcoAmostral = binding.etEsforcoAmostral.text.toString().trim().ifEmpty { null },
+            valoresVariaveis = coletarValoresVariaveis()
         )
+    }
+
+    /** Monta os valores_variaveis a enviar.
+     *
+     * Em criação: cada item carrega `variavel_id` + `valor`.
+     * Em edição: o backend (`sincronizar_valores_variaveis`) só atualiza
+     * registros existentes, identificados por `id`. Para variáveis sem
+     * valor prévio salvo na unidade, ainda enviamos `variavel_id` (que o
+     * backend ignora no PATCH); itens com valor preenchido e id existente
+     * são atualizados; itens omitidos são removidos via soft delete.
+     */
+    private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
+        if (camposVariavel.isEmpty()) return null
+        val idPorVariavel: Map<Int, Int> =
+            unidadeCarregada?.valoresVariaveis
+                ?.mapNotNull { vv -> vv.id?.let { vv.variavelId to it } }
+                ?.toMap()
+                ?: emptyMap()
+
+        val itens = camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+
+            if (modoEdicao) {
+                val existenteId = idPorVariavel[varId]
+                if (existenteId != null)
+                    ValorVariavelRequest(id = existenteId, variavelId = varId, valor = valor)
+                else
+                    ValorVariavelRequest(variavelId = varId, valor = valor)
+            } else {
+                ValorVariavelRequest(variavelId = varId, valor = valor)
+            }
+        }
+        return itens.ifEmpty { null }
     }
 
     /**
@@ -329,38 +478,24 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
      */
     private fun salvarOffline(req: UnidadeRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-        if (estudoLocalId == null) {
-            Toast.makeText(
-                this,
-                "Sem conexão — este estudo não está salvo offline.",
-                Toast.LENGTH_LONG
-            ).show()
-            return
+        val campanhaResolved = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            estudoRemoteId > 0 && campanhaId > 0 ->
+                repo.estudoLocalIdFromRemote(estudoRemoteId)?.let {
+                    repo.campanhaLocalIdFromRemote(it, campanhaId)
+                }
+            else -> null
         }
-        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId)
-        if (campanhaLocalId == null) {
-            Toast.makeText(
-                this,
-                "Sem conexão — esta campanha não está salva offline.",
-                Toast.LENGTH_LONG
-            ).show()
+        if (campanhaResolved == null) {
+            Toast.makeText(this, "Campanha não está salva offline.", Toast.LENGTH_LONG).show()
             return
         }
         try {
-            repo.criarUnidadeOffline(campanhaLocalId, req)
-            Toast.makeText(
-                this,
-                "Sem conexão — unidade salva offline.",
-                Toast.LENGTH_LONG
-            ).show()
+            repo.criarUnidadeOffline(campanhaResolved, req)
+            Toast.makeText(this, "Unidade salva offline.", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                "Erro ao salvar offline: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

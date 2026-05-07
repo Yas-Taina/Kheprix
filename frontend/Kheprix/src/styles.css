@@ -590,6 +590,7 @@ select.form-control {
 .photo-uploader .photo-preview {
   width: 60px;
   height: 60px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--border-color);
@@ -634,6 +635,10 @@ select.form-control {
 .species-photo-circle {
   width: 52px;
   height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  max-width: 52px;
+  max-height: 52px;
   aspect-ratio: 1 / 1; 
   border-radius: 50%;
   object-fit: cover;

@@ -259,7 +259,8 @@ data class CampanhaRequest(
 
 data class ValorVariavelRequest(
     @SerializedName("variavel_id") val variavelId: Int,
-    val valor: String
+    val valor: String,
+    val id: Int? = null
 )
 
 data class CampanhaResponse(
@@ -275,7 +276,8 @@ data class CampanhaResponse(
 
 data class ValorVariavelResponse(
     @SerializedName("variavel_id") val variavelId: Int,
-    val valor: String
+    val valor: String,
+    val id: Int? = null
 )
 
 // ──────────────────────────────────────────────
@@ -288,7 +290,8 @@ data class UnidadeRequest(
     val longitude: Double,
     val raio: Double? = null,
     @SerializedName("metodo_coleta") val metodoColeta: String? = null,
-    @SerializedName("esforco_amostral") val esforcoAmostral: String? = null
+    @SerializedName("esforco_amostral") val esforcoAmostral: String? = null,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
 )
 
 data class UnidadeResponse(
@@ -301,7 +304,8 @@ data class UnidadeResponse(
     @SerializedName("metodo_coleta") val metodoColeta: String?,
     @SerializedName("esforco_amostral") val esforcoAmostral: String?,
     @SerializedName("created_at") val createdAt: String,
-    @SerializedName("updated_at") val updatedAt: String
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )
 
 // ──────────────────────────────────────────────
@@ -311,7 +315,8 @@ data class UnidadeResponse(
 data class EventoRequest(
     @SerializedName("horario_inicio") val horarioInicio: String,
     @SerializedName("horario_fim") val horarioFim: String? = null,
-    @SerializedName("esforco_real") val esforcoReal: String? = null
+    @SerializedName("esforco_real") val esforcoReal: String? = null,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
 )
 
 data class EventoResponse(
@@ -320,7 +325,9 @@ data class EventoResponse(
     @SerializedName("horario_inicio") val horarioInicio: String,
     @SerializedName("horario_fim") val horarioFim: String?,
     @SerializedName("esforco_real") val esforcoReal: String?,
-    @SerializedName("created_at") val createdAt: String
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String? = null,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )
 
 // ──────────────────────────────────────────────
@@ -336,7 +343,8 @@ data class RegistroRequest(
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int? = null,
     /** Base64-encoded image */
     val foto: String? = null,
-    @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null
+    @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
 )
 
 data class RegistroPatchRequest(
@@ -348,7 +356,8 @@ data class RegistroPatchRequest(
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int? = null,
     /** Base64-encoded image */
     val foto: String? = null,
-    @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null
+    @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
 )
 
 data class RegistroResponse(
@@ -363,5 +372,6 @@ data class RegistroResponse(
     /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean?,
-    @SerializedName("created_at") val createdAt: String
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )

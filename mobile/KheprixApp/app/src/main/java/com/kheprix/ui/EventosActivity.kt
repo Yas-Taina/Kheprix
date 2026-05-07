@@ -25,6 +25,7 @@ import com.kheprix.db.OfflineRepository
 import com.kheprix.db.UnidadeDao
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
+import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -45,8 +46,11 @@ class EventosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEventosBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var unidadeNome    = ""
     private val eventos = mutableListOf<EventoResponse>()
 
@@ -56,8 +60,13 @@ class EventosActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         unidadeNome    = intent.getStringExtra("unidade_nome") ?: ""
 
         binding.tvUnidadeNome.text = unidadeNome
@@ -72,8 +81,11 @@ class EventosActivity : BaseDrawerActivity() {
         binding.btnAdicionarEvento.setOnClickListener {
             startActivity(Intent(this, NovoEventoActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
             })
         }
 
@@ -85,8 +97,11 @@ class EventosActivity : BaseDrawerActivity() {
         binding.btnEditarUnidade.setOnClickListener {
             startActivity(Intent(this, NovaUnidadeActivity::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
+                putExtra("estudo_local_id", estudoLocalId)
                 putExtra("campanha_id", campanhaId)
+                putExtra("campanha_local_id", campanhaLocalId)
                 putExtra("unidade_id", unidadeId)
+                putExtra("unidade_local_id", unidadeLocalId)
             })
         }
 
@@ -99,18 +114,24 @@ class EventosActivity : BaseDrawerActivity() {
         carregarEventos()
     }
 
-    override fun onResume() { super.onResume(); carregarEventos() }
+    override fun onResume() {
+        super.onResume()
+        carregarDetalhes()
+        carregarEventos()
+    }
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
             // Tenta API quando temos remote id da unidade.
-            if (unidadeId > 0) {
+            if (unidadeId > 0 && estudoRemoteId > 0 && campanhaId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getUnidade(
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
                     )
                     resp.body()?.let { u ->
-                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral)
+                        unidadeNome = u.nome
+                        binding.tvUnidadeNome.text = u.nome
+                        preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral, u.updatedAt)
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -122,14 +143,15 @@ class EventosActivity : BaseDrawerActivity() {
 
     private fun preencherCardUnidade(
         nome: String, lat: Double, lon: Double,
-        raio: Double?, metodo: String?, esforco: String?
+        raio: Double?, metodo: String?, esforco: String?, updatedAt: String? = null
     ) {
-        binding.tvDetalheNome.text   = nome
-        binding.tvDetalheLat.text    = decimalToDms(lat)
-        binding.tvDetalheLon.text    = decimalToDms(lon)
-        binding.tvDetalheRaio.text   = raio?.let { "${it}m" } ?: "—"
-        binding.tvDetalheMetodo.text = metodo ?: "—"
-        binding.tvDetalheEsforco.text = esforco ?: "—"
+        binding.tvDetalheNome.text      = nome
+        binding.tvDetalheLat.text       = decimalToDms(lat)
+        binding.tvDetalheLon.text       = decimalToDms(lon)
+        binding.tvDetalheRaio.text      = raio?.let { "${it}m" } ?: "—"
+        binding.tvDetalheMetodo.text    = metodo ?: "—"
+        binding.tvDetalheEsforco.text   = esforco ?: "—"
+        binding.tvDetalheUpdatedAt.text = updatedAt?.let { formatarDataHora(it) } ?: "—"
     }
 
     private fun preencherDetalhesOffline() {
@@ -154,18 +176,25 @@ class EventosActivity : BaseDrawerActivity() {
 
         preencherCardUnidade(
             unidade.nome, unidade.latitude, unidade.longitude,
-            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral
+            unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral, unidade.updatedAt
         )
     }
 
     private fun carregarEventos() {
-        // Se unidade_id == -1, é offline-only: buscar via SQLite
-        if (unidadeId == -1) {
-            val unidadeDao = UnidadeDao(this)
-            val campanhaDao = CampanhaDao(this)
-            val campanha = campanhaDao.listarTodos().firstOrNull { it.remoteId == campanhaId || (campanhaId == -1) } ?: return
-            val unidade = unidadeDao.listarPorCampanhaLocal(campanha.localId).firstOrNull { it.nome == unidadeNome } ?: return
-            carregarEventosOffline(unidade.localId)
+        // Unidade offline-only: lista do SQLite.
+        if (unidadeId <= 0) {
+            val localId = if (unidadeLocalId > 0) unidadeLocalId
+                else {
+                    val campanha = CampanhaDao(this).listarTodos()
+                        .firstOrNull { it.remoteId == campanhaId || (campanhaId <= 0) }
+                    campanha?.let {
+                        UnidadeDao(this).listarPorCampanhaLocal(it.localId).firstOrNull { u -> u.nome == unidadeNome }?.localId
+                    }
+                }
+            if (localId != null) {
+                unidadeLocalId = localId
+                carregarEventosOffline(localId)
+            }
             return
         }
 
@@ -236,11 +265,18 @@ class EventosActivity : BaseDrawerActivity() {
     }
 
     private fun abrirRegistros(e: EventoResponse) {
+        val eventoLocalId = if (e.id < 0) (-e.id).toLong()
+            else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(e.id, unidadeLocalId)?.localId ?: -1L
+            else -1L
         startActivity(Intent(this, RegistrosActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
+            putExtra("estudo_local_id", estudoLocalId)
             putExtra("campanha_id", campanhaId)
+            putExtra("campanha_local_id", campanhaLocalId)
             putExtra("unidade_id", unidadeId)
+            putExtra("unidade_local_id", unidadeLocalId)
             putExtra("evento_id", e.id)
+            putExtra("evento_local_id", eventoLocalId)
             putExtra("evento_nome", e.horarioInicio)
         })
     }
@@ -250,6 +286,17 @@ class EventosActivity : BaseDrawerActivity() {
             .setTitle("Deletar evento")
             .setMessage("Deletar evento iniciado em ${e.horarioInicio}?")
             .setPositiveButton("Deletar") { _, _ ->
+                if (e.id < 0 || unidadeId <= 0 || campanhaId <= 0 || estudoRemoteId <= 0) {
+                    val localId = if (e.id < 0) (-e.id).toLong()
+                        else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(e.id, unidadeLocalId)?.localId
+                        else null
+                    if (localId != null) {
+                        com.kheprix.db.DatabaseHelper(this).writableDatabase
+                            .delete("eventos_amostragem", "local_id = ?", arrayOf(localId.toString()))
+                        carregarEventos()
+                    }
+                    return@setPositiveButton
+                }
                 lifecycleScope.launch {
                     try {
                         RetrofitClient.apiService.deleteEvento(
@@ -268,6 +315,15 @@ class EventosActivity : BaseDrawerActivity() {
         val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
         return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
     }
+
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
+    } catch (_: Exception) { iso }
 }
 
 class EventoAdapter(
@@ -295,8 +351,13 @@ class EventoAdapter(
 
     override fun getItemCount() = items.size
 
-    private fun formatarDataHora(iso: String) = try {
-        val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
+    private fun formatarDataHora(iso: String): String = try {
+        val s = iso.replace("T", " ")
+        val partes = s.split(" ")
+        val d = partes[0].split("-")
+        val h = if (partes.size > 1) partes[1].take(5) else ""
+        val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
+        if (h.isNotEmpty()) "$data, ${h}h" else data
     } catch (_: Exception) { iso }
 }
 
@@ -318,19 +379,22 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEventoBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var campanhaId     = -1
+    private var campanhaLocalId = -1L
     private var unidadeId      = -1
+    private var unidadeLocalId = -1L
     private var eventoId       = -1
     private var modoEdicao     = false
 
     private var dataInicio = ""
     private var horaInicio = ""
-    private var dataFim = ""
-    private var horaFim = ""
 
     private val variaveis = mutableListOf<VariavelResponse>()
     /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
+
+    private var eventoCarregado: EventoResponse? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -338,24 +402,25 @@ class NovoEventoActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         campanhaId     = intent.getIntExtra("campanha_id", -1)
+        campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
+        if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
         unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
+        if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
         eventoId       = intent.getIntExtra("evento_id", -1)
         modoEdicao     = eventoId != -1
 
         binding.tvTitulo.text = if (modoEdicao) "Editar Evento" else "Novo Evento de Amostragem"
 
-        binding.ivCalendario.setOnClickListener { abrirDatePicker(inicio = true) }
-        binding.etDataInicio.setOnClickListener { abrirDatePicker(inicio = true) }
-        binding.etHoraInicio.setOnClickListener { abrirTimePicker(inicio = true) }
-        binding.ivCalendarioFim.setOnClickListener { abrirDatePicker(inicio = false) }
-        binding.etDataFim.setOnClickListener { abrirDatePicker(inicio = false) }
-        binding.etHoraFim.setOnClickListener { abrirTimePicker(inicio = false) }
+        binding.ivCalendario.setOnClickListener { abrirDatePicker() }
+        binding.etDataInicio.setOnClickListener { abrirDatePicker() }
+        binding.etHoraInicio.setOnClickListener { abrirTimePicker() }
 
         binding.btnConfirmar.setOnClickListener {
             if (modoEdicao) editarEvento() else criarEvento()
         }
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
@@ -365,27 +430,24 @@ class NovoEventoActivity : BaseDrawerActivity() {
         carregarVariaveis()
     }
 
-    private fun abrirDatePicker(inicio: Boolean) {
+    private fun abrirDatePicker() {
         val cal = Calendar.getInstance()
         DatePickerDialog(this, { _, y, m, d ->
-            val iso = "%04d-%02d-%02d".format(y, m + 1, d)
-            val br  = "%02d/%02d/%04d".format(d, m + 1, y)
-            if (inicio) { dataInicio = iso; binding.etDataInicio.setText(br) }
-            else        { dataFim = iso;    binding.etDataFim.setText(br) }
+            dataInicio = "%04d-%02d-%02d".format(y, m + 1, d)
+            binding.etDataInicio.setText("%02d/%02d/%04d".format(d, m + 1, y))
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    private fun abrirTimePicker(inicio: Boolean) {
+    private fun abrirTimePicker() {
         val cal = Calendar.getInstance()
         TimePickerDialog(this, { _, h, m ->
-            val iso = "%02d:%02d:00".format(h, m)
-            val exib = "%02d:%02d".format(h, m)
-            if (inicio) { horaInicio = iso; binding.etHoraInicio.setText(exib) }
-            else        { horaFim = iso;    binding.etHoraFim.setText(exib) }
+            horaInicio = "%02d:%02d:00".format(h, m)
+            binding.etHoraInicio.setText("%02d:%02d".format(h, m))
         }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
 
     private fun carregarVariaveis() {
+        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -395,9 +457,33 @@ class NovoEventoActivity : BaseDrawerActivity() {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
-                }
-            } catch (_: Exception) {}
+                } else carregarVariaveisOffline()
+            } catch (_: Exception) { carregarVariaveisOffline() }
         }
+    }
+
+    private fun carregarVariaveisOffline() {
+        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        variaveis.clear()
+        db.rawQuery(
+            "SELECT remote_id, nome, nivel_aplicacao, tipo_dado, metrica, created_at, updated_at, local_id FROM variaveis WHERE estudo_local_id = ? AND nivel_aplicacao = 'evento'",
+            arrayOf(estudoLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
+                variaveis.add(VariavelResponse(
+                    id = rid,
+                    nome = c.getString(1),
+                    nivelAplicacao = c.getString(2),
+                    tipoDado = c.getString(3),
+                    metrica = c.getString(4),
+                    createdAt = c.getString(5) ?: "",
+                    updatedAt = c.getString(6) ?: ""
+                ))
+            }
+        }
+        renderizarVariaveis()
     }
 
     private fun renderizarVariaveis() {
@@ -431,6 +517,24 @@ class NovoEventoActivity : BaseDrawerActivity() {
             }
             binding.layoutVariaveis.addView(linha)
         }
+
+        aplicarValoresVariaveis()
+    }
+
+    private fun aplicarValoresVariaveis() {
+        val e = eventoCarregado ?: return
+        if (camposVariavel.isEmpty()) return
+        e.valoresVariaveis?.forEach { vv ->
+            when (val view = camposVariavel[vv.variavelId]) {
+                is Spinner -> view.setSelection(when (vv.valor.trim().lowercase()) {
+                    "true", "verdadeiro" -> 1
+                    "false", "falso"     -> 2
+                    else                 -> 0
+                })
+                is EditText -> view.setText(vv.valor)
+                else -> {}
+            }
+        }
     }
 
     /** Cria a view de entrada adequada ao tipoDado da variável. */
@@ -463,15 +567,17 @@ class NovoEventoActivity : BaseDrawerActivity() {
     }
 
     private fun preencherEdicao() {
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) return
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getEvento(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
                 )
                 resp.body()?.let { e ->
-                    preencherDataHora(e.horarioInicio, inicio = true)
-                    e.horarioFim?.let { preencherDataHora(it, inicio = false) }
+                    eventoCarregado = e
+                    preencherDataHora(e.horarioInicio)
                     binding.etEsforcoReal.setText(e.esforcoReal ?: "")
+                    aplicarValoresVariaveis()
                 }
             } catch (_: Exception) {}
         }
@@ -479,6 +585,11 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun criarEvento() {
         val req = coletarFormulario() ?: return
+        // Pais offline-only: salva direto no SQLite.
+        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) {
+            salvarEventoOffline(req)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -503,18 +614,23 @@ class NovoEventoActivity : BaseDrawerActivity() {
      */
     private fun salvarEventoOffline(req: EventoRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId) ?: run {
-            Toast.makeText(this, "Sem conexão — estudo não salvo offline.", Toast.LENGTH_LONG).show(); return
+        val unidadeResolved = when {
+            unidadeLocalId > 0 -> unidadeLocalId
+            estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 ->
+                repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                    repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                        repo.unidadeLocalIdFromRemote(cL, unidadeId)
+                    }
+                }
+            else -> null
         }
-        val campanhaLocalId = repo.campanhaLocalIdFromRemote(estudoLocalId, campanhaId) ?: run {
-            Toast.makeText(this, "Sem conexão — campanha não salva offline.", Toast.LENGTH_LONG).show(); return
-        }
-        val unidadeLocalId = repo.unidadeLocalIdFromRemote(campanhaLocalId, unidadeId) ?: run {
-            Toast.makeText(this, "Sem conexão — unidade não salva offline.", Toast.LENGTH_LONG).show(); return
+        if (unidadeResolved == null) {
+            Toast.makeText(this, "Unidade não está salva offline.", Toast.LENGTH_LONG).show()
+            return
         }
         try {
-            repo.criarEventoOffline(unidadeLocalId, req)
-            Toast.makeText(this, "Sem conexão — evento salvo offline.", Toast.LENGTH_LONG).show()
+            repo.criarEventoOffline(unidadeResolved, req)
+            Toast.makeText(this, "Evento salvo offline.", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: Exception) {
             Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
@@ -543,20 +659,47 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun coletarFormulario(): EventoRequest? {
         val iniIso = montarIso(dataInicio, horaInicio, binding.etDataInicio.text.toString().trim(), binding.etHoraInicio.text.toString().trim())
-        val fimIso = montarIso(dataFim, horaFim, binding.etDataFim.text.toString().trim(), binding.etHoraFim.text.toString().trim())
         if (iniIso == null) {
             Toast.makeText(this, "Preencha data e hora de início", Toast.LENGTH_SHORT).show()
             return null
         }
-        if (fimIso == null) {
-            Toast.makeText(this, "Preencha data e hora de fim", Toast.LENGTH_SHORT).show()
-            return null
-        }
         return EventoRequest(
             horarioInicio = iniIso,
-            horarioFim = fimIso,
-            esforcoReal = binding.etEsforcoReal.text.toString().trim().ifEmpty { null }
+            horarioFim = null,
+            esforcoReal = binding.etEsforcoReal.text.toString().trim().ifEmpty { null },
+            valoresVariaveis = coletarValoresVariaveis()
         )
+    }
+
+    private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
+        if (camposVariavel.isEmpty()) return null
+        val idPorVariavel: Map<Int, Int> =
+            eventoCarregado?.valoresVariaveis
+                ?.mapNotNull { vv -> vv.id?.let { vv.variavelId to it } }
+                ?.toMap() ?: emptyMap()
+
+        val itens = camposVariavel.entries.mapNotNull { (varId, view) ->
+            val valor = when (view) {
+                is Spinner -> when (view.selectedItem?.toString()) {
+                    "Verdadeiro" -> "true"
+                    "Falso"      -> "false"
+                    else         -> null
+                }
+                is EditText -> view.text.toString().trim().ifEmpty { null }
+                else -> null
+            } ?: return@mapNotNull null
+
+            if (modoEdicao) {
+                val existingId = idPorVariavel[varId]
+                if (existingId != null)
+                    ValorVariavelRequest(id = existingId, variavelId = varId, valor = valor)
+                else
+                    ValorVariavelRequest(variavelId = varId, valor = valor)
+            } else {
+                ValorVariavelRequest(variavelId = varId, valor = valor)
+            }
+        }
+        return itens.ifEmpty { null }
     }
 
     /** Combina data/hora em ISO "yyyy-MM-ddTHH:mm:ss"; retorna null se faltar algum. */
@@ -572,22 +715,15 @@ class NovoEventoActivity : BaseDrawerActivity() {
         return "${dataFinal}T${horaFinal}"
     }
 
-    /** Pré-preenche campos a partir de string ISO do backend. */
-    private fun preencherDataHora(iso: String, inicio: Boolean) {
+    /** Pré-preenche data/hora de início a partir de string ISO do backend. */
+    private fun preencherDataHora(iso: String) {
         val partes = iso.split("T")
         if (partes.size < 2) return
         val dp = partes[0].split("-")
         if (dp.size != 3) return
-        val br = "${dp[2]}/${dp[1]}/${dp[0]}"
-        val horaIsoStr = partes[1].take(8)
-        val horaExib = partes[1].take(5)
-        if (inicio) {
-            dataInicio = partes[0]; horaInicio = horaIsoStr
-            binding.etDataInicio.setText(br); binding.etHoraInicio.setText(horaExib)
-        } else {
-            dataFim = partes[0]; horaFim = horaIsoStr
-            binding.etDataFim.setText(br); binding.etHoraFim.setText(horaExib)
-        }
+        dataInicio = partes[0]; horaInicio = partes[1].take(8)
+        binding.etDataInicio.setText("${dp[2]}/${dp[1]}/${dp[0]}")
+        binding.etHoraInicio.setText(partes[1].take(5))
     }
 
     private fun setLoading(loading: Boolean) {

@@ -1,7 +1,9 @@
 package com.kheprix.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -9,8 +11,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,6 +47,7 @@ class EspeciesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspeciesBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var estudoNome = ""
     private val especies = mutableListOf<EspecieResponse>()
     private val especiesExibidas = mutableListOf<EspecieResponse>()
@@ -54,6 +59,7 @@ class EspeciesActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
 
         binding.tvEstudoNome.text = estudoNome
@@ -63,6 +69,7 @@ class EspeciesActivity : BaseDrawerActivity() {
             onItemClick = { especie ->
                 val i = Intent(this, EspecieDetalheActivity::class.java)
                 i.putExtra("estudo_remote_id", estudoRemoteId)
+                i.putExtra("estudo_local_id", estudoLocalId)
                 i.putExtra("especie_id", especie.id)
                 i.putExtra("estudo_nome", estudoNome)
                 startActivity(i)
@@ -72,6 +79,7 @@ class EspeciesActivity : BaseDrawerActivity() {
         binding.btnAdicionarEspecie.setOnClickListener {
             val i = Intent(this, CadastroEspecieActivity::class.java)
             i.putExtra("estudo_remote_id", estudoRemoteId)
+            i.putExtra("estudo_local_id", estudoLocalId)
             startActivity(i)
         }
 
@@ -93,18 +101,22 @@ class EspeciesActivity : BaseDrawerActivity() {
     private fun carregarEspecies() {
         lifecycleScope.launch {
             val especiesOnline = mutableListOf<EspecieResponse>()
-            try {
-                val resp = RetrofitClient.apiService.getEspecies(
-                    SessionManager.getAuthHeader(), estudoRemoteId
-                )
-                if (resp.isSuccessful) {
-                    especiesOnline.addAll(resp.body() ?: emptyList())
-                }
-            } catch (_: Exception) { }
+            if (estudoRemoteId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getEspecies(
+                        SessionManager.getAuthHeader(), estudoRemoteId
+                    )
+                    if (resp.isSuccessful) {
+                        especiesOnline.addAll(resp.body() ?: emptyList())
+                    }
+                } catch (_: Exception) { }
+            }
 
             val repo = OfflineRepository(this@EspeciesActivity)
             // Resolve estudo localId, cacheando da API se necessário.
-            var estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
+            var estudoLocalId = if (this@EspeciesActivity.estudoLocalId > 0) this@EspeciesActivity.estudoLocalId
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
             if (estudoLocalId == null && especiesOnline.isNotEmpty()) {
                 try {
                     val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
@@ -239,9 +251,16 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     private lateinit var binding: ActivityCadastroEspecieBinding
 
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var especieId      = -1
     private var fotoBase64: String? = null
     private var cameraImageUri: Uri? = null
+
+    private val cameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) abrirCamera()
+            else Toast.makeText(this, "Permissão de câmera necessária", Toast.LENGTH_SHORT).show()
+        }
 
     companion object {
         private const val REQ_GALERIA = 101
@@ -260,6 +279,7 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         especieId      = intent.getIntExtra("especie_id", -1)
 
         val modoEdicao = especieId != -1
@@ -292,14 +312,23 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
         // Ícone câmera → câmera
         binding.ivAbrirCamera.setOnClickListener {
-            val arquivo = File.createTempFile("foto_", ".jpg", cacheDir)
-            cameraImageUri = FileProvider.getUriForFile(
-                this, "${packageName}.provider", arquivo
-            )
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
-            startActivityForResult(intent, REQ_CAMERA)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+                abrirCamera()
+            } else {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
         }
+    }
+
+    private fun abrirCamera() {
+        val arquivo = File.createTempFile("foto_", ".jpg", cacheDir)
+        cameraImageUri = FileProvider.getUriForFile(
+            this, "${packageName}.provider", arquivo
+        )
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
+        startActivityForResult(intent, REQ_CAMERA)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -332,30 +361,50 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     // ── Preencher campos no modo edição ───────────────────────────────────
 
     private fun carregarEspecieParaEdicao() {
-        lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getEspecie(
-                    SessionManager.getAuthHeader(), estudoRemoteId, especieId
-                )
-                resp.body()?.let { e ->
-                    binding.etClasse.setText(e.classe)
-                    binding.etOrdem.setText(e.ordem)
-                    binding.etFamilia.setText(e.familia)
-                    binding.etGenero.setText(e.genero)
-                    binding.etEspecie.setText(e.especie)
-                    binding.etNomePopular.setText(e.nomePopular ?: "")
-                    binding.checkEndemismo.isChecked = e.endemismo
-                    // fotoBase64 permanece null: se o usuário não escolher nova
-                    // foto, o patch omite o campo e o backend preserva a atual.
-
-                    // Selecionar status no spinner
-                    val idx = STATUS_CONSERVACAO.indexOfFirst {
-                        it.equals(e.statusConservacao, ignoreCase = true)
-                    }
-                    if (idx >= 0) binding.spinnerStatus.setSelection(idx)
-                }
-            } catch (_: Exception) { }
+        // Online com IDs válidos: usa API.
+        if (estudoRemoteId > 0 && especieId > 0) {
+            lifecycleScope.launch {
+                try {
+                    val resp = RetrofitClient.apiService.getEspecie(
+                        SessionManager.getAuthHeader(), estudoRemoteId, especieId
+                    )
+                    val e = resp.body()
+                    if (e != null) preencherCampos(e) else preencherCamposOffline()
+                } catch (_: Exception) { preencherCamposOffline() }
+            }
+        } else {
+            preencherCamposOffline()
         }
+    }
+
+    private fun preencherCamposOffline() {
+        val repo = com.kheprix.db.OfflineRepository(this)
+        val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+        if (resolvedEstudoLocal == null) return
+        val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
+            .firstOrNull { it.id == especieId }
+            ?: return
+        preencherCampos(match)
+    }
+
+    private fun preencherCampos(e: EspecieResponse) {
+        binding.etClasse.setText(e.classe)
+        binding.etOrdem.setText(e.ordem)
+        binding.etFamilia.setText(e.familia)
+        binding.etGenero.setText(e.genero)
+        binding.etEspecie.setText(e.especie)
+        binding.etNomePopular.setText(e.nomePopular ?: "")
+        binding.checkEndemismo.isChecked = e.endemismo
+        // fotoBase64 permanece null: se o usuário não escolher nova foto,
+        // o patch omite o campo e o backend preserva a atual.
+        if (!e.foto.isNullOrBlank()) binding.tvNomeFoto.text = "foto_atual.jpg"
+
+        val idx = STATUS_CONSERVACAO.indexOfFirst {
+            it.equals(e.statusConservacao, ignoreCase = true)
+        }
+        if (idx >= 0) binding.spinnerStatus.setSelection(idx)
     }
 
     // ── API calls ─────────────────────────────────────────────────────────
@@ -368,6 +417,10 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
             foto = req.foto, nomePopular = req.nomePopular,
             statusConservacao = req.statusConservacao
         )
+        if (estudoRemoteId <= 0) {
+            salvarEspecieOffline(especieReq)
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -388,15 +441,16 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private fun salvarEspecieOffline(req: EspecieRequest) {
         val repo = OfflineRepository(this)
-        val estudoLocalId = repo.estudoLocalIdFromRemote(estudoRemoteId)
-        if (estudoLocalId == null) {
-            Toast.makeText(
-                this,
-                "Sem conexão — este estudo não está salvo offline.",
-                Toast.LENGTH_LONG
-            ).show()
+        val resolved = when {
+            estudoLocalId > 0 -> estudoLocalId
+            estudoRemoteId > 0 -> repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else -> null
+        }
+        if (resolved == null) {
+            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show()
             return
         }
+        val estudoLocalId = resolved
         try {
             repo.criarEspecieOffline(estudoLocalId, req)
             Toast.makeText(
@@ -416,17 +470,22 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private fun editarEspecie() {
         val req = coletarFormulario() ?: return
+        val patchReq = EspeciePatchRequest(
+            classe = req.classe, ordem = req.ordem, familia = req.familia,
+            genero = req.genero, especie = req.especie, endemismo = req.endemismo,
+            foto = req.foto, nomePopular = req.nomePopular,
+            statusConservacao = req.statusConservacao
+        )
+        // Sem ids remotos válidos: edita direto no SQLite (espécie offline-only).
+        if (estudoRemoteId <= 0 || especieId <= 0) {
+            salvarEdicaoOffline(patchReq, "Espécie atualizada offline.")
+            return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.patchEspecie(
-                    SessionManager.getAuthHeader(), estudoRemoteId, especieId,
-                    EspeciePatchRequest(
-                        classe = req.classe, ordem = req.ordem, familia = req.familia,
-                        genero = req.genero, especie = req.especie, endemismo = req.endemismo,
-                        foto = req.foto, nomePopular = req.nomePopular,
-                        statusConservacao = req.statusConservacao
-                    )
+                    SessionManager.getAuthHeader(), estudoRemoteId, especieId, patchReq
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@CadastroEspecieActivity, "Espécie atualizada!", Toast.LENGTH_SHORT).show()
@@ -435,8 +494,35 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                     Toast.makeText(this@CadastroEspecieActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@CadastroEspecieActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                salvarEdicaoOffline(patchReq, "Sem conexão — alterações salvas offline.")
             } finally { setLoading(false) }
+        }
+    }
+
+    /**
+     * Persiste a edição no SQLite com sincronizado=0 e remote_id preservado.
+     * O sync posterior detecta remote_id != null + sincronizado=0 → PATCH.
+     */
+    private fun salvarEdicaoOffline(req: EspeciePatchRequest, msg: String) {
+        val repo = OfflineRepository(this)
+        val localId = if (especieId < 0) (-especieId).toLong()
+            else {
+                val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+                    else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    else null
+                if (resolvedEstudoLocal == null || especieId <= 0) null
+                else repo.especieLocalIdFromRemote(resolvedEstudoLocal, especieId)
+            }
+        if (localId == null) {
+            Toast.makeText(this, "Espécie não encontrada offline.", Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            repo.editarEspecieOffline(localId, req)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -488,6 +574,7 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspecieDetalheBinding
     private var estudoRemoteId = -1
+    private var estudoLocalId  = -1L
     private var especieId      = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -496,6 +583,7 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
+        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
         especieId      = intent.getIntExtra("especie_id", -1)
 
         carregarEspecie()
@@ -503,6 +591,7 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
         binding.ivEditar.setOnClickListener {
             val i = Intent(this, CadastroEspecieActivity::class.java)
             i.putExtra("estudo_remote_id", estudoRemoteId)
+            i.putExtra("estudo_local_id", estudoLocalId)
             i.putExtra("especie_id", especieId)
             startActivity(i)
         }
@@ -520,31 +609,51 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEspecie() {
+        // Espécie offline-only (id < 0) ou estudo offline-only: vai direto ao SQLite.
+        if (especieId <= 0 || estudoRemoteId <= 0) {
+            carregarEspecieOffline()
+            return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getEspecie(
                     SessionManager.getAuthHeader(), estudoRemoteId, especieId
                 )
-                resp.body()?.let { e ->
-                    binding.tvTitulo.text = "${e.genero} ${e.especie}"
-                    binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
-                    binding.tvNomePopular.text = e.nomePopular ?: "—"
-                    binding.tvClasse.text = e.classe
-                    binding.tvOrdem.text  = e.ordem
-                    binding.tvFamilia.text = e.familia
-                    binding.tvStatus.text = e.statusConservacao ?: "—"
-                    binding.tvEndemismo.text = if (e.endemismo) "A espécie é nativa da região do estudo" else ""
-                    binding.tvEndemismo.visibility = if (e.endemismo) View.VISIBLE else View.GONE
-
-                    ImagemLoader.load(
-                        scope = lifecycleScope,
-                        target = binding.ivFoto,
-                        url = e.foto,
-                        placeholder = R.drawable.ic_placeholder_beetle
-                    )
-                }
-            } catch (_: Exception) { }
+                val e = resp.body()
+                if (e != null) preencher(e) else carregarEspecieOffline()
+            } catch (_: Exception) { carregarEspecieOffline() }
         }
+    }
+
+    private fun carregarEspecieOffline() {
+        val repo = com.kheprix.db.OfflineRepository(this)
+        val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+        if (resolvedEstudoLocal == null) return
+        val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
+            .firstOrNull { it.id == especieId }
+            ?: return
+        preencher(match)
+    }
+
+    private fun preencher(e: EspecieResponse) {
+        binding.tvTitulo.text = "${e.genero} ${e.especie}"
+        binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
+        binding.tvNomePopular.text = e.nomePopular ?: "—"
+        binding.tvClasse.text = e.classe
+        binding.tvOrdem.text  = e.ordem
+        binding.tvFamilia.text = e.familia
+        binding.tvStatus.text = e.statusConservacao ?: "—"
+        binding.tvEndemismo.text = if (e.endemismo) "A espécie é nativa da região do estudo" else ""
+        binding.tvEndemismo.visibility = if (e.endemismo) View.VISIBLE else View.GONE
+
+        ImagemLoader.load(
+            scope = lifecycleScope,
+            target = binding.ivFoto,
+            url = e.foto,
+            placeholder = R.drawable.ic_placeholder_beetle
+        )
     }
 
     private fun confirmarDelete() {
@@ -552,6 +661,15 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
             .setTitle("Deletar espécie")
             .setMessage("Tem certeza?")
             .setPositiveButton("Deletar") { _, _ ->
+                if (especieId < 0 || estudoRemoteId <= 0) {
+                    val localId = if (especieId < 0) (-especieId).toLong() else null
+                    if (localId != null) {
+                        com.kheprix.db.DatabaseHelper(this).writableDatabase
+                            .delete("especies", "local_id = ?", arrayOf(localId.toString()))
+                    }
+                    finish()
+                    return@setPositiveButton
+                }
                 lifecycleScope.launch {
                     try {
                         RetrofitClient.apiService.deleteEspecie(

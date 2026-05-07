@@ -36,11 +36,20 @@ module ValidaValoresVariaveis
       errors.add(:valores_variaveis, "contém ids duplicados")
     end
 
+    var_ids_novos = valores_variaveis.select { |vv| vv[:id].blank? }.filter_map { |vv| vv[:variavel_id] }
+    if var_ids_novos.length != var_ids_novos.uniq.length
+      errors.add(:valores_variaveis, "contém variavel_id duplicados em novos itens")
+    end
+
     valores_variaveis.each_with_index do |vv, indice|
-      if vv[:id].blank?
-        errors.add(:base, "Valor variável #{indice + 1}: id é obrigatório em atualização")
-      elsif !vv[:id].is_a?(Integer) || vv[:id] <= 0
-        errors.add(:base, "Valor variável #{indice + 1}: id deve ser inteiro positivo")
+      if vv[:id].present?
+        unless vv[:id].is_a?(Integer) && vv[:id] > 0
+          errors.add(:base, "Valor variável #{indice + 1}: id deve ser inteiro positivo")
+        end
+      else
+        if vv[:variavel_id].blank?
+          errors.add(:base, "Valor variável #{indice + 1}: variavel_id é obrigatório para novos valores")
+        end
       end
       if vv[:valor].nil? || vv[:valor] == ""
         errors.add(:base, "Valor variável #{indice + 1}: valor não pode ficar em branco")
