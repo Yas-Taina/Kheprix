@@ -5,9 +5,10 @@
         <span [class.open]="isOpen"></span>
         <span [class.open]="isOpen"></span>
     </button>
-    <img class="navbarimg" src="/img/icon1_bege.png" alt="Icone">
-
-     <button class="logoutbutton">
+    <a href="#" (click)="abrirHome()">
+        <img class="navbarimg" src="/img/icon1_bege.png" alt="Icone">
+    </a>
+    <button class="logoutbutton" (click)="fazerLogout()">
         <p>inserir icone de logout</p>
     </button>
 </div>
@@ -16,22 +17,22 @@
 <ul class="menu-links" [class.open]="isOpen">
     <li>
         <img class="imgmenu" src="/img/decor1_verde.png" alt="Imagem Decorativa">
-        <a (click)="toggleMenu()">Registro Rápido de Ocorrência</a>
+        <a (click)="abrirRegistroRapido()">Registro Rápido de Ocorrência</a>
         <hr>
     </li>
     <li>
         <img class="imgmenu" src="/img/decor2_verde.png" alt="Imagem Decorativa">
-        <a (click)="toggleMenu()">Visualizar Estudos</a>
+        <a (click)="abrirVisualizarEstudos()">Visualizar Estudos</a>
         <hr>
     </li>
     <li>
         <img class="imgmenu" src="/img/decor3_verde.png" alt="Imagem Decorativa">
-        <a (click)="toggleMenu()">Cadastrar Novo Estudo</a>
+        <a (click)="abrirCadastrarNovoEstudo()">Cadastrar Novo Estudo</a>
         <hr>
     </li>
     <li>
         <img class="imgmenu" src="/img/decor4_verde.png" alt="Imagem Decorativa">
-        <a (click)="toggleMenu()">Convites de Colaboração</a>
+        <a (click)="abrirConvitesColaboracao()">Convites de Colaboração</a>
         <hr>
     </li>
 </ul>
