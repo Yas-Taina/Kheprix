@@ -74,6 +74,7 @@ services:
       SMTP_AUTH: ${SMTP_AUTH}
       SMTP_STARTTLS: ${SMTP_STARTTLS}
       EMAIL_REMETENTE: ${EMAIL_REMETENTE}
+      API_R_URL: http://api-r:8000
     volumes:
       - ./backend:/rails
     healthcheck:
@@ -86,6 +87,8 @@ services:
       db:
         condition: service_healthy
       db_dw:
+        condition: service_healthy
+      api-r:
         condition: service_healthy
     networks:
       - kheprix_network
@@ -136,6 +139,23 @@ services:
     restart: always
     ports:
       - "8080:8080"
+    networks:
+      - kheprix_network
+
+  api-r:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    container_name: kheprix_api_r_container
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - kheprix_network
 
