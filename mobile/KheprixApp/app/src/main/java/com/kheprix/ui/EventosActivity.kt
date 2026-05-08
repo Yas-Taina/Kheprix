@@ -26,6 +26,7 @@ import com.kheprix.db.UnidadeDao
 import com.kheprix.models.EventoRequest
 import com.kheprix.models.EventoResponse
 import com.kheprix.models.ValorVariavelRequest
+import com.kheprix.models.ValorVariavelResponse
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -132,6 +133,7 @@ class EventosActivity : BaseDrawerActivity() {
                         unidadeNome = u.nome
                         binding.tvUnidadeNome.text = u.nome
                         preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral, u.updatedAt)
+                        renderizarValoresCard(u.valoresVariaveis)
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -178,6 +180,55 @@ class EventosActivity : BaseDrawerActivity() {
             unidade.nome, unidade.latitude, unidade.longitude,
             unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral, unidade.updatedAt
         )
+        renderizarValoresCard(null)
+    }
+
+    private fun renderizarValoresCard(valores: List<ValorVariavelResponse>?) {
+        binding.layoutVariaveisDetalhe.removeAllViews()
+        if (valores.isNullOrEmpty()) return
+        val eLocal = (if (estudoLocalId > 0) estudoLocalId
+                      else if (estudoRemoteId > 0) OfflineRepository(this).estudoLocalIdFromRemote(estudoRemoteId)
+                      else null) ?: return
+        val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis WHERE estudo_local_id = ?",
+            arrayOf(eLocal.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) null else c.getInt(0)
+                val lid = c.getLong(1)
+                val nome = c.getString(2)
+                val metrica = if (c.isNull(3)) null else c.getString(3)
+                if (rid != null) varMap[rid] = nome to metrica
+                varMap[-lid.toInt()] = nome to metrica
+            }
+        }
+        val matched = valores.filter { varMap.containsKey(it.variavelId) }
+        if (matched.isEmpty()) return
+        val dp = resources.displayMetrics.density
+        binding.layoutVariaveisDetalhe.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
+                .also { it.topMargin = (6 * dp).toInt(); it.bottomMargin = (6 * dp).toInt() }
+            setBackgroundColor(0xFFD0CCB8.toInt())
+        })
+        binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+            text = "Variáveis:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+            typeface = android.graphics.Typeface.MONOSPACE
+            setPadding(0, 0, 0, (2 * dp).toInt())
+        })
+        matched.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId]!!
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+            })
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "${vv.valor}${if (!metrica.isNullOrBlank()) " $metrica" else ""}"
+                textSize = 14f; setTextColor(0xFF4A5240.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, 0, 0, (6 * dp).toInt())
+            })
+        }
     }
 
     private fun carregarEventos() {
@@ -567,20 +618,52 @@ class NovoEventoActivity : BaseDrawerActivity() {
     }
 
     private fun preencherEdicao() {
-        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) return
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getEvento(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
-                )
-                resp.body()?.let { e ->
-                    eventoCarregado = e
-                    preencherDataHora(e.horarioInicio)
-                    binding.etEsforcoReal.setText(e.esforcoReal ?: "")
-                    aplicarValoresVariaveis()
-                }
-            } catch (_: Exception) {}
+            if (estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 && eventoId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getEvento(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
+                    )
+                    resp.body()?.let { e ->
+                        eventoCarregado = e
+                        preencherDataHora(e.horarioInicio)
+                        binding.etEsforcoReal.setText(e.esforcoReal ?: "")
+                        aplicarValoresVariaveis()
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            preencherEdicaoOffline()
         }
+    }
+
+    private fun preencherEdicaoOffline() {
+        val uLocal: Long = when {
+            unidadeLocalId > 0 -> unidadeLocalId
+            unidadeId > 0 -> {
+                val repo = OfflineRepository(this)
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                val cL = eL?.let {
+                    if (campanhaLocalId > 0) campanhaLocalId
+                    else if (campanhaId > 0) repo.campanhaLocalIdFromRemote(it, campanhaId)
+                    else null
+                }
+                cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) } ?: return
+            }
+            else -> return
+        }
+        val e: EventoDao.EventoOffline = when {
+            eventoId < 0 -> {
+                val eLocal = (-eventoId).toLong()
+                EventoDao(this).listarPorUnidadeLocal(uLocal).firstOrNull { it.localId == eLocal }
+            }
+            eventoId > 0 -> EventoDao(this).buscarPorRemoteIdEscopo(eventoId, uLocal)
+            else -> null
+        } ?: return
+        preencherDataHora(e.horarioInicio)
+        binding.etEsforcoReal.setText(e.esforcoReal ?: "")
     }
 
     private fun criarEvento() {

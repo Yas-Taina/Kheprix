@@ -114,6 +114,13 @@
                     android:layout_marginEnd="8dp"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <ImageView android:id="@+id/ivPreviewFoto"
+                android:layout_width="match_parent" android:layout_height="160dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="Preview da foto"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp"/>
+
             <!-- Linha Classe | Ordem -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal">

@@ -18,6 +18,7 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
 import com.kheprix.db.OfflineRepository
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
 import com.kheprix.models.ValorVariavelRequest
@@ -338,25 +339,57 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Edição ────────────────────────────────────────────────────────────
 
     private fun preencherDadosEdicao() {
-        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) return
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getUnidade(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
-                )
-                resp.body()?.let { u ->
-                    unidadeCarregada = u
-                    binding.etNomeUnidade.setText(u.nome)
-                    latDecimal = u.latitude; lonDecimal = u.longitude
-                    binding.etLatitude.setText(decimalToDms(u.latitude))
-                    binding.etLongitude.setText(decimalToDms(u.longitude))
-                    binding.etRaio.setText(u.raio?.toString() ?: "")
-                    binding.etMetodoColeta.setText(u.metodoColeta ?: "")
-                    binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
-                    aplicarValoresVariaveis()
-                }
-            } catch (_: Exception) {}
+            if (estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getUnidade(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
+                    )
+                    resp.body()?.let { u ->
+                        unidadeCarregada = u
+                        binding.etNomeUnidade.setText(u.nome)
+                        latDecimal = u.latitude; lonDecimal = u.longitude
+                        binding.etLatitude.setText(decimalToDms(u.latitude))
+                        binding.etLongitude.setText(decimalToDms(u.longitude))
+                        binding.etRaio.setText(u.raio?.toString() ?: "")
+                        binding.etMetodoColeta.setText(u.metodoColeta ?: "")
+                        binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+                        aplicarValoresVariaveis()
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            preencherDadosEdicaoOffline()
         }
+    }
+
+    private fun preencherDadosEdicaoOffline() {
+        val cLocal: Long = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            campanhaId > 0 -> {
+                val repo = OfflineRepository(this)
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: return
+            }
+            else -> return
+        }
+        val u: UnidadeDao.UnidadeOffline = when {
+            unidadeId < 0 -> {
+                val uLocal = (-unidadeId).toLong()
+                UnidadeDao(this).listarPorCampanhaLocal(cLocal).firstOrNull { it.localId == uLocal }
+            }
+            unidadeId > 0 -> UnidadeDao(this).buscarPorRemoteIdEscopo(unidadeId, cLocal)
+            else -> null
+        } ?: return
+        binding.etNomeUnidade.setText(u.nome)
+        latDecimal = u.latitude; lonDecimal = u.longitude
+        binding.etLatitude.setText(decimalToDms(u.latitude))
+        binding.etLongitude.setText(decimalToDms(u.longitude))
+        binding.etRaio.setText(u.raio?.toString() ?: "")
+        binding.etMetodoColeta.setText(u.metodoColeta ?: "")
+        binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
     }
 
     // ── API ───────────────────────────────────────────────────────────────
