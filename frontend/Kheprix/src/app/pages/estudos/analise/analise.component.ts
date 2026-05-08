@@ -29,7 +29,7 @@ import {
 
 // ─── Interfaces locais ────────────────────────────────────────────────────────
 
-interface VariavelItem { id: number; nome: string; metrica?: string; tipo_dado?: string; }
+interface VariavelItem { id: number; nome: string; metrica?: string; }
 interface CampanhaItem { id: number; nome: string; }
 interface UnidadeItem  { id: number; nome: string; campanha_id: number; }
 interface OpcaoItem    { id: number; label: string; }
@@ -114,7 +114,8 @@ export class AnalisesComponent implements OnInit {
   variavelIdsAmbientais: number[] = [];
 
   // ── Filtros ───────────────────────────────────────────────────────────────
-  escopoCampanhaId: number | undefined = undefined;   // undefined = todo o estudo
+  filtroCampanhaIds: number[] = [];   // multi-seleção; vazio = todo o estudo
+  filtroUnidadeIds:  number[] = [];   // eventos omitidos: não carregados no componente
   dataInicio = '';
   dataFim    = '';
   // bounding box
@@ -146,6 +147,21 @@ export class AnalisesComponent implements OnInit {
     return !this.usaAmostra;
   }
 
+  /** Exibe o seletor de nivel_agregacao em dois_vetores só quando ao menos um lado é fonte derivada */
+  get mostraNivelAgregacaoDoisVetores(): boolean {
+    return this.fonteX !== 'variavel' || this.fonteY !== 'variavel';
+  }
+
+  /** Exibe o seletor de nivel_agregacao em vetor_unico só quando fonte é derivada */
+  get mostraNivelAgregacaoVetorUnico(): boolean {
+    return this.fonte !== 'variavel';
+  }
+
+  /** Exibe o seletor de nivel_agregacao em dois_grupos só quando fonte é derivada */
+  get mostraNivelAgregacaoDoisGrupos(): boolean {
+    return this.fonte !== 'variavel';
+  }
+
   get variavelOpcoes(): OpcaoItem[] {
     return this.variaveis.map(v => ({
       id: v.id,
@@ -154,10 +170,7 @@ export class AnalisesComponent implements OnInit {
   }
 
   get unidadesVisiveis(): OpcaoItem[] {
-    const lista = this.escopoCampanhaId
-      ? this.unidades.filter(u => u.campanha_id === this.escopoCampanhaId)
-      : this.unidades;
-    return lista.map(u => ({ id: u.id, label: u.nome }));
+    return this.unidades.map(u => ({ id: u.id, label: u.nome }));
   }
 
   /**
@@ -202,7 +215,7 @@ export class AnalisesComponent implements OnInit {
       variaveis: this.variavelService.listar(this.estudoId).pipe(catchError(() => of([]))),
       campanhas: this.campanhaService.listar(this.estudoId).pipe(catchError(() => of([]))),
     }).subscribe(({ variaveis, campanhas }) => {
-      this.variaveis = (variaveis as VariavelItem[]).filter(v.tipo_dado === 'numerico');
+      this.variaveis = (variaveis as VariavelItem[]).filter((v: any) => v.tipo_dado === 'numerico');
       this.campanhas = campanhas as CampanhaItem[];
 
       if ((campanhas as CampanhaItem[]).length) {
@@ -263,7 +276,7 @@ export class AnalisesComponent implements OnInit {
     this.grupo1Ids = []; this.grupo2Ids = [];
     this.nomeGrupo1 = ''; this.nomeGrupo2 = '';
     this.variavelIdsAmbientais = [];
-    this.escopoCampanhaId = undefined;
+    this.filtroCampanhaIds = []; this.filtroUnidadeIds = [];
     this.dataInicio = ''; this.dataFim = '';
     this.latMinMask = ''; this.latMaxMask = '';
     this.lngMinMask = ''; this.lngMaxMask = '';
@@ -293,6 +306,15 @@ export class AnalisesComponent implements OnInit {
 
   isInGrupo(grupo: 1 | 2, id: number): boolean {
     return grupo === 1 ? this.grupo1Ids.includes(id) : this.grupo2Ids.includes(id);
+  }
+
+  toggleFiltro(lista: 'filtroCampanhaIds' | 'filtroUnidadeIds', id: number, ev: Event): void {
+    const checked = (ev.target as HTMLInputElement).checked;
+    this[lista] = checked ? [...this[lista], id] : this[lista].filter(v => v !== id);
+  }
+
+  isFiltroAtivo(lista: 'filtroCampanhaIds' | 'filtroUnidadeIds', id: number): boolean {
+    return this[lista].includes(id);
   }
 
   // ─── Coordenadas DMS ──────────────────────────────────────────────────────
@@ -338,26 +360,44 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case 'dois_vetores':
-        // Cada perna (X e Y) é independente; nivel_agregacao define a granularidade das fontes derivadas
-        payload.fonte_x = this.fonteX;
-        payload.fonte_y = this.fonteY;
-        if (this.fonteX === 'variavel') payload.variavel_x_id = this.variavelXId;
-        if (this.fonteY === 'variavel') payload.variavel_y_id = this.variavelYId;
-        payload.nivel_agregacao = this.nivelAgregacao;
+        // Perna variavel: envia variavel_*_id, omite fonte_*
+        // Perna derivada: envia fonte_*, omite variavel_*_id
+        if (this.fonteX === 'variavel') {
+          payload.variavel_x_id = this.variavelXId;
+        } else {
+          payload.fonte_x = this.fonteX;
+        }
+        if (this.fonteY === 'variavel') {
+          payload.variavel_y_id = this.variavelYId;
+        } else {
+          payload.fonte_y = this.fonteY;
+        }
+        // nivel_agregacao só quando ao menos um lado é fonte derivada
+        if (this.fonteX !== 'variavel' || this.fonteY !== 'variavel') {
+          payload.nivel_agregacao = this.nivelAgregacao;
+        }
         break;
 
       case 'vetor_unico':
-        // fonte=variavel exige variavel_id; fontes derivadas usam nivel_agregacao
         payload.fonte = this.fonte;
-        if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
-        payload.nivel_agregacao = this.nivelAgregacao;
+        if (this.fonte === 'variavel') {
+          payload.variavel_id = this.variavelId;
+        } else {
+          // fonte derivada requer nivel_agregacao para saber a granularidade
+          payload.nivel_agregacao = this.nivelAgregacao;
+        }
         break;
 
       case 'dois_grupos':
-        // agrupar_por define se grupo*_ids são IDs de campanhas ou de unidades amostrais
+        // agrupar_por é parâmetro de UI apenas (para montar as opções de grupo)
+        // o backend infere o tipo dos grupo*_ids pelo contexto — não enviar
         payload.fonte = this.fonte;
-        if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
-        payload.agrupar_por = this.agruparPor;
+        if (this.fonte === 'variavel') {
+          payload.variavel_id = this.variavelId;
+        } else {
+          // fonte derivada: backend precisa da granularidade para agregar antes de separar nos grupos
+          payload.nivel_agregacao = this.nivelAgregacao;
+        }
         payload.grupo1_ids = this.grupo1Ids;
         payload.grupo2_ids = this.grupo2Ids;
         if (this.nomeGrupo1) payload.nome_grupo1 = this.nomeGrupo1;
@@ -376,9 +416,10 @@ export class AnalisesComponent implements OnInit {
     }
 
     // ── Filtros globais (opcionais, aditivos) ─────────────────────────────
-    if (this.escopoCampanhaId) payload.campanha_ids = [this.escopoCampanhaId];
-    if (this.dataInicio)       payload.data_inicio  = this.dataInicio;
-    if (this.dataFim)          payload.data_fim     = this.dataFim;
+    if (this.filtroCampanhaIds.length) payload.campanha_ids = this.filtroCampanhaIds;
+    if (this.filtroUnidadeIds.length)  payload.unidade_ids  = this.filtroUnidadeIds;
+    if (this.dataInicio)               payload.data_inicio  = this.dataInicio;
+    if (this.dataFim)                  payload.data_fim     = this.dataFim;
     if (this.latMin !== undefined) payload.latitude_min  = this.latMin;
     if (this.latMax !== undefined) payload.latitude_max  = this.latMax;
     if (this.lngMin !== undefined) payload.longitude_min = this.lngMin;
