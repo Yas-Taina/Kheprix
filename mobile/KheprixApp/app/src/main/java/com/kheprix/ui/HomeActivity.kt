@@ -66,7 +66,7 @@ class HomeActivity : BaseDrawerActivity() {
             startActivity(Intent(this, ConvitesActivity::class.java))
         }
         binding.btnVisualizarUltimo.setOnClickListener {
-            if (ultimoEstudoRemoteId == -1) return@setOnClickListener
+            if (ultimoEstudoRemoteId == -1 && ultimoEstudoLocalId == -1L) return@setOnClickListener
             startActivity(Intent(this, EstudoDetalheActivity::class.java).apply {
                 putExtra(EstudoDetalheActivity.EXTRA_ESTUDO_REMOTE_ID, ultimoEstudoRemoteId)
                 putExtra(EstudoDetalheActivity.EXTRA_ESTUDO_LOCAL_ID, ultimoEstudoLocalId)

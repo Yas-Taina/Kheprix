@@ -11,6 +11,7 @@ import com.kheprix.R
 import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaCampanhaV2Binding
+import com.kheprix.db.CampanhaDao
 import com.kheprix.db.OfflineRepository
 import com.kheprix.models.CampanhaRequest
 import com.kheprix.models.ValorVariavelRequest
@@ -138,24 +139,58 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             }
         }
         renderizarCamposVariaveis()
+        if (modoEdicao) preencherValoresVariaveisOffline()
     }
 
     private fun preencherValoresVariaveis() {
-        if (estudoRemoteId <= 0 || campanhaId <= 0) return
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getCampanha(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
-                )
-                resp.body()?.let { c ->
-                    binding.etNome.setText(c.nome)
-                    binding.etDataInicio.setText(isoParaBr(c.dataInicio))
-                    binding.etDescricao.setText(c.descricao ?: "")
-                    c.valoresVariaveis?.forEach { vv ->
-                        aplicarValorNoCampo(vv.variavelId, vv.valor)
+            if (estudoRemoteId > 0 && campanhaId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getCampanha(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
+                    )
+                    resp.body()?.let { c ->
+                        binding.etNome.setText(c.nome)
+                        binding.etDataInicio.setText(isoParaBr(c.dataInicio))
+                        binding.etDescricao.setText(c.descricao ?: "")
+                        c.valoresVariaveis?.forEach { vv -> aplicarValorNoCampo(vv.variavelId, vv.valor) }
+                        return@launch
                     }
-                }
-            } catch (_: Exception) { /* offline: campos mantêm valor do intent */ }
+                } catch (_: Exception) { }
+            }
+            preencherValoresVariaveisOffline()
+        }
+    }
+
+    private fun preencherValoresVariaveisOffline() {
+        val campanhaLocalId: Long = when {
+            campanhaId < 0 -> (-campanhaId).toLong()
+            campanhaId > 0 -> {
+                val repo = OfflineRepository(this)
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId } ?: return
+            }
+            else -> return
+        }
+        val c = CampanhaDao(this).buscarPorLocalId(campanhaLocalId) ?: return
+        binding.etNome.setText(c.nome)
+        binding.etDataInicio.setText(isoParaBr(c.dataInicio))
+        binding.etDescricao.setText(c.descricao ?: "")
+        val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        db.rawQuery(
+            "SELECT variavel_remote_id, variavel_local_id, valor FROM valores_variaveis WHERE campanha_local_id = ?",
+            arrayOf(campanhaLocalId.toString())
+        ).use { cur ->
+            while (cur.moveToNext()) {
+                val varRemoteId = if (cur.isNull(0)) null else cur.getInt(0)
+                val varLocalId  = cur.getLong(1)
+                val valor       = cur.getString(2) ?: continue
+                val varId = if (varRemoteId != null && varRemoteId > 0) varRemoteId
+                            else -varLocalId.toInt()
+                aplicarValorNoCampo(varId, valor)
+            }
         }
     }
 

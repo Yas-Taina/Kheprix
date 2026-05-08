@@ -83,6 +83,9 @@
                         android:text="Última alteração:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
                     <TextView android:id="@+id/tvDetalheUpdatedAt" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="8dp"/>
+                    <LinearLayout android:id="@+id/layoutVariaveisDetalhe"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
                     <Button android:id="@+id/btnEditarCampanha"
                         android:layout_width="wrap_content" android:layout_height="40dp"
                         android:text="✏ Editar Campanha" android:textColor="#FFFFFF"
