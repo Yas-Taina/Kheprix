@@ -130,15 +130,17 @@
           </div>
         </div>
 
-        <label class="field-label mt-m">Calcular por</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="nivelAgregacao">
-            <option value="unidade_amostral">Unidade amostral (padrão)</option>
-            <option value="campanha">Campanha</option>
-            <option value="evento">Evento de amostragem</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
+        @if (mostraNivelAgregacaoDoisVetores) {
+          <label class="field-label mt-m">Calcular por</label>
+          <div class="select-wrapper">
+            <select class="field-select" [(ngModel)]="nivelAgregacao">
+              <option value="unidade_amostral">Unidade amostral (padrão)</option>
+              <option value="campanha">Campanha</option>
+              <option value="evento">Evento de amostragem</option>
+            </select>
+            <span class="sel-arrow">▾</span>
+          </div>
+        }
       }
 
       <!-- vetor_unico: fonte, variável e nível de agregação -->
@@ -165,15 +167,17 @@
             <span class="sel-arrow">▾</span>
           </div>
         }
-        <label class="field-label mt-m">Calcular por</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="nivelAgregacao">
-            <option value="unidade_amostral">Unidade amostral (padrão)</option>
-            <option value="campanha">Campanha</option>
-            <option value="evento">Evento de amostragem</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
+        @if (mostraNivelAgregacaoVetorUnico) {
+          <label class="field-label mt-m">Calcular por</label>
+          <div class="select-wrapper">
+            <select class="field-select" [(ngModel)]="nivelAgregacao">
+              <option value="unidade_amostral">Unidade amostral (padrão)</option>
+              <option value="campanha">Campanha</option>
+              <option value="evento">Evento de amostragem</option>
+            </select>
+            <span class="sel-arrow">▾</span>
+          </div>
+        }
       }
 
       <!-- dois_grupos: fonte, variável, agrupar_por e checkboxes de grupos -->
@@ -214,6 +218,18 @@
           </select>
           <span class="sel-arrow">▾</span>
         </div>
+
+        @if (mostraNivelAgregacaoDoisGrupos) {
+          <label class="field-label mt-m">Calcular por</label>
+          <div class="select-wrapper">
+            <select class="field-select" [(ngModel)]="nivelAgregacao">
+              <option value="unidade_amostral">Unidade amostral (padrão)</option>
+              <option value="campanha">Campanha</option>
+              <option value="evento">Evento de amostragem</option>
+            </select>
+            <span class="sel-arrow">▾</span>
+          </div>
+        }
 
         <div class="grupos-wrap mt-m">
           <div class="grupo-block">
@@ -312,18 +328,36 @@
 
       <div class="filtros-grid">
 
-        @if (mostraFiltroCampanha) {
+        <!-- Campanhas: multi-seleção por checkboxes -->
+        @if (campanhas.length) {
           <div class="filtro-item full">
-            <label class="field-label">Restringir a</label>
-            <div class="select-wrapper">
-              <!-- [ngValue] preserva o tipo number; undefined = "Todo o estudo" -->
-              <select class="field-select" [(ngModel)]="escopoCampanhaId">
-                <option [ngValue]="undefined">Todo o estudo</option>
-                @for (c of campanhas; track c.id) {
-                  <option [ngValue]="c.id">Campanha: {{ c.nome }}</option>
-                }
-              </select>
-              <span class="sel-arrow">▾</span>
+            <label class="field-label">Campanhas</label>
+            <div class="check-grid compact">
+              @for (c of campanhas; track c.id) {
+                <label class="check-chip">
+                  <input type="checkbox"
+                    [checked]="isFiltroAtivo('filtroCampanhaIds', c.id)"
+                    (change)="toggleFiltro('filtroCampanhaIds', c.id, $event)"/>
+                  <span class="chip-label">{{ c.nome }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Unidades amostrais: multi-seleção por checkboxes -->
+        @if (unidades.length) {
+          <div class="filtro-item full">
+            <label class="field-label">Unidades amostrais</label>
+            <div class="check-grid compact">
+              @for (u of unidadesVisiveis; track u.id) {
+                <label class="check-chip">
+                  <input type="checkbox"
+                    [checked]="isFiltroAtivo('filtroUnidadeIds', u.id)"
+                    (change)="toggleFiltro('filtroUnidadeIds', u.id, $event)"/>
+                  <span class="chip-label">{{ u.label }}</span>
+                </label>
+              }
             </div>
           </div>
         }
