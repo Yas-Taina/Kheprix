@@ -1,5 +1,8 @@
-<app-menu></app-menu>
-<main>
+@if (isLogged) {
+  <app-menu></app-menu>
+}
+<main [class.with-menu]="isLogged">
   <router-outlet></router-outlet>
 </main>
+
 <app-footer></app-footer>

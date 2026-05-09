@@ -40,7 +40,6 @@ export class EstudoNovoComponent implements OnInit {
     this.isEdit = !!this.estudoId;
 
     if (this.isEdit && this.estudoId) {
-      // Load existing study data for editing
       this.estudoService.listar().subscribe(lista => {
         const estudo = lista.find(e => e.id === this.estudoId);
         if (estudo) {
@@ -48,7 +47,6 @@ export class EstudoNovoComponent implements OnInit {
           this.observacoes = estudo.observacoes ?? '';
         }
       });
-      // Load variables (read-only in edit mode)
       this.variavelService.listar(this.estudoId).subscribe(vars => {
         this.variaveisEdit = vars;
       });

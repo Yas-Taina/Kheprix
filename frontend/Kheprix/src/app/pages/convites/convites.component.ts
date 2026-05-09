@@ -106,7 +106,7 @@ export class ConvitesComponent implements OnInit {
       this.video.nativeElement,
       (result, err) => {
         if (result) {
-          this.codigoAcesso = result.getText(); // mantém seu fluxo
+          this.codigoAcesso = result.getText();
           this.fecharScanner();
         }
       }
@@ -118,7 +118,7 @@ export class ConvitesComponent implements OnInit {
 
 fecharScanner() {
   if (this.controls) {
-    this.controls.stop(); // 🔥 esse é o método correto universal
+    this.controls.stop(); 
   }
   this.scannerAtivo = false;
 }

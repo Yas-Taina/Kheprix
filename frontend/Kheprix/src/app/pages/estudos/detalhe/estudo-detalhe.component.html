@@ -1,18 +1,18 @@
 <div class="study-topbar">
   <div class="study-topbar-item" (click)="irParaCampanhas()">
-    <div style="font-size:2rem">🦋</div>
+    <img src="/img/decor1_verde.png">
     <span>Campanhas de<br>Coleta de Dados</span>
   </div>
   <div class="study-topbar-item" (click)="irParaNovaEspecie()">
-    <div style="font-size:2rem">🐞</div>
+    <img src="/img/decor2_verde.png">
     <span>Cadastrar<br>Espécies</span>
   </div>
   <div class="study-topbar-item" (click)="irParaEspecies()">
-    <div style="font-size:2rem">🦗</div>
+    <img src="/img/decor4_verde.png">
     <span>Ver Todas as<br>Espécies</span>
   </div>
   <div class="study-topbar-item" (click)="irParaAnalises()">
-    <div style="font-size:2rem">🦋</div>
+    <img src="/img/decor5_verde.png">
     <span>Análise de<br>Dados</span>
   </div>
 </div>
@@ -34,7 +34,7 @@
   </div>
   <div class="card">
     <div class="db-grid mt-md">
-    <div class="db-col-esquerda">
+    <div class="db-col-esquerda" style="justify-content:center; height: 100%;">
       <div class="estudo-info-left" style="text-align:right">
         <h1 class="page-title" style="text-align:right;font-size:1.6rem">{{ estudo!.nome }}</h1>
         <p class="text-muted" style="margin-top:4px">Editado em {{ util.formatDate(estudo!.updated_at) }}</p>
@@ -111,15 +111,13 @@
 
       </div>
 
-      <div class="db-col-direita">
+      <div class="db-col-direita" style="display:flex; flex-direction:column; height: 100%;">
  
-        <!-- Mapa -->
         <div class="card db-mapa-card">
           <div id="mapa-registros" class="db-mapa"></div>
         </div>
  
-        <!-- Quantidade de espécies distintas ao longo do tempo (linha) -->
-        <div class="card db-chart-card">
+        <div class="card db-chart-card" style="margin-top: auto;">
           <h3 class="section-title db-chart-title">Quantidade de Espécies Distintas ao Longo do Tempo</h3>
           <div class="db-chart-wrap db-chart-wrap--line">
             <canvas id="chart-especies-distintas-tempo"></canvas>
@@ -134,7 +132,7 @@
 
 </div>
 
-<div class="modal-backdrop" *ngIf="showExportar" (click)="fecharExportar()">
+<div class="modal-backdrop" *ngIf="showExportar" (click)="fecharExportar()" style="z-index: 99999;">
   <div class="modal-content" (click)="$event.stopPropagation()">
 
     <div style="background:var(--color-bg-green-light);padding:var(--space-md);border-radius:var(--border-radius-md) var(--border-radius-md) 0 0;margin:calc(-1 * var(--space-2xl)) calc(-1 * var(--space-2xl)) var(--space-xl);display:flex;align-items:center;justify-content:space-between">
