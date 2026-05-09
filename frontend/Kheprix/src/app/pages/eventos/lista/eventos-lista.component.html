@@ -6,10 +6,13 @@
       <div class="page-header-row">
         <div class="d-flex gap-sm" style="flex-wrap:wrap">
           <button class="btn btn-primary" (click)="toggleDetalhes()">
-            Visualizar Detalhes &nbsp;👁
+            Visualizar Detalhes <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 5C8.24261 5 5.43602 7.4404 3.76737 9.43934C2.51521 10.9394 2.51521 13.0606 3.76737 14.5607C5.43602 16.5596 8.24261 19 12 19C15.7574 19 18.564 16.5596 20.2326 14.5607C21.4848 13.0606 21.4848 10.9394 20.2326 9.43934C18.564 7.4404 15.7574 5 12 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
           </button>
           <button class="btn btn-primary" (click)="novoEvento()">
-            Adicionar Evento &nbsp;⊕
+            Adicionar Evento <svg class="svg-icon" width= "24" height="24" style="vertical-align: middle; overflow: hidden;" fill="currentColor" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 65.6c247.424 0 448 200.576 448 448S759.424 961.6 512 961.6 64 761.024 64 513.6 264.576 65.6 512 65.6z m0 48C291.0864 113.6 112 292.6864 112 513.6s179.0864 400 400 400 400-179.0864 400-400S732.9136 113.6 512 113.6z m0 209.6c13.2544 0 24 10.7456 24 24v144h144c13.2544 0 24 10.7456 24 24 0 13.2544-10.7456 24-24 24h-144.0016l0.0016 144c0 13.2544-10.7456 24-24 24-13.2544 0-24-10.7456-24-24l-0.0016-144H344c-13.2544 0-24-10.7456-24-24 0-13.2544 10.7456-24 24-24h144v-144c0-13.2544 10.7456-24 24-24z" fill="currentColor" /></svg>
           </button>
         </div>
         <button class="back-btn" (click)="voltar()">◀</button>
@@ -42,7 +45,6 @@
         </tbody>
       </table>
 
-      <!-- Painel de detalhes inline -->
       <div class="detail-panel" *ngIf="showDetalhes && unidadeDetalhe">
         <div class="d-flex justify-between align-center mb-md">
           <h3 class="section-title">Detalhes da Unidade Amostral</h3>

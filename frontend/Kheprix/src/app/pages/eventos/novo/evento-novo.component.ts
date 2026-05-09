@@ -55,7 +55,7 @@ export class EventoNovoComponent implements OnInit {
     const payload = {
       horario_inicio: horarioInicio,
       esforco_real: this.esforcoReal || undefined,
-      valores_variaveis: this.valoresVars.filter(v => v.valor),
+      valores_variaveis: this.valoresVars.filter(v => v.valor !== '' && v.valor !== null && v.valor !== undefined),
     };
     const obs = this.isEdit && this.eventoId
       ? this.eventoService.atualizar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId, payload)
