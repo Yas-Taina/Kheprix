@@ -81,3 +81,8 @@ footer {
     max-height: 25vh;
     object-fit: contain;
 }
+@media (max-width: 768px) {
+    .footer-content{
+        height: fit-content;
+    }
+}

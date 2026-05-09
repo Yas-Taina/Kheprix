@@ -14,7 +14,6 @@
       position: relative;
     }
 
-    /* --- Hero --- */
     .hero-section {
       background-color: var(--color-bg-cream);
       flex-direction: column;
@@ -47,7 +46,6 @@
       gap: var(--space-sm);
     }
 
-    /* --- About (Banner) --- */
     .about-section {
       background-image: url('/img/abelhas.jpg'); 
       background-size: cover;
@@ -81,8 +79,7 @@
       color: var(--color-text-primary);
     }
 
-    /* --- Feature sections --- */
-     .personalize-section {
+    .personalize-section {
       background-color: var(--color-bg-cream);
       text-align: right;
     }
@@ -121,7 +118,7 @@
       background: linear-gradient(to right, var(--color-bg-green-light) 0%, rgba(244, 244, 244, 0) 100%);
     }
 
-    .personbalize-image-bg {
+    .personalize-image-bg {
       overflow-x: hidden;
       overflow-y: hidden;
     }
@@ -143,8 +140,6 @@
       color: var(--color-text-secondary);
       max-width: 600px;
     }
-
-    /**/
 
     .especie-section {
       background-color: var(--color-bg-cream);
@@ -205,7 +200,6 @@
       max-width: 400px;
     }
 
-    /* --- Analysis --- */
     .analysis-section {
       background-color: var(--color-bg-green-light);
     }
@@ -245,18 +239,183 @@
       line-height: 1.2;
     }
 
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .hero-title {
+        font-size: 3rem;
+      }
+
+      .personalize-text {
+        padding-left: 5vw;
+      }
+
+      .personalize-text p {
+        font-size: 1.1rem;
+      }
+
+      .especie-section {
+        padding-left: 4vw;
+      }
+
+      .especies-img {
+        width: 50vh;
+        height: 40vh;
+      }
+
+      .especie-text p {
+        font-size: 1.2rem;
+      }
+
+      .analysis-box {
+        max-width: 80vw;
+      }
+
+      .analysis-box p {
+        font-size: 1.2rem;
+      }
+    }
+
     @media (max-width: 768px) {
-      .feature-right-img,
-      .feature-left-img {
+
+      .home-section {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .hero-title {
+        font-size: 2.2rem;
+        letter-spacing: 0.2em;
+      }
+
+      .hero-insect {
+        height: 38vh;
+      }
+
+      .about-overlay {
+        padding: var(--space-lg);
+      }
+
+      .about-text-box {
+        padding: var(--space-lg);
+        max-width: 100%;
+      }
+
+      .about-text-box p {
+        font-size: 1rem;
+      }
+
+      .chart-border {
+        padding: 3vh;
+      }
+
+      .personalize {
         flex-direction: column;
       }
-      .feature-image-placeholder {
-        height: 40vh;
+
+      .personalize-text {
         flex: none;
         width: 100%;
+        padding: var(--space-xl) var(--space-lg);
+        padding-left: var(--space-lg);
+        border-right: none;
+        border-bottom: 2px solid var(--color-bg-cream);
+        text-align: center;
+        align-items: center;
       }
-      .feature-text {
+
+      .personalize-text p {
+        font-size: 1rem;
+        max-width: 100%;
+      }
+
+      .personalize-title {
+        font-size: 1.4rem;
+      }
+
+      .personalize-image {
+        flex: none;
+        display: flex;
+        align-items: bottom;
+      }
+
+      .personalize-image::before {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(to bottom, var(--color-bg-green-light) 0%, rgba(244, 244, 244, 0) 100%);
+      }
+
+      .especie-imagem {
+        flex-direction: column;
+      }
+
+      .especie-section {
+        padding-left: 0;
+      }
+
+      .especies-img {
+        aspect-ratio: unset;
+        margin-right: 0;
+        margin-bottom: 0;
+      }
+
+      .especies-img-bg {
+        min-width: unset;
+        min-height: unset;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .especie-text {
+        flex: none;
+        width: 100%;
+        padding: var(--space-xl) var(--space-lg);
+        padding-left: var(--space-lg);
+        border-left: none;
+        border-top: 2px solid var(--color-text-primary);
+        text-align: center;
+        align-items: center;
+      }
+
+      .especie-title {
+        font-size: 1.4rem;
+      }
+
+      .especie-text p {
+        font-size: 1rem;
+        max-width: 100%;
+      }
+
+      /* --- Analysis --- */
+      .analysis-box {
+        max-width: 90vw;
         padding: var(--space-xl) var(--space-lg);
       }
-      .hero-title { font-size: 2.5rem; }
+
+      .analysis-box p {
+        font-size: 1rem;
+      }
+
+      .analysis-title {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .hero-title {
+        font-size: 1.8rem;
+        letter-spacing: 0.15em;
+      }
+
+      .hero-insect {
+        height: 30vh;
+      }
+
+      .personalize-title,
+      .especie-title {
+        font-size: 1.2rem;
+      }
+
+      .analysis-title {
+        font-size: 1.1rem;
+      }
     }

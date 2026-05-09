@@ -1,8 +1,6 @@
 <div class="auth-page">
       <div class="auth-form-side">
         <div class="auth-form-box">
-
-          <!-- Formulário 1: Email + Token (etapas 1 e 2) -->
           <ng-container *ngIf="!tokenValido">
             <div class="form-group">
               <label class="form-label">E-mail:</label>
@@ -22,8 +20,6 @@
               {{ loadingStep2 ? 'Validando...' : 'Confirmar' }}
             </button>
           </ng-container>
-
-          <!-- Formulário 2: Nova senha (etapa 3) -->
           <ng-container *ngIf="tokenValido">
             <div class="form-group">
               <label class="form-label">Nova senha:</label>
