@@ -29,7 +29,11 @@ import {
 
 // ─── Interfaces locais ────────────────────────────────────────────────────────
 
+<<<<<<< HEAD
 interface VariavelItem { id: number; nome: string; metrica?: string; tipo_dado?: string; }
+=======
+interface VariavelItem { id: number; nome: string; metrica?: string; }
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
 interface CampanhaItem { id: number; nome: string; }
 interface UnidadeItem  { id: number; nome: string; campanha_id: number; }
 interface OpcaoItem    { id: number; label: string; }
@@ -95,13 +99,22 @@ export class AnalisesComponent implements OnInit {
   // dois_vetores
   fonteX: FonteAnalise = 'variavel';
   fonteY: FonteAnalise = 'variavel';
+<<<<<<< HEAD
   variavelXId: number | undefined = undefined;
   variavelYId: number | undefined = undefined;
+=======
+  variavelXId?: number;
+  variavelYId?: number;
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
   nivelAgregacao: NivelAgregacao = 'unidade_amostral';
 
   // vetor_unico / dois_grupos / multiplos_grupos
   fonte: FonteAnalise = 'variavel';
+<<<<<<< HEAD
   variavelId: number | undefined = undefined;
+=======
+  variavelId?: number;
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
   agruparPor: AgruparPor = 'unidade_amostral';
 
   // dois_grupos
@@ -114,16 +127,27 @@ export class AnalisesComponent implements OnInit {
   variavelIdsAmbientais: number[] = [];
 
   // ── Filtros ───────────────────────────────────────────────────────────────
+<<<<<<< HEAD
   escopoCampanhaId: number | undefined = undefined;   // undefined = todo o estudo
+=======
+  escopoCampanhaId?: number;   // undefined = todo o estudo
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
   dataInicio = '';
   dataFim    = '';
   // bounding box
   latMinMask = ''; latMaxMask = '';
   lngMinMask = ''; lngMaxMask = '';
+<<<<<<< HEAD
   latMin: number | undefined = undefined;
   latMax: number | undefined = undefined;
   lngMin: number | undefined = undefined;
   lngMax: number | undefined = undefined;
+=======
+  latMin?: number; latMax?: number;
+  lngMin?: number; lngMax?: number;
+  // nível hierárquico (para fontes derivadas sem unidade amostral)
+  nivelFiltro: NivelAgregacao = 'unidade_amostral';
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
 
   // ── UI ────────────────────────────────────────────────────────────────────
   loading  = false;
@@ -160,10 +184,13 @@ export class AnalisesComponent implements OnInit {
     return lista.map(u => ({ id: u.id, label: u.nome }));
   }
 
+<<<<<<< HEAD
   /**
    * Opções para os checkboxes de dois_grupos.
    * Dependem de agruparPor: campanha → lista campanhas; qualquer outro → lista unidades.
    */
+=======
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
   get opcoesDoisGrupos(): OpcaoItem[] {
     return this.agruparPor === 'campanha'
       ? this.campanhas.map(c => ({ id: c.id, label: c.nome }))
@@ -172,6 +199,7 @@ export class AnalisesComponent implements OnInit {
 
   get opcoesAgruparPor(): { valor: AgruparPor; label: string }[] {
     const base = [
+<<<<<<< HEAD
       { valor: 'campanha'         as AgruparPor, label: 'Campanha' },
       { valor: 'unidade_amostral' as AgruparPor, label: 'Unidade amostral' },
       { valor: 'evento'           as AgruparPor, label: 'Evento de amostragem' },
@@ -181,6 +209,17 @@ export class AnalisesComponent implements OnInit {
         { valor: 'mes'     as AgruparPor, label: 'Mês' },
         { valor: 'ano'     as AgruparPor, label: 'Ano' },
         { valor: 'estacao' as AgruparPor, label: 'Estação do ano' },
+=======
+      { valor: 'campanha'        as AgruparPor, label: 'Campanha' },
+      { valor: 'unidade_amostral'as AgruparPor, label: 'Unidade amostral' },
+      { valor: 'evento'          as AgruparPor, label: 'Evento de amostragem' },
+    ];
+    if (this.fonte !== 'variavel') {
+      base.push(
+        { valor: 'mes'    as AgruparPor, label: 'Mês' },
+        { valor: 'ano'    as AgruparPor, label: 'Ano' },
+        { valor: 'estacao'as AgruparPor, label: 'Estação do ano' },
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
       );
     }
     return base;
@@ -202,7 +241,11 @@ export class AnalisesComponent implements OnInit {
       variaveis: this.variavelService.listar(this.estudoId).pipe(catchError(() => of([]))),
       campanhas: this.campanhaService.listar(this.estudoId).pipe(catchError(() => of([]))),
     }).subscribe(({ variaveis, campanhas }) => {
+<<<<<<< HEAD
       this.variaveis = (variaveis as VariavelItem[]).filter(v.tipo_dado === 'numerico');
+=======
+      this.variaveis = variaveis as VariavelItem[];
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
       this.campanhas = campanhas as CampanhaItem[];
 
       if ((campanhas as CampanhaItem[]).length) {
@@ -238,6 +281,7 @@ export class AnalisesComponent implements OnInit {
   onFonteChange(): void {
     // Se fonte não é variável, limpa a seleção de variável
     if (this.fonte !== 'variavel') this.variavelId = undefined;
+<<<<<<< HEAD
     // Reseta agrupar_por para evitar estado inválido com opções temporais
     if (this.fonte === 'variavel') this.agruparPor = 'unidade_amostral';
     // Limpa os grupos pois as opções podem mudar
@@ -252,6 +296,10 @@ export class AnalisesComponent implements OnInit {
   onAgruparPorDoisGruposChange(): void {
     this.grupo1Ids = [];
     this.grupo2Ids = [];
+=======
+    // Reseta agrupar_por para evitar estado inválido
+    if (this.fonte === 'variavel') this.agruparPor = 'unidade_amostral';
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
   }
 
   private resetFormulario(): void {
@@ -331,14 +379,21 @@ export class AnalisesComponent implements OnInit {
     };
 
     switch (this.tipoDado) {
+<<<<<<< HEAD
 
       case 'abundancias_com_variaveis':
         // variavel_ids são os IDs das variáveis ambientais preditoras (RDA/CCA)
+=======
+      case 'abundancias_com_variaveis':
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
         payload.variavel_ids = this.variavelIdsAmbientais;
         break;
 
       case 'dois_vetores':
+<<<<<<< HEAD
         // Cada perna (X e Y) é independente; nivel_agregacao define a granularidade das fontes derivadas
+=======
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
         payload.fonte_x = this.fonteX;
         payload.fonte_y = this.fonteY;
         if (this.fonteX === 'variavel') payload.variavel_x_id = this.variavelXId;
@@ -347,17 +402,25 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case 'vetor_unico':
+<<<<<<< HEAD
         // fonte=variavel exige variavel_id; fontes derivadas usam nivel_agregacao
+=======
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
         payload.nivel_agregacao = this.nivelAgregacao;
         break;
 
       case 'dois_grupos':
+<<<<<<< HEAD
         // agrupar_por define se grupo*_ids são IDs de campanhas ou de unidades amostrais
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
         payload.agrupar_por = this.agruparPor;
+=======
+        payload.fonte = this.fonte;
+        if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
         payload.grupo1_ids = this.grupo1Ids;
         payload.grupo2_ids = this.grupo2Ids;
         if (this.nomeGrupo1) payload.nome_grupo1 = this.nomeGrupo1;
@@ -365,6 +428,7 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case 'multiplos_grupos':
+<<<<<<< HEAD
         // agrupar_por define a granularidade dos grupos; nivel_agregacao NÃO se aplica aqui
         payload.fonte = this.fonte;
         if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
@@ -379,6 +443,19 @@ export class AnalisesComponent implements OnInit {
     if (this.escopoCampanhaId) payload.campanha_ids = [this.escopoCampanhaId];
     if (this.dataInicio)       payload.data_inicio  = this.dataInicio;
     if (this.dataFim)          payload.data_fim     = this.dataFim;
+=======
+        payload.fonte = this.fonte;
+        if (this.fonte === 'variavel') payload.variavel_id = this.variavelId;
+        payload.agrupar_por = this.agruparPor;
+        payload.nivel_agregacao = this.nivelFiltro;
+        break;
+    }
+
+    // Filtros contextuais
+    if (this.escopoCampanhaId) payload.campanha_ids = [this.escopoCampanhaId];
+    if (this.dataInicio) payload.data_inicio = this.dataInicio;
+    if (this.dataFim)    payload.data_fim    = this.dataFim;
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
     if (this.latMin !== undefined) payload.latitude_min  = this.latMin;
     if (this.latMax !== undefined) payload.latitude_max  = this.latMax;
     if (this.lngMin !== undefined) payload.longitude_min = this.lngMin;
@@ -391,7 +468,11 @@ export class AnalisesComponent implements OnInit {
     this.analiseService.executar(this.estudoId, payload).subscribe({
       next: res => { this.resultado = res; this.loading = false; },
       error: err => {
+<<<<<<< HEAD
         this.erro = err?.error?.erro ?? err?.error?.message ?? 'Erro ao executar a análise. Verifique os parâmetros.';
+=======
+        this.erro = err?.error?.erro ?? 'Erro ao executar a análise. Verifique os parâmetros.';
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
         this.loading = false;
       },
     });
@@ -406,4 +487,8 @@ export class AnalisesComponent implements OnInit {
   }
 
   abrirChatbot(): void { /* TODO */ }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b6af584da7866e829e530338c62259006eeb6a1a
