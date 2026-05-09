@@ -1,44 +1,31 @@
-import {
-  ApplicationConfig,
-  provideZoneChangeDetection
-} from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from "@angular/core";
 
-import {
-  provideRouter,
-  withComponentInputBinding
-} from '@angular/router';
+import { provideRouter, withComponentInputBinding } from "@angular/router";
 
 import {
   provideHttpClient,
   withInterceptorsFromDi,
-  HTTP_INTERCEPTORS
-} from '@angular/common/http';
+  HTTP_INTERCEPTORS,
+} from "@angular/common/http";
 
-import { routes } from './app.routes';
+import { routes } from "./app.routes";
 
-import { TipoDadoInterceptor } from './core/interceptors/tipo-dado.interceptor';
+import { TipoDadoInterceptor } from "./core/interceptors/tipo-dado.interceptor";
 
 export const appConfig: ApplicationConfig = {
   providers: [
-
     provideZoneChangeDetection({
-      eventCoalescing: true
+      eventCoalescing: true,
     }),
 
-    provideRouter(
-      routes,
-      withComponentInputBinding()
-    ),
+    provideRouter(routes, withComponentInputBinding()),
 
-    provideHttpClient(
-      withInterceptorsFromDi()
-    ),
+    provideHttpClient(withInterceptorsFromDi()),
 
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TipoDadoInterceptor,
-      multi: true
-    }
-
+      multi: true,
+    },
   ],
 };

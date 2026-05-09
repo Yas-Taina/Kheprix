@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { BaseService } from './base.service';
-import { Campanha, CampanhaCreate, CampanhaUpdate } from '../../models';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { BaseService } from "./base.service";
+import { Campanha, CampanhaCreate, CampanhaUpdate } from "../../models";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class CampanhaService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
@@ -22,7 +22,11 @@ export class CampanhaService extends BaseService {
     return this.post<Campanha>(`/estudos/${estudo_id}/campanhas`, data);
   }
 
-  atualizar(estudo_id: number, id: number, data: CampanhaUpdate): Observable<Campanha> {
+  atualizar(
+    estudo_id: number,
+    id: number,
+    data: CampanhaUpdate,
+  ): Observable<Campanha> {
     return this.patch<Campanha>(`/estudos/${estudo_id}/campanhas/${id}`, data);
   }
 

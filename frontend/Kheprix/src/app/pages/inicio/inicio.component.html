@@ -1,119 +1,143 @@
-    <div class="sidebar-layout">
-      <aside class="sidebar">
-        <div class="sidebar-item" (click)="router.navigate(['/registro-rapido'])">
-          <div class="insect-decor">
-            <img src="/img/decor1_verde.png">
-          </div>
-          <div class="sidebar-item-label">Registro Rápido<br>de Ocorrências</div>
-        </div>
-
-        <div class="sidebar-wrapper">
-          <div class="sidebar-divider-lines"></div>
-          <div class="sidebar-divider">⸙</div>
-
-        </div>
-
-        <div class="sidebar-item" (click)="router.navigate(['/estudos'])">
-          <div class="insect-decor">
-            <img src="/img/decor2_verde.png">
-          </div>
-          <div class="sidebar-item-label">Visualizar<br>Estudos</div>
-        </div>
-
-        <div class="sidebar-wrapper">
-          <div class="sidebar-divider-lines"></div>
-          <div class="sidebar-divider">⸙</div>
-
-        </div>
-
-        <div class="sidebar-item" (click)="router.navigate(['/estudos/novo'])">
-          <div class="insect-decor">
-            <img src="/img/decor3_verde.png">
-          </div>
-          <div class="sidebar-item-label">Cadastrar Novo<br>Estudo</div>
-        </div>
-
-        <div class="sidebar-wrapper">
-          <div class="sidebar-divider-lines"></div>
-          <div class="sidebar-divider">⸙</div>
-
-        </div>
-
-        <div class="sidebar-item" (click)="router.navigate(['/convites'])">
-          <div class="insect-decor">
-            <img src="/img/decor4_verde.png">
-          </div>
-          <div class="sidebar-item-label">Convites de<br>Colaboração</div>
-        </div>
-
-        <div class="sidebar-wrapper">
-          <div class="sidebar-divider-lines"></div>
-          <div class="sidebar-divider">⸙</div>
-
-        </div>
-      </aside>
-
-      <main class="main-content">
-        <ng-container *ngIf="loading">
-          <div class="loading-overlay"><div class="spinner"></div><span>Carregando dashboard...</span></div>
-        </ng-container>
-
-        <ng-container *ngIf="!loading && dashboard">
-          <div class="card ultimo-estudo-card">
-            <div class="ultimo-estudo-header" style="align-items: center; gap: 1rem;">
-              <div class="ultimo-estudo-titulo" style="text-align: right;">
-                <span class="section-title" style="font-size:1.1rem">Último<br>Estudo</span>
-              </div>
-              <div class="ultimo-estudo-info" style="text-align: left;">
-                <h2 class="study-name">{{ dashboard.nome }}</h2>
-                <p class="study-date">Editado em {{ util.formatDate(dashboard.updated_at) }}</p>
-              </div>
-            </div>
-            <div class="text-center mt-md">
-              <button class="btn btn-primary" (click)="router.navigate(['/estudos', dashboard.id])">
-                Visualizar Detalhes
-              </button>
-            </div>
-          </div>
-          <div class="stats-grid mt-lg">
-            <div class="stat-card">
-              <div class="stat-label">Data de início</div>
-              <div class="stat-value">{{ util.formatDate(dashboard.data_inicio) }}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Quantidade total de registros de ocorrência</div>
-              <div class="stat-value">{{ dashboard.total_registros | number }}</div>
-            </div>
-          </div>
-
-          <div class="stat-card mt-md">
-            <div class="stat-label">Quantidade total de espécies distintas</div>
-            <div class="stat-value">{{ dashboard.total_especies | number }}</div>
-          </div>
-
-          <div class="stats-grid mt-md">
-            <div class="stat-card">
-              <div class="stat-label">Espécies ameaçadas de extinção</div>
-              <div class="stat-value">{{ dashboard.especies_ameacadas | number }}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Espécies nativas</div>
-              <div class="stat-value">{{ dashboard.especies_nativas | number }}</div>
-              <div class="stat-label mt-sm">Espécies invasoras</div>
-              <div class="stat-value">{{ dashboard.especies_invasoras | number }}</div>
-            </div>
-          </div>
-
-          <div class="stat-card mt-md">
-            <div class="stat-label">Quantidade total de indivíduos encontrados</div>
-            <div class="stat-value">{{ dashboard.total_individuos | number }}</div>
-          </div>
-        </ng-container>
-
-        <ng-container *ngIf="!loading && !dashboard">
-          <div class="card text-center">
-            <p class="text-muted">Nenhum estudo encontrado. <a (click)="router.navigate(['/estudos/novo'])">Crie seu primeiro estudo</a>.</p>
-          </div>
-        </ng-container>
-      </main>
+<div class="sidebar-layout">
+  <aside class="sidebar">
+    <div class="sidebar-item" (click)="router.navigate(['/registro-rapido'])">
+      <div class="insect-decor">
+        <img src="/img/decor1_verde.png" />
+      </div>
+      <div class="sidebar-item-label">Registro Rápido<br />de Ocorrências</div>
     </div>
+
+    <div class="sidebar-wrapper">
+      <div class="sidebar-divider-lines"></div>
+      <div class="sidebar-divider">⸙</div>
+    </div>
+
+    <div class="sidebar-item" (click)="router.navigate(['/estudos'])">
+      <div class="insect-decor">
+        <img src="/img/decor2_verde.png" />
+      </div>
+      <div class="sidebar-item-label">Visualizar<br />Estudos</div>
+    </div>
+
+    <div class="sidebar-wrapper">
+      <div class="sidebar-divider-lines"></div>
+      <div class="sidebar-divider">⸙</div>
+    </div>
+
+    <div class="sidebar-item" (click)="router.navigate(['/estudos/novo'])">
+      <div class="insect-decor">
+        <img src="/img/decor3_verde.png" />
+      </div>
+      <div class="sidebar-item-label">Cadastrar Novo<br />Estudo</div>
+    </div>
+
+    <div class="sidebar-wrapper">
+      <div class="sidebar-divider-lines"></div>
+      <div class="sidebar-divider">⸙</div>
+    </div>
+
+    <div class="sidebar-item" (click)="router.navigate(['/convites'])">
+      <div class="insect-decor">
+        <img src="/img/decor4_verde.png" />
+      </div>
+      <div class="sidebar-item-label">Convites de<br />Colaboração</div>
+    </div>
+
+    <div class="sidebar-wrapper">
+      <div class="sidebar-divider-lines"></div>
+      <div class="sidebar-divider">⸙</div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <ng-container *ngIf="loading">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span>Carregando dashboard...</span>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && dashboard">
+      <div class="card ultimo-estudo-card">
+        <div
+          class="ultimo-estudo-header"
+          style="align-items: center; gap: 1rem"
+        >
+          <div class="ultimo-estudo-titulo" style="text-align: right">
+            <span class="section-title" style="font-size: 1.1rem"
+              >Último<br />Estudo</span
+            >
+          </div>
+          <div class="ultimo-estudo-info" style="text-align: left">
+            <h2 class="study-name">{{ dashboard.nome }}</h2>
+            <p class="study-date">
+              Editado em {{ util.formatDate(dashboard.updated_at) }}
+            </p>
+          </div>
+        </div>
+        <div class="text-center mt-md">
+          <button
+            class="btn btn-primary"
+            (click)="router.navigate(['/estudos', dashboard.id])"
+          >
+            Visualizar Detalhes
+          </button>
+        </div>
+      </div>
+      <div class="stats-grid mt-lg">
+        <div class="stat-card">
+          <div class="stat-label">Data de início</div>
+          <div class="stat-value">
+            {{ util.formatDate(dashboard.data_inicio) }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Quantidade total de registros de ocorrência
+          </div>
+          <div class="stat-value">{{ dashboard.total_registros | number }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card mt-md">
+        <div class="stat-label">Quantidade total de espécies distintas</div>
+        <div class="stat-value">{{ dashboard.total_especies | number }}</div>
+      </div>
+
+      <div class="stats-grid mt-md">
+        <div class="stat-card">
+          <div class="stat-label">Espécies ameaçadas de extinção</div>
+          <div class="stat-value">
+            {{ dashboard.especies_ameacadas | number }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Espécies nativas</div>
+          <div class="stat-value">
+            {{ dashboard.especies_nativas | number }}
+          </div>
+          <div class="stat-label mt-sm">Espécies invasoras</div>
+          <div class="stat-value">
+            {{ dashboard.especies_invasoras | number }}
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card mt-md">
+        <div class="stat-label">Quantidade total de indivíduos encontrados</div>
+        <div class="stat-value">{{ dashboard.total_individuos | number }}</div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && !dashboard">
+      <div class="card text-center">
+        <p class="text-muted">
+          Nenhum estudo encontrado.
+          <a (click)="router.navigate(['/estudos/novo'])"
+            >Crie seu primeiro estudo</a
+          >.
+        </p>
+      </div>
+    </ng-container>
+  </main>
+</div>

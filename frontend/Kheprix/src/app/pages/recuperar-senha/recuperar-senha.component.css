@@ -81,12 +81,11 @@
 .auth-image-wrapper::before {
   content: "";
   position: absolute;
-  width: 450px; 
+  width: 450px;
   height: 100%;
-  background: var(--color-bg-green-light); 
+  background: var(--color-bg-green-light);
   z-index: 2;
 }
-
 
 .auth-insect {
   width: 600px;

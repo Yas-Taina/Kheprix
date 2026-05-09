@@ -1,13 +1,13 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { BaseService } from './base.service';
+import { Injectable, inject } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { BaseService } from "./base.service";
 import {
   ExecutarAnaliseRequest,
   ExecutarAnaliseResponse,
-} from '../../models/analise.model';
+} from "../../models/analise.model";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class AnaliseService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
@@ -19,11 +19,11 @@ export class AnaliseService extends BaseService {
    */
   executar(
     estudoId: number,
-    payload: ExecutarAnaliseRequest
+    payload: ExecutarAnaliseRequest,
   ): Observable<ExecutarAnaliseResponse> {
     return this.post<ExecutarAnaliseResponse>(
       `/estudos/${estudoId}/analises/executar`,
-      payload
+      payload,
     );
   }
 
@@ -34,10 +34,8 @@ export class AnaliseService extends BaseService {
   downloadArquivo(
     estudoId: number,
     chave: string,
-    arquivo: string
+    arquivo: string,
   ): Observable<Blob> {
-    return this.getBlob(
-      `/analises/estudos/${estudoId}/${chave}/${arquivo}`
-    );
+    return this.getBlob(`/analises/estudos/${estudoId}/${chave}/${arquivo}`);
   }
 }

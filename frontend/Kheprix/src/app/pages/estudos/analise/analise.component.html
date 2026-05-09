@@ -1,21 +1,35 @@
 <div class="analises-page">
-
   <header class="page-header">
     <div class="header-center">
-      <h1 class="page-title">
-        Análises
-      </h1>
+      <h1 class="page-title">Análises</h1>
       <div class="title-rule"></div>
     </div>
-    <button class="btn-chatbot" (click)="abrirChatbot()" aria-label="Conversar com Chatbot">
+    <button
+      class="btn-chatbot"
+      (click)="abrirChatbot()"
+      aria-label="Conversar com Chatbot"
+    >
       <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <rect x="1.5" y="3.5" width="23" height="15" rx="3.5" stroke="currentColor" stroke-width="1.5"/>
-        <circle cx="8.5" cy="11" r="1.5" fill="currentColor"/>
-        <circle cx="13"  cy="11" r="1.5" fill="currentColor"/>
-        <circle cx="17.5"cy="11" r="1.5" fill="currentColor"/>
-        <path d="M8 18.5L5 23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <rect
+          x="1.5"
+          y="3.5"
+          width="23"
+          height="15"
+          rx="3.5"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <circle cx="8.5" cy="11" r="1.5" fill="currentColor" />
+        <circle cx="13" cy="11" r="1.5" fill="currentColor" />
+        <circle cx="17.5" cy="11" r="1.5" fill="currentColor" />
+        <path
+          d="M8 18.5L5 23"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
       </svg>
-      <span>Conversar<br>com Chatbot</span>
+      <span>Conversar<br />com Chatbot</span>
     </button>
   </header>
 
@@ -27,73 +41,165 @@
   }
 
   @if (!carregando) {
-  <div class="form-wrap">
+    <div class="form-wrap">
+      <!-- ── Passo 1: Seleção da análise ─────────────────────────────────────── -->
+      <section class="step-card">
+        <div class="step-label">
+          <span class="step-num">1</span> Selecione a análise
+        </div>
+        <div class="select-wrapper">
+          <select
+            class="field-select"
+            [(ngModel)]="chaveEscolhida"
+            (ngModelChange)="onAnaliseChange()"
+          >
+            <option value="">— escolha uma análise —</option>
+            @for (cat of categorias; track cat) {
+              @if (analisePorCategoria(cat).length) {
+                <optgroup [label]="nomeCategoria(cat)">
+                  @for (a of analisePorCategoria(cat); track a.chave) {
+                    <option [value]="a.chave">{{ a.nome }}</option>
+                  }
+                </optgroup>
+              }
+            }
+          </select>
+          <span class="sel-arrow">▾</span>
+        </div>
+      </section>
 
-    <!-- ── Passo 1: Seleção da análise ─────────────────────────────────────── -->
-    <section class="step-card">
-      <div class="step-label"><span class="step-num">1</span> Selecione a análise</div>
-      <div class="select-wrapper">
-        <select class="field-select" [(ngModel)]="chaveEscolhida" (ngModelChange)="onAnaliseChange()">
-          <option value="">— escolha uma análise —</option>
-          @for (cat of categorias; track cat) {
-            @if (analisePorCategoria(cat).length) {
-              <optgroup [label]="nomeCategoria(cat)">
-                @for (a of analisePorCategoria(cat); track a.chave) {
-                  <option [value]="a.chave">{{ a.nome }}</option>
+      <!-- ── Passo 2: Parâmetros da análise ──────────────────────────────────── -->
+      @if (analiseAtual) {
+        <section class="step-card" [@fadeSlide]>
+          <div class="step-label">
+            <span class="step-num">2</span> Parâmetros da análise
+          </div>
+
+          <!-- abundancias_com_variaveis: checkboxes de variáveis ambientais preditoras -->
+          @if (tipoDado === "abundancias_com_variaveis") {
+            <p class="field-hint">
+              Selecione as variáveis que serão usadas como preditoras ambientais
+              na análise.
+            </p>
+            @if (variavelOpcoes.length === 0) {
+              <p class="empty-notice">
+                Nenhuma variável cadastrada neste estudo.
+              </p>
+            }
+            <div class="check-grid">
+              @for (v of variavelOpcoes; track v.id) {
+                <label class="check-chip">
+                  <input
+                    type="checkbox"
+                    [checked]="variavelIdsAmbientais.includes(v.id)"
+                    (change)="toggleVariavelAmbiental(v.id, $event)"
+                  />
+                  <span class="chip-label">{{ v.label }}</span>
+                </label>
+              }
+            </div>
+          }
+
+          <!-- dois_vetores: fonte e variável para cada eixo, + nível de agregação -->
+          @if (tipoDado === "dois_vetores") {
+            <p class="field-hint">
+              Escolha o que representará cada eixo da análise.
+            </p>
+            <div class="two-col">
+              <div class="axis-block">
+                <div class="axis-tag x">Eixo X</div>
+                <label class="field-label">Fonte dos dados</label>
+                <div class="select-wrapper sm">
+                  <select class="field-select" [(ngModel)]="fonteX">
+                    <option value="variavel">Variável medida</option>
+                    <option value="abundancia">
+                      Abundância (total de indivíduos)
+                    </option>
+                    <option value="riqueza">Riqueza (nº de espécies)</option>
+                  </select>
+                  <span class="sel-arrow">▾</span>
+                </div>
+                @if (fonteX === "variavel") {
+                  <label class="field-label mt-s">Variável</label>
+                  <div class="select-wrapper sm">
+                    <select class="field-select" [(ngModel)]="variavelXId">
+                      <option [ngValue]="undefined">— selecione —</option>
+                      @for (v of variavelOpcoes; track v.id) {
+                        <option [ngValue]="v.id">{{ v.label }}</option>
+                      }
+                    </select>
+                    <span class="sel-arrow">▾</span>
+                  </div>
                 }
-              </optgroup>
+              </div>
+
+              <div class="axis-block">
+                <div class="axis-tag y">Eixo Y</div>
+                <label class="field-label">Fonte dos dados</label>
+                <div class="select-wrapper sm">
+                  <select class="field-select" [(ngModel)]="fonteY">
+                    <option value="variavel">Variável medida</option>
+                    <option value="abundancia">
+                      Abundância (total de indivíduos)
+                    </option>
+                    <option value="riqueza">Riqueza (nº de espécies)</option>
+                  </select>
+                  <span class="sel-arrow">▾</span>
+                </div>
+                @if (fonteY === "variavel") {
+                  <label class="field-label mt-s">Variável</label>
+                  <div class="select-wrapper sm">
+                    <select class="field-select" [(ngModel)]="variavelYId">
+                      <option [ngValue]="undefined">— selecione —</option>
+                      @for (v of variavelOpcoes; track v.id) {
+                        <option [ngValue]="v.id">{{ v.label }}</option>
+                      }
+                    </select>
+                    <span class="sel-arrow">▾</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (mostraNivelAgregacaoDoisVetores) {
+              <label class="field-label mt-m">Calcular por</label>
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="nivelAgregacao">
+                  <option value="unidade_amostral">
+                    Unidade amostral (padrão)
+                  </option>
+                  <option value="campanha">Campanha</option>
+                  <option value="evento">Evento de amostragem</option>
+                </select>
+                <span class="sel-arrow">▾</span>
+              </div>
             }
           }
-        </select>
-        <span class="sel-arrow">▾</span>
-      </div>
-    </section>
 
-    <!-- ── Passo 2: Parâmetros da análise ──────────────────────────────────── -->
-    @if (analiseAtual) {
-    <section class="step-card" [@fadeSlide]>
-      <div class="step-label"><span class="step-num">2</span> Parâmetros da análise</div>
-
-      <!-- abundancias_com_variaveis: checkboxes de variáveis ambientais preditoras -->
-      @if (tipoDado === 'abundancias_com_variaveis') {
-        <p class="field-hint">
-          Selecione as variáveis que serão usadas como preditoras ambientais na análise.
-        </p>
-        @if (variavelOpcoes.length === 0) {
-          <p class="empty-notice">Nenhuma variável cadastrada neste estudo.</p>
-        }
-        <div class="check-grid">
-          @for (v of variavelOpcoes; track v.id) {
-            <label class="check-chip">
-              <input type="checkbox"
-                [checked]="variavelIdsAmbientais.includes(v.id)"
-                (change)="toggleVariavelAmbiental(v.id, $event)"/>
-              <span class="chip-label">{{ v.label }}</span>
-            </label>
-          }
-        </div>
-      }
-
-      <!-- dois_vetores: fonte e variável para cada eixo, + nível de agregação -->
-      @if (tipoDado === 'dois_vetores') {
-        <p class="field-hint">Escolha o que representará cada eixo da análise.</p>
-        <div class="two-col">
-
-          <div class="axis-block">
-            <div class="axis-tag x">Eixo X</div>
+          <!-- vetor_unico: fonte, variável e nível de agregação -->
+          @if (tipoDado === "vetor_unico") {
+            <p class="field-hint">
+              Escolha o dado que será testado para normalidade.
+            </p>
             <label class="field-label">Fonte dos dados</label>
-            <div class="select-wrapper sm">
-              <select class="field-select" [(ngModel)]="fonteX">
+            <div class="select-wrapper">
+              <select
+                class="field-select"
+                [(ngModel)]="fonte"
+                (ngModelChange)="onFonteChange()"
+              >
                 <option value="variavel">Variável medida</option>
-                <option value="abundancia">Abundância (total de indivíduos)</option>
+                <option value="abundancia">
+                  Abundância (total de indivíduos)
+                </option>
                 <option value="riqueza">Riqueza (nº de espécies)</option>
               </select>
               <span class="sel-arrow">▾</span>
             </div>
-            @if (fonteX === 'variavel') {
+            @if (fonte === "variavel") {
               <label class="field-label mt-s">Variável</label>
-              <div class="select-wrapper sm">
-                <select class="field-select" [(ngModel)]="variavelXId">
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="variavelId">
                   <option [ngValue]="undefined">— selecione —</option>
                   @for (v of variavelOpcoes; track v.id) {
                     <option [ngValue]="v.id">{{ v.label }}</option>
@@ -102,23 +208,46 @@
                 <span class="sel-arrow">▾</span>
               </div>
             }
-          </div>
+            @if (mostraNivelAgregacaoVetorUnico) {
+              <label class="field-label mt-m">Calcular por</label>
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="nivelAgregacao">
+                  <option value="unidade_amostral">
+                    Unidade amostral (padrão)
+                  </option>
+                  <option value="campanha">Campanha</option>
+                  <option value="evento">Evento de amostragem</option>
+                </select>
+                <span class="sel-arrow">▾</span>
+              </div>
+            }
+          }
 
-          <div class="axis-block">
-            <div class="axis-tag y">Eixo Y</div>
-            <label class="field-label">Fonte dos dados</label>
-            <div class="select-wrapper sm">
-              <select class="field-select" [(ngModel)]="fonteY">
+          <!-- dois_grupos: fonte, variável, agrupar_por e checkboxes de grupos -->
+          @if (tipoDado === "dois_grupos") {
+            <p class="field-hint">
+              Compare dois grupos de locais ou campanhas entre si.
+            </p>
+            <label class="field-label">O que comparar</label>
+            <div class="select-wrapper">
+              <select
+                class="field-select"
+                [(ngModel)]="fonte"
+                (ngModelChange)="onFonteChange()"
+              >
                 <option value="variavel">Variável medida</option>
-                <option value="abundancia">Abundância (total de indivíduos)</option>
+                <option value="abundancia">
+                  Abundância (total de indivíduos)
+                </option>
                 <option value="riqueza">Riqueza (nº de espécies)</option>
               </select>
               <span class="sel-arrow">▾</span>
             </div>
-            @if (fonteY === 'variavel') {
+
+            @if (fonte === "variavel") {
               <label class="field-label mt-s">Variável</label>
-              <div class="select-wrapper sm">
-                <select class="field-select" [(ngModel)]="variavelYId">
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="variavelId">
                   <option [ngValue]="undefined">— selecione —</option>
                   @for (v of variavelOpcoes; track v.id) {
                     <option [ngValue]="v.id">{{ v.label }}</option>
@@ -127,363 +256,352 @@
                 <span class="sel-arrow">▾</span>
               </div>
             }
-          </div>
-        </div>
 
-        @if (mostraNivelAgregacaoDoisVetores) {
-          <label class="field-label mt-m">Calcular por</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="nivelAgregacao">
-              <option value="unidade_amostral">Unidade amostral (padrão)</option>
-              <option value="campanha">Campanha</option>
-              <option value="evento">Evento de amostragem</option>
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-      }
-
-      <!-- vetor_unico: fonte, variável e nível de agregação -->
-      @if (tipoDado === 'vetor_unico') {
-        <p class="field-hint">Escolha o dado que será testado para normalidade.</p>
-        <label class="field-label">Fonte dos dados</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="fonte" (ngModelChange)="onFonteChange()">
-            <option value="variavel">Variável medida</option>
-            <option value="abundancia">Abundância (total de indivíduos)</option>
-            <option value="riqueza">Riqueza (nº de espécies)</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
-        @if (fonte === 'variavel') {
-          <label class="field-label mt-s">Variável</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="variavelId">
-              <option [ngValue]="undefined">— selecione —</option>
-              @for (v of variavelOpcoes; track v.id) {
-                <option [ngValue]="v.id">{{ v.label }}</option>
-              }
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-        @if (mostraNivelAgregacaoVetorUnico) {
-          <label class="field-label mt-m">Calcular por</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="nivelAgregacao">
-              <option value="unidade_amostral">Unidade amostral (padrão)</option>
-              <option value="campanha">Campanha</option>
-              <option value="evento">Evento de amostragem</option>
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-      }
-
-      <!-- dois_grupos: fonte, variável, agrupar_por e checkboxes de grupos -->
-      @if (tipoDado === 'dois_grupos') {
-        <p class="field-hint">
-          Compare dois grupos de locais ou campanhas entre si.
-        </p>
-        <label class="field-label">O que comparar</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="fonte" (ngModelChange)="onFonteChange()">
-            <option value="variavel">Variável medida</option>
-            <option value="abundancia">Abundância (total de indivíduos)</option>
-            <option value="riqueza">Riqueza (nº de espécies)</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
-
-        @if (fonte === 'variavel') {
-          <label class="field-label mt-s">Variável</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="variavelId">
-              <option [ngValue]="undefined">— selecione —</option>
-              @for (v of variavelOpcoes; track v.id) {
-                <option [ngValue]="v.id">{{ v.label }}</option>
-              }
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-
-        <label class="field-label mt-m">Agrupar observações por</label>
-        <div class="select-wrapper">
-          <!-- Ao mudar agrupar_por os checkboxes são limpos, pois as opções mudam -->
-          <select class="field-select" [(ngModel)]="agruparPor"
-            (ngModelChange)="onAgruparPorDoisGruposChange()">
-            <option value="campanha">Campanha</option>
-            <option value="unidade_amostral">Unidade amostral</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
-
-        @if (mostraNivelAgregacaoDoisGrupos) {
-          <label class="field-label mt-m">Calcular por</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="nivelAgregacao">
-              <option value="unidade_amostral">Unidade amostral (padrão)</option>
-              <option value="campanha">Campanha</option>
-              <option value="evento">Evento de amostragem</option>
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-
-        <div class="grupos-wrap mt-m">
-          <div class="grupo-block">
-            <div class="grupo-header">
-              <span class="grupo-tag g1">Grupo 1</span>
-              <input class="field-input nome-grupo" type="text"
-                [(ngModel)]="nomeGrupo1"
-                placeholder="Nome do grupo (opcional)"/>
+            <label class="field-label mt-m">Agrupar observações por</label>
+            <div class="select-wrapper">
+              <!-- Ao mudar agrupar_por os checkboxes são limpos, pois as opções mudam -->
+              <select
+                class="field-select"
+                [(ngModel)]="agruparPor"
+                (ngModelChange)="onAgruparPorDoisGruposChange()"
+              >
+                <option value="campanha">Campanha</option>
+                <option value="unidade_amostral">Unidade amostral</option>
+              </select>
+              <span class="sel-arrow">▾</span>
             </div>
-            <div class="check-grid compact">
-              @for (op of opcoesDoisGrupos; track op.id) {
-                <label class="check-chip"
-                  [class.disabled]="isInGrupo(2, op.id)">
-                  <input type="checkbox"
-                    [checked]="isInGrupo(1, op.id)"
-                    [disabled]="isInGrupo(2, op.id)"
-                    (change)="toggleGrupo(1, op.id, $event)"/>
-                  <span class="chip-label">{{ op.label }}</span>
-                </label>
-              }
-            </div>
-          </div>
-          <div class="grupo-block">
-            <div class="grupo-header">
-              <span class="grupo-tag g2">Grupo 2</span>
-              <input class="field-input nome-grupo" type="text"
-                [(ngModel)]="nomeGrupo2"
-                placeholder="Nome do grupo (opcional)"/>
-            </div>
-            <div class="check-grid compact">
-              @for (op of opcoesDoisGrupos; track op.id) {
-                <label class="check-chip"
-                  [class.disabled]="isInGrupo(1, op.id)">
-                  <input type="checkbox"
-                    [checked]="isInGrupo(2, op.id)"
-                    [disabled]="isInGrupo(1, op.id)"
-                    (change)="toggleGrupo(2, op.id, $event)"/>
-                  <span class="chip-label">{{ op.label }}</span>
-                </label>
-              }
-            </div>
-          </div>
-        </div>
-      }
 
-      <!-- multiplos_grupos: fonte, variável e agrupar_por -->
-      @if (tipoDado === 'multiplos_grupos') {
-        <p class="field-hint">
-          Compare múltiplos grupos — os grupos são formados automaticamente conforme o agrupamento escolhido.
-        </p>
-        <label class="field-label">O que comparar</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="fonte" (ngModelChange)="onFonteChange()">
-            <option value="variavel">Variável medida</option>
-            <option value="abundancia">Abundância (total de indivíduos)</option>
-            <option value="riqueza">Riqueza (nº de espécies)</option>
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
-        @if (fonte === 'variavel') {
-          <label class="field-label mt-s">Variável</label>
-          <div class="select-wrapper">
-            <select class="field-select" [(ngModel)]="variavelId">
-              <option [ngValue]="undefined">— selecione —</option>
-              @for (v of variavelOpcoes; track v.id) {
-                <option [ngValue]="v.id">{{ v.label }}</option>
-              }
-            </select>
-            <span class="sel-arrow">▾</span>
-          </div>
-        }
-        <label class="field-label mt-m">Agrupar por</label>
-        <div class="select-wrapper">
-          <select class="field-select" [(ngModel)]="agruparPor">
-            @for (op of opcoesAgruparPor; track op.valor) {
-              <option [value]="op.valor">{{ op.label }}</option>
+            @if (mostraNivelAgregacaoDoisGrupos) {
+              <label class="field-label mt-m">Calcular por</label>
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="nivelAgregacao">
+                  <option value="unidade_amostral">
+                    Unidade amostral (padrão)
+                  </option>
+                  <option value="campanha">Campanha</option>
+                  <option value="evento">Evento de amostragem</option>
+                </select>
+                <span class="sel-arrow">▾</span>
+              </div>
             }
-          </select>
-          <span class="sel-arrow">▾</span>
-        </div>
+
+            <div class="grupos-wrap mt-m">
+              <div class="grupo-block">
+                <div class="grupo-header">
+                  <span class="grupo-tag g1">Grupo 1</span>
+                  <input
+                    class="field-input nome-grupo"
+                    type="text"
+                    [(ngModel)]="nomeGrupo1"
+                    placeholder="Nome do grupo (opcional)"
+                  />
+                </div>
+                <div class="check-grid compact">
+                  @for (op of opcoesDoisGrupos; track op.id) {
+                    <label
+                      class="check-chip"
+                      [class.disabled]="isInGrupo(2, op.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="isInGrupo(1, op.id)"
+                        [disabled]="isInGrupo(2, op.id)"
+                        (change)="toggleGrupo(1, op.id, $event)"
+                      />
+                      <span class="chip-label">{{ op.label }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="grupo-block">
+                <div class="grupo-header">
+                  <span class="grupo-tag g2">Grupo 2</span>
+                  <input
+                    class="field-input nome-grupo"
+                    type="text"
+                    [(ngModel)]="nomeGrupo2"
+                    placeholder="Nome do grupo (opcional)"
+                  />
+                </div>
+                <div class="check-grid compact">
+                  @for (op of opcoesDoisGrupos; track op.id) {
+                    <label
+                      class="check-chip"
+                      [class.disabled]="isInGrupo(1, op.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="isInGrupo(2, op.id)"
+                        [disabled]="isInGrupo(1, op.id)"
+                        (change)="toggleGrupo(2, op.id, $event)"
+                      />
+                      <span class="chip-label">{{ op.label }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- multiplos_grupos: fonte, variável e agrupar_por -->
+          @if (tipoDado === "multiplos_grupos") {
+            <p class="field-hint">
+              Compare múltiplos grupos — os grupos são formados automaticamente
+              conforme o agrupamento escolhido.
+            </p>
+            <label class="field-label">O que comparar</label>
+            <div class="select-wrapper">
+              <select
+                class="field-select"
+                [(ngModel)]="fonte"
+                (ngModelChange)="onFonteChange()"
+              >
+                <option value="variavel">Variável medida</option>
+                <option value="abundancia">
+                  Abundância (total de indivíduos)
+                </option>
+                <option value="riqueza">Riqueza (nº de espécies)</option>
+              </select>
+              <span class="sel-arrow">▾</span>
+            </div>
+            @if (fonte === "variavel") {
+              <label class="field-label mt-s">Variável</label>
+              <div class="select-wrapper">
+                <select class="field-select" [(ngModel)]="variavelId">
+                  <option [ngValue]="undefined">— selecione —</option>
+                  @for (v of variavelOpcoes; track v.id) {
+                    <option [ngValue]="v.id">{{ v.label }}</option>
+                  }
+                </select>
+                <span class="sel-arrow">▾</span>
+              </div>
+            }
+            <label class="field-label mt-m">Agrupar por</label>
+            <div class="select-wrapper">
+              <select class="field-select" [(ngModel)]="agruparPor">
+                @for (op of opcoesAgruparPor; track op.valor) {
+                  <option [value]="op.valor">{{ op.label }}</option>
+                }
+              </select>
+              <span class="sel-arrow">▾</span>
+            </div>
+          }
+
+          <!-- abundancias / abundancias_por_amostra / matriz_acumulacao: sem parâmetros extras -->
+          @if (
+            [
+              "abundancias",
+              "abundancias_por_amostra",
+              "matriz_acumulacao",
+            ].includes(tipoDado)
+          ) {
+            <p class="field-hint no-params">
+              Esta análise usa automaticamente os dados de abundância do estudo.
+              Use os filtros abaixo para refinar o conjunto de dados.
+            </p>
+          }
+        </section>
       }
 
-      <!-- abundancias / abundancias_por_amostra / matriz_acumulacao: sem parâmetros extras -->
-      @if (['abundancias','abundancias_por_amostra','matriz_acumulacao'].includes(tipoDado)) {
-        <p class="field-hint no-params">
-          Esta análise usa automaticamente os dados de abundância do estudo.
-          Use os filtros abaixo para refinar o conjunto de dados.
-        </p>
-      }
-
-    </section>}
-
-    <!-- ── Passo 3: Filtros globais ────────────────────────────────────────── -->
-    <section class="step-card" [@fadeSlide]>
-      <div class="step-label"><span class="step-num">3</span> Filtros <span class="step-opt">(todos opcionais)</span></div>
-
-      <div class="filtros-grid">
-
-        <!-- Campanhas: multi-seleção por checkboxes -->
-        @if (campanhas.length) {
-          <div class="filtro-item full">
-            <label class="field-label">Campanhas</label>
-            <div class="check-grid compact">
-              @for (c of campanhas; track c.id) {
-                <label class="check-chip">
-                  <input type="checkbox"
-                    [checked]="isFiltroAtivo('filtroCampanhaIds', c.id)"
-                    (change)="toggleFiltro('filtroCampanhaIds', c.id, $event)"/>
-                  <span class="chip-label">{{ c.nome }}</span>
-                </label>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Unidades amostrais: multi-seleção por checkboxes -->
-        @if (unidades.length) {
-          <div class="filtro-item full">
-            <label class="field-label">Unidades amostrais</label>
-            <div class="check-grid compact">
-              @for (u of unidadesVisiveis; track u.id) {
-                <label class="check-chip">
-                  <input type="checkbox"
-                    [checked]="isFiltroAtivo('filtroUnidadeIds', u.id)"
-                    (change)="toggleFiltro('filtroUnidadeIds', u.id, $event)"/>
-                  <span class="chip-label">{{ u.label }}</span>
-                </label>
-              }
-            </div>
-          </div>
-        }
-
-        <div class="filtro-item">
-          <label class="field-label">Data início</label>
-          <input class="field-input" type="date" [(ngModel)]="dataInicio"/>
-        </div>
-        <div class="filtro-item">
-          <label class="field-label">Data fim</label>
-          <input class="field-input" type="date" [(ngModel)]="dataFim"/>
+      <!-- ── Passo 3: Filtros globais ────────────────────────────────────────── -->
+      <section class="step-card" [@fadeSlide]>
+        <div class="step-label">
+          <span class="step-num">3</span> Filtros
+          <span class="step-opt">(todos opcionais)</span>
         </div>
 
-        @if (mostraBoundingBox) {
-          <div class="filtro-item full">
-            <label class="field-label section-divider">Área geográfica</label>
-            <p class="field-hint">Restringe os registros dentro desse retângulo. Preencha somente os limites que desejar.</p>
-          </div>
-          <div class="filtro-item">
-            <label class="field-label">Latitude mínima</label>
-            <input class="field-input" type="text"
-              [ngModel]="latMinMask"
-              (ngModelChange)="onCoordInput('latMin', $event)"
-              placeholder="ex.: -25°42'48&quot;"/>
-          </div>
-          <div class="filtro-item">
-            <label class="field-label">Latitude máxima</label>
-            <input class="field-input" type="text"
-              [ngModel]="latMaxMask"
-              (ngModelChange)="onCoordInput('latMax', $event)"
-              placeholder="ex.: -25°00'00&quot;"/>
-          </div>
-          <div class="filtro-item">
-            <label class="field-label">Longitude mínima</label>
-            <input class="field-input" type="text"
-              [ngModel]="lngMinMask"
-              (ngModelChange)="onCoordInput('lngMin', $event)"
-              placeholder="ex.: -49°30'00&quot;"/>
-          </div>
-          <div class="filtro-item">
-            <label class="field-label">Longitude máxima</label>
-            <input class="field-input" type="text"
-              [ngModel]="lngMaxMask"
-              (ngModelChange)="onCoordInput('lngMax', $event)"
-              placeholder="ex.: -49°00'00&quot;"/>
-          </div>
-        }
+        <div class="filtros-grid">
+          <!-- Campanhas: multi-seleção por checkboxes -->
+          @if (campanhas.length) {
+            <div class="filtro-item full">
+              <label class="field-label">Campanhas</label>
+              <div class="check-grid compact">
+                @for (c of campanhas; track c.id) {
+                  <label class="check-chip">
+                    <input
+                      type="checkbox"
+                      [checked]="isFiltroAtivo('filtroCampanhaIds', c.id)"
+                      (change)="toggleFiltro('filtroCampanhaIds', c.id, $event)"
+                    />
+                    <span class="chip-label">{{ c.nome }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
 
+          <!-- Unidades amostrais: multi-seleção por checkboxes -->
+          @if (unidades.length) {
+            <div class="filtro-item full">
+              <label class="field-label">Unidades amostrais</label>
+              <div class="check-grid compact">
+                @for (u of unidadesVisiveis; track u.id) {
+                  <label class="check-chip">
+                    <input
+                      type="checkbox"
+                      [checked]="isFiltroAtivo('filtroUnidadeIds', u.id)"
+                      (change)="toggleFiltro('filtroUnidadeIds', u.id, $event)"
+                    />
+                    <span class="chip-label">{{ u.label }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="filtro-item">
+            <label class="field-label">Data início</label>
+            <input class="field-input" type="date" [(ngModel)]="dataInicio" />
+          </div>
+          <div class="filtro-item">
+            <label class="field-label">Data fim</label>
+            <input class="field-input" type="date" [(ngModel)]="dataFim" />
+          </div>
+
+          @if (mostraBoundingBox) {
+            <div class="filtro-item full">
+              <label class="field-label section-divider">Área geográfica</label>
+              <p class="field-hint">
+                Restringe os registros dentro desse retângulo. Preencha somente
+                os limites que desejar.
+              </p>
+            </div>
+            <div class="filtro-item">
+              <label class="field-label">Latitude mínima</label>
+              <input
+                class="field-input"
+                type="text"
+                [ngModel]="latMinMask"
+                (ngModelChange)="onCoordInput('latMin', $event)"
+                placeholder="ex.: -25°42'48&quot;"
+              />
+            </div>
+            <div class="filtro-item">
+              <label class="field-label">Latitude máxima</label>
+              <input
+                class="field-input"
+                type="text"
+                [ngModel]="latMaxMask"
+                (ngModelChange)="onCoordInput('latMax', $event)"
+                placeholder="ex.: -25°00'00&quot;"
+              />
+            </div>
+            <div class="filtro-item">
+              <label class="field-label">Longitude mínima</label>
+              <input
+                class="field-input"
+                type="text"
+                [ngModel]="lngMinMask"
+                (ngModelChange)="onCoordInput('lngMin', $event)"
+                placeholder="ex.: -49°30'00&quot;"
+              />
+            </div>
+            <div class="filtro-item">
+              <label class="field-label">Longitude máxima</label>
+              <input
+                class="field-input"
+                type="text"
+                [ngModel]="lngMaxMask"
+                (ngModelChange)="onCoordInput('lngMax', $event)"
+                placeholder="ex.: -49°00'00&quot;"
+              />
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ── Botão executar ──────────────────────────────────────────────────── -->
+      <div class="confirm-row">
+        <button
+          class="btn-confirmar"
+          (click)="executar()"
+          [disabled]="loading || !analiseAtual"
+        >
+          @if (loading) {
+            <span class="spinner"></span> Analisando…
+          } @else {
+            Confirmar
+          }
+        </button>
       </div>
-    </section>
 
-    <!-- ── Botão executar ──────────────────────────────────────────────────── -->
-    <div class="confirm-row">
-      <button class="btn-confirmar" (click)="executar()" [disabled]="loading || !analiseAtual">
-        @if (loading) {
-          <span class="spinner"></span> Analisando…
-        } @else {
-          Confirmar
-        }
-      </button>
+      @if (erro) {
+        <div class="erro-box" [@fadeSlide]>{{ erro }}</div>
+      }
     </div>
-
-    @if (erro) {
-      <div class="erro-box" [@fadeSlide]>{{ erro }}</div>
-    }
-
-  </div>
   }
 
   <!-- ── Resultado ───────────────────────────────────────────────────────────── -->
   @if (resultado) {
-  <section class="resultado-section" [@fadeSlide]>
-    <div class="resultado-header">
-      <h2 class="resultado-titulo">{{ resultado.nome }}</h2>
-      <div class="title-rule"></div>
-    </div>
-
-    <!-- Só gráfico -->
-    @if (analiseAtual?.tem_grafico && !analiseAtual?.tem_valor && resultado.grafico) {
-      <div class="grafico-wrapper">
-        <iframe class="grafico-iframe"
-          sandbox="allow-scripts"
-          [srcdoc]="resultado.grafico"
-          title="Gráfico da análise">
-        </iframe>
+    <section class="resultado-section" [@fadeSlide]>
+      <div class="resultado-header">
+        <h2 class="resultado-titulo">{{ resultado.nome }}</h2>
+        <div class="title-rule"></div>
       </div>
-    }
 
-    <!-- Só valor -->
-    @if (analiseAtual?.tem_valor && !analiseAtual?.tem_grafico && resultado.valor) {
-      <div class="valor-block">
-        <pre class="valor-pre">{{ resultado.valor | json }}</pre>
-      </div>
-    }
-
-    <!-- Gráfico + valor -->
-    @if (analiseAtual?.tem_grafico && analiseAtual?.tem_valor) {
-      @if (resultado.grafico) {
+      <!-- Só gráfico -->
+      @if (
+        analiseAtual?.tem_grafico &&
+        !analiseAtual?.tem_valor &&
+        resultado.grafico
+      ) {
         <div class="grafico-wrapper">
-          <iframe class="grafico-iframe"
+          <iframe
+            class="grafico-iframe"
             sandbox="allow-scripts"
             [srcdoc]="resultado.grafico"
-            title="Gráfico da análise">
+            title="Gráfico da análise"
+          >
           </iframe>
         </div>
       }
-      @if (resultado.valor) {
+
+      <!-- Só valor -->
+      @if (
+        analiseAtual?.tem_valor && !analiseAtual?.tem_grafico && resultado.valor
+      ) {
         <div class="valor-block">
-          <h3 class="valor-subtitulo">Valores numéricos</h3>
           <pre class="valor-pre">{{ resultado.valor | json }}</pre>
         </div>
       }
-    }
 
-    @if (resultado.urlArquivo) {
-      <div class="exportar-row">
-        <button class="btn-exportar" (click)="exportar()">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M7.5 1v8M3.5 6l4 4 4-4M1.5 13h12"
-              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Exportar Resultado
-        </button>
-      </div>
-    }
-  </section>
+      <!-- Gráfico + valor -->
+      @if (analiseAtual?.tem_grafico && analiseAtual?.tem_valor) {
+        @if (resultado.grafico) {
+          <div class="grafico-wrapper">
+            <iframe
+              class="grafico-iframe"
+              sandbox="allow-scripts"
+              [srcdoc]="resultado.grafico"
+              title="Gráfico da análise"
+            >
+            </iframe>
+          </div>
+        }
+        @if (resultado.valor) {
+          <div class="valor-block">
+            <h3 class="valor-subtitulo">Valores numéricos</h3>
+            <pre class="valor-pre">{{ resultado.valor | json }}</pre>
+          </div>
+        }
+      }
+
+      @if (resultado.urlArquivo) {
+        <div class="exportar-row">
+          <button class="btn-exportar" (click)="exportar()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path
+                d="M7.5 1v8M3.5 6l4 4 4-4M1.5 13h12"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Exportar Resultado
+          </button>
+        </div>
+      }
+    </section>
   }
-
 </div>

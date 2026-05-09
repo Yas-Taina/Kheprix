@@ -1,29 +1,45 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { RegistroOcorrenciaService } from '../../../core/services/registro-ocorrencia.service';
-import { EspecieService } from '../../../core/services/especie.service';
-import { VariavelService } from '../../../core/services/variavel.service';
-import { Especie, Variavel, ValorVariavel } from '../../../models';
-import { UtilService } from '../../../core/services/util.service';
-import { environment } from '../../../../environments/environment';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Router, ActivatedRoute } from "@angular/router";
+import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
+import { EspecieService } from "../../../core/services/especie.service";
+import { VariavelService } from "../../../core/services/variavel.service";
+import { Especie, Variavel, ValorVariavel } from "../../../models";
+import { UtilService } from "../../../core/services/util.service";
+import { environment } from "../../../../environments/environment";
 
 @Component({
-  selector: 'app-registro-novo',
+  selector: "app-registro-novo",
   standalone: true,
-  templateUrl: './registro-novo.component.html',
-  styleUrls: ['./registro-novo.component.css'],
+  templateUrl: "./registro-novo.component.html",
+  styleUrls: ["./registro-novo.component.css"],
   imports: [CommonModule, FormsModule],
 })
 export class RegistroNovoComponent implements OnInit {
-  estudoId!: number; campanhaId!: number; unidadeId!: number; eventoId!: number;
-  registroId: number | null = null; isEdit = false;
-  data = ''; hora = ''; latDMS = ''; lngDMS = '';
-  especieId: number | null = null; qtdeIndividuos: number | null = null;
-  ausenciaEspecie = false; fotoBase64 = ''; fotoNome = ''; fotoPreview = '';
-  especies: Especie[] = []; variaveis: Variavel[] = []; valoresVars: ValorVariavel[] = [];
-  loading = false; gpsLoading = false; erro = ''; gpsErro = '';
+  estudoId!: number;
+  campanhaId!: number;
+  unidadeId!: number;
+  eventoId!: number;
+  registroId: number | null = null;
+  isEdit = false;
+  data = "";
+  hora = "";
+  latDMS = "";
+  lngDMS = "";
+  especieId: number | null = null;
+  qtdeIndividuos: number | null = null;
+  ausenciaEspecie = false;
+  fotoBase64 = "";
+  fotoNome = "";
+  fotoPreview = "";
+  especies: Especie[] = [];
+  variaveis: Variavel[] = [];
+  valoresVars: ValorVariavel[] = [];
+  loading = false;
+  gpsLoading = false;
+  erro = "";
+  gpsErro = "";
   apiUrl = environment.apiUrl;
 
   constructor(
@@ -36,77 +52,141 @@ export class RegistroNovoComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.estudoId = +this.route.snapshot.params['estudo_id'];
-    this.campanhaId = +this.route.snapshot.params['campanha_id'];
-    this.unidadeId = +this.route.snapshot.params['unidade_id'];
-    this.eventoId = +this.route.snapshot.params['evento_id'];
-    this.registroId = this.route.snapshot.params['registro_id'] ? +this.route.snapshot.params['registro_id'] : null;
+    this.estudoId = +this.route.snapshot.params["estudo_id"];
+    this.campanhaId = +this.route.snapshot.params["campanha_id"];
+    this.unidadeId = +this.route.snapshot.params["unidade_id"];
+    this.eventoId = +this.route.snapshot.params["evento_id"];
+    this.registroId = this.route.snapshot.params["registro_id"]
+      ? +this.route.snapshot.params["registro_id"]
+      : null;
     this.isEdit = !!this.registroId;
 
-    this.especieService.listar(this.estudoId).subscribe(e => this.especies = e);
-    this.variavelService.listar(this.estudoId, 'registro').subscribe(vars => {
+    this.especieService
+      .listar(this.estudoId)
+      .subscribe((e) => (this.especies = e));
+    this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map(v => ({ variavel_id: v.id, valor: '' }));
+      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
     });
 
     if (this.isEdit && this.registroId) {
-      this.registroService.buscar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId, this.registroId).subscribe(r => {
-        this.data = r.data; this.hora = r.hora;
-        this.latDMS = this.util.decimalToDMS(r.latitude);
-        this.lngDMS = this.util.decimalToDMS(r.longitude);
-        this.especieId = r.especie_id; this.qtdeIndividuos = r.qtde_individuos;
-        this.ausenciaEspecie = r.ausencia_especie;
-        if (r.foto) this.fotoPreview = this.util.buildFotoUrl(this.apiUrl, r.foto);
-      });
+      this.registroService
+        .buscar(
+          this.estudoId,
+          this.campanhaId,
+          this.unidadeId,
+          this.eventoId,
+          this.registroId,
+        )
+        .subscribe((r) => {
+          this.data = r.data;
+          this.hora = r.hora;
+          this.latDMS = this.util.decimalToDMS(r.latitude);
+          this.lngDMS = this.util.decimalToDMS(r.longitude);
+          this.especieId = r.especie_id;
+          this.qtdeIndividuos = r.qtde_individuos;
+          this.ausenciaEspecie = r.ausencia_especie;
+          if (r.foto)
+            this.fotoPreview = this.util.buildFotoUrl(this.apiUrl, r.foto);
+        });
     }
   }
 
   abrirArquivo() {
-    this.util.openFilePicker((b64, name) => { this.fotoBase64 = b64; this.fotoNome = name; this.fotoPreview = b64; });
+    this.util.openFilePicker((b64, name) => {
+      this.fotoBase64 = b64;
+      this.fotoNome = name;
+      this.fotoPreview = b64;
+    });
   }
   abrirCamera() {
-    this.util.openCamera((b64) => { this.fotoBase64 = b64; this.fotoNome = 'foto.jpg'; this.fotoPreview = b64; });
+    this.util.openCamera((b64) => {
+      this.fotoBase64 = b64;
+      this.fotoNome = "foto.jpg";
+      this.fotoPreview = b64;
+    });
   }
 
   async obterLocalizacao() {
-    this.gpsLoading = true; this.gpsErro = '';
+    this.gpsLoading = true;
+    this.gpsErro = "";
     try {
       const loc = await this.util.getCurrentLocationDMS();
       this.latDMS = loc.latDMS;
       this.lngDMS = loc.lngDMS;
     } catch {
-      this.gpsErro = 'Não foi possível obter a localização. Preencha manualmente.';
+      this.gpsErro =
+        "Não foi possível obter a localização. Preencha manualmente.";
     } finally {
       this.gpsLoading = false;
     }
   }
 
   salvar() {
-    if (!this.data || !this.hora || !this.latDMS || !this.lngDMS || !this.especieId) {
-      this.erro = 'Preencha data, hora, coordenadas e espécie.'; return;
+    if (
+      !this.data ||
+      !this.hora ||
+      !this.latDMS ||
+      !this.lngDMS ||
+      !this.especieId
+    ) {
+      this.erro = "Preencha data, hora, coordenadas e espécie.";
+      return;
     }
-    this.loading = true; this.erro = '';
+    this.loading = true;
+    this.erro = "";
     const lat = this.util.dmsTodecimal(this.latDMS);
     const lng = this.util.dmsTodecimal(this.lngDMS);
     const payload = {
       especie_id: this.especieId!,
-      data: this.data, hora: this.hora,
-      latitude: lat, longitude: lng,
+      data: this.data,
+      hora: this.hora,
+      latitude: lat,
+      longitude: lng,
       qtde_individuos: this.qtdeIndividuos ?? undefined,
       ausencia_especie: this.ausenciaEspecie,
       ...(this.fotoBase64 ? { foto: this.fotoBase64 } : {}),
-      valores_variaveis: this.valoresVars.filter(v => v.valor !== '' && v.valor !== null && v.valor !== undefined),
+      valores_variaveis: this.valoresVars.filter(
+        (v) => v.valor !== "" && v.valor !== null && v.valor !== undefined,
+      ),
     };
-    const obs = this.isEdit && this.registroId
-      ? this.registroService.atualizar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId, this.registroId, payload)
-      : this.registroService.criar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId, payload);
+    const obs =
+      this.isEdit && this.registroId
+        ? this.registroService.atualizar(
+            this.estudoId,
+            this.campanhaId,
+            this.unidadeId,
+            this.eventoId,
+            this.registroId,
+            payload,
+          )
+        : this.registroService.criar(
+            this.estudoId,
+            this.campanhaId,
+            this.unidadeId,
+            this.eventoId,
+            payload,
+          );
     obs.subscribe({
       next: () => this.voltar(),
-      error: () => { this.erro = 'Erro ao salvar.'; this.loading = false; },
+      error: () => {
+        this.erro = "Erro ao salvar.";
+        this.loading = false;
+      },
     });
   }
 
   voltar() {
-    this.router.navigate(['/estudos', this.estudoId, 'campanhas', this.campanhaId, 'unidades', this.unidadeId, 'eventos', this.eventoId, 'registros']);
+    this.router.navigate([
+      "/estudos",
+      this.estudoId,
+      "campanhas",
+      this.campanhaId,
+      "unidades",
+      this.unidadeId,
+      "eventos",
+      this.eventoId,
+      "registros",
+    ]);
   }
 }
