@@ -385,7 +385,6 @@
         max-width: 100%;
       }
 
-      /* --- Analysis --- */
       .analysis-box {
         max-width: 90vw;
         padding: var(--space-xl) var(--space-lg);
