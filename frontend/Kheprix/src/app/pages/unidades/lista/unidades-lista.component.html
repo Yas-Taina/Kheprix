@@ -23,7 +23,6 @@
             <th>Nome</th>
             <th>Posição</th>
             <th>Área (Raio)</th>
-            <th>Eventos de Amostragem</th>
             <th></th>
           </tr>
         </thead>
@@ -32,7 +31,6 @@
             <td>{{ u.nome }}</td>
             <td>{{ formatCoord(u.latitude) }}, {{ formatCoord(u.longitude) }}</td>
             <td>{{ u.raio ? u.raio + 'm' : '—' }}</td>
-            <td>—</td>
             <td (click)="$event.stopPropagation()">
               <div class="actions-cell">
                 <button class="btn-icon danger" (click)="deletar(u)">

@@ -15,7 +15,7 @@ import { Variavel, ValorVariavel } from '../../../models';
 })
 export class EventoNovoComponent implements OnInit {
   estudoId!: number; campanhaId!: number; unidadeId!: number; eventoId: number | null = null; isEdit = false;
-  nomeEvento = ''; dataInicio = ''; horaInicio = ''; dataFim = ''; horaFim = ''; esforcoReal = '';
+  nomeEvento = ''; dataInicio = ''; horaInicio = ''; esforcoReal = '';
   variaveis: Variavel[] = []; valoresVars: ValorVariavel[] = [];
   loading = false; erro = '';
 
@@ -41,13 +41,8 @@ export class EventoNovoComponent implements OnInit {
     if (this.isEdit && this.eventoId) {
       this.eventoService.buscar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId).subscribe(ev => {
         const dtInicio = new Date(ev.horario_inicio);
-        const dtFim = ev.horario_fim ? new Date(ev.horario_fim) : null;
         this.dataInicio = dtInicio.toISOString().split('T')[0];
         this.horaInicio = dtInicio.toTimeString().substring(0, 5);
-        if (dtFim) {
-          this.dataFim = dtFim.toISOString().split('T')[0];
-          this.horaFim = dtFim.toTimeString().substring(0, 5);
-        }
         this.esforcoReal = ev.esforco_real ?? '';
       });
     }
@@ -57,10 +52,8 @@ export class EventoNovoComponent implements OnInit {
     if (!this.dataInicio || !this.horaInicio) { this.erro = 'Data e hora de início são obrigatórias.'; return; }
     this.loading = true; this.erro = '';
     const horarioInicio = `${this.dataInicio}T${this.horaInicio}:00`;
-    const horarioFim = this.dataFim && this.horaFim ? `${this.dataFim}T${this.horaFim}:00` : undefined;
     const payload = {
       horario_inicio: horarioInicio,
-      horario_fim: horarioFim,
       esforco_real: this.esforcoReal || undefined,
       valores_variaveis: this.valoresVars.filter(v => v.valor),
     };

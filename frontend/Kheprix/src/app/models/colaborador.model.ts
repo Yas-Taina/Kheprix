@@ -1,4 +1,4 @@
-export type PerfilColaborador = 'proprietario' | 'co-proprietario' | 'colaborador';
+export type PerfilColaborador = 'proprietario' | 'colaborador';
 
 export interface Colaborador {
   id_usuario: number;

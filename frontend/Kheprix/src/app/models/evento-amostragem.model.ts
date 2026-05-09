@@ -4,14 +4,13 @@ export interface EventoAmostragem {
   id: number;
   unidade_amostral_id: number;
   horario_inicio: string;
-  horario_fim: string;
   esforco_real: string;
   created_at: string;
+  //updated_at: string;
 }
 
 export interface EventoAmostragemCreate {
   horario_inicio: string;
-  horario_fim?: string;
   esforco_real?: string;
   valores_variaveis?: ValorVariavel[];
 }

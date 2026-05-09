@@ -22,7 +22,7 @@
           <tr>
             <th>Nome</th>
             <th>Data de Início</th>
-            <th>Última Alteração</th>
+            <!--<th>Última Alteração</th>-->
             <th></th>
           </tr>
         </thead>
@@ -30,7 +30,7 @@
           <tr *ngFor="let ev of eventos" (click)="verRegistros(ev)">
             <td>{{ util.formatDateTime(ev.horario_inicio) }}</td>
             <td>{{ util.formatDate(ev.horario_inicio) }}</td>
-            <td>{{ util.formatDate(ev.created_at) }}</td>
+            <!--<td>{{ util.formatDate(ev.updated_at) }}</td>-->
             <td (click)="$event.stopPropagation()">
               <div class="actions-cell">
                 <button class="btn-icon danger" (click)="deletar(ev)">
