@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component } from "@angular/core";
+import { Router } from "@angular/router";
 
 @Component({
-  selector: 'app-home',
+  selector: "app-home",
   standalone: true,
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css'],
+  templateUrl: "./home.component.html",
+  styleUrls: ["./home.component.css"],
 })
 export class HomeComponent {
   constructor(private router: Router) {}
-  goTo(path: string) { this.router.navigate([path]); }
+  goTo(path: string) {
+    this.router.navigate([path]);
+  }
 }

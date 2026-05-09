@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { BaseService } from './base.service';
-import { Colaborador, ColaboradorUpdate } from '../../models';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { BaseService } from "./base.service";
+import { Colaborador, ColaboradorUpdate } from "../../models";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ColaboradorService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
@@ -14,8 +14,15 @@ export class ColaboradorService extends BaseService {
     return this.get<Colaborador[]>(`/estudos/${estudo_id}/colaboradores`);
   }
 
-  atualizar(estudo_id: number, id: number, data: ColaboradorUpdate): Observable<Colaborador> {
-    return this.patch<Colaborador>(`/estudos/${estudo_id}/colaboradores/${id}`, data);
+  atualizar(
+    estudo_id: number,
+    id: number,
+    data: ColaboradorUpdate,
+  ): Observable<Colaborador> {
+    return this.patch<Colaborador>(
+      `/estudos/${estudo_id}/colaboradores/${id}`,
+      data,
+    );
   }
 
   deletar(estudo_id: number, id: number): Observable<void> {

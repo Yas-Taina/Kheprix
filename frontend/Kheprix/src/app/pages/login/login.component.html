@@ -1,36 +1,54 @@
 <div class="auth-page">
-      <div class="auth-form-side">
-        <div class="auth-form-box">
-          <div class="form-group">
-            <label class="form-label">E-mail:</label>
-            <input class="form-control" type="email" [(ngModel)]="email" placeholder="seu@email.com" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Senha:</label>
-            <input class="form-control" type="password" [(ngModel)]="senha" placeholder="••••••••" />
-          </div>
-          <a class="forgot-link" routerLink="/recuperar-senha" style="text-align: center;">Esqueci minha senha</a>
-          <div *ngIf="erro" class="alert alert-error mt-md">{{ erro }}</div>
-          <button class="btn btn-primary btn-full mt-md" (click)="onLogin()" [disabled]="loading">
-            {{ loading ? 'Entrando...' : 'Confirmar' }}
-          </button>
-        </div>
+  <div class="auth-form-side">
+    <div class="auth-form-box">
+      <div class="form-group">
+        <label class="form-label">E-mail:</label>
+        <input
+          class="form-control"
+          type="email"
+          [(ngModel)]="email"
+          placeholder="seu@email.com"
+        />
       </div>
-
-      <div class="auth-info-side">
-        <h1 class="auth-title">LOGIN</h1>
-        <div class="auth-image-wrapper">
-          <div class="auth-divider-lines"></div>
-
-          <img
-            src="/img/icon_marrom.png"
-            alt="Inseto"
-            class="auth-insect"
-          />
-        </div>
-        <p class="auth-info-text">Faça seu login de usuário para ter acesso ao sistema</p>
-        <p class="auth-info-text">
-          Ainda não tem uma conta? Faça seu cadastro <a routerLink="/cadastro">aqui</a>
-        </p>
+      <div class="form-group">
+        <label class="form-label">Senha:</label>
+        <input
+          class="form-control"
+          type="password"
+          [(ngModel)]="senha"
+          placeholder="••••••••"
+        />
       </div>
+      <a
+        class="forgot-link"
+        routerLink="/recuperar-senha"
+        style="text-align: center"
+        >Esqueci minha senha</a
+      >
+      <div *ngIf="erro" class="alert alert-error mt-md">{{ erro }}</div>
+      <button
+        class="btn btn-primary btn-full mt-md"
+        (click)="onLogin()"
+        [disabled]="loading"
+      >
+        {{ loading ? "Entrando..." : "Confirmar" }}
+      </button>
     </div>
+  </div>
+
+  <div class="auth-info-side">
+    <h1 class="auth-title">LOGIN</h1>
+    <div class="auth-image-wrapper">
+      <div class="auth-divider-lines"></div>
+
+      <img src="/img/icon_marrom.png" alt="Inseto" class="auth-insect" />
+    </div>
+    <p class="auth-info-text">
+      Faça seu login de usuário para ter acesso ao sistema
+    </p>
+    <p class="auth-info-text">
+      Ainda não tem uma conta? Faça seu cadastro
+      <a routerLink="/cadastro">aqui</a>
+    </p>
+  </div>
+</div>

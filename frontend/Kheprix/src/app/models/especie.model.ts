@@ -1,15 +1,22 @@
 export type StatusConservacao =
-  | 'LC' | 'NT' | 'VU' | 'EN' | 'CR' | 'EW' | 'EX' | 'DD';
+  | "LC"
+  | "NT"
+  | "VU"
+  | "EN"
+  | "CR"
+  | "EW"
+  | "EX"
+  | "DD";
 
 export const StatusConservacaoLabels: Record<StatusConservacao, string> = {
-  LC: 'Menos Preocupante',
-  NT: 'Quase Ameaçada',
-  VU: 'Vulnerável',
-  EN: 'Em Perigo',
-  CR: 'Criticamente em Perigo',
-  EW: 'Extinto na Natureza',
-  EX: 'Extinto',
-  DD: 'Dados Insuficientes',
+  LC: "Menos Preocupante",
+  NT: "Quase Ameaçada",
+  VU: "Vulnerável",
+  EN: "Em Perigo",
+  CR: "Criticamente em Perigo",
+  EW: "Extinto na Natureza",
+  EX: "Extinto",
+  DD: "Dados Insuficientes",
 };
 
 export interface Especie {

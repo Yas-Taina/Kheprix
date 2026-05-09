@@ -1,4 +1,4 @@
-  .db-stats-row {
+.db-stats-row {
   display: flex;
   gap: var(--space-sm);
   flex-wrap: wrap;
@@ -54,11 +54,21 @@
   font-size: 0.9rem;
 }
 
-.db-chart-wrap          { position: relative; }
-.db-chart-wrap--line    { height: 155px; }
-.db-chart-wrap--donut   { height: 200px; }
-.db-chart-wrap--barh    { height: 100px; }
-.db-chart-wrap--barh-tall { height: 160px; }
+.db-chart-wrap {
+  position: relative;
+}
+.db-chart-wrap--line {
+  height: 155px;
+}
+.db-chart-wrap--donut {
+  height: 200px;
+}
+.db-chart-wrap--barh {
+  height: 100px;
+}
+.db-chart-wrap--barh-tall {
+  height: 160px;
+}
 
 .db-mapa-card {
   padding: 0;
@@ -87,7 +97,9 @@
   border-radius: var(--border-radius-md);
   padding: var(--space-sm) var(--space-md);
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
   background: var(--color-bg-cream);
 }
 

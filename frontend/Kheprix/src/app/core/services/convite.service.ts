@@ -1,22 +1,29 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { BaseService } from './base.service';
-import { Convite, ConviteRecebido, ConvitePublico, StatusConvite } from '../../models';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { BaseService } from "./base.service";
+import {
+  Convite,
+  ConviteRecebido,
+  ConvitePublico,
+  StatusConvite,
+} from "../../models";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ConviteService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
   }
 
   criar(estudo_id: number, email_convidado: string): Observable<Convite> {
-    return this.post<Convite>(`/estudos/${estudo_id}/convites`, { email_convidado });
+    return this.post<Convite>(`/estudos/${estudo_id}/convites`, {
+      email_convidado,
+    });
   }
 
   listar(estudo_id: number, status?: StatusConvite): Observable<Convite[]> {
     const params: Record<string, string> = {};
-    if (status) params['status'] = status;
+    if (status) params["status"] = status;
     return this.get<Convite[]>(`/estudos/${estudo_id}/convites`, params);
   }
 
@@ -25,14 +32,14 @@ export class ConviteService extends BaseService {
   }
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ConviteRecebidoService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
   }
 
   listar(): Observable<ConviteRecebido[]> {
-    return this.get<ConviteRecebido[]>('/convites');
+    return this.get<ConviteRecebido[]>("/convites");
   }
 
   buscarPorToken(token: string): Observable<ConvitePublico> {

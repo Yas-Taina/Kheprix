@@ -127,7 +127,7 @@
 .menu-links li a {
   display: inline-block;
   padding: 1rem;
-  color: var( --color-bg-green-dark);
+  color: var(--color-bg-green-dark);
   text-decoration: none;
   font-size: 1.5rem;
   text-align: center;
@@ -137,7 +137,7 @@
   width: 60%;
   margin: 1rem auto;
   border: none;
-  border-top: 1px solid var( --color-bg-green-dark);
+  border-top: 1px solid var(--color-bg-green-dark);
 }
 
 @media (max-width: 768px) {
@@ -161,9 +161,9 @@ button {
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: var( --color-bg-green-dark);
+  background-color: var(--color-bg-green-dark);
   min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
 

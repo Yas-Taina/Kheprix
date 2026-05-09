@@ -1,5 +1,5 @@
-export type NivelAplicacao = 'campanha' | 'unidade' | 'evento' | 'registro';
-export type TipoDado = 'numerico' | 'texto' | 'logico';
+export type NivelAplicacao = "campanha" | "unidade" | "evento" | "registro";
+export type TipoDado = "numerico" | "texto" | "logico";
 
 export interface VariavelCreate {
   nome: string;

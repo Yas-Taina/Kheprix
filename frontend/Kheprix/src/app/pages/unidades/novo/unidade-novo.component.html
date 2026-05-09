@@ -1,25 +1,56 @@
-    <div class="page-container" style="max-width:700px">
-      <h1 class="page-title">{{ isEdit ? 'Editar Unidade Amostral' : 'Nova Unidade Amostral' }}</h1>
-      <div class="ornament-divider"><span>⸙</span></div>
+<div class="page-container" style="max-width: 700px">
+  <h1 class="page-title">
+    {{ isEdit ? "Editar Unidade Amostral" : "Nova Unidade Amostral" }}
+  </h1>
+  <div class="ornament-divider"><span>⸙</span></div>
 
-      <div class="form-group">
-        <label class="form-label">Nome</label>
-        <input class="form-control" type="text" [(ngModel)]="nome" placeholder="Nome da unidade" />
-      </div>
+  <div class="form-group">
+    <label class="form-label">Nome</label>
+    <input
+      class="form-control"
+      type="text"
+      [(ngModel)]="nome"
+      placeholder="Nome da unidade"
+    />
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Latitude / Longitude</label>
-        <div class="location-input-group">
-          <input class="form-control" type="text" [(ngModel)]="latDMS" placeholder="-00°00'00&quot;" />
-          <input class="form-control" type="text" [(ngModel)]="lngDMS" placeholder="-00°00'00&quot;" />
-          <button class="btn-location" (click)="obterLocalizacao()" title="Usar localização atual" [disabled]="gpsLoading">
-    
-            <span *ngIf="gpsLoading">
-              <svg fill="currentColor" height="24" width="24" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="0 0 512 512" xml:space="preserve">
-<g>
-	<g>
-		<path d="M422.957,478.609h-16.696v-89.044c0-58.08-33.125-108.564-81.473-133.565c48.834-25.253,81.473-76.015,81.473-133.565
+  <div class="form-group">
+    <label class="form-label">Latitude / Longitude</label>
+    <div class="location-input-group">
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="latDMS"
+        placeholder="-00°00'00&quot;"
+      />
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="lngDMS"
+        placeholder="-00°00'00&quot;"
+      />
+      <button
+        class="btn-location"
+        (click)="obterLocalizacao()"
+        title="Usar localização atual"
+        [disabled]="gpsLoading"
+      >
+        <span *ngIf="gpsLoading">
+          <svg
+            fill="currentColor"
+            height="24"
+            width="24"
+            version="1.1"
+            id="Layer_1"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 512 512"
+            xml:space="preserve"
+          >
+            <g>
+              <g>
+                <path
+                  d="M422.957,478.609h-16.696v-89.044c0-58.08-33.125-108.564-81.473-133.565c48.834-25.253,81.473-76.015,81.473-133.565
 			V33.391h16.696c9.22,0,16.696-7.475,16.696-16.696S432.177,0,422.957,0c-9.08,0-325.108,0-333.913,0
 			c-9.22,0-16.696,7.475-16.696,16.696s7.475,16.696,16.696,16.696h16.696v89.044c0,56.875,32.002,107.984,81.473,133.565
 			c-48.347,25.001-81.473,75.485-81.473,133.565v89.044H89.044c-9.22,0-16.696,7.475-16.696,16.696S79.823,512,89.044,512
@@ -30,71 +61,130 @@
 			 M372.87,459.658c-92.345-76.954-88.883-75.431-100.174-79.421v-18.498c0-9.22-7.475-16.696-16.696-16.696
 			s-16.696,7.475-16.696,16.696v18.499c-11.404,4.03-8.095,2.689-100.174,79.421v-70.094c0-58.773,43.612-107.546,100.174-115.672
 			v21.063c0,9.22,7.475,16.696,16.696,16.696s16.696-7.475,16.696-16.696v-21.063c56.562,8.126,100.174,56.899,100.174,115.672
-			V459.658z"/>
-	</g>
-</g>
-</svg>
-            </span>
-            <span *ngIf="!gpsLoading">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-            </span>
-          </button>
-        </div>
-        <small class="text-muted">Formato: -00°00'00" (preenchido automaticamente via GPS ou manualmente)</small>
-      </div>
+			V459.658z"
+                />
+              </g>
+            </g>
+          </svg>
+        </span>
+        <span *ngIf="!gpsLoading">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </button>
+    </div>
+    <small class="text-muted"
+      >Formato: -00°00'00" (preenchido automaticamente via GPS ou
+      manualmente)</small
+    >
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Raio (em metros)</label>
-        <div class="d-flex align-center gap-sm">
-          <input class="form-control" type="number" [(ngModel)]="raio" placeholder="Raio em m²" style="max-width:200px" />
-          <span class="text-muted" style="font-size:0.9rem">Usado para indicar a área total do estudo</span>
-        </div>
-      </div>
+  <div class="form-group">
+    <label class="form-label">Raio (em metros)</label>
+    <div class="d-flex align-center gap-sm">
+      <input
+        class="form-control"
+        type="number"
+        [(ngModel)]="raio"
+        placeholder="Raio em m²"
+        style="max-width: 200px"
+      />
+      <span class="text-muted" style="font-size: 0.9rem"
+        >Usado para indicar a área total do estudo</span
+      >
+    </div>
+  </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Método de Coleta</label>
-          <input class="form-control" type="text" [(ngModel)]="metodoColeta" placeholder="Ex: Armadilhas" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Esforço Amostral</label>
-          <input class="form-control" type="text" [(ngModel)]="esforcoAmostral" placeholder="Ex: 15" />
-        </div>
-      </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Método de Coleta</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="metodoColeta"
+        placeholder="Ex: Armadilhas"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Esforço Amostral</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="esforcoAmostral"
+        placeholder="Ex: 15"
+      />
+    </div>
+  </div>
 
-      <!-- Variáveis da Unidade -->
-      <ng-container *ngIf="variaveis.length > 0">
-        <label class="form-label">Variáveis da Unidade</label>
-        <div *ngFor="let v of variaveis; let i = index" class="form-group">
-          <label class="form-label">{{ v.nome }}</label>
-          <div class="form-inline-group">
-            @if (v.tipo_dado === 'texto'){
-            <input class="form-control" type="text" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
-            }
-            @if (v.tipo_dado === 'numerico'){
-            <input class="form-control" type="number" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
-            }
-            @if (v.tipo_dado === 'logico'){
-            <select class="form-control" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome">
-                <option value="true">Verdadeiro</option>
-                <option value="false">Falso</option>
-            </select>
-            }
-            <span *ngIf="v.metrica" class="text-muted" style="white-space:nowrap">{{ v.metrica }}</span>
-          </div>
-        </div>
-      </ng-container>
-
-      <div *ngIf="gpsErro" class="alert alert-error mt-sm">{{ gpsErro }}</div>
-      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
-
-      <div class="d-flex align-center justify-between mt-lg">
-        <button class="back-btn" (click)="voltar()">◀</button>
-        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
-          {{ loading ? 'Salvando...' : 'Confirmar' }}
-        </button>
+  <!-- Variáveis da Unidade -->
+  <ng-container *ngIf="variaveis.length > 0">
+    <label class="form-label">Variáveis da Unidade</label>
+    <div *ngFor="let v of variaveis; let i = index" class="form-group">
+      <label class="form-label">{{ v.nome }}</label>
+      <div class="form-inline-group">
+        @if (v.tipo_dado === "texto") {
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          />
+        }
+        @if (v.tipo_dado === "numerico") {
+          <input
+            class="form-control"
+            type="number"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          />
+        }
+        @if (v.tipo_dado === "logico") {
+          <select
+            class="form-control"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          >
+            <option value="true">Verdadeiro</option>
+            <option value="false">Falso</option>
+          </select>
+        }
+        <span
+          *ngIf="v.metrica"
+          class="text-muted"
+          style="white-space: nowrap"
+          >{{ v.metrica }}</span
+        >
       </div>
     </div>
+  </ng-container>
+
+  <div *ngIf="gpsErro" class="alert alert-error mt-sm">{{ gpsErro }}</div>
+  <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+  <div class="d-flex align-center justify-between mt-lg">
+    <button class="back-btn" (click)="voltar()">◀</button>
+    <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+      {{ loading ? "Salvando..." : "Confirmar" }}
+    </button>
+  </div>
+</div>

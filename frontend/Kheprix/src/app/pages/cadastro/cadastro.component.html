@@ -1,48 +1,68 @@
 <div class="auth-page">
-      <div class="auth-form-side">
-        <div class="auth-form-box">
-          <div class="form-group">
-            <label class="form-label">Nome:</label>
-            <input class="form-control" type="text" [(ngModel)]="nome" placeholder="Seu nome" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">E-mail:</label>
-            <input class="form-control" type="email" [(ngModel)]="email" placeholder="seu@email.com" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Senha:</label>
-            <input class="form-control" type="password" [(ngModel)]="senha" placeholder="••••••••" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Confirme a senha:</label>
-            <input class="form-control" type="password" [(ngModel)]="confirmarSenha" placeholder="••••••••" />
-          </div>
-          <div *ngIf="erro" class="alert alert-error mt-md">{{ erro }}</div>
-          <div *ngIf="sucesso" class="alert alert-success mt-md">{{ sucesso }}</div>
-          <button class="btn btn-primary btn-full mt-md" (click)="onCadastro()" [disabled]="loading">
-            {{ loading ? 'Cadastrando...' : 'Confirmar' }}
-          </button>
-        </div>
+  <div class="auth-form-side">
+    <div class="auth-form-box">
+      <div class="form-group">
+        <label class="form-label">Nome:</label>
+        <input
+          class="form-control"
+          type="text"
+          [(ngModel)]="nome"
+          placeholder="Seu nome"
+        />
       </div>
-
-      <div class="auth-info-side">
-        <h1 class="auth-title">CADASTRE-SE</h1>
-
-        <div class="auth-image-wrapper">
-          <div class="auth-divider-lines"></div>
-
-          <img
-            src="/img/icon_marrom.png"
-            alt="Inseto"
-            class="auth-insect"
-          />
-        </div>
-
-        <p class="auth-info-text">
-          Faça seu cadastro gratuitamente para ter acesso ao sistema
-        </p>
-        <p class="auth-info-text">
-          Já tem um cadastro? Faça seu login <a routerLink="/login">aqui</a>
-        </p>
+      <div class="form-group">
+        <label class="form-label">E-mail:</label>
+        <input
+          class="form-control"
+          type="email"
+          [(ngModel)]="email"
+          placeholder="seu@email.com"
+        />
       </div>
+      <div class="form-group">
+        <label class="form-label">Senha:</label>
+        <input
+          class="form-control"
+          type="password"
+          [(ngModel)]="senha"
+          placeholder="••••••••"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirme a senha:</label>
+        <input
+          class="form-control"
+          type="password"
+          [(ngModel)]="confirmarSenha"
+          placeholder="••••••••"
+        />
+      </div>
+      <div *ngIf="erro" class="alert alert-error mt-md">{{ erro }}</div>
+      <div *ngIf="sucesso" class="alert alert-success mt-md">{{ sucesso }}</div>
+      <button
+        class="btn btn-primary btn-full mt-md"
+        (click)="onCadastro()"
+        [disabled]="loading"
+      >
+        {{ loading ? "Cadastrando..." : "Confirmar" }}
+      </button>
     </div>
+  </div>
+
+  <div class="auth-info-side">
+    <h1 class="auth-title">CADASTRE-SE</h1>
+
+    <div class="auth-image-wrapper">
+      <div class="auth-divider-lines"></div>
+
+      <img src="/img/icon_marrom.png" alt="Inseto" class="auth-insect" />
+    </div>
+
+    <p class="auth-info-text">
+      Faça seu cadastro gratuitamente para ter acesso ao sistema
+    </p>
+    <p class="auth-info-text">
+      Já tem um cadastro? Faça seu login <a routerLink="/login">aqui</a>
+    </p>
+  </div>
+</div>

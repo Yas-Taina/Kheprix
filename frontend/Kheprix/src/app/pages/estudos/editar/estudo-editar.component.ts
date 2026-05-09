@@ -1,1 +1,1 @@
-export { EstudoNovoComponent as EstudoEditarComponent } from '../novo/estudo-novo.component';
+export { EstudoNovoComponent as EstudoEditarComponent } from "../novo/estudo-novo.component";

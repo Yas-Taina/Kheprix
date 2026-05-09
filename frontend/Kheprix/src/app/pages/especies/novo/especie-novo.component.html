@@ -1,19 +1,39 @@
-    <div class="page-container" style="max-width:700px">
-      <h1 class="page-title">{{ isEdit ? 'Editar Espécie' : 'Cadastro de Espécies' }}</h1>
-      <div class="ornament-divider"><span>⸙</span></div>
+<div class="page-container" style="max-width: 700px">
+  <h1 class="page-title">
+    {{ isEdit ? "Editar Espécie" : "Cadastro de Espécies" }}
+  </h1>
+  <div class="ornament-divider"><span>⸙</span></div>
 
-      <div class="form-group">
-        <label class="form-label">Foto</label>
-        <div class="photo-uploader">
-          <div class="form-control" style="flex:1">{{ fotoNome || 'Foto da Espécie' }}</div>
-          <button class="photo-upload-btn" (click)="abrirArquivo()" title="Selecionar arquivo">
-            <svg height="30" width="30" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="0 0 512 512"  xml:space="preserve">
-<style type="text/css">
-	.st0{fill:currentColor;}
-</style>
-<g>
-	<path class="st0" d="M503.283,233.406c-8.198-11.548-21.106-18.678-35.108-19.704v-44.571c0.007-12.334-5.052-23.663-13.14-31.724
+  <div class="form-group">
+    <label class="form-label">Foto</label>
+    <div class="photo-uploader">
+      <div class="form-control" style="flex: 1">
+        {{ fotoNome || "Foto da Espécie" }}
+      </div>
+      <button
+        class="photo-upload-btn"
+        (click)="abrirArquivo()"
+        title="Selecionar arquivo"
+      >
+        <svg
+          height="30"
+          width="30"
+          version="1.1"
+          id="_x32_"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 512 512"
+          xml:space="preserve"
+        >
+          <style type="text/css">
+            .st0 {
+              fill: currentColor;
+            }
+          </style>
+          <g>
+            <path
+              class="st0"
+              d="M503.283,233.406c-8.198-11.548-21.106-18.678-35.108-19.704v-44.571c0.007-12.334-5.052-23.663-13.14-31.724
 		c-8.068-8.088-19.39-13.14-31.724-13.134H220.167c-2.495,0-4.916-0.951-6.755-2.681l0.013,0.021L177.73,88.139
 		c-8.321-7.794-19.287-12.136-30.684-12.136H88.698c-12.334-0.007-23.663,5.053-31.724,13.141
 		c-8.088,8.06-13.147,19.39-13.14,31.724v92.834c-14.002,1.026-26.911,8.156-35.109,19.711C2.981,241.509,0,251.094,0,260.768
@@ -24,81 +44,143 @@
 		C512,251.094,509.026,241.509,503.283,233.406z M433.168,213.497H78.838v-92.628c0.007-2.776,1.074-5.128,2.885-6.974
 		c1.846-1.812,4.198-2.878,6.974-2.885h58.348c2.509,0,4.908,0.951,6.748,2.667l35.69,33.468l0.013,0.02
 		c8.3,7.76,19.26,12.115,30.671,12.115H423.31c2.776,0.006,5.134,1.074,6.974,2.885c1.812,1.839,2.879,4.191,2.885,6.967V213.497z"
-		/>
-</g>
-</svg>
-          </button>
-          <button class="photo-upload-btn" (click)="abrirCamera()" title="Câmera">
-           <svg width="30px" height="30px" viewBox="0 -2 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-    
-    <title>Câmera</title>
-    <defs>
-
-</defs>
-    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
-        <g id="Icon-Set" sketch:type="MSLayerGroup" transform="translate(-256.000000, -465.000000)" fill="currentColor">
-            <path d="M272,487 C268.687,487 266,484.313 266,481 C266,477.687 268.687,475 272,475 C275.313,475 278,477.687 278,481 C278,484.313 275.313,487 272,487 L272,487 Z M272,473 C267.582,473 264,476.582 264,481 C264,485.418 267.582,489 272,489 C276.418,489 280,485.418 280,481 C280,476.582 276.418,473 272,473 L272,473 Z M286,489 C286,490.104 285.104,491 284,491 L260,491 C258.896,491 258,490.104 258,489 L258,473 C258,471.896 258.896,471 260,471 L264,471 L265,469 C265.707,467.837 265.896,467 267,467 L277,467 C278.104,467 278.293,467.837 279,469 L280,471 L284,471 C285.104,471 286,471.896 286,473 L286,489 L286,489 Z M284,469 L281,469 L280,467 C279.411,465.837 279.104,465 278,465 L266,465 C264.896,465 264.53,465.954 264,467 L263,469 L260,469 C257.791,469 256,470.791 256,473 L256,489 C256,491.209 257.791,493 260,493 L284,493 C286.209,493 288,491.209 288,489 L288,473 C288,470.791 286.209,469 284,469 L284,469 Z" id="camera" sketch:type="MSShapeGroup">
-
-</path>
-        </g>
-    </g>
-</svg>
-          </button>
-        </div>
-        <img *ngIf="fotoPreview" [src]="fotoPreview" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-top:8px" />
-      </div>
-
-      <div class="form-row three-col">
-        <div class="form-group">
-          <label class="form-label">Classe</label>
-          <input class="form-control" type="text" [(ngModel)]="classe" placeholder="Insecta" value="Insecta"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ordem</label>
-          <input class="form-control" type="text" [(ngModel)]="ordem" placeholder="Classe da Espécie" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Família</label>
-          <input class="form-control" type="text" [(ngModel)]="familia" placeholder="Familia da Espécie" />
-        </div>
-      </div>
-
-      <div class="form-row three-col">
-        <div class="form-group">
-          <label class="form-label">Gênero</label>
-          <input class="form-control" type="text" [(ngModel)]="genero" placeholder="Gênero da Espécie" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Espécie</label>
-          <input class="form-control" type="text" [(ngModel)]="especie" placeholder="Espécie" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nome Popular</label>
-          <input class="form-control" type="text" [(ngModel)]="nomePopular" placeholder="Nome Popular" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Status de Conservação</label>
-        <select class="form-control" [(ngModel)]="statusConservacao">
-          <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="orb-checkbox">
-          <input type="checkbox" [(ngModel)]="endemismo" />
-          <span class="orb-indicator"></span>
-          A espécie é nativa da região
-        </label>
-      </div>
-
-      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
-
-      <div class="d-flex align-center justify-between mt-lg">
-        <button class="back-btn" (click)="voltar()">◀</button>
-        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
-          {{ loading ? 'Salvando...' : 'Confirmar' }}
-        </button>
-      </div>
+            />
+          </g>
+        </svg>
+      </button>
+      <button class="photo-upload-btn" (click)="abrirCamera()" title="Câmera">
+        <svg
+          width="30px"
+          height="30px"
+          viewBox="0 -2 32 32"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+        >
+          <title>Câmera</title>
+          <defs></defs>
+          <g
+            id="Page-1"
+            stroke="none"
+            stroke-width="1"
+            fill="none"
+            fill-rule="evenodd"
+            sketch:type="MSPage"
+          >
+            <g
+              id="Icon-Set"
+              sketch:type="MSLayerGroup"
+              transform="translate(-256.000000, -465.000000)"
+              fill="currentColor"
+            >
+              <path
+                d="M272,487 C268.687,487 266,484.313 266,481 C266,477.687 268.687,475 272,475 C275.313,475 278,477.687 278,481 C278,484.313 275.313,487 272,487 L272,487 Z M272,473 C267.582,473 264,476.582 264,481 C264,485.418 267.582,489 272,489 C276.418,489 280,485.418 280,481 C280,476.582 276.418,473 272,473 L272,473 Z M286,489 C286,490.104 285.104,491 284,491 L260,491 C258.896,491 258,490.104 258,489 L258,473 C258,471.896 258.896,471 260,471 L264,471 L265,469 C265.707,467.837 265.896,467 267,467 L277,467 C278.104,467 278.293,467.837 279,469 L280,471 L284,471 C285.104,471 286,471.896 286,473 L286,489 L286,489 Z M284,469 L281,469 L280,467 C279.411,465.837 279.104,465 278,465 L266,465 C264.896,465 264.53,465.954 264,467 L263,469 L260,469 C257.791,469 256,470.791 256,473 L256,489 C256,491.209 257.791,493 260,493 L284,493 C286.209,493 288,491.209 288,489 L288,473 C288,470.791 286.209,469 284,469 L284,469 Z"
+                id="camera"
+                sketch:type="MSShapeGroup"
+              ></path>
+            </g>
+          </g>
+        </svg>
+      </button>
     </div>
+    <img
+      *ngIf="fotoPreview"
+      [src]="fotoPreview"
+      style="
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-top: 8px;
+      "
+    />
+  </div>
+
+  <div class="form-row three-col">
+    <div class="form-group">
+      <label class="form-label">Classe</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="classe"
+        placeholder="Insecta"
+        value="Insecta"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ordem</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="ordem"
+        placeholder="Classe da Espécie"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Família</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="familia"
+        placeholder="Familia da Espécie"
+      />
+    </div>
+  </div>
+
+  <div class="form-row three-col">
+    <div class="form-group">
+      <label class="form-label">Gênero</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="genero"
+        placeholder="Gênero da Espécie"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Espécie</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="especie"
+        placeholder="Espécie"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nome Popular</label>
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="nomePopular"
+        placeholder="Nome Popular"
+      />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Status de Conservação</label>
+    <select class="form-control" [(ngModel)]="statusConservacao">
+      <option *ngFor="let s of statusList" [value]="s.value">
+        {{ s.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="orb-checkbox">
+      <input type="checkbox" [(ngModel)]="endemismo" />
+      <span class="orb-indicator"></span>
+      A espécie é nativa da região
+    </label>
+  </div>
+
+  <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+  <div class="d-flex align-center justify-between mt-lg">
+    <button class="back-btn" (click)="voltar()">◀</button>
+    <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+      {{ loading ? "Salvando..." : "Confirmar" }}
+    </button>
+  </div>
+</div>

@@ -1,60 +1,99 @@
 <div class="auth-page">
-      <div class="auth-form-side">
-        <div class="auth-form-box">
-          <ng-container *ngIf="!tokenValido">
-            <div class="form-group">
-              <label class="form-label">E-mail:</label>
-              <input class="form-control" type="email" [(ngModel)]="email" placeholder="seu@email.com" [disabled]="tokenEnviado" />
-            </div>
-            <button class="btn btn-primary" style="margin-bottom:var(--space-md)" (click)="solicitarToken()" [disabled]="loadingStep1 || tokenEnviado" style="width: 100%; margin-bottom: 5vh;">
-              {{ loadingStep1 ? 'Enviando...' : 'Enviar Token' }}
-            </button>
-
-            <div class="form-group">
-              <label class="form-label">Token:</label>
-              <input class="form-control" type="text" [(ngModel)]="token" placeholder="Token recebido por e-mail" />
-            </div>
-            <div *ngIf="erroStep1" class="alert alert-error mt-md">{{ erroStep1 }}</div>
-            <div *ngIf="msgStep1" class="alert alert-success mt-md">{{ msgStep1 }}</div>
-            <button class="btn btn-primary btn-full mt-md" (click)="validarToken()" [disabled]="loadingStep2 || !token">
-              {{ loadingStep2 ? 'Validando...' : 'Confirmar' }}
-            </button>
-          </ng-container>
-          <ng-container *ngIf="tokenValido">
-            <div class="form-group">
-              <label class="form-label">Nova senha:</label>
-              <input class="form-control" type="password" [(ngModel)]="novaSenha" placeholder="••••••••" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Confirme a senha:</label>
-              <input class="form-control" type="password" [(ngModel)]="confirmarSenha" placeholder="••••••••" />
-            </div>
-            <div *ngIf="erroStep3" class="alert alert-error mt-md">{{ erroStep3 }}</div>
-            <div *ngIf="msgStep3" class="alert alert-success mt-md">{{ msgStep3 }}</div>
-            <button class="btn btn-primary btn-full mt-md" (click)="redefinirSenha()" [disabled]="loadingStep3">
-              {{ loadingStep3 ? 'Salvando...' : 'Confirmar' }}
-            </button>
-          </ng-container>
-
-        </div>
-      </div>
-
-            <div class="auth-info-side">
-        <h1 class="auth-title">RECUPERAÇÃO DE SENHA</h1>
-        <div class="auth-image-wrapper">
-          <div class="auth-divider-lines"></div>
-
-          <img
-            src="/img/icon_marrom.png"
-            alt="Inseto"
-            class="auth-insect"
+  <div class="auth-form-side">
+    <div class="auth-form-box">
+      <ng-container *ngIf="!tokenValido">
+        <div class="form-group">
+          <label class="form-label">E-mail:</label>
+          <input
+            class="form-control"
+            type="email"
+            [(ngModel)]="email"
+            placeholder="seu@email.com"
+            [disabled]="tokenEnviado"
           />
         </div>
-        <p class="auth-info-text" *ngIf="!tokenValido">
-          Informe seu email e aguarde o envio do token de confirmação. Então, informe o token para prosseguir.
-        </p>
-        <p class="auth-info-text" *ngIf="tokenValido">
-          Insira uma nova senha e confirme sua escolha
-        </p>
-      </div>
+        <button
+          class="btn btn-primary"
+          style="margin-bottom: var(--space-md)"
+          (click)="solicitarToken()"
+          [disabled]="loadingStep1 || tokenEnviado"
+          style="width: 100%; margin-bottom: 5vh"
+        >
+          {{ loadingStep1 ? "Enviando..." : "Enviar Token" }}
+        </button>
+
+        <div class="form-group">
+          <label class="form-label">Token:</label>
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="token"
+            placeholder="Token recebido por e-mail"
+          />
+        </div>
+        <div *ngIf="erroStep1" class="alert alert-error mt-md">
+          {{ erroStep1 }}
+        </div>
+        <div *ngIf="msgStep1" class="alert alert-success mt-md">
+          {{ msgStep1 }}
+        </div>
+        <button
+          class="btn btn-primary btn-full mt-md"
+          (click)="validarToken()"
+          [disabled]="loadingStep2 || !token"
+        >
+          {{ loadingStep2 ? "Validando..." : "Confirmar" }}
+        </button>
+      </ng-container>
+      <ng-container *ngIf="tokenValido">
+        <div class="form-group">
+          <label class="form-label">Nova senha:</label>
+          <input
+            class="form-control"
+            type="password"
+            [(ngModel)]="novaSenha"
+            placeholder="••••••••"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirme a senha:</label>
+          <input
+            class="form-control"
+            type="password"
+            [(ngModel)]="confirmarSenha"
+            placeholder="••••••••"
+          />
+        </div>
+        <div *ngIf="erroStep3" class="alert alert-error mt-md">
+          {{ erroStep3 }}
+        </div>
+        <div *ngIf="msgStep3" class="alert alert-success mt-md">
+          {{ msgStep3 }}
+        </div>
+        <button
+          class="btn btn-primary btn-full mt-md"
+          (click)="redefinirSenha()"
+          [disabled]="loadingStep3"
+        >
+          {{ loadingStep3 ? "Salvando..." : "Confirmar" }}
+        </button>
+      </ng-container>
     </div>
+  </div>
+
+  <div class="auth-info-side">
+    <h1 class="auth-title">RECUPERAÇÃO DE SENHA</h1>
+    <div class="auth-image-wrapper">
+      <div class="auth-divider-lines"></div>
+
+      <img src="/img/icon_marrom.png" alt="Inseto" class="auth-insect" />
+    </div>
+    <p class="auth-info-text" *ngIf="!tokenValido">
+      Informe seu email e aguarde o envio do token de confirmação. Então,
+      informe o token para prosseguir.
+    </p>
+    <p class="auth-info-text" *ngIf="tokenValido">
+      Insira uma nova senha e confirme sua escolha
+    </p>
+  </div>
+</div>
