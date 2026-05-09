@@ -134,7 +134,9 @@
         <label>Horário de Início</label
         ><span>{{ util.formatDateTime(eventoDetalhe.horario_inicio) }}</span>
       </div>
-      <!--<div class="detail-field"><label>Horário de Ultima Alteração</label><span>{{ util.formatDateTime(eventoDetalhe.updated_at) }}</span></div>-->
+      <div class="detail-field">
+        <label>Horário de Ultima Alteração</label>
+        <span>{{ util.formatDateTime(eventoDetalhe.updated_at) }}</span></div>
       <div class="detail-field">
         <label>Esforço Real</label
         ><span>{{ eventoDetalhe.esforco_real || "—" }}</span>

@@ -6,7 +6,7 @@ export interface EventoAmostragem {
   horario_inicio: string;
   esforco_real: string;
   created_at: string;
-  //updated_at: string;
+  updated_at: string;
 }
 
 export interface EventoAmostragemCreate {
