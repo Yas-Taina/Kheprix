@@ -37,7 +37,7 @@ export const routes: Routes = [
     path: "inicio",
     loadComponent: () =>
       import("./pages/inicio/inicio.component").then((m) => m.InicioComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "registro-rapido",
@@ -45,7 +45,7 @@ export const routes: Routes = [
       import("./pages/cadastro-rapido/cadastro-rapido.component").then(
         (m) => m.CadastroRapidoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "convites",
@@ -53,7 +53,7 @@ export const routes: Routes = [
       import("./pages/convites/convites.component").then(
         (m) => m.ConvitesComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Estudos
@@ -63,7 +63,7 @@ export const routes: Routes = [
       import("./pages/estudos/lista/estudos-lista.component").then(
         (m) => m.EstudosListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/analises",
@@ -71,7 +71,7 @@ export const routes: Routes = [
       import("./pages/estudos/analise/analise.component").then(
         (m) => m.AnalisesComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/novo",
@@ -79,7 +79,7 @@ export const routes: Routes = [
       import("./pages/estudos/novo/estudo-novo.component").then(
         (m) => m.EstudoNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id",
@@ -87,7 +87,7 @@ export const routes: Routes = [
       import("./pages/estudos/detalhe/estudo-detalhe.component").then(
         (m) => m.EstudoDetalheComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/editar",
@@ -95,7 +95,7 @@ export const routes: Routes = [
       import("./pages/estudos/editar/estudo-editar.component").then(
         (m) => m.EstudoEditarComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/colaboradores",
@@ -103,7 +103,7 @@ export const routes: Routes = [
       import("./pages/estudos/colaboradores/colaboradores.component").then(
         (m) => m.ColaboradoresComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Espécies
@@ -113,7 +113,7 @@ export const routes: Routes = [
       import("./pages/especies/lista/especies-lista.component").then(
         (m) => m.EspeciesListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/especies/novo",
@@ -121,7 +121,7 @@ export const routes: Routes = [
       import("./pages/especies/novo/especie-novo.component").then(
         (m) => m.EspecieNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/especies/:especie_id",
@@ -129,7 +129,7 @@ export const routes: Routes = [
       import("./pages/especies/detalhe/especie-detalhe.component").then(
         (m) => m.EspecieDetalheComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/especies/:especie_id/editar",
@@ -137,7 +137,7 @@ export const routes: Routes = [
       import("./pages/especies/novo/especie-novo.component").then(
         (m) => m.EspecieNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Campanhas
@@ -147,7 +147,7 @@ export const routes: Routes = [
       import("./pages/campanhas/lista/campanhas-lista.component").then(
         (m) => m.CampanhasListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/novo",
@@ -155,7 +155,7 @@ export const routes: Routes = [
       import("./pages/campanhas/novo/campanha-novo.component").then(
         (m) => m.CampanhaNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/editar",
@@ -163,7 +163,7 @@ export const routes: Routes = [
       import("./pages/campanhas/novo/campanha-novo.component").then(
         (m) => m.CampanhaNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Unidades Amostrais
@@ -173,7 +173,7 @@ export const routes: Routes = [
       import("./pages/unidades/lista/unidades-lista.component").then(
         (m) => m.UnidadesListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/novo",
@@ -181,7 +181,7 @@ export const routes: Routes = [
       import("./pages/unidades/novo/unidade-novo.component").then(
         (m) => m.UnidadeNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/editar",
@@ -189,7 +189,7 @@ export const routes: Routes = [
       import("./pages/unidades/novo/unidade-novo.component").then(
         (m) => m.UnidadeNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Eventos de Amostragem
@@ -199,7 +199,7 @@ export const routes: Routes = [
       import("./pages/eventos/lista/eventos-lista.component").then(
         (m) => m.EventosListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/novo",
@@ -207,7 +207,7 @@ export const routes: Routes = [
       import("./pages/eventos/novo/evento-novo.component").then(
         (m) => m.EventoNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/:evento_id/editar",
@@ -215,7 +215,7 @@ export const routes: Routes = [
       import("./pages/eventos/novo/evento-novo.component").then(
         (m) => m.EventoNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   // Registros de Ocorrência
@@ -225,7 +225,7 @@ export const routes: Routes = [
       import("./pages/registros/lista/registros-lista.component").then(
         (m) => m.RegistrosListaComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/:evento_id/registros/novo",
@@ -233,7 +233,7 @@ export const routes: Routes = [
       import("./pages/registros/novo/registro-novo.component").then(
         (m) => m.RegistroNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/:evento_id/registros/:registro_id/editar",
@@ -241,7 +241,7 @@ export const routes: Routes = [
       import("./pages/registros/novo/registro-novo.component").then(
         (m) => m.RegistroNovoComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/:evento_id/registros/:registro_id",
@@ -249,7 +249,7 @@ export const routes: Routes = [
       import("./pages/registros/detalhe/registro-detalhe.component").then(
         (m) => m.RegistroDetalheComponent,
       ),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
 
   { path: "**", redirectTo: "" },

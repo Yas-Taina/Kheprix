@@ -59,11 +59,9 @@ export class CampanhasListaComponent implements OnInit {
   }
   deletar(c: Campanha) {
     if (!confirm(`Excluir "${c.nome}"?`)) return;
-    this.campanhaService
-      .deletar(this.estudoId, c.id)
-      .subscribe({
-        next: () =>
-          (this.campanhas = this.campanhas.filter((x) => x.id !== c.id)),
-      });
+    this.campanhaService.deletar(this.estudoId, c.id).subscribe({
+      next: () =>
+        (this.campanhas = this.campanhas.filter((x) => x.id !== c.id)),
+    });
   }
 }

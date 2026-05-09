@@ -46,7 +46,6 @@ export class EspecieDetalheComponent implements OnInit {
       const estudo = l.find((e) => e.id === this.estudoId);
       this.perfilEstudo = estudo?.perfil ?? "";
     });
-
   }
 
   isProprietario(): boolean {

@@ -479,6 +479,6 @@ export interface ExecutarAnaliseResponse {
   analise: string;
   nome: string;
   valor: Record<string, unknown> | null;
-  grafico: string | null; 
+  grafico: string | null;
   urlArquivo: string | null;
 }

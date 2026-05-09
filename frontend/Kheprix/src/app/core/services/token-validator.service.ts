@@ -37,7 +37,9 @@ export class TokenValidatorService implements OnDestroy {
         switchMap(() =>
           this.authService.validarToken(this.authService.getToken()!).pipe(
             catchError(() => {
-              console.warn("TokenValidator: falha ao validar token (cheque sua rede)");
+              console.warn(
+                "TokenValidator: falha ao validar token (cheque sua rede)",
+              );
               return of({ valido: true });
             }),
           ),

@@ -119,7 +119,7 @@ export class AnalisesComponent implements OnInit {
   nomeGrupo2 = "";
   variavelIdsAmbientais: number[] = [];
   filtroCampanhaIds: number[] = [];
-  filtroUnidadeIds: number[] = []; 
+  filtroUnidadeIds: number[] = [];
   dataInicio = "";
   dataFim = "";
   latMinMask = "";
