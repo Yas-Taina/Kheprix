@@ -18,7 +18,7 @@ export class EspecieNovoComponent implements OnInit {
   estudoId!: number;
   especieId: number | null = null;
   isEdit = false;
-  classe = ''; ordem = ''; familia = ''; genero = ''; especie = '';
+  classe = 'Insecta'; ordem = ''; familia = ''; genero = ''; especie = '';
   nomePopular = ''; statusConservacao: StatusConservacao = 'LC'; endemismo = false;
   fotoBase64 = ''; fotoNome = ''; fotoPreview = '';
   loading = false; erro = '';

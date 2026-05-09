@@ -15,7 +15,7 @@ import { Variavel, ValorVariavel } from '../../../models';
 })
 export class CampanhaNovoComponent implements OnInit {
   estudoId!: number; campanhaId: number | null = null; isEdit = false;
-  nome = ''; dataInicio = ''; dataFim = ''; descricao = '';
+  nome = ''; dataInicio = ''; descricao = '';
   variaveis: Variavel[] = []; valoresVars: ValorVariavel[] = [];
   loading = false; erro = '';
 
@@ -32,7 +32,7 @@ export class CampanhaNovoComponent implements OnInit {
     });
     if (this.isEdit && this.campanhaId) {
       this.campanhaService.buscar(this.estudoId, this.campanhaId).subscribe(c => {
-        this.nome = c.nome; this.dataInicio = c.data_inicio; this.dataFim = c.data_fim ?? ''; this.descricao = c.descricao ?? '';
+        this.nome = c.nome; this.dataInicio = c.data_inicio; this.descricao = c.descricao ?? '';
       });
     }
   }
@@ -40,7 +40,7 @@ export class CampanhaNovoComponent implements OnInit {
   salvar() {
     if (!this.nome || !this.dataInicio) { this.erro = 'Nome e data de início são obrigatórios.'; return; }
     this.loading = true; this.erro = '';
-    const payload = { nome: this.nome, data_inicio: this.dataInicio, data_fim: this.dataFim || undefined, descricao: this.descricao || undefined, valores_variaveis: this.valoresVars.filter(v => v.valor) };
+    const payload = { nome: this.nome, data_inicio: this.dataInicio, descricao: this.descricao || undefined, valores_variaveis: this.valoresVars.filter(v => v.valor !== '' && v.valor !== null && v.valor !== undefined) };
     const obs = this.isEdit && this.campanhaId
       ? this.campanhaService.atualizar(this.estudoId, this.campanhaId, payload)
       : this.campanhaService.criar(this.estudoId, payload);

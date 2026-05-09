@@ -10,18 +10,24 @@
         <label class="form-label">Data de Início</label>
         <input class="form-control" type="date" [(ngModel)]="dataInicio" />
       </div>
-      <div class="form-group">
-        <label class="form-label">Data de Fim</label>
-        <input class="form-control" type="date" [(ngModel)]="dataFim" />
-      </div>
 
-      <!-- Variáveis da Campanha -->
       <ng-container *ngIf="variaveis.length > 0">
         <label class="form-label">Variáveis da Campanha</label>
         <div *ngFor="let v of variaveis; let i = index" class="form-group">
           <label class="form-label">{{ v.nome }}</label>
           <div class="form-inline-group">
+            @if (v.tipo_dado === 'texto'){
             <input class="form-control" type="text" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
+            }
+            @if (v.tipo_dado === 'numerico'){
+            <input class="form-control" type="number" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
+            }
+            @if (v.tipo_dado === 'logico'){
+            <select class="form-control" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome">
+                <option value="true">Verdadeiro</option>
+                <option value="false">Falso</option>
+            </select>
+            }
             <span *ngIf="v.metrica" class="text-muted" style="white-space:nowrap">{{ v.metrica }}</span>
           </div>
         </div>

@@ -95,7 +95,7 @@ export class RegistroNovoComponent implements OnInit {
       qtde_individuos: this.qtdeIndividuos ?? undefined,
       ausencia_especie: this.ausenciaEspecie,
       ...(this.fotoBase64 ? { foto: this.fotoBase64 } : {}),
-      valores_variaveis: this.valoresVars.filter(v => v.valor),
+      valores_variaveis: this.valoresVars.filter(v => v.valor !== '' && v.valor !== null && v.valor !== undefined),
     };
     const obs = this.isEdit && this.registroId
       ? this.registroService.atualizar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId, this.registroId, payload)

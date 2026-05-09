@@ -1,4 +1,5 @@
 export * from './auth.model';
+export * from './analise.model';
 export * from './dashboard.model';
 export * from './variavel.model';
 export * from './estudo.model';
