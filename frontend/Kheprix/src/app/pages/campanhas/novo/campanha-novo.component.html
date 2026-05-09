@@ -11,7 +11,6 @@
         <input class="form-control" type="date" [(ngModel)]="dataInicio" />
       </div>
 
-      <!-- Variáveis da Campanha -->
       <ng-container *ngIf="variaveis.length > 0">
         <label class="form-label">Variáveis da Campanha</label>
         <div *ngFor="let v of variaveis; let i = index" class="form-group">
