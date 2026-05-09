@@ -4,8 +4,9 @@
       height: 100vh;
     }
 
+
     .home-section {
-      height: 85vh;
+      height: 100vh;
       scroll-snap-align: start;
       display: flex;
       align-items: center;
@@ -36,7 +37,8 @@
     }
 
     .hero-insect {
-      height: 45vh;
+      height: 55vh;
+      max-width: 100vw;
       object-fit: contain;
     }
 
@@ -80,41 +82,35 @@
     }
 
     /* --- Feature sections --- */
-    .feature-section {
+     .personalize-section {
       background-color: var(--color-bg-cream);
+      text-align: right;
     }
 
-    .feature-right-img {
+    .personalize {
       background-color: var(--color-bg-green-light);
       flex-direction: row;
     }
 
-    .feature-left-img {
-      background-color: var(--color-bg-cream);
-      flex-direction: row;
-    }
-
-    .feature-text {
+    .personalize-text {
       flex: 1;
       padding: var(--space-3xl);
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: var(--space-lg);
+      padding-left: 10vw;
+      border-right: 2px solid var(--color-bg-cream);
     }
 
-    .feature-text-right {
-      padding-left: var(--space-2xl);
-    }
-
-    .feature-image {
+    .personalize-image {
       overflow: hidden;
       position: relative;
       display: flex;
-      height: 85vh;
+      height: 100vh;
     }
 
-    .feature-image::before {
+    .personalize-image::before {
       content: "";
       position: absolute;
       top: 0;
@@ -125,12 +121,12 @@
       background: linear-gradient(to right, var(--color-bg-green-light) 0%, rgba(244, 244, 244, 0) 100%);
     }
 
-    .feature-image-bg {
+    .personbalize-image-bg {
       overflow-x: hidden;
       overflow-y: hidden;
     }
 
-    .section-feature-title {
+    .personalize-title {
       font-family: var(--font-display);
       font-size: 1.8rem;
       font-weight: 700;
@@ -140,9 +136,70 @@
       line-height: 1.3;
     }
 
-    .feature-text p {
+    .personalize-text p {
       font-family: var(--font-body);
-      font-size: 1rem;
+      font-size: 1.3rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      max-width: 600px;
+    }
+
+    /**/
+
+    .especie-section {
+      background-color: var(--color-bg-cream);
+      padding-left: 10vw;
+    }
+
+.especies-img {
+  background-color: var(--color-bg-green-light);
+  width: 75vh;
+  height: 50vh;
+  aspect-ratio: 3 / 2;
+  margin-right: var(--space-2xl);
+  overflow: hidden; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+    .especie-text {
+      flex: 1;
+      padding: var(--space-3xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--space-lg);
+      padding-left: var(--space-2xl);
+      border-left: 2px solid var(--color-text-primary);
+    }
+
+    .especies-img-bg {
+  min-width: 90vh; 
+  min-height: 90vh;
+  object-fit: cover;
+  object-position: center; 
+}
+
+    .especie-imagem {
+      background-color: var(--color-bg-cream);
+      flex-direction: row;
+    }
+
+    .especie-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .especie-text p {
+      font-family: var(--font-body);
+      font-size: 1.5rem;
       line-height: 1.7;
       color: var(--color-text-secondary);
       max-width: 400px;
@@ -150,7 +207,7 @@
 
     /* --- Analysis --- */
     .analysis-section {
-      background-color: var(--color-bg-cream);
+      background-color: var(--color-bg-green-light);
     }
 
     .analysis-box {
@@ -158,7 +215,7 @@
       border: 1.5px solid var(--border-color);
       border-radius: var(--border-radius-md);
       padding: var(--space-3xl) var(--space-2xl);
-      max-width: 700px;
+      max-width: 70vw;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -168,9 +225,24 @@
 
     .analysis-box p {
       font-family: var(--font-body);
-      font-size: 1rem;
+      font-size: 1.5rem;
       line-height: 1.7;
       color: var(--color-text-secondary);
+    }
+
+    .analysis-border {
+      margin: 3px;
+      border: 2px solid var(--color-bg-green-light);
+      padding: 5vh;
+    }
+    .analysis-title {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-bg-green-light);
+      line-height: 1.2;
     }
 
     @media (max-width: 768px) {

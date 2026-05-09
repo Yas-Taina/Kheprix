@@ -1,4 +1,4 @@
-import { Component, DoCheck } from '@angular/core';
+import { Component, DoCheck, OnInit } from '@angular/core';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,9 +10,19 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
-export class Menu {
+export class Menu implements OnInit {
   constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
+  isLogged = false;
   isOpen = false;
+
+  ngOnInit(): void {
+    this.checkLogged();
+  }
+
+  checkLogged(){
+    this.isLogged = this.authService.isLoggedIn();
+  }
+
   toggleMenu(){
     this.isOpen = !this.isOpen
   }
@@ -21,9 +31,24 @@ export class Menu {
     this.authService.logout();
   }
 
-  abrirHome() { this.router.navigate(['/inicio']); }
-  abrirRegistroRapido()   { this.router.navigate(['/registro-rapido']); }
-  abrirVisualizarEstudos() { this.router.navigate(['/estudos']); }
-  abrirCadastrarNovoEstudo()    { this.router.navigate(['/estudos/novo']); }
-  abrirConvitesColaboracao()      { this.router.navigate(['/convites']); }
+  abrirHome() { 
+    this.router.navigate(['/inicio']); 
+    this.toggleMenu();
+  }
+  abrirRegistroRapido()   { 
+    this.router.navigate(['/registro-rapido']); 
+    this.toggleMenu();
+  }
+  abrirVisualizarEstudos() { 
+    this.router.navigate(['/estudos']); 
+    this.toggleMenu();
+  }
+  abrirCadastrarNovoEstudo()    { 
+    this.router.navigate(['/estudos/novo']); 
+    this.toggleMenu();
+  }
+  abrirConvitesColaboracao()      { 
+    this.router.navigate(['/convites']); 
+    this.toggleMenu();
+  }
 }
