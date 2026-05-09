@@ -42,7 +42,7 @@
 
   @if (!carregando) {
     <div class="form-wrap">
-      <!-- ── Passo 1: Seleção da análise ─────────────────────────────────────── -->
+      <!-- Passo 1: Seleção da análise -->
       <section class="step-card">
         <div class="step-label">
           <span class="step-num">1</span> Selecione a análise
@@ -68,7 +68,7 @@
         </div>
       </section>
 
-      <!-- ── Passo 2: Parâmetros da análise ──────────────────────────────────── -->
+      <!-- Passo 2: Parâmetros da análise-->
       @if (analiseAtual) {
         <section class="step-card" [@fadeSlide]>
           <div class="step-label">
@@ -259,7 +259,6 @@
 
             <label class="field-label mt-m">Agrupar observações por</label>
             <div class="select-wrapper">
-              <!-- Ao mudar agrupar_por os checkboxes são limpos, pois as opções mudam -->
               <select
                 class="field-select"
                 [(ngModel)]="agruparPor"
@@ -403,7 +402,7 @@
         </section>
       }
 
-      <!-- ── Passo 3: Filtros globais ────────────────────────────────────────── -->
+      <!-- Passo 3: Filtros globais -->
       <section class="step-card" [@fadeSlide]>
         <div class="step-label">
           <span class="step-num">3</span> Filtros
@@ -473,7 +472,7 @@
                 type="text"
                 [ngModel]="latMinMask"
                 (ngModelChange)="onCoordInput('latMin', $event)"
-                placeholder="ex.: -25°42'48&quot;"
+                placeholder="-00°00'00&quot;"
               />
             </div>
             <div class="filtro-item">
@@ -483,7 +482,7 @@
                 type="text"
                 [ngModel]="latMaxMask"
                 (ngModelChange)="onCoordInput('latMax', $event)"
-                placeholder="ex.: -25°00'00&quot;"
+                placeholder="-00°00'00&quot;"
               />
             </div>
             <div class="filtro-item">
@@ -493,7 +492,7 @@
                 type="text"
                 [ngModel]="lngMinMask"
                 (ngModelChange)="onCoordInput('lngMin', $event)"
-                placeholder="ex.: -49°30'00&quot;"
+                placeholder="-00°00'00&quot;"
               />
             </div>
             <div class="filtro-item">
@@ -503,14 +502,14 @@
                 type="text"
                 [ngModel]="lngMaxMask"
                 (ngModelChange)="onCoordInput('lngMax', $event)"
-                placeholder="ex.: -49°00'00&quot;"
+                placeholder="ex.: -00°00'00&quot;"
               />
             </div>
           }
         </div>
       </section>
 
-      <!-- ── Botão executar ──────────────────────────────────────────────────── -->
+      <!-- Botão executar -->
       <div class="confirm-row">
         <button
           class="btn-confirmar"
@@ -531,7 +530,7 @@
     </div>
   }
 
-  <!-- ── Resultado ───────────────────────────────────────────────────────────── -->
+  <!-- Resultado -->
   @if (resultado) {
     <section class="resultado-section" [@fadeSlide]>
       <div class="resultado-header">

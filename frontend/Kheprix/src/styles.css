@@ -459,9 +459,6 @@ select.form-control {
   color: var(--color-text-primary);
 }
 
-/* =====================================================
-   BARRA LATERAL (página Início)
-   ===================================================== */
 .sidebar-layout {
   display: flex;
   min-height: calc(100vh - 76px);
@@ -562,9 +559,6 @@ select.form-control {
   z-index: 2;
 }
 
-/* =====================================================
-   BARRA DE FILTROS
-   ===================================================== */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -591,9 +585,6 @@ select.form-control {
   min-width: 150px;
 }
 
-/* =====================================================
-   PAINÉIS DE DETALHE INLINE
-   ===================================================== */
 .detail-panel {
   background: var(--color-bg-cream);
   border: 1.5px solid var(--border-color);
@@ -636,9 +627,6 @@ select.form-control {
   letter-spacing: 0.04em;
 }
 
-/* =====================================================
-   SPECIES PHOTO + RECORD PHOTO
-   ===================================================== */
 .photo-uploader {
   display: flex;
   align-items: center;
@@ -677,9 +665,6 @@ select.form-control {
   transform: scale(1.1);
 }
 
-/* =====================================================
-   STATUS DE CONSERVAÇÃO
-   ===================================================== */
 .conservation-dot {
   display: inline-block;
   width: 12px;
@@ -689,16 +674,13 @@ select.form-control {
   vertical-align: middle;
 }
 
-/* =====================================================
-   BOLINHA ESPÉCIE - FOTO LISTA
-   ===================================================== */
 .species-photo-circle {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  min-height: 52px;
-  max-width: 52px;
-  max-height: 52px;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
@@ -706,9 +688,6 @@ select.form-control {
   background: var(--color-bg-sand);
 }
 
-/* =====================================================
-   QR CODE
-   ===================================================== */
 .qrcode-container {
   display: flex;
   flex-direction: column;
@@ -722,9 +701,6 @@ select.form-control {
   border-radius: var(--border-radius-sm);
 }
 
-/* =====================================================
-   TOPBAR DE LINKS (detalhe do estudo)
-   ===================================================== */
 .study-topbar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -764,9 +740,6 @@ select.form-control {
   text-align: center;
 }
 
-/* =====================================================
-   MODAL / OVERLAY
-   ===================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -812,9 +785,6 @@ select.form-control {
   color: var(--color-text-primary);
 }
 
-/* =====================================================
-   PÁGINAS AUTENTICADAS - CONTAINER
-   ===================================================== */
 .page-container {
   max-width: 900px;
   margin: 0 auto;
@@ -829,9 +799,6 @@ select.form-control {
   margin-bottom: var(--space-lg);
 }
 
-/* =====================================================
-   CHECKBOX / TOGGLE ESTILO ORBE
-   ===================================================== */
 .orb-checkbox {
   display: flex;
   align-items: center;
@@ -858,9 +825,6 @@ select.form-control {
   background: var(--color-btn-primary);
 }
 
-/* =====================================================
-   LOADER / SPINNER
-   ===================================================== */
 .spinner {
   width: 32px;
   height: 32px;
@@ -887,9 +851,6 @@ select.form-control {
   color: var(--color-text-muted);
 }
 
-/* =====================================================
-   MENSAGENS DE FEEDBACK
-   ===================================================== */
 .alert {
   padding: var(--space-md);
   border-radius: var(--border-radius-sm);
@@ -916,9 +877,6 @@ select.form-control {
   color: var(--color-btn-primary);
 }
 
-/* =====================================================
-   VARIÁVEIS DINÂMICAS (formulário de estudo)
-   ===================================================== */
 .variable-group {
   background: var(--color-bg-cream-dark);
   border: 1px solid var(--border-color);
@@ -944,9 +902,6 @@ select.form-control {
   transform: scale(1.15);
 }
 
-/* =====================================================
-   LOCALIZAÇÃO (ícone)
-   ===================================================== */
 .location-input-group {
   display: flex;
   align-items: center;
@@ -971,9 +926,6 @@ select.form-control {
   transform: scale(1.1);
 }
 
-/* =====================================================
-   NAVEGAÇÃO DE VOLTA (triângulo)
-   ===================================================== */
 .back-btn {
   background: none;
   border: none;
@@ -991,9 +943,6 @@ select.form-control {
   transform: scale(1.1);
 }
 
-/* =====================================================
-   UTILITÁRIOS
-   ===================================================== */
 .text-center {
   text-align: center;
 }
@@ -1046,9 +995,6 @@ select.form-control {
   font-style: italic;
 }
 
-/* =====================================================
-   RESPONSIVIDADE
-   ===================================================== */
 @media (max-width: 768px) {
   .page-container {
     padding: var(--space-lg) var(--space-md);
