@@ -71,12 +71,21 @@ _KEYWORDS_DOMINIO = {
 }
 
 # Palavras que indicam claramente fora do domínio (lista curta, intencional)
+# ATENÇÃO: não incluir variáveis ecológicas (temperatura, umidade, pH, altitude,
+# precipitação) — podem ser métricas legítimas de estudos de campo.
 _KEYWORDS_FORA_DOMINIO = {
-    "receita", "culinária", "futebol", "política", "politica",
-    "música", "musica", "filme", "série", "serie", "novela",
+    # Culinária
+    "receita", "culinária", "culinaria", "bolo", "pizza", "sopa", "cozinhar",
+    # Entretenimento
+    "futebol", "filme", "série", "serie", "novela", "música", "musica",
+    "jogo", "videogame", "celebridade", "famoso",
+    # Política e economia
+    "política", "politica", "eleição", "eleicao", "presidente",
     "comprar", "vender", "preço", "preco", "salário", "salario",
-    "programar", "código fonte", "codigo fonte", "javascript", "python",
-    "hacker", "invadir", "senha do sistema",
+    "investimento", "criptomoeda", "bitcoin",
+    # Tecnologia não relacionada
+    "programar", "javascript", "typescript", "html", "css",
+    "hacker", "invadir", "malware", "vírus computador",
 }
 
 
@@ -91,25 +100,28 @@ def _verificar_prompt_injection(pergunta: str) -> GuardResult:
     return GuardResult(passou=True)
 
 
+_MENSAGEM_FORA_DOMINIO = (
+    "Só consigo responder perguntas sobre os dados de coleta entomológica "
+    "registrados no Kheprix. Tente perguntar sobre espécies, campanhas, "
+    "riqueza de espécies, abundância, etc."
+)
+
+
 def _verificar_relevancia(pergunta: str) -> GuardResult:
     texto = pergunta.lower()
-    palavras = set(re.findall(r"\b\w+\b", texto))
 
-    tem_keyword_dominio = bool(_KEYWORDS_DOMINIO & palavras) or any(
-        kw in texto for kw in _KEYWORDS_DOMINIO if " " in kw
-    )
-    tem_keyword_fora = bool(_KEYWORDS_FORA_DOMINIO & palavras)
+    # Substring matching captura plurais e variações (estudo→estudos, espécie→espécies)
+    tem_keyword_dominio = any(kw in texto for kw in _KEYWORDS_DOMINIO)
+    tem_keyword_fora = any(kw in texto for kw in _KEYWORDS_FORA_DOMINIO)
 
-    # Pergunta longa + claramente fora do domínio = bloquear
-    if tem_keyword_fora and not tem_keyword_dominio and len(pergunta.split()) > 5:
-        return GuardResult(
-            passou=False,
-            motivo=(
-                "Só consigo responder perguntas sobre os dados de coleta entomológica "
-                "registrados no Kheprix. Tente perguntar sobre espécies, campanhas, "
-                "riqueza de espécies, abundância, etc."
-            ),
-        )
+    # Keyword explicitamente fora do domínio → bloqueia independente do tamanho
+    if tem_keyword_fora and not tem_keyword_dominio:
+        return GuardResult(passou=False, motivo=_MENSAGEM_FORA_DOMINIO)
+
+    # Pergunta substantiva (≥ 5 palavras) sem nenhuma keyword do domínio → bloqueia
+    if not tem_keyword_dominio and len(pergunta.split()) >= 5:
+        return GuardResult(passou=False, motivo=_MENSAGEM_FORA_DOMINIO)
+
     return GuardResult(passou=True)
 
 

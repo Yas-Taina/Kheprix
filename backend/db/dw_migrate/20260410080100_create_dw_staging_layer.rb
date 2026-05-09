@@ -7,6 +7,7 @@ class CreateDwStagingLayer < ActiveRecord::Migration[8.0]
       t.string :nome
       t.string :email
       t.string :password_digest
+      t.bigint :ultimo_estudo_acessado_id
       t.datetime :loaded_at, default: -> { 'CURRENT_TIMESTAMP' }
       t.timestamps
     end

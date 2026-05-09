@@ -1,5 +1,5 @@
-import { Component, signal, OnInit } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
+import { Component, signal } from "@angular/core";
+import { Router, RouterOutlet } from "@angular/router";
 import { Menu } from "./pages/componentes/menu/menu";
 import { Footer } from "./pages/componentes/footer/footer";
 import { CommonModule } from "@angular/common";
@@ -12,12 +12,19 @@ import { AuthService } from "./core/services/auth.service";
   templateUrl: "./app.html",
   styleUrl: "./app.css",
 })
-export class App implements OnInit {
-  constructor(private authService: AuthService) {}
-  isLogged = false;
+export class App {
   protected readonly title = signal("Kheprix");
 
-  ngOnInit() {
-    this.isLogged = this.authService.isLoggedIn();
+  private readonly rotasPublicas = ["", "login", "cadastro", "recuperar-senha"];
+
+  constructor(public router: Router, private authService: AuthService) {}
+
+  get isLogged(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  mostrarFab(): boolean {
+    const segmento = this.router.url.split("/")[1]?.split("?")[0] ?? "";
+    return !this.rotasPublicas.includes(segmento) && segmento !== "chatbot";
   }
 }

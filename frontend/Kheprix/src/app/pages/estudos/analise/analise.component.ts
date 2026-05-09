@@ -462,7 +462,4 @@ export class AnalisesComponent implements OnInit {
     a.click();
   }
 
-  abrirChatbot(): void {
-    /* TODO */
-  }
 }

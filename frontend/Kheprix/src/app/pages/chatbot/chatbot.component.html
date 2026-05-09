@@ -1,0 +1,134 @@
+<div class="sidebar-layout">
+
+  <aside class="sidebar">
+    <button class="btn-sidebar btn-insights" (click)="iniciarInsights()"
+      [disabled]="carregando || aguardandoSelecaoEstudos">
+      <span class="btn-sidebar-icon">
+        <img src="icons/chart.svg" alt="" width="28" height="28">
+      </span>
+      <span class="btn-sidebar-label">Gerar<br>Insights</span>
+    </button>
+
+    <div class="sidebar-divider">⸙</div>
+
+    <button class="btn-sidebar btn-limpar" (click)="limparConversa()" [disabled]="carregando">
+      <span class="btn-sidebar-icon">🗑</span>
+      <span class="btn-sidebar-label">Limpar<br>Conversa</span>
+    </button>
+
+    <div class="sidebar-divider">⸙</div>
+
+    <button class="back-btn chatbot-back" (click)="voltar()" title="Voltar">◀</button>
+  </aside>
+
+  <div class="chat-container">
+
+    <div class="chat-messages" #chatArea>
+      <ng-container *ngFor="let msg of mensagens">
+
+        <div *ngIf="msg.tipo === 'usuario'" class="msg-row msg-row--usuario">
+          <div class="bubble bubble--usuario">{{ msg.conteudo }}</div>
+        </div>
+
+        <div *ngIf="msg.tipo === 'bot'" class="msg-row msg-row--bot">
+          <div class="avatar"><img src="icons/robot.svg" alt="" width="20" height="20"></div>
+          <div class="bubble bubble--bot">
+            <p class="bubble-text">{{ msg.conteudo }}</p>
+
+            <div *ngIf="msg.tabela && msg.tabela.linhas.length" class="tabela-wrapper">
+              <table class="dados-table">
+                <thead>
+                  <tr>
+                    <th *ngFor="let col of msg.tabela.colunas">{{ col }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let linha of msg.tabela.linhas">
+                    <td *ngFor="let col of msg.tabela.colunas">{{ linha[col] }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+        <div *ngIf="msg.tipo === 'sistema'" class="msg-row msg-row--sistema">
+          <div class="card sistema-card">
+            <p class="sistema-titulo">Selecione os estudos para o relatório:</p>
+            <div class="chips-container">
+              <button *ngFor="let estudo of estudos" class="chip" [class.chip--selecionado]="estudo.selecionado"
+                (click)="toggleEstudo(estudo)">
+                {{ estudo.nome }}
+              </button>
+            </div>
+            <div class="sistema-acoes">
+              <button class="btn btn-primary" (click)="confirmarInsights()" [disabled]="!algumEstudoSelecionado">Gerar
+                Insights</button>
+              <button class="btn btn-secondary" (click)="cancelarInsights()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="msg.tipo === 'insights'" class="msg-row msg-row--bot">
+          <div class="avatar"><img src="icons/chart-light.svg" alt="" width="20" height="20"></div>
+          <div class="bubble bubble--bot bubble--insights">
+            <p class="narrativa-text">{{ msg.conteudo }}</p>
+
+            <button class="toggle-btn" (click)="toggleMetricas(msg)">
+              {{ msg.mostrarMetricas ? 'Ocultar dados brutos ▲' : 'Ver dados brutos ▼' }}
+            </button>
+
+            <div *ngIf="msg.mostrarMetricas && msg.metricas" class="metricas-container">
+              <ng-container *ngFor="let secao of metricasSections(msg.metricas!)">
+                <h4 class="secao-label">{{ secao.label }}</h4>
+                <div class="tabela-wrapper">
+                  <table class="dados-table">
+                    <thead>
+                      <tr>
+                        <th *ngFor="let col of colunasDaTabela(secao.dados)">{{ col }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let linha of secao.dados">
+                        <td *ngFor="let col of colunasDaTabela(secao.dados)">{{ linha[col] }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="msg.tipo === 'carregando'" class="msg-row msg-row--bot">
+          <div class="avatar"><img src="icons/robot.svg" alt="" width="20" height="20"></div>
+          <div class="bubble bubble--bot bubble--loading">
+            <span class="loading-text">{{ mensagemCarregando }}</span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <div class="data-latency-notice">
+      <img src="icons/clock.svg" alt="" class="data-latency-icon" width="14" height="14">
+      Os dados refletem registros de até <strong>5 minutos atrás</strong>, conforme o ciclo de atualização do sistema.
+    </div>
+
+    <div class="chat-input-area">
+      <textarea class="chat-textarea" [(ngModel)]="perguntaAtual" (keydown)="onEnter($event)"
+        [disabled]="carregando || aguardandoSelecaoEstudos"
+        placeholder="Pergunte algo sobre seus dados... (Enter para enviar, Shift+Enter para nova linha)" rows="2">
+      </textarea>
+      <button class="btn-enviar" (click)="enviarPergunta()"
+        [disabled]="carregando || aguardandoSelecaoEstudos || !perguntaAtual.trim()" title="Enviar">
+        ➤
+      </button>
+    </div>
+
+  </div>
+</div>

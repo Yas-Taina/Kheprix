@@ -252,5 +252,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
+  {
+    path: "chatbot",
+    loadComponent: () => import("./pages/chatbot/chatbot.component").then((m) => m.ChatbotComponent),
+    canActivate: [authGuard],
+  },
+
   { path: "**", redirectTo: "" },
 ];
