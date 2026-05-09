@@ -168,10 +168,10 @@ class EstudoOfflineManager(context: Context) {
         val especies = queryUnsyncedEspecies(db, estudoLocalId)
         val espLocalToRemote = mutableMapOf<Long, Int>()
         especies.forEach { e ->
-            // Foto que não é Base64 (URL ou path do servidor) NÃO deve ser
-            // reenviada, senão o backend rejeita ou tenta decodificar como Base64.
+            // Envia foto apenas se for Base64 (data URI ou raw Base64 longo).
+            // URLs do servidor não são reenviadas.
             val fotoEnvio = e.foto?.takeIf { f ->
-                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+                f.startsWith("data:") || (!f.startsWith("http://") && !f.startsWith("https://") && f.length > 500)
             }
 
             if (e.remoteId != null && e.remoteId > 0) {
@@ -329,9 +329,9 @@ class EstudoOfflineManager(context: Context) {
                         if (registro.sincronizado == 0) {
                             val especieRemoteId = espLocalToRemote[registro.especieLocalId]
                                 ?: error("Espécie remota para registro ${registro.localId} não encontrada")
-                            // Foto que não é Base64 (URL/path do servidor) não é reenviada.
+                            // Envia foto apenas se for Base64 (data URI ou raw Base64 longo).
                             val fotoEnvio = registro.foto?.takeIf { f ->
-                                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+                                f.startsWith("data:") || (!f.startsWith("http://") && !f.startsWith("https://") && f.length > 500)
                             }
 
                             if (registro.remoteId != null && registro.remoteId > 0) {

@@ -1079,6 +1079,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             if (!salvo) return
         }
         startActivity(Intent(this, OfflineWarningActivity::class.java))
+        finish()
     }
 
     /**

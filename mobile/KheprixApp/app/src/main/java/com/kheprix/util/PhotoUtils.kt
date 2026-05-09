@@ -34,7 +34,10 @@ object PhotoUtils {
             inputStream.close()
 
             val scaled = scaleBitmap(original, maxWidth)
-            bitmapToBase64(scaled)
+            // Prefix with data URI scheme so the string is unambiguously Base64
+            // and never confused with a relative URL path (raw JPEG Base64 starts
+            // with "/9j/" which would otherwise be misidentified as a URL path).
+            "data:image/jpeg;base64,${bitmapToBase64(scaled)}"
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -42,7 +45,7 @@ object PhotoUtils {
     }
 
     /**
-     * Converts a [Bitmap] to a Base64-encoded JPEG string.
+     * Converts a [Bitmap] to a Base64-encoded JPEG string (no data URI prefix).
      */
     fun bitmapToBase64(bitmap: Bitmap, quality: Int = 80): String {
         val outputStream = ByteArrayOutputStream()
@@ -53,12 +56,15 @@ object PhotoUtils {
 
     /**
      * Decodes a Base64 string back to a [Bitmap] for display in an ImageView.
+     * Accepts both raw Base64 and data URI format ("data:image/...;base64,...").
      *
      * @return Decoded [Bitmap], or null if the string is invalid.
      */
     fun base64ToBitmap(base64: String): Bitmap? {
         return try {
-            val bytes = Base64.decode(base64, Base64.NO_WRAP)
+            val payload = if (base64.startsWith("data:")) base64.substringAfter(",", "") else base64
+            if (payload.isEmpty()) return null
+            val bytes = Base64.decode(payload, Base64.DEFAULT)
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
         } catch (e: Exception) {
             e.printStackTrace()
