@@ -1,10 +1,14 @@
 <nav>
   <div class="navbar">
+    @if (isInicio){
     <button class="menu-btn" (click)="toggleMenu()">
       <span [class.open]="isOpen"></span>
       <span [class.open]="isOpen"></span>
       <span [class.open]="isOpen"></span>
     </button>
+    } @else {
+      <div class="menu-btn-placeholder"></div>
+    }
     <a href="#" (click)="abrirHome()">
       <img class="navbarimg" src="/img/icon1_bege.png" alt="Icone" />
     </a>
