@@ -5,20 +5,21 @@
 
       <div class="page-header-row">
         <div class="d-flex gap-sm" style="flex-wrap:wrap">
-          <button class="btn btn-primary" (click)="toggleDetalhes()">Visualizar Detalhes &nbsp;👁</button>
-          <button class="btn btn-primary" (click)="novoRegistro()">Adicionar Registro &nbsp;⊕</button>
+          <button class="btn btn-primary" (click)="toggleDetalhes()">Visualizar Detalhes <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 5C8.24261 5 5.43602 7.4404 3.76737 9.43934C2.51521 10.9394 2.51521 13.0606 3.76737 14.5607C5.43602 16.5596 8.24261 19 12 19C15.7574 19 18.564 16.5596 20.2326 14.5607C21.4848 13.0606 21.4848 10.9394 20.2326 9.43934C18.564 7.4404 15.7574 5 12 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></button>
+          <button class="btn btn-primary" (click)="novoRegistro()">Adicionar Registro <svg class="svg-icon" width= "24" height="24" style="vertical-align: middle; overflow: hidden;" fill="currentColor" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 65.6c247.424 0 448 200.576 448 448S759.424 961.6 512 961.6 64 761.024 64 513.6 264.576 65.6 512 65.6z m0 48C291.0864 113.6 112 292.6864 112 513.6s179.0864 400 400 400 400-179.0864 400-400S732.9136 113.6 512 113.6z m0 209.6c13.2544 0 24 10.7456 24 24v144h144c13.2544 0 24 10.7456 24 24 0 13.2544-10.7456 24-24 24h-144.0016l0.0016 144c0 13.2544-10.7456 24-24 24-13.2544 0-24-10.7456-24-24l-0.0016-144H344c-13.2544 0-24-10.7456-24-24 0-13.2544 10.7456-24 24-24h144v-144c0-13.2544 10.7456-24 24-24z" fill="currentColor" /></svg></button>
         </div>
         <button class="back-btn" (click)="voltar()">◀</button>
       </div>
-
-      <!-- Filtro por espécie -->
       <div class="filter-bar">
         <span class="filter-label">Buscar por:</span>
         <select class="form-control" style="min-width:180px">
           <option>Nome da Espécie</option>
         </select>
         <input class="form-control" type="text" [(ngModel)]="busca" placeholder="Digite sua busca..." style="flex:1" />
-        <button class="btn-icon" (click)="filtrar()">🔍</button>
+        <button class="btn-icon" (click)="filtrar()"><svg fill="currentColor" alt="Buscar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" style="transform:scale(1)"><path d="M16.32 14.9l5.39 5.4a1 1 0 0 1-1.42 1.4l-5.38-5.38a8 8 0 1 1 1.41-1.41zM10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg></button>
       </div>
 
       <div *ngIf="loading" class="loading-overlay"><div class="spinner"></div></div>
@@ -35,7 +36,6 @@
         <tbody>
           <tr *ngFor="let r of registrosFiltrados" (click)="verDetalhe(r)">
             <td>
-              <!-- Foto do registro (não da espécie) -->
               <img
                 [src]="r.foto ? util.buildFotoUrl(apiUrl, r.foto) : placeholderImg"
                 class="species-photo-circle"
@@ -49,7 +49,6 @@
         </tbody>
       </table>
 
-      <!-- Painel de detalhes do evento inline -->
       <div class="detail-panel" *ngIf="showDetalhes && eventoDetalhe">
         <div class="d-flex justify-between align-center mb-md">
           <h3 class="section-title">Detalhes do Evento de Amostragem</h3>
@@ -60,7 +59,7 @@
         </div>
         <div class="detail-grid">
           <div class="detail-field"><label>Horário de Início</label><span>{{ util.formatDateTime(eventoDetalhe.horario_inicio) }}</span></div>
-          <div class="detail-field"><label>Horário de Ultima Alteração</label><span>{{ util.formatDateTime(eventoDetalhe.horario_fim) }}</span></div>
+          <!--<div class="detail-field"><label>Horário de Ultima Alteração</label><span>{{ util.formatDateTime(eventoDetalhe.updated_at) }}</span></div>-->
           <div class="detail-field"><label>Esforço Real</label><span>{{ eventoDetalhe.esforco_real || '—' }}</span></div>
           <div class="detail-field"><label>Criado em</label><span>{{ util.formatDate(eventoDetalhe.created_at) }}</span></div>
         </div>

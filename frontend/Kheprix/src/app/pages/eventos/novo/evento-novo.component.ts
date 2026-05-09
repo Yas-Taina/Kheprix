@@ -15,7 +15,7 @@ import { Variavel, ValorVariavel } from '../../../models';
 })
 export class EventoNovoComponent implements OnInit {
   estudoId!: number; campanhaId!: number; unidadeId!: number; eventoId: number | null = null; isEdit = false;
-  nomeEvento = ''; dataInicio = ''; horaInicio = ''; esforcoReal = '';
+  dataInicio = ''; horaInicio = ''; esforcoReal = '';
   variaveis: Variavel[] = []; valoresVars: ValorVariavel[] = [];
   loading = false; erro = '';
 

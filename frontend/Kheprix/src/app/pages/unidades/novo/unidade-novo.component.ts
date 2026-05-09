@@ -75,7 +75,7 @@ export class UnidadeNovoComponent implements OnInit {
       raio: this.raio ?? undefined,
       metodo_coleta: this.metodoColeta || undefined,
       esforco_amostral: this.esforcoAmostral || undefined,
-      valores_variaveis: this.valoresVars.filter(v => v.valor),
+      valores_variaveis: this.valoresVars.filter(v => v.valor !== '' && v.valor !== null && v.valor !== undefined),
     };
     const obs = this.isEdit && this.unidadeId
       ? this.unidadeService.atualizar(this.estudoId, this.campanhaId, this.unidadeId, payload)
