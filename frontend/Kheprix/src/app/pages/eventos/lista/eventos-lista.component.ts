@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
+import { EstudoService } from "../../../core/services/estudo.service";
 import { EventoAmostragem, UnidadeAmostral } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 
@@ -17,6 +18,7 @@ export class EventosListaComponent implements OnInit {
   eventos: EventoAmostragem[] = [];
   unidadeDetalhe: UnidadeAmostral | null = null;
   estudoId!: number;
+  perfilEstudo = "";
   campanhaId!: number;
   unidadeId!: number;
   nomeUnidade = "";
@@ -26,6 +28,7 @@ export class EventosListaComponent implements OnInit {
   constructor(
     private eventoService: EventoAmostragemService,
     private unidadeService: UnidadeAmostralService,
+    private estudoService: EstudoService,
     public router: Router,
     private route: ActivatedRoute,
     public util: UtilService,
@@ -50,10 +53,19 @@ export class EventosListaComponent implements OnInit {
         this.unidadeDetalhe = u;
         this.nomeUnidade = u.nome;
       });
+
+    this.estudoService.listar().subscribe((l) => {
+      const estudo = l.find((e) => e.id === this.estudoId);
+      this.perfilEstudo = estudo?.perfil ?? "";
+    });
   }
 
   toggleDetalhes() {
     this.showDetalhes = !this.showDetalhes;
+  }
+
+  isProprietario(): boolean {
+    return this.perfilEstudo === "proprietario";
   }
 
   verRegistros(ev: EventoAmostragem) {

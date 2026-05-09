@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EspecieService } from "../../../core/services/especie.service";
 import { Especie, StatusConservacaoLabels } from "../../../models";
+import { EstudoService } from "../../../core/services/estudo.service";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 
@@ -18,12 +19,14 @@ export class EspecieDetalheComponent implements OnInit {
   loading = true;
   estudoId!: number;
   especieId!: number;
+  perfilEstudo = "";
   apiUrl = environment.apiUrl;
   placeholderImg =
     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"%3E%3Ccircle cx="90" cy="90" r="88" fill="%23D4CDBA"/%3E%3Ctext x="50%25" y="55%25" text-anchor="middle" font-size="14" fill="%238A7D6E"%3EFoto%3C/text%3E%3C/svg%3E';
 
   constructor(
     private especieService: EspecieService,
+    private estudoService: EstudoService,
     private route: ActivatedRoute,
     public router: Router,
     public util: UtilService,
@@ -39,6 +42,15 @@ export class EspecieDetalheComponent implements OnInit {
       },
       error: () => (this.loading = false),
     });
+    this.estudoService.listar().subscribe((l) => {
+      const estudo = l.find((e) => e.id === this.estudoId);
+      this.perfilEstudo = estudo?.perfil ?? "";
+    });
+
+  }
+
+  isProprietario(): boolean {
+    return this.perfilEstudo === "proprietario";
   }
 
   statusLabel(s: string): string {

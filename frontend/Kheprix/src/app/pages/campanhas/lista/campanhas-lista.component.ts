@@ -17,6 +17,7 @@ export class CampanhasListaComponent implements OnInit {
   campanhas: Campanha[] = [];
   estudoId!: number;
   nomeEstudo = "";
+  perfilEstudo = "";
   loading = true;
 
   constructor(
@@ -36,12 +37,15 @@ export class CampanhasListaComponent implements OnInit {
       },
       error: () => (this.loading = false),
     });
-    this.estudoService
-      .listar()
-      .subscribe(
-        (l) =>
-          (this.nomeEstudo = l.find((e) => e.id === this.estudoId)?.nome ?? ""),
-      );
+    this.estudoService.listar().subscribe((l) => {
+      const estudo = l.find((e) => e.id === this.estudoId);
+      this.nomeEstudo = estudo?.nome ?? "";
+      this.perfilEstudo = estudo?.perfil ?? "";
+    });
+  }
+
+  isProprietario(): boolean {
+    return this.perfilEstudo === "proprietario";
   }
 
   verUnidades(c: Campanha) {

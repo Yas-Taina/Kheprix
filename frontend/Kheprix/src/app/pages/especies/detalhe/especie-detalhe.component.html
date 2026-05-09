@@ -108,6 +108,7 @@
         </svg>
       </span>
     </button>
+    <ng-container *ngIf="isProprietario()">
     <button class="btn-icon danger" (click)="deletar()" title="Excluir">
       <span style="color: var(--color-delete)"
         ><svg
@@ -232,6 +233,7 @@
           </g></svg
       ></span>
     </button>
+  </ng-container>
   </div>
 </div>
 <div *ngIf="loading" class="page-container">

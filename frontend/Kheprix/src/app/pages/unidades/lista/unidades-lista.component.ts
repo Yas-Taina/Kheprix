@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Router, ActivatedRoute } from "@angular/router";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { CampanhaService } from "../../../core/services/campanha.service";
+import { EstudoService} from "../../../core/services/estudo.service";
 import { UnidadeAmostral, Campanha } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 
@@ -19,12 +20,14 @@ export class UnidadesListaComponent implements OnInit {
   estudoId!: number;
   campanhaId!: number;
   nomeCampanha = "";
+  perfilEstudo = "";
   loading = true;
   showDetalhes = false;
 
   constructor(
     private unidadeService: UnidadeAmostralService,
     private campanhaService: CampanhaService,
+    private estudoService: EstudoService,
     public router: Router,
     private route: ActivatedRoute,
     public util: UtilService,
@@ -46,6 +49,15 @@ export class UnidadesListaComponent implements OnInit {
         this.campanhaDetalhe = c;
         this.nomeCampanha = c.nome;
       });
+    
+    this.estudoService.listar().subscribe((l) => {
+      const estudo = l.find((e) => e.id === this.estudoId);
+      this.perfilEstudo = estudo?.perfil ?? "";
+    });
+  }
+
+  isProprietario(): boolean {
+    return this.perfilEstudo === "proprietario";
   }
 
   toggleDetalhes() {

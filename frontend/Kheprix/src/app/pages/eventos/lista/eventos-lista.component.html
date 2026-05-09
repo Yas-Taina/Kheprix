@@ -68,6 +68,7 @@
         <td>{{ util.formatDateTime(ev.updated_at) }}</td>
         <td (click)="$event.stopPropagation()">
           <div class="actions-cell">
+            <ng-container *ngIf="isProprietario()">
             <button class="btn-icon danger" (click)="deletar(ev)">
               <span style="font-size: 1.2rem; color: var(--color-delete)"
                 ><svg
@@ -192,6 +193,7 @@
                   </g></svg>
                 </span>
             </button>
+          </ng-container>
           </div>
         </td>
       </tr>

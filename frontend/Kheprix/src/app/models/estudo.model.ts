@@ -4,7 +4,7 @@ export interface Estudo {
   id: number;
   nome: string;
   observacoes: string;
-  perfil?: string;
+  perfil: string;
   created_at: string;
   updated_at: string;
 }
