@@ -25,8 +25,6 @@ import {
   ChaveAnalise,
 } from "../../../models/analise.model";
 
-// ─── Interfaces locais ────────────────────────────────────────────────────────
-
 interface VariavelItem {
   id: number;
   nome: string;
@@ -46,14 +44,11 @@ interface OpcaoItem {
   label: string;
 }
 
-// Tipos cuja unidade de análise É a amostra (linhas = locais de coleta)
 const TIPOS_COM_AMOSTRA = new Set([
   "abundancias_por_amostra",
   "abundancias_com_variaveis",
   "matriz_acumulacao",
 ]);
-
-// ─── Componente ───────────────────────────────────────────────────────────────
 
 @Component({
   selector: "app-analises",
@@ -89,7 +84,6 @@ export class AnalisesComponent implements OnInit {
 
   estudoId!: number;
 
-  // ── Catálogo ──────────────────────────────────────────────────────────────
   readonly catalogo = CATALOGO_ANALISES;
   readonly categorias: CategoriaAnalise[] = [
     "modelo_distribuicao",
@@ -105,45 +99,29 @@ export class AnalisesComponent implements OnInit {
     "acumulacao",
   ];
 
-  // ── Dados carregados da API ────────────────────────────────────────────────
   variaveis: VariavelItem[] = [];
   campanhas: CampanhaItem[] = [];
   unidades: UnidadeItem[] = [];
   carregando = false;
-
-  // ── Seleção de análise ─────────────────────────────────────────────────────
   chaveEscolhida = "";
   analiseAtual: CatalogoAnalise | null = null;
-
-  // ── Campos dinâmicos ──────────────────────────────────────────────────────
-
-  // dois_vetores
   fonteX: FonteAnalise = "variavel";
   fonteY: FonteAnalise = "variavel";
   variavelXId: number | undefined = undefined;
   variavelYId: number | undefined = undefined;
   nivelAgregacao: NivelAgregacao = "unidade_amostral";
-
-  // vetor_unico / dois_grupos / multiplos_grupos
   fonte: FonteAnalise = "variavel";
   variavelId: number | undefined = undefined;
   agruparPor: AgruparPor = "unidade_amostral";
-
-  // dois_grupos
   grupo1Ids: number[] = [];
   grupo2Ids: number[] = [];
   nomeGrupo1 = "";
   nomeGrupo2 = "";
-
-  // abundancias_com_variaveis
   variavelIdsAmbientais: number[] = [];
-
-  // ── Filtros ───────────────────────────────────────────────────────────────
-  filtroCampanhaIds: number[] = []; // multi-seleção; vazio = todo o estudo
-  filtroUnidadeIds: number[] = []; // eventos omitidos: não carregados no componente
+  filtroCampanhaIds: number[] = [];
+  filtroUnidadeIds: number[] = []; 
   dataInicio = "";
   dataFim = "";
-  // bounding box
   latMinMask = "";
   latMaxMask = "";
   lngMinMask = "";
@@ -152,13 +130,9 @@ export class AnalisesComponent implements OnInit {
   latMax: number | undefined = undefined;
   lngMin: number | undefined = undefined;
   lngMax: number | undefined = undefined;
-
-  // ── UI ────────────────────────────────────────────────────────────────────
   loading = false;
   erro: string | null = null;
   resultado: ExecutarAnaliseResponse | null = null;
-
-  // ─── Computed helpers ─────────────────────────────────────────────────────
 
   get tipoDado(): string {
     return this.analiseAtual?.tipo_dado ?? "";
@@ -176,17 +150,14 @@ export class AnalisesComponent implements OnInit {
     return !this.usaAmostra;
   }
 
-  /** Exibe o seletor de nivel_agregacao em dois_vetores só quando ao menos um lado é fonte derivada */
   get mostraNivelAgregacaoDoisVetores(): boolean {
     return this.fonteX !== "variavel" || this.fonteY !== "variavel";
   }
 
-  /** Exibe o seletor de nivel_agregacao em vetor_unico só quando fonte é derivada */
   get mostraNivelAgregacaoVetorUnico(): boolean {
     return this.fonte !== "variavel";
   }
 
-  /** Exibe o seletor de nivel_agregacao em dois_grupos só quando fonte é derivada */
   get mostraNivelAgregacaoDoisGrupos(): boolean {
     return this.fonte !== "variavel";
   }
@@ -202,10 +173,6 @@ export class AnalisesComponent implements OnInit {
     return this.unidades.map((u) => ({ id: u.id, label: u.nome }));
   }
 
-  /**
-   * Opções para os checkboxes de dois_grupos.
-   * Dependem de agruparPor: campanha → lista campanhas; qualquer outro → lista unidades.
-   */
   get opcoesDoisGrupos(): OpcaoItem[] {
     return this.agruparPor === "campanha"
       ? this.campanhas.map((c) => ({ id: c.id, label: c.nome }))
@@ -227,8 +194,6 @@ export class AnalisesComponent implements OnInit {
     }
     return base;
   }
-
-  // ─── Ciclo de vida ────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.estudoId = Number(
@@ -275,8 +240,6 @@ export class AnalisesComponent implements OnInit {
     });
   }
 
-  // ─── Eventos do formulário ────────────────────────────────────────────────
-
   nomeCategoria(cat: CategoriaAnalise): string {
     return NOME_CATEGORIA[cat];
   }
@@ -292,19 +255,12 @@ export class AnalisesComponent implements OnInit {
   }
 
   onFonteChange(): void {
-    // Se fonte não é variável, limpa a seleção de variável
     if (this.fonte !== "variavel") this.variavelId = undefined;
-    // Reseta agrupar_por para evitar estado inválido com opções temporais
     if (this.fonte === "variavel") this.agruparPor = "unidade_amostral";
-    // Limpa os grupos pois as opções podem mudar
     this.grupo1Ids = [];
     this.grupo2Ids = [];
   }
 
-  /**
-   * Chamado quando agruparPor muda em dois_grupos.
-   * Limpa os grupos selecionados pois as opções mudam (campanhas vs unidades).
-   */
   onAgruparPorDoisGruposChange(): void {
     this.grupo1Ids = [];
     this.grupo2Ids = [];
@@ -339,8 +295,6 @@ export class AnalisesComponent implements OnInit {
     this.resultado = null;
     this.erro = null;
   }
-
-  // ─── Checkboxes ───────────────────────────────────────────────────────────
 
   toggleVariavelAmbiental(id: number, ev: Event): void {
     const checked = (ev.target as HTMLInputElement).checked;
@@ -386,8 +340,6 @@ export class AnalisesComponent implements OnInit {
     return this[lista].includes(id);
   }
 
-  // ─── Coordenadas DMS ──────────────────────────────────────────────────────
-
   onCoordInput(
     campo: "latMin" | "latMax" | "lngMin" | "lngMax",
     raw: string,
@@ -415,8 +367,6 @@ export class AnalisesComponent implements OnInit {
     return r;
   }
 
-  // ─── Executar ─────────────────────────────────────────────────────────────
-
   executar(): void {
     if (!this.analiseAtual) return;
 
@@ -426,13 +376,10 @@ export class AnalisesComponent implements OnInit {
 
     switch (this.tipoDado) {
       case "abundancias_com_variaveis":
-        // variavel_ids são os IDs das variáveis ambientais preditoras (RDA/CCA)
         payload.variavel_ids = this.variavelIdsAmbientais;
         break;
 
       case "dois_vetores":
-        // Perna variavel: envia variavel_*_id, omite fonte_*
-        // Perna derivada: envia fonte_*, omite variavel_*_id
         if (this.fonteX === "variavel") {
           payload.variavel_x_id = this.variavelXId;
         } else {
@@ -443,7 +390,6 @@ export class AnalisesComponent implements OnInit {
         } else {
           payload.fonte_y = this.fonteY;
         }
-        // nivel_agregacao só quando ao menos um lado é fonte derivada
         if (this.fonteX !== "variavel" || this.fonteY !== "variavel") {
           payload.nivel_agregacao = this.nivelAgregacao;
         }
@@ -454,19 +400,15 @@ export class AnalisesComponent implements OnInit {
         if (this.fonte === "variavel") {
           payload.variavel_id = this.variavelId;
         } else {
-          // fonte derivada requer nivel_agregacao para saber a granularidade
           payload.nivel_agregacao = this.nivelAgregacao;
         }
         break;
 
       case "dois_grupos":
-        // agrupar_por é parâmetro de UI apenas (para montar as opções de grupo)
-        // o backend infere o tipo dos grupo*_ids pelo contexto — não enviar
         payload.fonte = this.fonte;
         if (this.fonte === "variavel") {
           payload.variavel_id = this.variavelId;
         } else {
-          // fonte derivada: backend precisa da granularidade para agregar antes de separar nos grupos
           payload.nivel_agregacao = this.nivelAgregacao;
         }
         payload.grupo1_ids = this.grupo1Ids;
@@ -476,17 +418,12 @@ export class AnalisesComponent implements OnInit {
         break;
 
       case "multiplos_grupos":
-        // agrupar_por define a granularidade dos grupos; nivel_agregacao NÃO se aplica aqui
         payload.fonte = this.fonte;
         if (this.fonte === "variavel") payload.variavel_id = this.variavelId;
         payload.agrupar_por = this.agruparPor;
         break;
-
-      // abundancias, abundancias_por_amostra, matriz_acumulacao:
-      // sem parâmetros obrigatórios além de chave — apenas filtros globais abaixo
     }
 
-    // ── Filtros globais (opcionais, aditivos) ─────────────────────────────
     if (this.filtroCampanhaIds.length)
       payload.campanha_ids = this.filtroCampanhaIds;
     if (this.filtroUnidadeIds.length)

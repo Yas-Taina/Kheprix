@@ -199,7 +199,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: false,
   },
-  // Índices de diversidade — apenas valor
   {
     chave: "shannon",
     nome: "Shannon-Wiener",
@@ -272,7 +271,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: false,
   },
-  // Testes de hipótese — apenas valor
   {
     chave: "teste_t",
     nome: "Teste T",
@@ -313,7 +311,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: false,
   },
-  // Correlação — valor + gráfico
   {
     chave: "pearson",
     nome: "Correlação de Pearson",
@@ -338,7 +335,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: true,
   },
-  // Regressão — apenas gráfico
   {
     chave: "regressao_linear",
     nome: "Regressão Linear",
@@ -347,7 +343,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: false,
     tem_grafico: true,
   },
-  // Similaridade — valor + gráfico
   {
     chave: "jaccard",
     nome: "Índice de Jaccard",
@@ -380,7 +375,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: true,
   },
-  // Multivariada — apenas gráfico
   {
     chave: "rda",
     nome: "RDA",
@@ -413,7 +407,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: false,
     tem_grafico: true,
   },
-  // GLM — valor + gráfico
   {
     chave: "modelo_gaussiano",
     nome: "GLM Gaussiano",
@@ -446,7 +439,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: true,
   },
-  // Acumulação — apenas gráfico
   {
     chave: "michaelis_menten",
     nome: "Michaelis-Menten",
@@ -457,29 +449,21 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
   },
 ];
 
-// ─── Request / Response ───────────────────────────────────────────────────────
-
 export interface ExecutarAnaliseRequest {
   chave: ChaveAnalise;
-  // abundancias_com_variaveis
   variavel_ids?: number[];
-  // dois_vetores
   variavel_x_id?: number;
   variavel_y_id?: number;
   fonte_x?: FonteAnalise;
   fonte_y?: FonteAnalise;
-  // vetor_unico / multiplos_grupos
   variavel_id?: number;
   fonte?: FonteAnalise;
   nivel_agregacao?: NivelAgregacao;
-  // dois_grupos
   grupo1_ids?: number[];
   grupo2_ids?: number[];
   nome_grupo1?: string;
   nome_grupo2?: string;
-  // multiplos_grupos
   agrupar_por?: AgruparPor;
-  // filtros globais
   campanha_ids?: number[];
   unidade_ids?: number[];
   evento_ids?: number[];
@@ -495,6 +479,6 @@ export interface ExecutarAnaliseResponse {
   analise: string;
   nome: string;
   valor: Record<string, unknown> | null;
-  grafico: string | null; // HTML completo
+  grafico: string | null; 
   urlArquivo: string | null;
 }

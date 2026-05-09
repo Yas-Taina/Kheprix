@@ -13,10 +13,6 @@ export class AnaliseService extends BaseService {
     super(http);
   }
 
-  /**
-   * Executa uma análise estatística.
-   * POST /estudos/:estudo_id/analises/executar
-   */
   executar(
     estudoId: number,
     payload: ExecutarAnaliseRequest,
@@ -27,10 +23,6 @@ export class AnaliseService extends BaseService {
     );
   }
 
-  /**
-   * Download do resultado exportado (ZIP com JSON, XML e, se houver, HTML do gráfico).
-   * GET /analises/estudos/:estudo_id/:chave/:arquivo
-   */
   downloadArquivo(
     estudoId: number,
     chave: string,
