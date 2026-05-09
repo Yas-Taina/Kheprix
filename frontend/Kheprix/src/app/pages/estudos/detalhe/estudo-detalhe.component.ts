@@ -44,7 +44,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
   exportLoading = false;
   exportMsg = '';
 
-  // ── Estado do dashboard ───────────────────────────────────────────────────
   dashboard = signal<EstudoDashboard | null>(null);
   dashboardLoading = signal(false);
   dashboardError = signal<string | null>(null);
@@ -57,7 +56,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     return [...new Set(d.registros_por_especie_tempo.map(r => r.nome_cientifico))].sort();
   });
 
-  // ── Instâncias de Chart / Map (destruídas no ngOnDestroy) ─────────────────
   private chartRegistrosData?: Chart;
   private chartOcorrencias?: Chart;
   private chartEspecieTempo?: Chart;
@@ -74,7 +72,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     public util: UtilService,
   ) {}
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.estudoId = +this.route.snapshot.params['estudo_id'];
 
@@ -100,14 +97,12 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     this.map?.remove();
   }
 
-  // ── Navegação (original) ──────────────────────────────────────────────────
   irParaCampanhas()   { this.router.navigate(['/estudos', this.estudoId, 'campanhas']); }
   irParaNovaEspecie() { this.router.navigate(['/estudos', this.estudoId, 'especies', 'novo']); }
   irParaEspecies()    { this.router.navigate(['/estudos', this.estudoId, 'especies']); }
   irParaEditar()      { this.router.navigate(['/estudos', this.estudoId, 'editar']); }
   irParaAnalises()      { this.router.navigate(['/estudos', this.estudoId, 'analises']); }
 
-  // ── Exportação ─────────────────────────────────
   abrirExportar()  { this.showExportar = true; this.exportMsg = ''; }
   fecharExportar() { this.showExportar = false; }
 
@@ -129,7 +124,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────
   carregarDashboard(): void {
     this.dashboardLoading.set(true);
     this.dashboardError.set(null);
@@ -146,7 +140,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Gráficos ──────────────────────────────────────────────────────────────
   private inicializarGraficos(): void {
     const d = this.dashboard();
     if (!d) return;
@@ -177,12 +170,10 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 18,
-      // tileSize e zoomOffset corretos garantem tiles sem fragmentação
       tileSize: 256,
       zoomOffset: 0,
     }).addTo(this.map);
 
-    // CircleMarker é renderizado no canvas — sem problemas de ícone/CSS externo
     d.pontos_mapa.forEach(p => {
       L.circleMarker([p.latitude, p.longitude], {
         radius: 7,
@@ -205,7 +196,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
       this.map.setView([-15, -50], 5);
     }
 
-    // Garante que o Leaflet recalcula o tamanho após Angular terminar o render
     setTimeout(() => this.map?.invalidateSize(), 200);
   }
 
@@ -249,7 +239,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Chamado também pelo template via (ngModelChange)
   buildEspecieTempo(d?: EstudoDashboard): void {
     const data = d ?? this.dashboard();
     if (!data) return;
@@ -308,7 +297,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Chamado também pelo template via (ngModelChange)
   buildEspeciesDistintas(d?: EstudoDashboard): void {
     const data = d ?? this.dashboard();
     if (!data) return;
@@ -361,7 +349,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     this.buildEspeciesDistintasTempo();
   }
 
-  // Linha: quantidade de espécies distintas ao longo do tempo
   buildEspeciesDistintasTempo(d?: EstudoDashboard): void {
     const data = d ?? this.dashboard();
     if (!data) return;
@@ -383,7 +370,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
       labels = [...anos.keys()].sort();
       valores = labels.map(k => anos.get(k)!);
     } else {
-      // Ordena cronologicamente: ano ASC, mes ASC
       const ordenado = [...data.especies_distintas_por_mes].sort(
         (a, b) => a.ano !== b.ano ? a.ano - b.ano : a.mes - b.mes
       );
@@ -411,7 +397,6 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Helpers de font/opções (consistência com --font-body do projeto) ──────
   private fontCormorant(size = 13) {
     return { family: "'Cormorant Garamond', Georgia, serif", size };
   }

@@ -38,19 +38,19 @@ export const routes: Routes = [
   {
     path: 'convites',
     loadComponent: () => import('./pages/convites/convites.component').then(m => m.ConvitesComponent),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
 
   // Estudos
   {
     path: 'estudos',
     loadComponent: () => import('./pages/estudos/lista/estudos-lista.component').then(m => m.EstudosListaComponent),
-    canActivate: [authGuard],
+    //canActivate: [authGuard],
   },
   {
     path: 'estudos/:estudo_id/analises',
     loadComponent: () => import('./pages/estudos/analise/analise.component').then(m => m.AnalisesComponent),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'estudos/novo',
@@ -60,7 +60,7 @@ export const routes: Routes = [
   {
     path: 'estudos/:estudo_id',
     loadComponent: () => import('./pages/estudos/detalhe/estudo-detalhe.component').then(m => m.EstudoDetalheComponent),
-    canActivate: [authGuard],
+    //canActivate: [authGuard],
   },
   {
     path: 'estudos/:estudo_id/editar',
