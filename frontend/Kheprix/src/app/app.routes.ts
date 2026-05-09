@@ -28,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'inicio',
     loadComponent: () => import('./pages/inicio/inicio.component').then(m => m.InicioComponent),
-    canActivate: [authGuard],
+    //canActivate: [authGuard],
   },
   {
     path: 'registro-rapido',
@@ -38,7 +38,7 @@ export const routes: Routes = [
   {
     path: 'convites',
     loadComponent: () => import('./pages/convites/convites.component').then(m => m.ConvitesComponent),
-    canActivate: [authGuard],
+    //canActivate: [authGuard],
   },
 
   // Estudos

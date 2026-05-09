@@ -65,7 +65,7 @@
     .about-text-box {
       background: rgba(234, 230, 216, 0.85);
       border: 1px solid rgba(234, 230, 216, 0.6);
-      border-radius: var(--border-radius-md);
+      border-radius: var(--border-radius-sm);
       padding: var(--space-2xl) var(--space-xl);
       max-width: 700px;
       text-align: center;
@@ -207,7 +207,7 @@
     .analysis-box {
       background: var(--color-bg-cream);
       border: 1.5px solid var(--border-color);
-      border-radius: var(--border-radius-md);
+      border-radius: var(--border-radius-sm);
       padding: var(--space-3xl) var(--space-2xl);
       max-width: 70vw;
       text-align: center;

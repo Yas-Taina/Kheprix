@@ -1,53 +1,70 @@
     <div class="sidebar-layout">
-      <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-item" (click)="router.navigate(['/registro-rapido'])">
-          <!-- PLACEHOLDER: Ícone de borboleta. Substituir por <img src="/assets/images/insect-butterfly.png"> -->
-          <div class="insect-placeholder">🦋</div>
+          <div class="insect-decor">
+            <img src="/img/decor1_verde.png">
+          </div>
           <div class="sidebar-item-label">Registro Rápido<br>de Ocorrências</div>
         </div>
 
-        <div class="sidebar-divider">⸙</div>
+        <div class="sidebar-wrapper">
+          <div class="sidebar-divider-lines"></div>
+          <div class="sidebar-divider">⸙</div>
+
+        </div>
 
         <div class="sidebar-item" (click)="router.navigate(['/estudos'])">
-          <!-- PLACEHOLDER: Ícone de joaninha. Substituir por <img src="/assets/images/insect-ladybug.png"> -->
-          <div class="insect-placeholder">🐞</div>
+          <div class="insect-decor">
+            <img src="/img/decor2_verde.png">
+          </div>
           <div class="sidebar-item-label">Visualizar<br>Estudos</div>
         </div>
 
-        <div class="sidebar-divider">⸙</div>
+        <div class="sidebar-wrapper">
+          <div class="sidebar-divider-lines"></div>
+          <div class="sidebar-divider">⸙</div>
+
+        </div>
 
         <div class="sidebar-item" (click)="router.navigate(['/estudos/novo'])">
-          <!-- PLACEHOLDER: Ícone de vespa. Substituir por <img src="/assets/images/insect-wasp.png"> -->
-          <div class="insect-placeholder">🪲</div>
+          <div class="insect-decor">
+            <img src="/img/decor3_verde.png">
+          </div>
           <div class="sidebar-item-label">Cadastrar Novo<br>Estudo</div>
         </div>
 
-        <div class="sidebar-divider">⸙</div>
+        <div class="sidebar-wrapper">
+          <div class="sidebar-divider-lines"></div>
+          <div class="sidebar-divider">⸙</div>
+
+        </div>
 
         <div class="sidebar-item" (click)="router.navigate(['/convites'])">
-          <!-- PLACEHOLDER: Ícone de abelha. Substituir por <img src="/assets/images/insect-bee.png"> -->
-          <div class="insect-placeholder">🐝</div>
+          <div class="insect-decor">
+            <img src="/img/decor4_verde.png">
+          </div>
           <div class="sidebar-item-label">Convites de<br>Colaboração</div>
         </div>
 
-        <div class="sidebar-divider">⸙</div>
+        <div class="sidebar-wrapper">
+          <div class="sidebar-divider-lines"></div>
+          <div class="sidebar-divider">⸙</div>
+
+        </div>
       </aside>
 
-      <!-- Main content -->
       <main class="main-content">
         <ng-container *ngIf="loading">
           <div class="loading-overlay"><div class="spinner"></div><span>Carregando dashboard...</span></div>
         </ng-container>
 
         <ng-container *ngIf="!loading && dashboard">
-          <!-- Card Último Estudo -->
           <div class="card ultimo-estudo-card">
-            <div class="ultimo-estudo-header" style="display: flex; align-items: center; gap: 1rem;">
-              <div class="ultimo-estudo-titulo">
+            <div class="ultimo-estudo-header" style="align-items: center; gap: 1rem;">
+              <div class="ultimo-estudo-titulo" style="text-align: right;">
                 <span class="section-title" style="font-size:1.1rem">Último<br>Estudo</span>
               </div>
-              <div class="ultimo-estudo-info">
+              <div class="ultimo-estudo-info" style="text-align: left;">
                 <h2 class="study-name">{{ dashboard.nome }}</h2>
                 <p class="study-date">Editado em {{ util.formatDate(dashboard.updated_at) }}</p>
               </div>
@@ -58,8 +75,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Stats grid -->
           <div class="stats-grid mt-lg">
             <div class="stat-card">
               <div class="stat-label">Data de início</div>
