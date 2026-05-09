@@ -48,6 +48,6 @@ export const appConfig: ApplicationConfig = {
       useFactory: initTokenValidator,
       deps: [TokenValidatorService],
       multi: true,
-    }, 
+    },
   ],
 };
