@@ -95,6 +95,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+main {
+  flex: 1;
+}
+
 main.with-menu {
   padding-top: 15vh;
 }
