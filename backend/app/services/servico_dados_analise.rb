@@ -8,6 +8,8 @@ class ServicoDadosAnalise
   # IDs colidissem por acaso entre campanha e unidade.
   class NivelIncompativel < StandardError; end
 
+  class DadosDegenerados < StandardError; end
+
   def montar_dados(estudo_id:, tipo_dado:, params:)
     @campanha_ids = params[:campanha_ids].presence
     @unidade_ids = params[:unidade_ids].presence
@@ -155,25 +157,56 @@ class ServicoDadosAnalise
             "Ajuste nivel_agregacao ou escolha variáveis no mesmo nível."
     end
 
-    hash_x, nome_x = hash_bivariado(
+    hash_x, nome_x, vazio_por_null_x = hash_bivariado(
       estudo_id: estudo_id, fonte: fonte_x,
       variavel_id: params[:variavel_x_id], nivel: nivel,
     )
-    hash_y, nome_y = hash_bivariado(
+    hash_y, nome_y, vazio_por_null_y = hash_bivariado(
       estudo_id: estudo_id, fonte: fonte_y,
       variavel_id: params[:variavel_y_id], nivel: nivel,
     )
+
+    if vazio_por_null_x
+      raise DadosDegenerados,
+            "Variável '#{nome_x || "X"}' não tem valor numérico no DW para os filtros aplicados " \
+            "(todas as linhas dela têm valor_numerico=NULL — provável problema de qualidade do dado)."
+    end
+    if vazio_por_null_y
+      raise DadosDegenerados,
+            "Variável '#{nome_y || "Y"}' não tem valor numérico no DW para os filtros aplicados " \
+            "(todas as linhas dela têm valor_numerico=NULL — provável problema de qualidade do dado)."
+    end
+
     return nil if hash_x.empty? || hash_y.empty?
 
     ids_comuns = hash_x.keys & hash_y.keys
     return nil if ids_comuns.empty?
 
+    valores_x = ids_comuns.map { |id| hash_x[id] }
+    valores_y = ids_comuns.map { |id| hash_y[id] }
+
+    if vetor_constante?(valores_x)
+      raise DadosDegenerados,
+            "Vetor X ('#{nome_x || "X"}') é constante (variância zero); " \
+            "correlação ou regressão não são definidas. Tente outra variável ou outro filtro."
+    end
+    if vetor_constante?(valores_y)
+      raise DadosDegenerados,
+            "Vetor Y ('#{nome_y || "Y"}') é constante (variância zero); " \
+            "correlação ou regressão não são definidas. Tente outra variável ou outro filtro."
+    end
+
     {
-      x: ids_comuns.map { |id| hash_x[id] },
-      y: ids_comuns.map { |id| hash_y[id] },
+      x: valores_x,
+      y: valores_y,
       nome_x: nome_x || "Variável X",
       nome_y: nome_y || "Variável Y"
     }
+  end
+
+  def vetor_constante?(valores)
+    return false if valores.length < 2
+    valores.uniq.length == 1
   end
 
   # ==================== Dois Grupos ====================
@@ -271,6 +304,15 @@ class ServicoDadosAnalise
     end
 
     return nil if valores.empty?
+
+    contagem_por_grupo = grupos.tally
+    if contagem_por_grupo.size < 2
+      raise DadosDegenerados,
+            "ANOVA/Kruskal precisam de pelo menos 2 grupos distintos; " \
+            "obteve #{contagem_por_grupo.size} (label='#{contagem_por_grupo.keys.first}'). " \
+            "Verifique se agrupar_por='#{params[:agrupar_por] || "unidade_amostral"}' " \
+            "faz sentido pros filtros aplicados."
+    end
 
     { valores: valores, grupos: grupos, nome_variavel: nome_variavel }
   end
@@ -458,20 +500,27 @@ class ServicoDadosAnalise
 
   def hash_bivariado(estudo_id:, fonte:, variavel_id:, nivel:)
     if fonte == "variavel"
-      return [ {}, nil ] if variavel_id.blank?
+      return [ {}, nil, false ] if variavel_id.blank?
 
       hash = {}
       nome = nil
+      total_rows = 0
+      rows_com_null = 0
       valores_variavel_unicos(estudo_id: estudo_id, variavel_id: variavel_id).each do |r|
-        next unless r.valor_numerico
+        total_rows += 1
+        nome ||= r.nome_variavel
+        if r.valor_numerico.nil?
+          rows_com_null += 1
+          next
+        end
         chave = chave_nivel_nativo(r)
         hash[chave] = r.valor_numerico.to_f
-        nome ||= r.nome_variavel
       end
-      [ hash, nome ]
+      vazio_por_null = total_rows.positive? && rows_com_null == total_rows
+      [ hash, nome, vazio_por_null ]
     else
       valores = dados_derivados(estudo_id: estudo_id, fonte: fonte, nivel_agregacao: nivel)
-      [ valores.transform_values(&:to_f), "#{fonte.capitalize} por #{nivel}" ]
+      [ valores.transform_values(&:to_f), "#{fonte.capitalize} por #{nivel}", false ]
     end
   end
 

@@ -34,12 +34,14 @@ class AnalisesController < ApplicationController
     path = resultado[:url_arquivo]
     url_absoluto = path.present? ? "#{ENV.fetch('BACKEND_URL', 'http://localhost:3000')}#{path}" : nil
 
-    {
+    resposta = {
       analise: resultado[:analise],
       nome: resultado[:nome],
       valor: resultado[:valor],
       grafico: resultado[:grafico],
       urlArquivo: url_absoluto
     }
+    resposta[:aviso] = resultado[:aviso] if resultado[:aviso].present?
+    resposta
   end
 end
