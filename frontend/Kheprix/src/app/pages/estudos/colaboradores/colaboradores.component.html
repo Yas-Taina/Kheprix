@@ -1,4 +1,12 @@
 <div class="page-container" style="max-width: 1000px">
+  <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm); justify-content: center;">
+    <h1 class="page-title" style="font-size: 1.6rem; margin: 0">Colaboradores</h1>
+  </div>
+  <div class="ornament-divider"><span>⸙</span></div>
+    <div class="d-flex align-center justify-between mt-lg" style="margin-bottom: 2.5rem;">
+      <div></div>
+  <button class="back-btn" (click)="router.navigate(['/estudos'])">◀</button></div>
+
   <div class="colab-layout">
     <div class="colab-invite-section">
       <h2 class="section-title" style="text-align: center">
@@ -248,5 +256,45 @@
     class="text-center text-muted mt-lg"
   >
     Nenhum colaborador cadastrado.
+  </div>
+
+  <!-- Seção de Convites Enviados -->
+  <h2 class="section-title text-center mt-lg">Convites Enviados</h2>
+  <div class="ornament-divider"><span>⸙</span></div>
+
+  <div *ngIf="loadingConvites" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loadingConvites">
+    <div *ngIf="convites.length === 0" class="text-muted text-center mt-lg">
+      Nenhum convite pendente.
+    </div>
+    <table class="data-table" *ngIf="convites.length > 0">
+      <thead>
+        <tr>
+          <th>E-mail Convidado</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of convites">
+          <td>{{ c.email_convidado }}</td>
+          <td>{{ c.status }}</td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn btn-danger btn-sm" (click)="cancelarConvite(c)">
+                Cancelar
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-container>
+
+  <div *ngIf="erroConvites" class="alert alert-error mt-md">
+    {{ erroConvites }}
   </div>
 </div>
