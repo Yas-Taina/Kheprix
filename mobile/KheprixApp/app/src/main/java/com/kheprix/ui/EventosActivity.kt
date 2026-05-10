@@ -133,7 +133,7 @@ class EventosActivity : BaseDrawerActivity() {
                         unidadeNome = u.nome
                         binding.tvUnidadeNome.text = u.nome
                         preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral, u.updatedAt)
-                        renderizarValoresCard(u.valoresVariaveis)
+                        renderizarValoresCard(u.valoresVariaveis, fetchVarNomesApi())
                         return@launch
                     }
                 } catch (_: Exception) { }
@@ -141,6 +141,14 @@ class EventosActivity : BaseDrawerActivity() {
             // Fallback offline: SQLite.
             preencherDetalhesOffline()
         }
+    }
+
+    private suspend fun fetchVarNomesApi(): Map<Int, Pair<String, String?>> {
+        if (estudoRemoteId <= 0) return emptyMap()
+        return try {
+            RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
+                .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
     }
 
     private fun preencherCardUnidade(
@@ -160,39 +168,40 @@ class EventosActivity : BaseDrawerActivity() {
         val unidadeDao = UnidadeDao(this)
         val campanhaDao = CampanhaDao(this)
         val estudoDao = EstudoDao(this)
+        val repo = OfflineRepository(this)
 
-        val campanhaLocalId = if (campanhaId > 0) {
-            estudoDao.buscarPorRemoteId(estudoRemoteId)?.localId?.let { estudoLocal ->
+        val cLocal = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            campanhaId > 0 -> estudoDao.buscarPorRemoteId(estudoRemoteId)?.localId?.let { estudoLocal ->
                 campanhaDao.buscarPorRemoteIdEscopo(campanhaId, estudoLocal)?.localId
             }
-        } else null
+            else -> null
+        }
 
         val unidade = when {
-            unidadeId > 0 && campanhaLocalId != null ->
-                unidadeDao.buscarPorRemoteIdEscopo(unidadeId, campanhaLocalId)
-            campanhaLocalId != null ->
-                unidadeDao.listarPorCampanhaLocal(campanhaLocalId).firstOrNull { it.nome == unidadeNome }
-            else ->
-                unidadeDao.listarTodos().firstOrNull { it.nome == unidadeNome }
+            unidadeLocalId > 0 -> unidadeDao.listarTodos().firstOrNull { it.localId == unidadeLocalId }
+            unidadeId > 0 && cLocal != null -> unidadeDao.buscarPorRemoteIdEscopo(unidadeId, cLocal)
+            cLocal != null -> unidadeDao.listarPorCampanhaLocal(cLocal).firstOrNull { it.nome == unidadeNome }
+            else -> unidadeDao.listarTodos().firstOrNull { it.nome == unidadeNome }
         } ?: return
 
         preencherCardUnidade(
             unidade.nome, unidade.latitude, unidade.longitude,
             unidade.raio, unidade.metodoColeta, unidade.esforcoAmostral, unidade.updatedAt
         )
-        renderizarValoresCard(null)
+        renderizarValoresCard(repo.listarValoresPorUnidade(unidade.localId))
     }
 
-    private fun renderizarValoresCard(valores: List<ValorVariavelResponse>?) {
+    private fun renderizarValoresCard(
+        valores: List<ValorVariavelResponse>?,
+        apiNomes: Map<Int, Pair<String, String?>> = emptyMap()
+    ) {
         binding.layoutVariaveisDetalhe.removeAllViews()
         if (valores.isNullOrEmpty()) return
-        val eLocal = (if (estudoLocalId > 0) estudoLocalId
-                      else if (estudoRemoteId > 0) OfflineRepository(this).estudoLocalIdFromRemote(estudoRemoteId)
-                      else null) ?: return
         val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        varMap.putAll(apiNomes)
         com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
-            "SELECT remote_id, local_id, nome, metrica FROM variaveis WHERE estudo_local_id = ?",
-            arrayOf(eLocal.toString())
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis", null
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) null else c.getInt(0)
@@ -203,8 +212,6 @@ class EventosActivity : BaseDrawerActivity() {
                 varMap[-lid.toInt()] = nome to metrica
             }
         }
-        val matched = valores.filter { varMap.containsKey(it.variavelId) }
-        if (matched.isEmpty()) return
         val dp = resources.displayMetrics.density
         binding.layoutVariaveisDetalhe.addView(View(this).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
@@ -216,8 +223,8 @@ class EventosActivity : BaseDrawerActivity() {
             typeface = android.graphics.Typeface.MONOSPACE
             setPadding(0, 0, 0, (2 * dp).toInt())
         })
-        matched.forEach { vv ->
-            val (nome, metrica) = varMap[vv.variavelId]!!
+        valores.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId] ?: ("Variável ${vv.variavelId}" to null)
             binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
                 text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
                 typeface = android.graphics.Typeface.MONOSPACE
@@ -353,6 +360,12 @@ class EventosActivity : BaseDrawerActivity() {
                         RetrofitClient.apiService.deleteEvento(
                             SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, e.id
                         )
+                        if (unidadeLocalId > 0) {
+                            EventoDao(this@EventosActivity).buscarPorRemoteIdEscopo(e.id, unidadeLocalId)?.localId?.let { lid ->
+                                com.kheprix.db.DatabaseHelper(this@EventosActivity).writableDatabase
+                                    .delete("eventos_amostragem", "local_id = ?", arrayOf(lid.toString()))
+                            }
+                        }
                         carregarEventos()
                     } catch (_: Exception) {}
                 }
@@ -638,10 +651,10 @@ class NovoEventoActivity : BaseDrawerActivity() {
     }
 
     private fun preencherEdicaoOffline() {
+        val repo = OfflineRepository(this)
         val uLocal: Long = when {
             unidadeLocalId > 0 -> unidadeLocalId
             unidadeId > 0 -> {
-                val repo = OfflineRepository(this)
                 val eL = if (estudoLocalId > 0) estudoLocalId
                          else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
                          else null
@@ -664,6 +677,14 @@ class NovoEventoActivity : BaseDrawerActivity() {
         } ?: return
         preencherDataHora(e.horarioInicio)
         binding.etEsforcoReal.setText(e.esforcoReal ?: "")
+        eventoCarregado = EventoResponse(
+            id = if (eventoId > 0) eventoId else -e.localId.toInt(),
+            unidadeAmostralId = uLocal.toInt(),
+            horarioInicio = e.horarioInicio, horarioFim = e.horarioFim,
+            esforcoReal = e.esforcoReal, createdAt = "",
+            valoresVariaveis = repo.listarValoresPorEvento(e.localId)
+        )
+        aplicarValoresVariaveis()
     }
 
     private fun criarEvento() {
@@ -722,6 +743,9 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun editarEvento() {
         val req = coletarFormulario() ?: return
+        if (eventoId < 0 || estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) {
+            editarEventoOffline(req); return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -735,8 +759,45 @@ class NovoEventoActivity : BaseDrawerActivity() {
                     Toast.makeText(this@NovoEventoActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovoEventoActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                editarEventoOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun editarEventoOffline(req: EventoRequest) {
+        val repo = OfflineRepository(this)
+        val uLocal: Long = when {
+            unidadeLocalId > 0 -> unidadeLocalId
+            unidadeId > 0 -> {
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                val cL = eL?.let {
+                    if (campanhaLocalId > 0) campanhaLocalId
+                    else if (campanhaId > 0) repo.campanhaLocalIdFromRemote(it, campanhaId)
+                    else null
+                }
+                cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) } ?: run {
+                    Toast.makeText(this, "Unidade não encontrada offline", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            else -> return
+        }
+        val eLocalId: Long = when {
+            eventoId < 0 -> (-eventoId).toLong()
+            eventoId > 0 -> repo.eventoLocalIdFromRemote(uLocal, eventoId) ?: run {
+                Toast.makeText(this, "Evento não encontrado offline", Toast.LENGTH_SHORT).show()
+                return
+            }
+            else -> return
+        }
+        try {
+            repo.editarEventoOffline(eLocalId, req)
+            Toast.makeText(this, "Evento salvo offline.", Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

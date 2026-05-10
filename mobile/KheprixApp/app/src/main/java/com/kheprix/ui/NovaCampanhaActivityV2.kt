@@ -460,17 +460,24 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             return
         }
 
+        val req = CampanhaRequest(
+            nome = nome,
+            dataInicio = inicioIso,
+            descricao = descricao,
+            valoresVariaveis = coletarValoresVariaveis()
+        )
+
+        // Campanha offline-only (negative ID) or offline study: persist to SQLite directly.
+        if (campanhaId < 0 || estudoRemoteId <= 0) {
+            editarCampanhaOffline(req)
+            return
+        }
+
         setLoading(true)
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.patchCampanha(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId,
-                    CampanhaRequest(
-                        nome = nome,
-                        dataInicio = inicioIso,
-                        descricao = descricao,
-                        valoresVariaveis = coletarValoresVariaveis()
-                    )
+                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, req
                 )
                 if (resp.isSuccessful) {
                     Toast.makeText(this@NovaCampanhaActivityV2, "Campanha atualizada!", Toast.LENGTH_SHORT).show()
@@ -479,8 +486,32 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     Toast.makeText(this@NovaCampanhaActivityV2, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovaCampanhaActivityV2, "Sem conexão", Toast.LENGTH_SHORT).show()
+                editarCampanhaOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun editarCampanhaOffline(req: CampanhaRequest) {
+        val repo = OfflineRepository(this)
+        val campanhaLocalId: Long = when {
+            campanhaId < 0 -> (-campanhaId).toLong()
+            campanhaId > 0 -> {
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId } ?: run {
+                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            else -> return
+        }
+        try {
+            repo.editarCampanhaOffline(campanhaLocalId, req)
+            Toast.makeText(this, "Campanha salva offline.", Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

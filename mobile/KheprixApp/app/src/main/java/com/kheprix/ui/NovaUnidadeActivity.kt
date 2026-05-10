@@ -364,10 +364,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     }
 
     private fun preencherDadosEdicaoOffline() {
+        val repo = OfflineRepository(this)
         val cLocal: Long = when {
             campanhaLocalId > 0 -> campanhaLocalId
             campanhaId > 0 -> {
-                val repo = OfflineRepository(this)
                 val eL = if (estudoLocalId > 0) estudoLocalId
                          else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
                          else null
@@ -390,6 +390,15 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         binding.etRaio.setText(u.raio?.toString() ?: "")
         binding.etMetodoColeta.setText(u.metodoColeta ?: "")
         binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+        unidadeCarregada = com.kheprix.models.UnidadeResponse(
+            id = if (unidadeId > 0) unidadeId else -u.localId.toInt(),
+            campanhaId = if (campanhaId > 0) campanhaId else -cLocal.toInt(),
+            nome = u.nome, latitude = u.latitude, longitude = u.longitude,
+            raio = u.raio, metodoColeta = u.metodoColeta, esforcoAmostral = u.esforcoAmostral,
+            createdAt = "", updatedAt = "",
+            valoresVariaveis = repo.listarValoresPorUnidade(u.localId)
+        )
+        aplicarValoresVariaveis()
     }
 
     // ── API ───────────────────────────────────────────────────────────────
@@ -421,6 +430,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private fun editarUnidade() {
         val req = coletarFormulario() ?: return
+        if (unidadeId < 0 || estudoRemoteId <= 0 || campanhaId <= 0) {
+            editarUnidadeOffline(req); return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -434,8 +446,40 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     Toast.makeText(this@NovaUnidadeActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovaUnidadeActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                editarUnidadeOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun editarUnidadeOffline(req: UnidadeRequest) {
+        val repo = OfflineRepository(this)
+        val cLocal: Long = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            campanhaId > 0 -> {
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: run {
+                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            else -> return
+        }
+        val uLocalId: Long = when {
+            unidadeId < 0 -> (-unidadeId).toLong()
+            unidadeId > 0 -> repo.unidadeLocalIdFromRemote(cLocal, unidadeId) ?: run {
+                Toast.makeText(this, "Unidade não encontrada offline", Toast.LENGTH_SHORT).show()
+                return
+            }
+            else -> return
+        }
+        try {
+            repo.editarUnidadeOffline(uLocalId, req)
+            Toast.makeText(this, "Unidade salva offline.", Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

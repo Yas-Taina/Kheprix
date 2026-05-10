@@ -194,13 +194,21 @@ class RegistrosActivity : BaseDrawerActivity() {
                     )
                     resp.body()?.let { e ->
                         preencherCardEvento(e.horarioInicio, e.esforcoReal, e.updatedAt)
-                        renderizarValoresCard(e.valoresVariaveis)
+                        renderizarValoresCard(e.valoresVariaveis, fetchVarNomesApi())
                         return@launch
                     }
                 } catch (_: Exception) { }
             }
             preencherDetalhesEventoOffline()
         }
+    }
+
+    private suspend fun fetchVarNomesApi(): Map<Int, Pair<String, String?>> {
+        if (estudoRemoteId <= 0) return emptyMap()
+        return try {
+            RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
+                .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
     }
 
     private fun preencherCardEvento(inicio: String, esforco: String?, updatedAt: String? = null) {
@@ -220,25 +228,27 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private fun preencherDetalhesEventoOffline() {
         val eventoDao = EventoDao(this)
+        val repo = OfflineRepository(this)
         val evento = when {
+            eventoLocalId > 0 -> eventoDao.listarTodos().firstOrNull { it.localId == eventoLocalId }
             eventoId < 0 -> eventoDao.listarTodos().firstOrNull { it.localId == (-eventoId).toLong() }
             eventoId > 0 -> eventoDao.listarTodos().firstOrNull { it.remoteId == eventoId }
             else -> eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome }
         } ?: return
         preencherCardEvento(evento.horarioInicio, evento.esforcoReal)
-        renderizarValoresCard(null)
+        renderizarValoresCard(repo.listarValoresPorEvento(evento.localId))
     }
 
-    private fun renderizarValoresCard(valores: List<ValorVariavelResponse>?) {
+    private fun renderizarValoresCard(
+        valores: List<ValorVariavelResponse>?,
+        apiNomes: Map<Int, Pair<String, String?>> = emptyMap()
+    ) {
         binding.layoutVariaveisDetalhe.removeAllViews()
         if (valores.isNullOrEmpty()) return
-        val eLocal = (if (estudoLocalId > 0) estudoLocalId
-                      else if (estudoRemoteId > 0) OfflineRepository(this).estudoLocalIdFromRemote(estudoRemoteId)
-                      else null) ?: return
         val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        varMap.putAll(apiNomes)
         com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
-            "SELECT remote_id, local_id, nome, metrica FROM variaveis WHERE estudo_local_id = ?",
-            arrayOf(eLocal.toString())
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis", null
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) null else c.getInt(0)
@@ -249,8 +259,6 @@ class RegistrosActivity : BaseDrawerActivity() {
                 varMap[-lid.toInt()] = nome to metrica
             }
         }
-        val matched = valores.filter { varMap.containsKey(it.variavelId) }
-        if (matched.isEmpty()) return
         val dp = resources.displayMetrics.density
         binding.layoutVariaveisDetalhe.addView(View(this).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
@@ -262,8 +270,8 @@ class RegistrosActivity : BaseDrawerActivity() {
             typeface = android.graphics.Typeface.MONOSPACE
             setPadding(0, 0, 0, (2 * dp).toInt())
         })
-        matched.forEach { vv ->
-            val (nome, metrica) = varMap[vv.variavelId]!!
+        valores.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId] ?: ("Variável ${vv.variavelId}" to null)
             binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
                 text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
                 typeface = android.graphics.Typeface.MONOSPACE
@@ -881,6 +889,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         val localId = resolveRegistroLocalId()
         if (localId == null) return
         val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
+        val valoresOffline = OfflineRepository(this).listarValoresPorRegistro(localId)
         val r = RegistroResponse(
             id = off.remoteId ?: -off.localId.toInt(),
             eventoAmostragemId = off.eventoLocalId.toInt(),
@@ -893,7 +902,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             foto = off.foto,
             ausenciaEspecie = off.ausenciaEspecie,
             createdAt = off.createdAt ?: "",
-            valoresVariaveis = null
+            valoresVariaveis = valoresOffline.ifEmpty { null }
         )
         preencherForm(r)
     }
@@ -1237,7 +1246,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         val localId = resolveRegistroLocalId()
         if (localId == null) return
         val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
-        // Adapta RegistroOffline → RegistroResponse para reuso de preencher.
+        val valoresOffline = OfflineRepository(this).listarValoresPorRegistro(localId)
         val r = RegistroResponse(
             id = off.remoteId ?: -off.localId.toInt(),
             eventoAmostragemId = off.eventoLocalId.toInt(),
@@ -1250,7 +1259,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
             foto = off.foto,
             ausenciaEspecie = off.ausenciaEspecie,
             createdAt = off.createdAt ?: "",
-            valoresVariaveis = null  // valores não persistidos no schema atual
+            valoresVariaveis = valoresOffline.ifEmpty { null }
         )
         preencherRegistro(r)
     }
@@ -1414,6 +1423,10 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                             SessionManager.getAuthHeader(),
                             estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
                         )
+                        resolveRegistroLocalId()?.let { lid ->
+                            com.kheprix.db.DatabaseHelper(this@RegistroDetalheActivity).writableDatabase
+                                .delete("registros_ocorrencia", "local_id = ?", arrayOf(lid.toString()))
+                        }
                         finish()
                     } catch (_: Exception) {
                         Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()

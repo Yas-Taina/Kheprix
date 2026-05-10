@@ -217,6 +217,11 @@ class CampanhasActivity : BaseDrawerActivity() {
                         RetrofitClient.apiService.deleteCampanha(
                             SessionManager.getAuthHeader(), estudoRemoteId, campanha.id
                         )
+                        CampanhaDao(this@CampanhasActivity).listarTodos()
+                            .firstOrNull { it.remoteId == campanha.id }?.localId?.let { lid ->
+                                com.kheprix.db.DatabaseHelper(this@CampanhasActivity).writableDatabase
+                                    .delete("campanhas", "local_id = ?", arrayOf(lid.toString()))
+                            }
                         carregarCampanhas()
                     } catch (_: Exception) { }
                 }

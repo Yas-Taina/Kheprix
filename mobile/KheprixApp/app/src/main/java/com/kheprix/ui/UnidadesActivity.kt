@@ -132,10 +132,18 @@ class UnidadesActivity : BaseDrawerActivity() {
                     binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
                     binding.tvDetalheDescricao.text = c.descricao ?: "—"
                     binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
-                    renderizarValoresCard(c.valoresVariaveis)
+                    renderizarValoresCard(c.valoresVariaveis, fetchVarNomesApi())
                 } ?: preencherDetalhesOffline()
             } catch (_: Exception) { preencherDetalhesOffline() }
         }
+    }
+
+    private suspend fun fetchVarNomesApi(): Map<Int, Pair<String, String?>> {
+        if (estudoRemoteId <= 0) return emptyMap()
+        return try {
+            RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
+                .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
     }
 
     private fun preencherDetalhesOffline() {
@@ -161,16 +169,16 @@ class UnidadesActivity : BaseDrawerActivity() {
         renderizarValoresCard(valoresOffline.ifEmpty { null })
     }
 
-    private fun renderizarValoresCard(valores: List<ValorVariavelResponse>?) {
+    private fun renderizarValoresCard(
+        valores: List<ValorVariavelResponse>?,
+        apiNomes: Map<Int, Pair<String, String?>> = emptyMap()
+    ) {
         binding.layoutVariaveisDetalhe.removeAllViews()
         if (valores.isNullOrEmpty()) return
-        val eLocal = (if (estudoLocalId > 0) estudoLocalId
-                      else if (estudoRemoteId > 0) OfflineRepository(this).estudoLocalIdFromRemote(estudoRemoteId)
-                      else null) ?: return
         val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        varMap.putAll(apiNomes)
         com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
-            "SELECT remote_id, local_id, nome, metrica FROM variaveis WHERE estudo_local_id = ?",
-            arrayOf(eLocal.toString())
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis", null
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) null else c.getInt(0)
@@ -181,8 +189,6 @@ class UnidadesActivity : BaseDrawerActivity() {
                 varMap[-lid.toInt()] = nome to metrica
             }
         }
-        val matched = valores.filter { varMap.containsKey(it.variavelId) }
-        if (matched.isEmpty()) return
         val dp = resources.displayMetrics.density
         binding.layoutVariaveisDetalhe.addView(View(this).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
@@ -194,8 +200,8 @@ class UnidadesActivity : BaseDrawerActivity() {
             typeface = android.graphics.Typeface.MONOSPACE
             setPadding(0, 0, 0, (2 * dp).toInt())
         })
-        matched.forEach { vv ->
-            val (nome, metrica) = varMap[vv.variavelId]!!
+        valores.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId] ?: ("Variável ${vv.variavelId}" to null)
             binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
                 text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
                 typeface = android.graphics.Typeface.MONOSPACE
@@ -352,6 +358,12 @@ class UnidadesActivity : BaseDrawerActivity() {
                         RetrofitClient.apiService.deleteUnidade(
                             SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, u.id
                         )
+                        if (campanhaLocalId > 0) {
+                            UnidadeDao(this@UnidadesActivity).buscarPorRemoteIdEscopo(u.id, campanhaLocalId)?.localId?.let { lid ->
+                                com.kheprix.db.DatabaseHelper(this@UnidadesActivity).writableDatabase
+                                    .delete("unidades_amostrais", "local_id = ?", arrayOf(lid.toString()))
+                            }
+                        }
                         carregarUnidades()
                     } catch (_: Exception) {}
                 }

@@ -22,7 +22,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         const val DB_NAME = "estudos_offline.db"
-        const val DB_VERSION = 3
+        const val DB_VERSION = 4
 
         // ── TABLE NAMES ──────────────────────────────────────────────────────
         const val TABLE_ESTUDOS             = "estudos"
@@ -64,6 +64,33 @@ class DatabaseHelper(context: Context) :
             removerDuplicatasRemoteId(db)
             criarIndicesUnicidade(db)
         }
+        if (oldVersion < 4) {
+            migrarValoresVariaveisV4(db)
+        }
+    }
+
+    private fun migrarValoresVariaveisV4(db: SQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE valores_variaveis_v4 (
+                local_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                sincronizado      INTEGER NOT NULL DEFAULT 0,
+                campanha_local_id INTEGER,
+                unidade_local_id  INTEGER,
+                evento_local_id   INTEGER,
+                registro_local_id INTEGER,
+                variavel_local_id INTEGER NOT NULL,
+                variavel_remote_id INTEGER,
+                valor             TEXT NOT NULL
+            )
+        """.trimIndent())
+        db.execSQL("""
+            INSERT INTO valores_variaveis_v4
+                (local_id, sincronizado, campanha_local_id, variavel_local_id, variavel_remote_id, valor)
+            SELECT local_id, sincronizado, campanha_local_id, variavel_local_id, variavel_remote_id, valor
+            FROM valores_variaveis
+        """.trimIndent())
+        db.execSQL("DROP TABLE valores_variaveis")
+        db.execSQL("ALTER TABLE valores_variaveis_v4 RENAME TO valores_variaveis")
     }
 
     /**
@@ -178,17 +205,22 @@ class DatabaseHelper(context: Context) :
         )
     """.trimIndent()
 
-    /** Stores variable values (valores_variaveis) attached to campaigns. */
     private val SQL_CREATE_VALORES_VARIAVEIS = """
         CREATE TABLE $TABLE_VALORES_VARIAVEIS (
             $COL_LOCAL_ID       INTEGER PRIMARY KEY AUTOINCREMENT,
             $COL_SINCRONIZADO   INTEGER NOT NULL DEFAULT 0,
-            campanha_local_id   INTEGER NOT NULL,
+            campanha_local_id   INTEGER,
+            unidade_local_id    INTEGER,
+            evento_local_id     INTEGER,
+            registro_local_id   INTEGER,
             variavel_local_id   INTEGER NOT NULL,
             variavel_remote_id  INTEGER,
             valor               TEXT NOT NULL,
-            FOREIGN KEY(campanha_local_id) REFERENCES $TABLE_CAMPANHAS($COL_LOCAL_ID),
-            FOREIGN KEY(variavel_local_id) REFERENCES $TABLE_VARIAVEIS($COL_LOCAL_ID)
+            FOREIGN KEY(campanha_local_id)  REFERENCES $TABLE_CAMPANHAS($COL_LOCAL_ID),
+            FOREIGN KEY(unidade_local_id)   REFERENCES $TABLE_UNIDADES($COL_LOCAL_ID),
+            FOREIGN KEY(evento_local_id)    REFERENCES $TABLE_EVENTOS($COL_LOCAL_ID),
+            FOREIGN KEY(registro_local_id)  REFERENCES $TABLE_REGISTROS($COL_LOCAL_ID),
+            FOREIGN KEY(variavel_local_id)  REFERENCES $TABLE_VARIAVEIS($COL_LOCAL_ID)
         )
     """.trimIndent()
 
