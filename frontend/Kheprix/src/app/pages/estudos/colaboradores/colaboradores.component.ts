@@ -12,6 +12,7 @@ import { ColaboradorService } from "../../../core/services/colaborador.service";
 import { ConviteService } from "../../../core/services/convite.service";
 import { CodigoAcessoService } from "../../../core/services/codigo-acesso.service";
 import { Colaborador, CodigoAcesso, PerfilColaborador } from "../../../models";
+import { Convite } from "../../../models";
 import QRCode from "qrcode";
 
 @Component({
@@ -27,14 +28,17 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
   estudoId!: number;
   colaboradores: Colaborador[] = [];
   codigoAcesso: CodigoAcesso | null = null;
+  convites: Convite[] = [];
   emailConvite = "";
   novaSenhaAcesso = "";
   loading = false;
   loadingConvite = false;
   loadingCodigo = true;
   loadingSenha = false;
+  loadingConvites = false;
   erroConvite = "";
   msgConvite = "";
+  erroConvites = "";
 
   constructor(
     private colabService: ColaboradorService,
@@ -57,6 +61,7 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
       },
       error: () => (this.loadingCodigo = false),
     });
+    this.carregarConvites();
   }
 
   ngAfterViewInit() {
@@ -79,6 +84,33 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
     }).catch((err) => console.error(err));
   }
 
+  carregarConvites() {
+    this.loadingConvites = true;
+    this.erroConvites = "";
+    this.conviteService.listar(this.estudoId, "pendente").subscribe({
+      next: (convites) => {
+        this.convites = convites;
+        this.loadingConvites = false;
+      },
+      error: () => {
+        this.erroConvites = "Erro ao carregar convites.";
+        this.loadingConvites = false;
+      },
+    });
+  }
+
+  cancelarConvite(c: Convite) {
+    if (!confirm(`Cancelar convite para "${c.email_convidado}"?`)) return;
+    this.conviteService.deletar(this.estudoId, c.id).subscribe({
+      next: () => {
+        this.convites = this.convites.filter((x) => x.id !== c.id);
+      },
+      error: () => {
+        this.erroConvites = "Erro ao cancelar convite.";
+      },
+    });
+  }
+
   convidar() {
     if (!this.emailConvite) {
       this.erroConvite = "Informe o e-mail.";
@@ -87,10 +119,11 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
     this.loadingConvite = true;
     this.erroConvite = "";
     this.conviteService.criar(this.estudoId, this.emailConvite).subscribe({
-      next: () => {
+      next: (novoConvite) => {
         this.msgConvite = "Convite enviado!";
         this.emailConvite = "";
         this.loadingConvite = false;
+        this.convites = [...this.convites, novoConvite];
       },
       error: () => {
         this.erroConvite = "Erro ao enviar convite.";
