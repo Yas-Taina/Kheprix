@@ -53,7 +53,7 @@ export const routes: Routes = [
       import("./pages/convites/convites.component").then(
         (m) => m.ConvitesComponent,
       ),
-    canActivate: [authGuard],
+    //canActivate: [authGuard],
   },
 
   // Estudos
