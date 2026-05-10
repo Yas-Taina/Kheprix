@@ -6,7 +6,7 @@ import { ConviteRecebidoService } from "../../core/services/convite.service";
 import { CodigoAcessoService } from "../../core/services/codigo-acesso.service";
 import { ConviteRecebido } from "../../models";
 import { UtilService } from "../../core/services/util.service";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 
 @Component({
   selector: "app-convites",
@@ -30,7 +30,8 @@ export class ConvitesComponent implements OnInit {
 
   scannerAtivo = false;
   private codeReader = new BrowserMultiFormatReader();
-  private controls: any;
+  private controls: IScannerControls | null = null;
+  private monitorInterval: any;
 
   constructor(
     private conviteService: ConviteRecebidoService,
@@ -101,25 +102,42 @@ export class ConvitesComponent implements OnInit {
     this.scannerAtivo = true;
 
     setTimeout(() => {
-      this.iniciarScanner();
-    }, 0);
+      if (this.video?.nativeElement) {
+        this.iniciarScanner();
+      }
+    }, 100);
   }
 
   async iniciarScanner() {
     try {
       const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-      const deviceId = devices[0]?.deviceId;
 
-      this.codeReader.decodeFromVideoDevice(
-        deviceId,
+      const device =
+        devices.find(
+          (d) =>
+            d.label.toLowerCase().includes("back") ||
+            d.label.toLowerCase().includes("traseira"),
+        ) || devices[0];
+
+      this.controls = await this.codeReader.decodeFromConstraints(
+        {
+          video: {
+            deviceId: device?.deviceId,
+            facingMode: "environment",
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
+        },
         this.video.nativeElement,
-        (result, err) => {
+        (result) => {
           if (result) {
             this.codigoAcesso = result.getText();
             this.fecharScanner();
           }
         },
       );
+
+      this.startMonitor();
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
     }
@@ -128,7 +146,39 @@ export class ConvitesComponent implements OnInit {
   fecharScanner() {
     if (this.controls) {
       this.controls.stop();
+      this.controls = null;
     }
+
+    const videoEl = this.video?.nativeElement;
+    if (videoEl) {
+      videoEl.srcObject = null;
+    }
+
+    this.stopMonitor();
     this.scannerAtivo = false;
+  }
+
+  private startMonitor() {
+    this.stopMonitor();
+
+    this.monitorInterval = setInterval(() => {
+      const videoEl = this.video?.nativeElement;
+
+      if (!videoEl || videoEl.readyState < 2) {
+        this.restartScanner();
+      }
+    }, 2000);
+  }
+
+  private stopMonitor() {
+    if (this.monitorInterval) {
+      clearInterval(this.monitorInterval);
+      this.monitorInterval = null;
+    }
+  }
+
+  private async restartScanner() {
+    this.fecharScanner();
+    await this.iniciarScanner();
   }
 }
