@@ -8,13 +8,14 @@ import { VariavelService } from "../../../core/services/variavel.service";
 import { Especie, Variavel, ValorVariavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
+import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
 
 @Component({
   selector: "app-registro-novo",
   standalone: true,
   templateUrl: "./registro-novo.component.html",
   styleUrls: ["./registro-novo.component.css"],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DmsMaskDirective],
 })
 export class RegistroNovoComponent implements OnInit {
   estudoId!: number;
@@ -81,8 +82,8 @@ export class RegistroNovoComponent implements OnInit {
         .subscribe((r) => {
           this.data = r.data;
           this.hora = r.hora;
-          this.latDMS = this.util.decimalToDMS(r.latitude);
-          this.lngDMS = this.util.decimalToDMS(r.longitude);
+          this.latDMS = this.util.decimalToDMS(r.latitude, "lat");
+          this.lngDMS = this.util.decimalToDMS(r.longitude, "lng");
           this.especieId = r.especie_id;
           this.qtdeIndividuos = r.qtde_individuos;
           this.ausenciaEspecie = r.ausencia_especie;

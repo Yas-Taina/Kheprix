@@ -5,15 +5,26 @@ export class UtilService {
   /**
    * Converte decimal para DMS (graus, minutos, segundos)
    * Formato: -25°42'48"
+   *
+   * Graus são zero-padded conforme o tipo de coordenada:
+   *   latitude  → 2 dígitos: -05°30'00"
+   *   longitude → 3 dígitos: -125°30'00"
+   * Minutos e segundos são sempre 2 dígitos: 00–59
    */
-  decimalToDMS(decimal: number): string {
+  decimalToDMS(decimal: number, type: "lat" | "lng" = "lat"): string {
     const sign = decimal < 0 ? "-" : "";
     const abs = Math.abs(decimal);
     const degrees = Math.floor(abs);
     const minutesFloat = (abs - degrees) * 60;
     const minutes = Math.floor(minutesFloat);
     const seconds = Math.round((minutesFloat - minutes) * 60);
-    return `${sign}${degrees}°${minutes}'${seconds}"`;
+
+    const degPad = type === "lng" ? 3 : 2;
+    const degStr = String(degrees).padStart(degPad, "0");
+    const minStr = String(minutes).padStart(2, "0");
+    const secStr = String(seconds).padStart(2, "0");
+
+    return `${sign}${degStr}°${minStr}'${secStr}"`;
   }
 
   /**
@@ -50,8 +61,8 @@ export class UtilService {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           resolve({
-            latDMS: this.decimalToDMS(lat),
-            lngDMS: this.decimalToDMS(lng),
+            latDMS: this.decimalToDMS(lat, "lat"),
+            lngDMS: this.decimalToDMS(lng, "lng"),
             latDecimal: lat,
             lngDecimal: lng,
           });
@@ -184,7 +195,6 @@ export class UtilService {
       })
       .catch((err) => {
         console.error("Erro ao acessar webcam:", err);
-
         this.openFilePicker((b64) => callback(b64));
       });
   }
