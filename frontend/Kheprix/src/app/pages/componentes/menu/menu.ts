@@ -23,7 +23,7 @@ export class Menu implements OnInit {
   ngOnInit(): void {
     this.checkLogged();
     this.router.events.subscribe(() => {
-      this.isInicio = this.router.url.includes('/inicio');
+      this.isInicio = this.router.url.includes("/inicio");
     });
   }
 
