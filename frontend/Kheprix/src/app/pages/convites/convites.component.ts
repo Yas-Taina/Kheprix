@@ -51,7 +51,7 @@ export class ConvitesComponent implements OnInit {
   }
 
   aceitar(c: ConviteRecebido) {
-    this.conviteService.aceitar(String(c.id)).subscribe({
+    this.conviteService.aceitar(String(c.token)).subscribe({
       next: (r) => {
         this.msgConvite = r.mensagem;
         this.convites = this.convites.filter((x) => x.id !== c.id);
@@ -61,7 +61,7 @@ export class ConvitesComponent implements OnInit {
   }
 
   recusar(c: ConviteRecebido) {
-    this.conviteService.recusar(String(c.id)).subscribe({
+    this.conviteService.recusar(String(c.token)).subscribe({
       next: (r) => {
         this.msgConvite = r.mensagem;
         this.convites = this.convites.filter((x) => x.id !== c.id);
