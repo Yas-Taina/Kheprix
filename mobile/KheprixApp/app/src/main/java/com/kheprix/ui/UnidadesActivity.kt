@@ -21,7 +21,9 @@ import com.kheprix.db.CampanhaDao
 import com.kheprix.db.EstudoDao
 import com.kheprix.db.OfflineRepository
 import com.kheprix.db.UnidadeDao
+import android.widget.LinearLayout
 import com.kheprix.models.UnidadeResponse
+import com.kheprix.models.ValorVariavelResponse
 import kotlinx.coroutines.launch
 
 /**
@@ -130,9 +132,18 @@ class UnidadesActivity : BaseDrawerActivity() {
                     binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
                     binding.tvDetalheDescricao.text = c.descricao ?: "—"
                     binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
+                    renderizarValoresCard(c.valoresVariaveis, fetchVarNomesApi())
                 } ?: preencherDetalhesOffline()
             } catch (_: Exception) { preencherDetalhesOffline() }
         }
+    }
+
+    private suspend fun fetchVarNomesApi(): Map<Int, Pair<String, String?>> {
+        if (estudoRemoteId <= 0) return emptyMap()
+        return try {
+            RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
+                .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
     }
 
     private fun preencherDetalhesOffline() {
@@ -142,6 +153,66 @@ class UnidadesActivity : BaseDrawerActivity() {
         binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
         binding.tvDetalheDescricao.text = c.descricao ?: "—"
         binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
+        val valoresOffline = mutableListOf<ValorVariavelResponse>()
+        com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
+            "SELECT variavel_remote_id, variavel_local_id, valor FROM valores_variaveis WHERE campanha_local_id = ?",
+            arrayOf(campanhaLocalId.toString())
+        ).use { cur ->
+            while (cur.moveToNext()) {
+                val rid = if (cur.isNull(0)) null else cur.getInt(0)
+                val lid = cur.getLong(1)
+                val valor = cur.getString(2) ?: return@use
+                val varId = if (rid != null && rid > 0) rid else -lid.toInt()
+                valoresOffline.add(ValorVariavelResponse(variavelId = varId, valor = valor))
+            }
+        }
+        renderizarValoresCard(valoresOffline.ifEmpty { null })
+    }
+
+    private fun renderizarValoresCard(
+        valores: List<ValorVariavelResponse>?,
+        apiNomes: Map<Int, Pair<String, String?>> = emptyMap()
+    ) {
+        binding.layoutVariaveisDetalhe.removeAllViews()
+        if (valores.isNullOrEmpty()) return
+        val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        varMap.putAll(apiNomes)
+        com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis", null
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) null else c.getInt(0)
+                val lid = c.getLong(1)
+                val nome = c.getString(2)
+                val metrica = if (c.isNull(3)) null else c.getString(3)
+                if (rid != null) varMap[rid] = nome to metrica
+                varMap[-lid.toInt()] = nome to metrica
+            }
+        }
+        val dp = resources.displayMetrics.density
+        binding.layoutVariaveisDetalhe.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
+                .also { it.topMargin = (6 * dp).toInt(); it.bottomMargin = (6 * dp).toInt() }
+            setBackgroundColor(0xFFD0CCB8.toInt())
+        })
+        binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+            text = "Variáveis:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+            typeface = android.graphics.Typeface.MONOSPACE
+            setPadding(0, 0, 0, (2 * dp).toInt())
+        })
+        valores.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId] ?: ("Variável ${vv.variavelId}" to null)
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+            })
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "${vv.valor}${if (!metrica.isNullOrBlank()) " $metrica" else ""}"
+                textSize = 14f; setTextColor(0xFF4A5240.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, 0, 0, (6 * dp).toInt())
+            })
+        }
     }
 
     private fun carregarUnidades() {
@@ -287,6 +358,12 @@ class UnidadesActivity : BaseDrawerActivity() {
                         RetrofitClient.apiService.deleteUnidade(
                             SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, u.id
                         )
+                        if (campanhaLocalId > 0) {
+                            UnidadeDao(this@UnidadesActivity).buscarPorRemoteIdEscopo(u.id, campanhaLocalId)?.localId?.let { lid ->
+                                com.kheprix.db.DatabaseHelper(this@UnidadesActivity).writableDatabase
+                                    .delete("unidades_amostrais", "local_id = ?", arrayOf(lid.toString()))
+                            }
+                        }
                         carregarUnidades()
                     } catch (_: Exception) {}
                 }

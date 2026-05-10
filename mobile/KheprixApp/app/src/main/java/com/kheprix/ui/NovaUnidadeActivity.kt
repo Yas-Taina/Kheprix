@@ -18,6 +18,7 @@ import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityNovaUnidadeBinding
 import com.kheprix.db.OfflineRepository
+import com.kheprix.db.UnidadeDao
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
 import com.kheprix.models.ValorVariavelRequest
@@ -338,25 +339,66 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     // ── Edição ────────────────────────────────────────────────────────────
 
     private fun preencherDadosEdicao() {
-        if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) return
         lifecycleScope.launch {
-            try {
-                val resp = RetrofitClient.apiService.getUnidade(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
-                )
-                resp.body()?.let { u ->
-                    unidadeCarregada = u
-                    binding.etNomeUnidade.setText(u.nome)
-                    latDecimal = u.latitude; lonDecimal = u.longitude
-                    binding.etLatitude.setText(decimalToDms(u.latitude))
-                    binding.etLongitude.setText(decimalToDms(u.longitude))
-                    binding.etRaio.setText(u.raio?.toString() ?: "")
-                    binding.etMetodoColeta.setText(u.metodoColeta ?: "")
-                    binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
-                    aplicarValoresVariaveis()
-                }
-            } catch (_: Exception) {}
+            if (estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0) {
+                try {
+                    val resp = RetrofitClient.apiService.getUnidade(
+                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
+                    )
+                    resp.body()?.let { u ->
+                        unidadeCarregada = u
+                        binding.etNomeUnidade.setText(u.nome)
+                        latDecimal = u.latitude; lonDecimal = u.longitude
+                        binding.etLatitude.setText(decimalToDms(u.latitude))
+                        binding.etLongitude.setText(decimalToDms(u.longitude))
+                        binding.etRaio.setText(u.raio?.toString() ?: "")
+                        binding.etMetodoColeta.setText(u.metodoColeta ?: "")
+                        binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+                        aplicarValoresVariaveis()
+                        return@launch
+                    }
+                } catch (_: Exception) { }
+            }
+            preencherDadosEdicaoOffline()
         }
+    }
+
+    private fun preencherDadosEdicaoOffline() {
+        val repo = OfflineRepository(this)
+        val cLocal: Long = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            campanhaId > 0 -> {
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: return
+            }
+            else -> return
+        }
+        val u: UnidadeDao.UnidadeOffline = when {
+            unidadeId < 0 -> {
+                val uLocal = (-unidadeId).toLong()
+                UnidadeDao(this).listarPorCampanhaLocal(cLocal).firstOrNull { it.localId == uLocal }
+            }
+            unidadeId > 0 -> UnidadeDao(this).buscarPorRemoteIdEscopo(unidadeId, cLocal)
+            else -> null
+        } ?: return
+        binding.etNomeUnidade.setText(u.nome)
+        latDecimal = u.latitude; lonDecimal = u.longitude
+        binding.etLatitude.setText(decimalToDms(u.latitude))
+        binding.etLongitude.setText(decimalToDms(u.longitude))
+        binding.etRaio.setText(u.raio?.toString() ?: "")
+        binding.etMetodoColeta.setText(u.metodoColeta ?: "")
+        binding.etEsforcoAmostral.setText(u.esforcoAmostral ?: "")
+        unidadeCarregada = com.kheprix.models.UnidadeResponse(
+            id = if (unidadeId > 0) unidadeId else -u.localId.toInt(),
+            campanhaId = if (campanhaId > 0) campanhaId else -cLocal.toInt(),
+            nome = u.nome, latitude = u.latitude, longitude = u.longitude,
+            raio = u.raio, metodoColeta = u.metodoColeta, esforcoAmostral = u.esforcoAmostral,
+            createdAt = "", updatedAt = "",
+            valoresVariaveis = repo.listarValoresPorUnidade(u.localId)
+        )
+        aplicarValoresVariaveis()
     }
 
     // ── API ───────────────────────────────────────────────────────────────
@@ -388,6 +430,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private fun editarUnidade() {
         val req = coletarFormulario() ?: return
+        if (unidadeId < 0 || estudoRemoteId <= 0 || campanhaId <= 0) {
+            editarUnidadeOffline(req); return
+        }
         setLoading(true)
         lifecycleScope.launch {
             try {
@@ -401,8 +446,40 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     Toast.makeText(this@NovaUnidadeActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@NovaUnidadeActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                editarUnidadeOffline(req)
             } finally { setLoading(false) }
+        }
+    }
+
+    private fun editarUnidadeOffline(req: UnidadeRequest) {
+        val repo = OfflineRepository(this)
+        val cLocal: Long = when {
+            campanhaLocalId > 0 -> campanhaLocalId
+            campanhaId > 0 -> {
+                val eL = if (estudoLocalId > 0) estudoLocalId
+                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                         else null
+                eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: run {
+                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            else -> return
+        }
+        val uLocalId: Long = when {
+            unidadeId < 0 -> (-unidadeId).toLong()
+            unidadeId > 0 -> repo.unidadeLocalIdFromRemote(cLocal, unidadeId) ?: run {
+                Toast.makeText(this, "Unidade não encontrada offline", Toast.LENGTH_SHORT).show()
+                return
+            }
+            else -> return
+        }
+        try {
+            repo.editarUnidadeOffline(uLocalId, req)
+            Toast.makeText(this, "Unidade salva offline.", Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao salvar offline: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

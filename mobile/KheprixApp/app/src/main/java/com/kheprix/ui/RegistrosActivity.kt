@@ -37,7 +37,9 @@ import com.kheprix.models.*
 import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Calendar
 
@@ -192,12 +194,21 @@ class RegistrosActivity : BaseDrawerActivity() {
                     )
                     resp.body()?.let { e ->
                         preencherCardEvento(e.horarioInicio, e.esforcoReal, e.updatedAt)
+                        renderizarValoresCard(e.valoresVariaveis, fetchVarNomesApi())
                         return@launch
                     }
                 } catch (_: Exception) { }
             }
             preencherDetalhesEventoOffline()
         }
+    }
+
+    private suspend fun fetchVarNomesApi(): Map<Int, Pair<String, String?>> {
+        if (estudoRemoteId <= 0) return emptyMap()
+        return try {
+            RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
+                .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
     }
 
     private fun preencherCardEvento(inicio: String, esforco: String?, updatedAt: String? = null) {
@@ -217,12 +228,61 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private fun preencherDetalhesEventoOffline() {
         val eventoDao = EventoDao(this)
+        val repo = OfflineRepository(this)
         val evento = when {
+            eventoLocalId > 0 -> eventoDao.listarTodos().firstOrNull { it.localId == eventoLocalId }
             eventoId < 0 -> eventoDao.listarTodos().firstOrNull { it.localId == (-eventoId).toLong() }
             eventoId > 0 -> eventoDao.listarTodos().firstOrNull { it.remoteId == eventoId }
             else -> eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome }
         } ?: return
         preencherCardEvento(evento.horarioInicio, evento.esforcoReal)
+        renderizarValoresCard(repo.listarValoresPorEvento(evento.localId))
+    }
+
+    private fun renderizarValoresCard(
+        valores: List<ValorVariavelResponse>?,
+        apiNomes: Map<Int, Pair<String, String?>> = emptyMap()
+    ) {
+        binding.layoutVariaveisDetalhe.removeAllViews()
+        if (valores.isNullOrEmpty()) return
+        val varMap = mutableMapOf<Int, Pair<String, String?>>()
+        varMap.putAll(apiNomes)
+        com.kheprix.db.DatabaseHelper(this).readableDatabase.rawQuery(
+            "SELECT remote_id, local_id, nome, metrica FROM variaveis", null
+        ).use { c ->
+            while (c.moveToNext()) {
+                val rid = if (c.isNull(0)) null else c.getInt(0)
+                val lid = c.getLong(1)
+                val nome = c.getString(2)
+                val metrica = if (c.isNull(3)) null else c.getString(3)
+                if (rid != null) varMap[rid] = nome to metrica
+                varMap[-lid.toInt()] = nome to metrica
+            }
+        }
+        val dp = resources.displayMetrics.density
+        binding.layoutVariaveisDetalhe.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
+                .also { it.topMargin = (6 * dp).toInt(); it.bottomMargin = (6 * dp).toInt() }
+            setBackgroundColor(0xFFD0CCB8.toInt())
+        })
+        binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+            text = "Variáveis:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+            typeface = android.graphics.Typeface.MONOSPACE
+            setPadding(0, 0, 0, (2 * dp).toInt())
+        })
+        valores.forEach { vv ->
+            val (nome, metrica) = varMap[vv.variavelId] ?: ("Variável ${vv.variavelId}" to null)
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "$nome:"; textSize = 12f; setTextColor(0xFF6B7A5E.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+            })
+            binding.layoutVariaveisDetalhe.addView(TextView(this).apply {
+                text = "${vv.valor}${if (!metrica.isNullOrBlank()) " $metrica" else ""}"
+                textSize = 14f; setTextColor(0xFF4A5240.toInt())
+                typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, 0, 0, (6 * dp).toInt())
+            })
+        }
     }
 
     private fun carregarRegistros() {
@@ -511,8 +571,20 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun processarImagem(uri: Uri?) {
         uri ?: return
-        fotoBase64 = PhotoUtils.uriToBase64(this, uri)
-        binding.tvNomeFoto.text = uri.lastPathSegment ?: "foto.jpg"
+        lifecycleScope.launch {
+            val base64 = withContext(Dispatchers.IO) { PhotoUtils.uriToBase64(this@NovoRegistroActivity, uri) }
+            fotoBase64 = base64
+            binding.tvNomeFoto.text = uri.lastPathSegment ?: "foto.jpg"
+            if (base64 != null) {
+                val bmp = withContext(Dispatchers.IO) { PhotoUtils.base64ToBitmap(base64) }
+                if (bmp != null) {
+                    binding.ivPreviewFoto.setImageBitmap(bmp)
+                    binding.ivPreviewFoto.visibility = View.VISIBLE
+                }
+            } else {
+                Toast.makeText(this@NovoRegistroActivity, "Não foi possível carregar a foto", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun verificarPermissaoCamera() {
@@ -793,13 +865,31 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         }
     }
 
+    /**
+     * Resolve o local_id do registro no SQLite considerando todos os cenários
+     * possíveis de IDs (offline-only, online com eventoLocalId conhecido, ou
+     * online com eventoLocalId ausente mas remote IDs disponíveis na hierarquia).
+     */
+    private fun resolveRegistroLocalId(): Long? {
+        if (registroId < 0) return (-registroId).toLong()
+        val evtLocal = if (eventoLocalId > 0) eventoLocalId
+        else {
+            val repo = OfflineRepository(this)
+            val eL = if (estudoLocalId > 0) estudoLocalId
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+            val cL = eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) }
+            val uL = cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) }
+            uL?.let { repo.eventoLocalIdFromRemote(it, eventoId) }
+        } ?: return null
+        return RegistroDao(this).buscarPorRemoteIdEscopo(registroId, evtLocal)?.localId
+    }
+
     private fun preencherFormOffline() {
-        val localId = if (registroId < 0) (-registroId).toLong()
-            else if (eventoLocalId > 0)
-                RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
-            else null
+        val localId = resolveRegistroLocalId()
         if (localId == null) return
         val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
+        val valoresOffline = OfflineRepository(this).listarValoresPorRegistro(localId)
         val r = RegistroResponse(
             id = off.remoteId ?: -off.localId.toInt(),
             eventoAmostragemId = off.eventoLocalId.toInt(),
@@ -812,7 +902,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             foto = off.foto,
             ausenciaEspecie = off.ausenciaEspecie,
             createdAt = off.createdAt ?: "",
-            valoresVariaveis = null
+            valoresVariaveis = valoresOffline.ifEmpty { null }
         )
         preencherForm(r)
     }
@@ -828,7 +918,11 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         binding.etLatitude.setText(decimalToDms(r.latitude))
         binding.etLongitude.setText(decimalToDms(r.longitude))
         binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
-        if (r.foto != null) binding.tvNomeFoto.text = "foto_atual.jpg"
+        if (!r.foto.isNullOrBlank()) {
+            binding.tvNomeFoto.text = "foto_atual.jpg"
+            binding.ivPreviewFoto.visibility = View.VISIBLE
+            ImagemLoader.load(lifecycleScope, binding.ivPreviewFoto, r.foto, R.drawable.ic_placeholder_beetle)
+        }
         val idx = especies.indexOfFirst { it.id == r.especieId }
         if (idx >= 0) binding.spinnerEspecie.setSelection(idx + 1)
         aplicarValoresVariaveis()
@@ -898,9 +992,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
      */
     private fun salvarEdicaoOffline(req: RegistroPatchRequest, msg: String) {
         val repo = OfflineRepository(this)
-        val localId = if (registroId < 0) (-registroId).toLong()
-            else if (eventoLocalId > 0) RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
-            else null
+        val localId = resolveRegistroLocalId()
         if (localId == null) {
             Toast.makeText(this, "Registro não encontrado offline.", Toast.LENGTH_LONG).show()
             return
@@ -996,6 +1088,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             if (!salvo) return
         }
         startActivity(Intent(this, OfflineWarningActivity::class.java))
+        finish()
     }
 
     /**
@@ -1134,14 +1227,26 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         }
     }
 
+    private fun resolveRegistroLocalId(): Long? {
+        if (registroId < 0) return (-registroId).toLong()
+        val evtLocal = if (eventoLocalId > 0) eventoLocalId
+        else {
+            val repo = OfflineRepository(this)
+            val eL = if (estudoLocalId > 0) estudoLocalId
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+            val cL = eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) }
+            val uL = cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) }
+            uL?.let { repo.eventoLocalIdFromRemote(it, eventoId) }
+        } ?: return null
+        return RegistroDao(this).buscarPorRemoteIdEscopo(registroId, evtLocal)?.localId
+    }
+
     private fun carregarRegistroOffline() {
-        val localId = if (registroId < 0) (-registroId).toLong()
-            else if (eventoLocalId > 0)
-                RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
-            else null
+        val localId = resolveRegistroLocalId()
         if (localId == null) return
         val off = RegistroDao(this).buscarPorLocalId(localId) ?: return
-        // Adapta RegistroOffline → RegistroResponse para reuso de preencher.
+        val valoresOffline = OfflineRepository(this).listarValoresPorRegistro(localId)
         val r = RegistroResponse(
             id = off.remoteId ?: -off.localId.toInt(),
             eventoAmostragemId = off.eventoLocalId.toInt(),
@@ -1154,7 +1259,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
             foto = off.foto,
             ausenciaEspecie = off.ausenciaEspecie,
             createdAt = off.createdAt ?: "",
-            valoresVariaveis = null  // valores não persistidos no schema atual
+            valoresVariaveis = valoresOffline.ifEmpty { null }
         )
         preencherRegistro(r)
     }
@@ -1304,9 +1409,7 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
             .setMessage("Tem certeza?")
             .setPositiveButton("Deletar") { _, _ ->
                 if (registroId < 0 || estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
-                    val localId = if (registroId < 0) (-registroId).toLong()
-                        else if (eventoLocalId > 0) RegistroDao(this).buscarPorRemoteIdEscopo(registroId, eventoLocalId)?.localId
-                        else null
+                    val localId = resolveRegistroLocalId()
                     if (localId != null) {
                         com.kheprix.db.DatabaseHelper(this).writableDatabase
                             .delete("registros_ocorrencia", "local_id = ?", arrayOf(localId.toString()))
@@ -1320,6 +1423,10 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                             SessionManager.getAuthHeader(),
                             estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
                         )
+                        resolveRegistroLocalId()?.let { lid ->
+                            com.kheprix.db.DatabaseHelper(this@RegistroDetalheActivity).writableDatabase
+                                .delete("registros_ocorrencia", "local_id = ?", arrayOf(lid.toString()))
+                        }
                         finish()
                     } catch (_: Exception) {
                         Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()

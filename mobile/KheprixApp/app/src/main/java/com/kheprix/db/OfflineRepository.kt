@@ -30,6 +30,7 @@ import com.kheprix.models.RegistroRequest
 import com.kheprix.models.RegistroResponse
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
+import com.kheprix.models.ValorVariavelResponse
 
 /**
  * Fonte única de persistência offline com validação de integridade.
@@ -117,6 +118,23 @@ class OfflineRepository(context: Context) {
         }
     }
 
+    fun editarCampanhaOffline(localId: Long, req: CampanhaRequest) {
+        val db = dbHelper.writableDatabase
+        db.transactionTo {
+            val cv = ContentValues().apply {
+                put("nome", req.nome)
+                put("data_inicio", req.dataInicio)
+                put("data_fim", req.dataFim)
+                put("descricao", req.descricao)
+                put(COL_SINCRONIZADO, 0)
+                put(COL_UPDATED_AT, nowIso())
+            }
+            db.update(TABLE_CAMPANHAS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
+            substituirValores(db, "campanha_local_id", localId,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+        }
+    }
+
     fun criarCampanhaOffline(estudoLocalId: Long, req: CampanhaRequest): Long {
         requireEstudoExists(estudoLocalId)
         val db = dbHelper.writableDatabase
@@ -155,31 +173,75 @@ class OfflineRepository(context: Context) {
         requireCampanhaExists(campanhaLocalId)
         val db = dbHelper.writableDatabase
         val now = nowIso()
-        return db.insertOrThrow(TABLE_UNIDADES, null, ContentValues().apply {
-            put(COL_SINCRONIZADO, 0)
-            put("campanha_local_id", campanhaLocalId)
-            put("nome", req.nome)
-            put("latitude", req.latitude)
-            put("longitude", req.longitude)
-            put("raio", req.raio)
-            put("metodo_coleta", req.metodoColeta)
-            put("esforco_amostral", req.esforcoAmostral)
-            put(COL_CREATED_AT, now)
-            put(COL_UPDATED_AT, now)
-        })
+        return db.transactionTo {
+            val id = db.insertOrThrow(TABLE_UNIDADES, null, ContentValues().apply {
+                put(COL_SINCRONIZADO, 0)
+                put("campanha_local_id", campanhaLocalId)
+                put("nome", req.nome)
+                put("latitude", req.latitude)
+                put("longitude", req.longitude)
+                put("raio", req.raio)
+                put("metodo_coleta", req.metodoColeta)
+                put("esforco_amostral", req.esforcoAmostral)
+                put(COL_CREATED_AT, now)
+                put(COL_UPDATED_AT, now)
+            })
+            salvarValores(db, "unidade_local_id", id,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+            id
+        }
+    }
+
+    fun editarUnidadeOffline(localId: Long, req: UnidadeRequest) {
+        val db = dbHelper.writableDatabase
+        db.transactionTo {
+            val cv = ContentValues().apply {
+                put("nome", req.nome)
+                put("latitude", req.latitude)
+                put("longitude", req.longitude)
+                put("raio", req.raio)
+                put("metodo_coleta", req.metodoColeta)
+                put("esforco_amostral", req.esforcoAmostral)
+                put(COL_SINCRONIZADO, 0)
+                put(COL_UPDATED_AT, nowIso())
+            }
+            db.update(TABLE_UNIDADES, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
+            substituirValores(db, "unidade_local_id", localId,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+        }
     }
 
     fun criarEventoOffline(unidadeLocalId: Long, req: EventoRequest): Long {
         requireUnidadeExists(unidadeLocalId)
         val db = dbHelper.writableDatabase
-        return db.insertOrThrow(TABLE_EVENTOS, null, ContentValues().apply {
-            put(COL_SINCRONIZADO, 0)
-            put("unidade_local_id", unidadeLocalId)
-            put("horario_inicio", req.horarioInicio)
-            put("horario_fim", req.horarioFim)
-            put("esforco_real", req.esforcoReal)
-            put(COL_CREATED_AT, nowIso())
-        })
+        return db.transactionTo {
+            val id = db.insertOrThrow(TABLE_EVENTOS, null, ContentValues().apply {
+                put(COL_SINCRONIZADO, 0)
+                put("unidade_local_id", unidadeLocalId)
+                put("horario_inicio", req.horarioInicio)
+                put("horario_fim", req.horarioFim)
+                put("esforco_real", req.esforcoReal)
+                put(COL_CREATED_AT, nowIso())
+            })
+            salvarValores(db, "evento_local_id", id,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+            id
+        }
+    }
+
+    fun editarEventoOffline(localId: Long, req: EventoRequest) {
+        val db = dbHelper.writableDatabase
+        db.transactionTo {
+            val cv = ContentValues().apply {
+                put("horario_inicio", req.horarioInicio)
+                put("horario_fim", req.horarioFim)
+                put("esforco_real", req.esforcoReal)
+                put(COL_SINCRONIZADO, 0)
+            }
+            db.update(TABLE_EVENTOS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
+            substituirValores(db, "evento_local_id", localId,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+        }
     }
 
     /**
@@ -188,19 +250,23 @@ class OfflineRepository(context: Context) {
      */
     fun editarRegistroOffline(localId: Long, req: RegistroPatchRequest, especieLocalId: Long? = null) {
         val db = dbHelper.writableDatabase
-        val cv = ContentValues().apply {
-            req.especieId?.let { put("especie_remote_id", it) }
-            especieLocalId?.let { put("especie_local_id", it) }
-            req.data?.let { put("data", it) }
-            req.hora?.let { put("hora", it) }
-            req.latitude?.let { put("latitude", it) }
-            req.longitude?.let { put("longitude", it) }
-            req.qtdeIndividuos?.let { put("qtde_individuos", it) }
-            req.ausenciaEspecie?.let { put("ausencia_especie", if (it) 1 else 0) }
-            if (!req.foto.isNullOrBlank()) put("foto", req.foto)
-            put(COL_SINCRONIZADO, 0)
+        db.transactionTo {
+            val cv = ContentValues().apply {
+                req.especieId?.let { put("especie_remote_id", it) }
+                especieLocalId?.let { put("especie_local_id", it) }
+                req.data?.let { put("data", it) }
+                req.hora?.let { put("hora", it) }
+                req.latitude?.let { put("latitude", it) }
+                req.longitude?.let { put("longitude", it) }
+                req.qtdeIndividuos?.let { put("qtde_individuos", it) }
+                req.ausenciaEspecie?.let { put("ausencia_especie", if (it) 1 else 0) }
+                if (!req.foto.isNullOrBlank()) put("foto", req.foto)
+                put(COL_SINCRONIZADO, 0)
+            }
+            db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
+            substituirValores(db, "registro_local_id", localId,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
         }
-        db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
     }
 
     fun cacheRegistro(eventoLocalId: Long, especieLocalId: Long, r: RegistroResponse): Long {
@@ -221,11 +287,16 @@ class OfflineRepository(context: Context) {
             put("ausencia_especie", r.ausenciaEspecie?.let { if (it) 1 else 0 })
             put(COL_CREATED_AT, r.createdAt)
         }
-        return if (existing != null) {
-            db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
-            existing
-        } else {
-            db.insertOrThrow(TABLE_REGISTROS, null, cv)
+        return db.transactionTo {
+            val localId = if (existing != null) {
+                db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                existing
+            } else {
+                db.insertOrThrow(TABLE_REGISTROS, null, cv)
+            }
+            substituirValores(db, "registro_local_id", localId,
+                r.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            localId
         }
     }
 
@@ -237,20 +308,25 @@ class OfflineRepository(context: Context) {
         requireEventoExists(eventoLocalId)
         requireEspecieExists(especieLocalId)
         val db = dbHelper.writableDatabase
-        return db.insertOrThrow(TABLE_REGISTROS, null, ContentValues().apply {
-            put(COL_SINCRONIZADO, 0)
-            put("evento_local_id", eventoLocalId)
-            put("especie_local_id", especieLocalId)
-            put("especie_remote_id", req.especieId)
-            put("data", req.data)
-            put("hora", req.hora)
-            put("latitude", req.latitude)
-            put("longitude", req.longitude)
-            put("qtde_individuos", req.qtdeIndividuos)
-            put("foto", req.foto)
-            put("ausencia_especie", req.ausenciaEspecie?.let { if (it) 1 else 0 })
-            put(COL_CREATED_AT, nowIso())
-        })
+        return db.transactionTo {
+            val id = db.insertOrThrow(TABLE_REGISTROS, null, ContentValues().apply {
+                put(COL_SINCRONIZADO, 0)
+                put("evento_local_id", eventoLocalId)
+                put("especie_local_id", especieLocalId)
+                put("especie_remote_id", req.especieId)
+                put("data", req.data)
+                put("hora", req.hora)
+                put("latitude", req.latitude)
+                put("longitude", req.longitude)
+                put("qtde_individuos", req.qtdeIndividuos)
+                put("foto", req.foto)
+                put("ausencia_especie", req.ausenciaEspecie?.let { if (it) 1 else 0 })
+                put(COL_CREATED_AT, nowIso())
+            })
+            salvarValores(db, "registro_local_id", id,
+                req.valoresVariaveis?.map { it.variavelId to it.valor })
+            id
+        }
     }
 
     /**
@@ -360,11 +436,16 @@ class OfflineRepository(context: Context) {
             put(COL_CREATED_AT, u.createdAt)
             put(COL_UPDATED_AT, u.updatedAt)
         }
-        return if (existing != null) {
-            db.update(TABLE_UNIDADES, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
-            existing
-        } else {
-            db.insertOrThrow(TABLE_UNIDADES, null, cv)
+        return db.transactionTo {
+            val localId = if (existing != null) {
+                db.update(TABLE_UNIDADES, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                existing
+            } else {
+                db.insertOrThrow(TABLE_UNIDADES, null, cv)
+            }
+            substituirValores(db, "unidade_local_id", localId,
+                u.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            localId
         }
     }
 
@@ -380,11 +461,16 @@ class OfflineRepository(context: Context) {
             put("esforco_real", e.esforcoReal)
             put(COL_CREATED_AT, e.createdAt)
         }
-        return if (existing != null) {
-            db.update(TABLE_EVENTOS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
-            existing
-        } else {
-            db.insertOrThrow(TABLE_EVENTOS, null, cv)
+        return db.transactionTo {
+            val localId = if (existing != null) {
+                db.update(TABLE_EVENTOS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                existing
+            } else {
+                db.insertOrThrow(TABLE_EVENTOS, null, cv)
+            }
+            substituirValores(db, "evento_local_id", localId,
+                e.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            localId
         }
     }
 
@@ -412,6 +498,41 @@ class OfflineRepository(context: Context) {
         } else {
             db.insertOrThrow(TABLE_ESPECIES, null, cv)
         }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // VALORES DE VARIÁVEIS — leitura offline
+    // ════════════════════════════════════════════════════════════════════════
+
+    fun listarValoresPorCampanha(campanhaLocalId: Long): List<ValorVariavelResponse> =
+        listarValores("campanha_local_id", campanhaLocalId)
+
+    fun listarValoresPorUnidade(unidadeLocalId: Long): List<ValorVariavelResponse> =
+        listarValores("unidade_local_id", unidadeLocalId)
+
+    fun listarValoresPorEvento(eventoLocalId: Long): List<ValorVariavelResponse> =
+        listarValores("evento_local_id", eventoLocalId)
+
+    fun listarValoresPorRegistro(registroLocalId: Long): List<ValorVariavelResponse> =
+        listarValores("registro_local_id", registroLocalId)
+
+    private fun listarValores(parentCol: String, parentLocalId: Long): List<ValorVariavelResponse> {
+        val db = dbHelper.readableDatabase
+        val list = mutableListOf<ValorVariavelResponse>()
+        db.rawQuery(
+            "SELECT variavel_remote_id, variavel_local_id, valor FROM $TABLE_VALORES_VARIAVEIS WHERE $parentCol = ?",
+            arrayOf(parentLocalId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                val remoteId = if (c.isNull(0)) null else c.getInt(0)
+                val localId  = c.getLong(1)
+                list.add(ValorVariavelResponse(
+                    variavelId = remoteId ?: -localId.toInt(),
+                    valor = c.getString(2)
+                ))
+            }
+        }
+        return list
     }
 
     /**
@@ -537,6 +658,41 @@ class OfflineRepository(context: Context) {
                 "$rotulo (localId=$localId) não está salvo offline."
             )
         }
+    }
+
+    private fun salvarValores(
+        db: SQLiteDatabase,
+        parentCol: String,
+        parentLocalId: Long,
+        pares: List<Pair<Int, String>>?,
+        sincronizado: Int = 0
+    ) {
+        pares?.forEach { (variavelRemoteId, valor) ->
+            val variavelLocalId = db.rawQuery(
+                "SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE $COL_REMOTE_ID = ? LIMIT 1",
+                arrayOf(variavelRemoteId.toString())
+            ).use { if (it.moveToFirst()) it.getLong(0) else null }
+            if (variavelLocalId != null) {
+                db.insertOrThrow(TABLE_VALORES_VARIAVEIS, null, ContentValues().apply {
+                    put(COL_SINCRONIZADO, sincronizado)
+                    put(parentCol, parentLocalId)
+                    put("variavel_local_id", variavelLocalId)
+                    put("variavel_remote_id", variavelRemoteId)
+                    put("valor", valor)
+                })
+            }
+        }
+    }
+
+    private fun substituirValores(
+        db: SQLiteDatabase,
+        parentCol: String,
+        parentLocalId: Long,
+        pares: List<Pair<Int, String>>?,
+        sincronizado: Int = 0
+    ) {
+        db.delete(TABLE_VALORES_VARIAVEIS, "$parentCol = ?", arrayOf(parentLocalId.toString()))
+        salvarValores(db, parentCol, parentLocalId, pares, sincronizado)
     }
 
     private fun nowIso(): String = java.time.Instant.now().toString()

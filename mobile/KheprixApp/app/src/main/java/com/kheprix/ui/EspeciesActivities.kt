@@ -32,7 +32,9 @@ import com.kheprix.models.EspecieResponse
 import com.kheprix.util.ImagemLoader
 import com.kheprix.util.PhotoUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -341,12 +343,21 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
             else        -> null
         }
 
-        uri?.let {
-            fotoBase64 = PhotoUtils.uriToBase64(this, it)
-            binding.tvNomeFoto.text = it.lastPathSegment ?: "foto.jpg"
-            // Preview: decode e exibe miniatura no campo de foto
-            val bmp = PhotoUtils.base64ToBitmap(fotoBase64 ?: "")
-            // Preview disponível: adicione um ImageView com id ivPreviewFoto ao layout para exibir miniaturaal: adicionar ImageView de preview
+        uri?.let { u ->
+            lifecycleScope.launch {
+                val base64 = withContext(Dispatchers.IO) { PhotoUtils.uriToBase64(this@CadastroEspecieActivity, u) }
+                fotoBase64 = base64
+                binding.tvNomeFoto.text = u.lastPathSegment ?: "foto.jpg"
+                if (base64 != null) {
+                    val bmp = withContext(Dispatchers.IO) { PhotoUtils.base64ToBitmap(base64) }
+                    if (bmp != null) {
+                        binding.ivPreviewFoto.setImageBitmap(bmp)
+                        binding.ivPreviewFoto.visibility = View.VISIBLE
+                    }
+                } else {
+                    Toast.makeText(this@CadastroEspecieActivity, "Não foi possível carregar a foto", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -399,7 +410,11 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         binding.checkEndemismo.isChecked = e.endemismo
         // fotoBase64 permanece null: se o usuário não escolher nova foto,
         // o patch omite o campo e o backend preserva a atual.
-        if (!e.foto.isNullOrBlank()) binding.tvNomeFoto.text = "foto_atual.jpg"
+        if (!e.foto.isNullOrBlank()) {
+            binding.tvNomeFoto.text = "foto_atual.jpg"
+            binding.ivPreviewFoto.visibility = View.VISIBLE
+            ImagemLoader.load(lifecycleScope, binding.ivPreviewFoto, e.foto, R.drawable.ic_placeholder_beetle)
+        }
 
         val idx = STATUS_CONSERVACAO.indexOfFirst {
             it.equals(e.statusConservacao, ignoreCase = true)

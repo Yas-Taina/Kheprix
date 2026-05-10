@@ -1,5 +1,6 @@
 package com.kheprix.ui
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -11,9 +12,13 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationView
 import com.kheprix.R
+import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
+import com.kheprix.models.TokenRequest
+import kotlinx.coroutines.launch
 
 /**
  * Activity base que injeta o menu lateral (Navigation Drawer) em qualquer
@@ -34,6 +39,46 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
 
     protected var drawerLayout: DrawerLayout? = null
     protected var navigationView: NavigationView? = null
+
+    private var dialogTokenInvalidoVisivel = false
+
+    override fun onResume() {
+        super.onResume()
+        verificarTokenOnline()
+    }
+
+    private fun verificarTokenOnline() {
+        val token = SessionManager.getToken() ?: return
+
+        lifecycleScope.launch {
+            try {
+                val resposta = RetrofitClient.apiService.validarToken(TokenRequest(token))
+                if (resposta.isSuccessful && resposta.body()?.valido == false) {
+                    mostrarDialogTokenInvalido()
+                }
+            } catch (_: Exception) {
+                // Falha de rede: usuário está offline, não exibir dialog de sessão expirada
+            }
+        }
+    }
+
+    private fun mostrarDialogTokenInvalido() {
+        if (dialogTokenInvalidoVisivel || isFinishing) return
+        dialogTokenInvalidoVisivel = true
+
+        AlertDialog.Builder(this)
+            .setTitle("Você está online")
+            .setMessage("Sua sessão expirou. Faça login novamente para continuar.")
+            .setPositiveButton("OK") { _, _ ->
+                dialogTokenInvalidoVisivel = false
+                SessionManager.logout()
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+            }
+            .setCancelable(false)
+            .show()
+    }
 
     override fun setContentView(view: View) {
         val instalado = installDrawer(view)

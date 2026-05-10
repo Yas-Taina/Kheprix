@@ -168,10 +168,10 @@ class EstudoOfflineManager(context: Context) {
         val especies = queryUnsyncedEspecies(db, estudoLocalId)
         val espLocalToRemote = mutableMapOf<Long, Int>()
         especies.forEach { e ->
-            // Foto que não é Base64 (URL ou path do servidor) NÃO deve ser
-            // reenviada, senão o backend rejeita ou tenta decodificar como Base64.
+            // Envia foto apenas se for Base64 (data URI ou raw Base64 longo).
+            // URLs do servidor não são reenviadas.
             val fotoEnvio = e.foto?.takeIf { f ->
-                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+                f.startsWith("data:") || (!f.startsWith("http://") && !f.startsWith("https://") && f.length > 500)
             }
 
             if (e.remoteId != null && e.remoteId > 0) {
@@ -288,18 +288,29 @@ class EstudoOfflineManager(context: Context) {
                 var unidadeRemoteId = unidade.remoteId
 
                 if (unidade.sincronizado == 0) {
+                    val valoresU = queryUnsyncedValoresVariaveisDePai(db, "unidade_local_id", unidade.localId)
+                    val valoresUReq = valoresU.mapNotNull { vv ->
+                        val varRemoteId = varLocalToRemote[vv.variavelLocalId]
+                            ?: vv.variavelRemoteId
+                            ?: queryVariavelRemoteId(db, vv.variavelLocalId)
+                        if (varRemoteId != null && varRemoteId > 0)
+                            ValorVariavelRequest(variavelId = varRemoteId, valor = vv.valor)
+                        else null
+                    }
                     val req = UnidadeRequest(
                         nome = unidade.nome,
                         latitude = unidade.latitude,
                         longitude = unidade.longitude,
                         raio = unidade.raio,
                         metodoColeta = unidade.metodoColeta,
-                        esforcoAmostral = unidade.esforcoAmostral
+                        esforcoAmostral = unidade.esforcoAmostral,
+                        valoresVariaveis = valoresUReq.ifEmpty { null }
                     )
                     val resp = api.postUnidade(token, remoteEstudoId, remoteCampanhaId, req).body()
                         ?: error("Erro ao criar unidade amostral")
                     unidadeRemoteId = resp.id
                     markSynced(db, TABLE_UNIDADES, unidade.localId, resp.id)
+                    markValoresVariaveisSynced(db, "unidade_local_id", unidade.localId)
                 }
 
                 val remoteUnidadeId = unidadeRemoteId ?: error("Unidade remota não disponível")
@@ -310,15 +321,26 @@ class EstudoOfflineManager(context: Context) {
                     var eventoRemoteId = evento.remoteId
 
                     if (evento.sincronizado == 0) {
+                        val valoresE = queryUnsyncedValoresVariaveisDePai(db, "evento_local_id", evento.localId)
+                        val valoresEReq = valoresE.mapNotNull { vv ->
+                            val varRemoteId = varLocalToRemote[vv.variavelLocalId]
+                                ?: vv.variavelRemoteId
+                                ?: queryVariavelRemoteId(db, vv.variavelLocalId)
+                            if (varRemoteId != null && varRemoteId > 0)
+                                ValorVariavelRequest(variavelId = varRemoteId, valor = vv.valor)
+                            else null
+                        }
                         val req = EventoRequest(
                             horarioInicio = evento.horarioInicio,
                             horarioFim = evento.horarioFim,
-                            esforcoReal = evento.esforcoReal
+                            esforcoReal = evento.esforcoReal,
+                            valoresVariaveis = valoresEReq.ifEmpty { null }
                         )
                         val resp = api.postEvento(token, remoteEstudoId, remoteCampanhaId, remoteUnidadeId, req).body()
                             ?: error("Erro ao criar evento de amostragem")
                         eventoRemoteId = resp.id
                         markSynced(db, TABLE_EVENTOS, evento.localId, resp.id)
+                        markValoresVariaveisSynced(db, "evento_local_id", evento.localId)
                     }
 
                     val remoteEventoId = eventoRemoteId ?: error("Evento remoto não disponível")
@@ -329,13 +351,20 @@ class EstudoOfflineManager(context: Context) {
                         if (registro.sincronizado == 0) {
                             val especieRemoteId = espLocalToRemote[registro.especieLocalId]
                                 ?: error("Espécie remota para registro ${registro.localId} não encontrada")
-                            // Foto que não é Base64 (URL/path do servidor) não é reenviada.
                             val fotoEnvio = registro.foto?.takeIf { f ->
-                                !f.startsWith("http://") && !f.startsWith("https://") && !f.startsWith("/")
+                                f.startsWith("data:") || (!f.startsWith("http://") && !f.startsWith("https://") && f.length > 500)
+                            }
+                            val valoresR = queryUnsyncedValoresVariaveisDePai(db, "registro_local_id", registro.localId)
+                            val valoresRReq = valoresR.mapNotNull { vv ->
+                                val varRemoteId = varLocalToRemote[vv.variavelLocalId]
+                                    ?: vv.variavelRemoteId
+                                    ?: queryVariavelRemoteId(db, vv.variavelLocalId)
+                                if (varRemoteId != null && varRemoteId > 0)
+                                    ValorVariavelRequest(variavelId = varRemoteId, valor = vv.valor)
+                                else null
                             }
 
                             if (registro.remoteId != null && registro.remoteId > 0) {
-                                // Edição offline de registro já sincronizado → PATCH.
                                 val patchReq = RegistroPatchRequest(
                                     especieId = especieRemoteId,
                                     data = registro.data,
@@ -344,7 +373,8 @@ class EstudoOfflineManager(context: Context) {
                                     longitude = registro.longitude,
                                     qtdeIndividuos = registro.qtdeIndividuos,
                                     foto = fotoEnvio,
-                                    ausenciaEspecie = registro.ausenciaEspecie
+                                    ausenciaEspecie = registro.ausenciaEspecie,
+                                    valoresVariaveis = valoresRReq.ifEmpty { null }
                                 )
                                 val resp = api.patchRegistro(
                                     token, remoteEstudoId, remoteCampanhaId,
@@ -355,7 +385,6 @@ class EstudoOfflineManager(context: Context) {
                                 }
                                 markSynced(db, TABLE_REGISTROS, registro.localId, registro.remoteId)
                             } else {
-                                // Registro criado offline → POST.
                                 val req = RegistroRequest(
                                     especieId = especieRemoteId,
                                     data = registro.data,
@@ -364,7 +393,8 @@ class EstudoOfflineManager(context: Context) {
                                     longitude = registro.longitude,
                                     qtdeIndividuos = registro.qtdeIndividuos,
                                     foto = fotoEnvio,
-                                    ausenciaEspecie = registro.ausenciaEspecie
+                                    ausenciaEspecie = registro.ausenciaEspecie,
+                                    valoresVariaveis = valoresRReq.ifEmpty { null }
                                 )
                                 val resp = api.postRegistro(
                                     token, remoteEstudoId, remoteCampanhaId,
@@ -372,6 +402,7 @@ class EstudoOfflineManager(context: Context) {
                                 ).body() ?: error("Erro ao criar registro de ocorrência")
                                 markSynced(db, TABLE_REGISTROS, registro.localId, resp.id)
                             }
+                            markValoresVariaveisSynced(db, "registro_local_id", registro.localId)
                         }
                     }
                 }
@@ -418,7 +449,11 @@ class EstudoOfflineManager(context: Context) {
     /** Wipes all local rows for the study tree without syncing first. */
     fun deletarDadosEstudoLocal(estudoLocalId: Long) {
         val db = dbHelper.writableDatabase
-        // Cascade order: deepest first
+        // Delete all valores_variaveis whose variavel belongs to this study (covers all levels)
+        db.execSQL(
+            "DELETE FROM $TABLE_VALORES_VARIAVEIS WHERE variavel_local_id IN (SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE estudo_local_id = ?)",
+            arrayOf(estudoLocalId.toString())
+        )
         val campanhaLocalIds = queryCampanhaLocalIds(db, estudoLocalId)
         campanhaLocalIds.forEach { campanhaLocalId ->
             val unidadeLocalIds = queryUnidadeLocalIds(db, campanhaLocalId)
@@ -430,7 +465,6 @@ class EstudoOfflineManager(context: Context) {
                 db.delete(TABLE_EVENTOS, "unidade_local_id = ?", arrayOf(unidadeLocalId.toString()))
             }
             db.delete(TABLE_UNIDADES, "campanha_local_id = ?", arrayOf(campanhaLocalId.toString()))
-            db.delete(TABLE_VALORES_VARIAVEIS, "campanha_local_id = ?", arrayOf(campanhaLocalId.toString()))
         }
         db.delete(TABLE_CAMPANHAS, "estudo_local_id = ?", arrayOf(estudoLocalId.toString()))
         db.delete(TABLE_ESPECIES,  "estudo_local_id = ?", arrayOf(estudoLocalId.toString()))
@@ -687,12 +721,14 @@ class EstudoOfflineManager(context: Context) {
             put("created_at", u.createdAt)
             put("updated_at", u.updatedAt)
         }
-        return if (existing != null) {
+        val localId = if (existing != null) {
             db.update(TABLE_UNIDADES, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
             existing
         } else {
             db.insert(TABLE_UNIDADES, null, cv)
         }
+        upsertValoresVariaveis(db, "unidade_local_id", localId, u.valoresVariaveis)
+        return localId
     }
 
     private fun upsertEvento(db: android.database.sqlite.SQLiteDatabase, e: EventoResponse, unidadeLocalId: Long): Long {
@@ -706,12 +742,14 @@ class EstudoOfflineManager(context: Context) {
             put("esforco_real", e.esforcoReal)
             put("created_at", e.createdAt)
         }
-        return if (existing != null) {
+        val localId = if (existing != null) {
             db.update(TABLE_EVENTOS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
             existing
         } else {
             db.insert(TABLE_EVENTOS, null, cv)
         }
+        upsertValoresVariaveis(db, "evento_local_id", localId, e.valoresVariaveis)
+        return localId
     }
 
     private fun upsertRegistro(db: android.database.sqlite.SQLiteDatabase, r: RegistroResponse, eventoLocalId: Long, especieLocalId: Long): Long {
@@ -731,11 +769,36 @@ class EstudoOfflineManager(context: Context) {
             put("ausencia_especie", r.ausenciaEspecie?.let { if (it) 1 else 0 })
             put("created_at", r.createdAt)
         }
-        return if (existing != null) {
+        val localId = if (existing != null) {
             db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
             existing
         } else {
             db.insert(TABLE_REGISTROS, null, cv)
+        }
+        upsertValoresVariaveis(db, "registro_local_id", localId, r.valoresVariaveis)
+        return localId
+    }
+
+    private fun upsertValoresVariaveis(
+        db: android.database.sqlite.SQLiteDatabase,
+        parentCol: String,
+        parentLocalId: Long,
+        valores: List<ValorVariavelResponse>?
+    ) {
+        if (valores == null) return
+        db.delete(TABLE_VALORES_VARIAVEIS, "$parentCol = ?", arrayOf(parentLocalId.toString()))
+        valores.forEach { vv ->
+            val varLocalId = db.rawQuery(
+                "SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE $COL_REMOTE_ID = ? LIMIT 1",
+                arrayOf(vv.variavelId.toString())
+            ).use { if (it.moveToFirst()) it.getLong(0) else null } ?: return@forEach
+            db.insert(TABLE_VALORES_VARIAVEIS, null, ContentValues().apply {
+                put(COL_SINCRONIZADO, 1)
+                put(parentCol, parentLocalId)
+                put("variavel_local_id", varLocalId)
+                put("variavel_remote_id", vv.variavelId)
+                put("valor", vv.valor)
+            })
         }
     }
 
@@ -952,11 +1015,16 @@ class EstudoOfflineManager(context: Context) {
 
     private fun queryUnsyncedValoresVariaveisDeCampanha(
         db: android.database.sqlite.SQLiteDatabase, campanhaLocalId: Long
+    ): List<LocalValorVariavel> =
+        queryUnsyncedValoresVariaveisDePai(db, "campanha_local_id", campanhaLocalId)
+
+    private fun queryUnsyncedValoresVariaveisDePai(
+        db: android.database.sqlite.SQLiteDatabase, parentCol: String, parentLocalId: Long
     ): List<LocalValorVariavel> {
         val list = mutableListOf<LocalValorVariavel>()
         db.rawQuery(
-            "SELECT $COL_LOCAL_ID, variavel_local_id, variavel_remote_id, valor FROM $TABLE_VALORES_VARIAVEIS WHERE campanha_local_id = ? AND $COL_SINCRONIZADO = 0",
-            arrayOf(campanhaLocalId.toString())
+            "SELECT $COL_LOCAL_ID, variavel_local_id, variavel_remote_id, valor FROM $TABLE_VALORES_VARIAVEIS WHERE $parentCol = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(parentLocalId.toString())
         ).use {
             while (it.moveToNext()) {
                 list.add(LocalValorVariavel(
@@ -981,12 +1049,16 @@ class EstudoOfflineManager(context: Context) {
 
     private fun markValoresVariaveisCampanhaSynced(
         db: android.database.sqlite.SQLiteDatabase, campanhaLocalId: Long
+    ) = markValoresVariaveisSynced(db, "campanha_local_id", campanhaLocalId)
+
+    private fun markValoresVariaveisSynced(
+        db: android.database.sqlite.SQLiteDatabase, parentCol: String, parentLocalId: Long
     ) {
         val cv = ContentValues().apply { put(COL_SINCRONIZADO, 1) }
         db.update(
             TABLE_VALORES_VARIAVEIS, cv,
-            "campanha_local_id = ? AND $COL_SINCRONIZADO = 0",
-            arrayOf(campanhaLocalId.toString())
+            "$parentCol = ? AND $COL_SINCRONIZADO = 0",
+            arrayOf(parentLocalId.toString())
         )
     }
 
