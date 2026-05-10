@@ -1,71 +1,241 @@
-    <div class="page-container" style="max-width:700px" *ngIf="especie">
-      <h1 class="page-title">{{ especie.nome_popular || especie.genero + ' ' + especie.especie }}</h1>
-      <div class="ornament-divider"><span>⸙</span></div>
+<div class="page-container" style="max-width: 700px" *ngIf="especie">
+  <h1 class="page-title">
+    {{ especie.nome_popular || especie.genero + " " + especie.especie }}
+  </h1>
+  <div class="ornament-divider"><span>⸙</span></div>
 
-      <div class="d-flex justify-end">
-        <button class="back-btn" (click)="voltar()">◀</button>
+  <div class="d-flex justify-end">
+    <button class="back-btn" (click)="voltar()">◀</button>
+  </div>
+
+  <div class="especie-detalhe-card">
+    <div class="especie-foto-col">
+      <img
+        [src]="
+          especie.foto
+            ? util.buildFotoUrl(apiUrl, especie.foto)
+            : placeholderImg
+        "
+        class="especie-foto-grande"
+        alt="{{ especie.nome_popular }}"
+      />
+    </div>
+    <div class="especie-info-col">
+      <div>
+        <span class="detail-field-label">Nome Científico</span><br />
+        <em style="font-size: 1.1rem; color: var(--color-text-secondary)"
+          >{{ especie.genero }} {{ especie.especie }}</em
+        >
       </div>
-
-      <div class="especie-detalhe-card">
-        <div class="especie-foto-col">
-          <img
-            [src]="especie.foto ? util.buildFotoUrl(apiUrl, especie.foto) : placeholderImg"
-            class="especie-foto-grande"
-            alt="{{ especie.nome_popular }}"
-          />
-        </div>
-        <div class="especie-info-col">
-          <div>
-            <span class="detail-field-label">Nome Científico</span><br>
-            <em style="font-size:1.1rem; color:var(--color-text-secondary)">{{ especie.genero }} {{ especie.especie }}</em>
-          </div>
-          <div class="mt-md">
-            <span class="detail-field-label">Nome Popular</span><br>
-            <span>{{ especie.nome_popular || '—' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="detail-grid mt-lg">
-        <div class="detail-field">
-          <label>Classe</label>
-          <span>{{ especie.classe }}</span>
-        </div>
-        <div class="detail-field">
-          <label>Ordem</label>
-          <span>{{ especie.ordem }}</span>
-        </div>
-        <div class="detail-field">
-          <label>Família</label>
-          <span>{{ especie.familia }}</span>
-        </div>
-      </div>
-
       <div class="mt-md">
-        <label class="detail-field-label">Status de Conservação</label><br>
-        <span class="d-flex align-center gap-sm">
-          <span
-            class="conservation-dot"
-            [style.background-color]="util.conservacaoColor(especie.status_conservacao)"
-          ></span>
-          {{ statusLabel(especie.status_conservacao) }}
-        </span>
-      </div>
-
-      <div class="mt-md">
-        <span *ngIf="especie.endemismo">A espécie é nativa da região de estudo</span>
-        <span *ngIf="!especie.endemismo" class="text-muted">Espécie não endêmica da região</span>
-      </div>
-
-      <div class="d-flex justify-end gap-sm mt-xl">
-        <button class="btn-icon" (click)="editar()" title="Editar">
-          <!-- PLACEHOLDER: Ícone de caneta. Substituir por <img src="/assets/icons/edit.svg"> -->
-          <span style="font-size:1.4rem; color:var(--color-edit)">✏️</span>
-        </button>
-        <button class="btn-icon danger" (click)="deletar()" title="Excluir">
-          <!-- PLACEHOLDER: Ícone de lixeira. Substituir por <img src="/assets/icons/trash.svg"> -->
-          <span style="font-size:1.4rem; color:var(--color-delete)">🗑️</span>
-        </button>
+        <span class="detail-field-label">Nome Popular</span><br />
+        <span>{{ especie.nome_popular || "—" }}</span>
       </div>
     </div>
-    <div *ngIf="loading" class="page-container"><div class="loading-overlay"><div class="spinner"></div></div></div>
+  </div>
+
+  <div class="detail-grid mt-lg">
+    <div class="detail-field">
+      <label>Classe</label>
+      <span>{{ especie.classe }}</span>
+    </div>
+    <div class="detail-field">
+      <label>Ordem</label>
+      <span>{{ especie.ordem }}</span>
+    </div>
+    <div class="detail-field">
+      <label>Família</label>
+      <span>{{ especie.familia }}</span>
+    </div>
+  </div>
+
+  <div class="mt-md">
+    <label class="detail-field-label">Status de Conservação</label><br />
+    <span class="d-flex align-center gap-sm">
+      <span
+        class="conservation-dot"
+        [style.background-color]="
+          util.conservacaoColor(especie.status_conservacao)
+        "
+      ></span>
+      {{ statusLabel(especie.status_conservacao) }}
+    </span>
+  </div>
+
+  <div class="mt-md">
+    <span *ngIf="especie.endemismo"
+      >A espécie é nativa da região de estudo</span
+    >
+    <span *ngIf="!especie.endemismo" class="text-muted"
+      >A espécie não é nativa da região</span
+    >
+  </div>
+
+  <div class="d-flex justify-end gap-sm mt-xl">
+    <button class="btn-icon" (click)="editar()" title="Editar">
+      <span style="color: var(--color-bg-green-dark)"
+        ><svg
+          fill="currentColor"
+          version="1.1"
+          id="Capa_1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          width="35"
+          height="35"
+          viewBox="0 0 264.989 264.99"
+          xml:space="preserve"
+        >
+          <g>
+            <g>
+              <path
+                d="M174.76,182.846l-16.125-71.898c-0.272-1.231-1.365-2.102-2.625-2.102h-23.518h-23.517c-1.271,0-2.368,0.887-2.63,2.128
+			l-16.126,75.727c-0.171,0.802,0.037,1.648,0.559,2.277c0.313,0.368,30.969,37.928,30.969,73.313c0,1.48,1.202,2.688,2.688,2.688
+			c1.483,0,2.688-1.207,2.688-2.688v-69.125c0-0.119-0.055-0.23-0.071-0.34c-0.026-0.195-0.047-0.385-0.113-0.562
+			c-0.052-0.147-0.128-0.268-0.209-0.39c-0.102-0.179-0.205-0.351-0.344-0.503c-0.071-0.079-0.156-0.127-0.231-0.2
+			c-0.145-0.12-0.268-0.272-0.447-0.361c-4.764-2.558-7.725-7.439-7.725-12.746c0-5.308,2.961-10.189,7.73-12.745
+			c4.386-2.357,9.197-2.357,13.583,0h0.005c4.766,2.556,7.727,7.438,7.727,12.745c0,5.307-2.961,10.188-7.727,12.746
+			c-0.571,0.31-0.955,0.803-1.187,1.363c-0.005,0.017-0.016,0.032-0.025,0.048c-0.098,0.252-0.138,0.503-0.153,0.766
+			c-0.011,0.101-0.052,0.179-0.052,0.279v69.035c0,1.479,1.202,2.688,2.688,2.688s2.688-1.208,2.688-2.688
+			c0-33.659,30.761-76.856,31.077-77.287C174.772,184.374,174.934,183.592,174.76,182.846z"
+              />
+              <path
+                d="M107.97,101.46h49.052c1.366,0,2.521-1.026,2.667-2.387L170.44,2.989c0.089-0.763-0.152-1.522-0.672-2.092
+			c-0.51-0.57-1.233-0.897-2-0.897H97.219c-0.764,0-1.496,0.327-2.005,0.897c-0.513,0.564-0.754,1.329-0.672,2.092l10.751,96.085
+			C105.448,100.428,106.602,101.46,107.97,101.46z"
+              />
+            </g>
+          </g>
+        </svg>
+      </span>
+    </button>
+    <ng-container *ngIf="isProprietario()">
+      <button class="btn-icon danger" (click)="deletar()" title="Excluir">
+        <span style="color: var(--color-delete)"
+          ><svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            version="1.1"
+            width="35"
+            height="35"
+            viewBox="0 0 256 256"
+            xml:space="preserve"
+          >
+            <g
+              style="
+                stroke: none;
+                stroke-width: 0;
+                stroke-dasharray: none;
+                stroke-linecap: butt;
+                stroke-linejoin: miter;
+                stroke-miterlimit: 10;
+                fill: none;
+                fill-rule: nonzero;
+                opacity: 1;
+              "
+              transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)"
+            >
+              <path
+                d="M 64.71 90 H 25.291 c -4.693 0 -8.584 -3.67 -8.859 -8.355 l -3.928 -67.088 c -0.048 -0.825 0.246 -1.633 0.812 -2.234 c 0.567 -0.601 1.356 -0.941 2.183 -0.941 h 59.002 c 0.826 0 1.615 0.341 2.183 0.941 c 0.566 0.601 0.86 1.409 0.813 2.234 l -3.928 67.089 C 73.294 86.33 69.403 90 64.71 90 z M 18.679 17.381 l 3.743 63.913 C 22.51 82.812 23.771 84 25.291 84 H 64.71 c 1.52 0 2.779 -1.188 2.868 -2.705 l 3.742 -63.914 H 18.679 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+              <path
+                d="M 80.696 17.381 H 9.304 c -1.657 0 -3 -1.343 -3 -3 s 1.343 -3 3 -3 h 71.393 c 1.657 0 3 1.343 3 3 S 82.354 17.381 80.696 17.381 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+              <path
+                d="M 58.729 17.381 H 31.271 c -1.657 0 -3 -1.343 -3 -3 V 8.789 C 28.271 3.943 32.214 0 37.061 0 h 15.879 c 4.847 0 8.789 3.943 8.789 8.789 v 5.592 C 61.729 16.038 60.386 17.381 58.729 17.381 z M 34.271 11.381 h 21.457 V 8.789 C 55.729 7.251 54.478 6 52.939 6 H 37.061 c -1.538 0 -2.789 1.251 -2.789 2.789 V 11.381 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+              <path
+                d="M 58.33 74.991 c -0.06 0 -0.118 -0.002 -0.179 -0.005 c -1.653 -0.097 -2.916 -1.517 -2.819 -3.171 l 2.474 -42.244 c 0.097 -1.655 1.508 -2.933 3.171 -2.819 c 1.653 0.097 2.916 1.516 2.819 3.17 l -2.474 42.245 C 61.229 73.761 59.906 74.991 58.33 74.991 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+              <path
+                d="M 31.669 74.991 c -1.577 0 -2.898 -1.23 -2.992 -2.824 l -2.473 -42.245 c -0.097 -1.654 1.165 -3.073 2.819 -3.17 c 1.646 -0.111 3.073 1.165 3.17 2.819 l 2.473 42.244 c 0.097 1.654 -1.165 3.074 -2.819 3.171 C 31.788 74.989 31.729 74.991 31.669 74.991 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+              <path
+                d="M 45 74.991 c -1.657 0 -3 -1.343 -3 -3 V 29.747 c 0 -1.657 1.343 -3 3 -3 c 1.657 0 3 1.343 3 3 v 42.244 C 48 73.648 46.657 74.991 45 74.991 z"
+                style="
+                  stroke: none;
+                  stroke-width: 1;
+                  stroke-dasharray: none;
+                  stroke-linecap: butt;
+                  stroke-linejoin: miter;
+                  stroke-miterlimit: 10;
+                  fill: currentColor;
+                  fill-rule: nonzero;
+                  opacity: 1;
+                "
+                transform=" matrix(1 0 0 1 0 0) "
+                stroke-linecap="round"
+              />
+            </g></svg
+        ></span>
+      </button>
+    </ng-container>
+  </div>
+</div>
+<div *ngIf="loading" class="page-container">
+  <div class="loading-overlay"><div class="spinner"></div></div>
+</div>

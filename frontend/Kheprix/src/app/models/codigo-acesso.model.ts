@@ -1,4 +1,4 @@
-import { PerfilColaborador } from './colaborador.model';
+import { PerfilColaborador } from "./colaborador.model";
 
 export interface CodigoAcesso {
   codigo: string;

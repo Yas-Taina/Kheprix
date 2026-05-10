@@ -1,57 +1,83 @@
-    <div class="page-container" style="max-width:700px">
-      <h1 class="page-title">{{ isEdit ? 'Editar Evento' : 'Novo Evento de Amostragem' }}</h1>
-      <div class="ornament-divider"><span>⸙</span></div>
+<div class="page-container" style="max-width: 700px">
+  <h1 class="page-title">
+    {{ isEdit ? "Editar Evento" : "Novo Evento de Amostragem" }}
+  </h1>
+  <div class="ornament-divider"><span>⸙</span></div>
 
-      <div class="form-group">
-        <label class="form-label">Nome</label>
-        <input class="form-control" type="text" [(ngModel)]="nomeEvento" placeholder="Identificação do evento" />
-      </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Data de Início</label>
+      <input class="form-control" type="date" [(ngModel)]="dataInicio" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hora de Início</label>
+      <input
+        class="form-control"
+        type="time"
+        [(ngModel)]="horaInicio"
+        placeholder="23:59"
+      />
+    </div>
+  </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Data de Início</label>
-          <input class="form-control" type="date" [(ngModel)]="dataInicio" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hora de Início</label>
-          <input class="form-control" type="time" [(ngModel)]="horaInicio" placeholder="23:59" />
-        </div>
-      </div>
+  <div class="form-group">
+    <label class="form-label">Esforço Real</label>
+    <input
+      class="form-control"
+      type="text"
+      [(ngModel)]="esforcoReal"
+      placeholder="Ex: 15"
+      style="max-width: 200px"
+    />
+  </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Data de Fim</label>
-          <input class="form-control" type="date" [(ngModel)]="dataFim" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hora de Fim</label>
-          <input class="form-control" type="time" [(ngModel)]="horaFim" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Esforço Real</label>
-        <input class="form-control" type="text" [(ngModel)]="esforcoReal" placeholder="Ex: 15" style="max-width:200px" />
-      </div>
-
-      <!-- Variáveis do Evento -->
-      <ng-container *ngIf="variaveis.length > 0">
-        <label class="form-label">Variáveis do Evento</label>
-        <div *ngFor="let v of variaveis; let i = index" class="form-group">
-          <label class="form-label">{{ v.nome }}</label>
-          <div class="form-inline-group">
-            <input class="form-control" type="text" [(ngModel)]="valoresVars[i].valor" [placeholder]="'Valor de ' + v.nome" />
-            <span *ngIf="v.metrica" class="text-muted" style="white-space:nowrap">{{ v.metrica }}</span>
-          </div>
-        </div>
-      </ng-container>
-
-      <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
-
-      <div class="d-flex align-center justify-between mt-lg">
-        <button class="back-btn" (click)="voltar()">◀</button>
-        <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
-          {{ loading ? 'Salvando...' : 'Confirmar' }}
-        </button>
+  <ng-container *ngIf="variaveis.length > 0">
+    <label class="form-label">Variáveis do Evento</label>
+    <div *ngFor="let v of variaveis; let i = index" class="form-group">
+      <label class="form-label">{{ v.nome }}</label>
+      <div class="form-inline-group">
+        @if (v.tipo_dado === "texto") {
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          />
+        }
+        @if (v.tipo_dado === "numerico") {
+          <input
+            class="form-control"
+            type="number"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          />
+        }
+        @if (v.tipo_dado === "logico") {
+          <select
+            class="form-control"
+            [(ngModel)]="valoresVars[i].valor"
+            [placeholder]="'Valor de ' + v.nome"
+          >
+            <option value="true">Verdadeiro</option>
+            <option value="false">Falso</option>
+          </select>
+        }
+        <span
+          *ngIf="v.metrica"
+          class="text-muted"
+          style="white-space: nowrap"
+          >{{ v.metrica }}</span
+        >
       </div>
     </div>
+  </ng-container>
+
+  <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
+
+  <div class="d-flex align-center justify-between mt-lg">
+    <button class="back-btn" (click)="voltar()">◀</button>
+    <button class="btn btn-primary" (click)="salvar()" [disabled]="loading">
+      {{ loading ? "Salvando..." : "Confirmar" }}
+    </button>
+  </div>
+</div>

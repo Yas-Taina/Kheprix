@@ -1,28 +1,32 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ConviteRecebidoService } from '../../core/services/convite.service';
-import { CodigoAcessoService } from '../../core/services/codigo-acesso.service';
-import { ConviteRecebido } from '../../models';
-import { UtilService } from '../../core/services/util.service';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import { Component, OnInit, ViewChild, ElementRef } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import { ConviteRecebidoService } from "../../core/services/convite.service";
+import { CodigoAcessoService } from "../../core/services/codigo-acesso.service";
+import { ConviteRecebido } from "../../models";
+import { UtilService } from "../../core/services/util.service";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 @Component({
-  selector: 'app-convites',
+  selector: "app-convites",
   standalone: true,
-  templateUrl: './convites.component.html',
-  styleUrls: ['./convites.component.css'],
+  templateUrl: "./convites.component.html",
+  styleUrls: ["./convites.component.css"],
   imports: [CommonModule, FormsModule],
 })
 export class ConvitesComponent implements OnInit {
   convites: ConviteRecebido[] = [];
   loading = true;
-  msgConvite = ''; erroConvite = '';
-  codigoAcesso = ''; senhaAcesso = '';
-  loadingAcesso = false; erroAcesso = ''; msgAcesso = '';
+  msgConvite = "";
+  erroConvite = "";
+  codigoAcesso = "";
+  senhaAcesso = "";
+  loadingAcesso = false;
+  erroAcesso = "";
+  msgAcesso = "";
 
-  @ViewChild('video') video!: ElementRef<HTMLVideoElement>;
+  @ViewChild("video") video!: ElementRef<HTMLVideoElement>;
 
   scannerAtivo = false;
   private codeReader = new BrowserMultiFormatReader();
@@ -37,8 +41,11 @@ export class ConvitesComponent implements OnInit {
 
   ngOnInit() {
     this.conviteService.listar().subscribe({
-      next: (c) => { this.convites = c; this.loading = false; },
-      error: () => this.loading = false,
+      next: (c) => {
+        this.convites = c;
+        this.loading = false;
+      },
+      error: () => (this.loading = false),
     });
   }
 
@@ -46,9 +53,9 @@ export class ConvitesComponent implements OnInit {
     this.conviteService.aceitar(String(c.id)).subscribe({
       next: (r) => {
         this.msgConvite = r.mensagem;
-        this.convites = this.convites.filter(x => x.id !== c.id);
+        this.convites = this.convites.filter((x) => x.id !== c.id);
       },
-      error: () => this.erroConvite = 'Erro ao aceitar convite.',
+      error: () => (this.erroConvite = "Erro ao aceitar convite."),
     });
   }
 
@@ -56,36 +63,38 @@ export class ConvitesComponent implements OnInit {
     this.conviteService.recusar(String(c.id)).subscribe({
       next: (r) => {
         this.msgConvite = r.mensagem;
-        this.convites = this.convites.filter(x => x.id !== c.id);
+        this.convites = this.convites.filter((x) => x.id !== c.id);
       },
-      error: () => this.erroConvite = 'Erro ao recusar convite.',
+      error: () => (this.erroConvite = "Erro ao recusar convite."),
     });
   }
 
   ingressarEstudo() {
     if (!this.codigoAcesso || !this.senhaAcesso) {
-      this.erroAcesso = 'Preencha código e senha.';
+      this.erroAcesso = "Preencha código e senha.";
       return;
     }
 
     this.loadingAcesso = true;
-    this.erroAcesso = '';
+    this.erroAcesso = "";
 
-    this.codigoService.ingressar({
-      codigo: this.codigoAcesso,
-      senha_autocadastro: this.senhaAcesso
-    }).subscribe({
-      next: (r) => {
-        this.msgAcesso = `Ingressou em "${r.nome_estudo}" como ${r.perfil}.`;
-        this.loadingAcesso = false;
-        this.codigoAcesso = '';
-        this.senhaAcesso = '';
-      },
-      error: () => {
-        this.erroAcesso = 'Código ou senha inválidos.';
-        this.loadingAcesso = false;
-      },
-    });
+    this.codigoService
+      .ingressar({
+        codigo: this.codigoAcesso,
+        senha_autocadastro: this.senhaAcesso,
+      })
+      .subscribe({
+        next: (r) => {
+          this.msgAcesso = `Ingressou em "${r.nome_estudo}" como ${r.perfil}.`;
+          this.loadingAcesso = false;
+          this.codigoAcesso = "";
+          this.senhaAcesso = "";
+        },
+        error: () => {
+          this.erroAcesso = "Código ou senha inválidos.";
+          this.loadingAcesso = false;
+        },
+      });
   }
 
   lerQrCode() {
@@ -97,29 +106,29 @@ export class ConvitesComponent implements OnInit {
   }
 
   async iniciarScanner() {
-  try {
-    const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-    const deviceId = devices[0]?.deviceId;
+    try {
+      const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+      const deviceId = devices[0]?.deviceId;
 
-    this.codeReader.decodeFromVideoDevice(
-      deviceId,
-      this.video.nativeElement,
-      (result, err) => {
-        if (result) {
-          this.codigoAcesso = result.getText(); // mantém seu fluxo
-          this.fecharScanner();
-        }
-      }
-    );
-  } catch (err) {
-    console.error('Erro ao acessar câmera:', err);
+      this.codeReader.decodeFromVideoDevice(
+        deviceId,
+        this.video.nativeElement,
+        (result, err) => {
+          if (result) {
+            this.codigoAcesso = result.getText();
+            this.fecharScanner();
+          }
+        },
+      );
+    } catch (err) {
+      console.error("Erro ao acessar câmera:", err);
+    }
   }
-}
 
-fecharScanner() {
-  if (this.controls) {
-    this.controls.stop(); // 🔥 esse é o método correto universal
+  fecharScanner() {
+    if (this.controls) {
+      this.controls.stop();
+    }
+    this.scannerAtivo = false;
   }
-  this.scannerAtivo = false;
-}
 }

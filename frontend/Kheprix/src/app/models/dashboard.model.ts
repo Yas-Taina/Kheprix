@@ -67,4 +67,4 @@ export interface EspecieDistintaMes {
   total: number;
 }
 
-export type AgrupamentoTempo = 'mes' | 'ano';
+export type AgrupamentoTempo = "mes" | "ano";

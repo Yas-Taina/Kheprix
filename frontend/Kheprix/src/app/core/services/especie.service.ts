@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { BaseService } from './base.service';
-import { Especie, EspecieCreate, EspecieUpdate } from '../../models';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { BaseService } from "./base.service";
+import { Especie, EspecieCreate, EspecieUpdate } from "../../models";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class EspecieService extends BaseService {
   constructor(http: HttpClient) {
     super(http);
@@ -12,7 +12,7 @@ export class EspecieService extends BaseService {
 
   listar(estudo_id: number, nome_popular?: string): Observable<Especie[]> {
     const params: Record<string, string> = {};
-    if (nome_popular) params['nome_popular'] = nome_popular;
+    if (nome_popular) params["nome_popular"] = nome_popular;
     return this.get<Especie[]>(`/estudos/${estudo_id}/especies`, params);
   }
 
@@ -24,7 +24,11 @@ export class EspecieService extends BaseService {
     return this.post<Especie>(`/estudos/${estudo_id}/especies`, data);
   }
 
-  atualizar(estudo_id: number, id: number, data: EspecieUpdate): Observable<Especie> {
+  atualizar(
+    estudo_id: number,
+    id: number,
+    data: EspecieUpdate,
+  ): Observable<Especie> {
     return this.patch<Especie>(`/estudos/${estudo_id}/especies/${id}`, data);
   }
 

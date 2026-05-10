@@ -1,4 +1,4 @@
-export type StatusConvite = 'pendente' | 'aceito' | 'recusado' | 'expirado';
+export type StatusConvite = "pendente" | "aceito" | "recusado" | "expirado";
 
 export interface Convite {
   id: number;

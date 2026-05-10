@@ -1,10 +1,10 @@
-import { VariavelCreate } from './variavel.model';
+import { VariavelCreate } from "./variavel.model";
 
 export interface Estudo {
   id: number;
   nome: string;
   observacoes: string;
-  perfil?: string;
+  perfil: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,11 +21,10 @@ export interface EstudoUpdate {
 }
 
 export type TipoAgrupamento =
-  | 'registro_ocorrencia'
-  | 'evento_amostragem'
-  | 'unidade_amostral'
-  | 'campanha'
-  | 'especie';
+  | "registro_ocorrencia"
+  | "evento_amostragem"
+  | "unidade_amostral"
+  | "campanha"
+  | "especie";
 
-
-export type FormatoExportacao = 'csv' | 'xml';
+export type FormatoExportacao = "csv" | "xml";

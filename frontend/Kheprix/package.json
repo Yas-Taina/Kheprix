@@ -36,6 +36,7 @@
     "@types/jasmine": "^6.0.0",
     "@types/node": "^20.0.0",
     "@types/qrcode": "^1.5.5",
+    "prettier": "^3.8.3",
     "typescript": "~5.9.2"
   }
 }

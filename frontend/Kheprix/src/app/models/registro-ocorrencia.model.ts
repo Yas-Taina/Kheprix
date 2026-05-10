@@ -1,4 +1,4 @@
-import { ValorVariavel } from './variavel.model';
+import { ValorVariavel } from "./variavel.model";
 
 export interface RegistroOcorrencia {
   id: number;

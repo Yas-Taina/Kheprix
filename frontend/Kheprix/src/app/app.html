@@ -1,6 +1,9 @@
-<h1>Teste</h1>
+@if (isLogged) {
 <app-menu></app-menu>
-<main>
+}
+
+<main [class.with-menu]="isLogged">
   <router-outlet></router-outlet>
 </main>
+
 <app-footer></app-footer>
