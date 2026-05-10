@@ -515,6 +515,9 @@ select.form-control {
   padding: var(--space-xl);
   background-color: var(--color-bg-sand);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sidebar-wrapper {
@@ -641,7 +644,6 @@ select.form-control {
   object-fit: cover;
   border: 2px solid var(--border-color);
   background: var(--color-bg-sand);
-  /* PLACEHOLDER para imagem */
 }
 
 .photo-uploader input[type="file"] {
