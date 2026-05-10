@@ -44,7 +44,11 @@ export class EstudoService extends BaseService {
     formato: FormatoExportacao = "csv",
   ): Observable<Blob> {
     const params: Record<string, string> = { formato };
-    if (agrupamento) params["agrupamento"] = agrupamento;
+ 
+    if (formato !== "xml" && agrupamento) {
+      params["agrupamento"] = agrupamento;
+    }
+ 
     return this.getBlob(`/estudos/${id}/exportar_dados`, params);
   }
 }

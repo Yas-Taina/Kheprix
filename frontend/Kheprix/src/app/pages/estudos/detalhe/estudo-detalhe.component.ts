@@ -146,7 +146,7 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
   fecharExportar() {
     this.showExportar = false;
   }
-
+ 
   exportar(): void {
     this.exportLoading = true;
     this.exportMsg = "";
@@ -158,13 +158,18 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
           const a = document.createElement("a");
           a.href = url;
           a.download = `dados_estudo_${this.estudoId}.${this.formato}`;
+
+          document.body.appendChild(a);
           a.click();
-          URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+ 
           this.exportLoading = false;
           this.exportMsg = "Arquivo baixado!";
         },
         error: () => {
           this.exportLoading = false;
+          this.exportMsg = "Erro ao exportar. Tente novamente.";
         },
       });
   }
