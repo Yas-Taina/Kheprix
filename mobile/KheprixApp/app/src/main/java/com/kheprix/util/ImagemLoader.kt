@@ -44,9 +44,13 @@ object ImagemLoader {
 
         target.setImageResource(placeholder)
 
-        // Fotos criadas offline são salvas como Base64 no SQLite (sem prefixo
-        // data URI). URLs http(s) ou paths relativos vão pelo fluxo de cache+download.
-        val ehUrl = url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")
+        // Fotos offline são salvas com prefixo "data:image/jpeg;base64," (novas) ou
+        // como raw Base64 sem prefixo (registros salvos antes da correção). Raw
+        // JPEG Base64 começa com "/9j/" que colide com paths relativos; por isso
+        // usamos comprimento > 500 como heurística para distinguir Base64 de URL.
+        val ehBase64 = url.startsWith("data:") ||
+            (!url.startsWith("http://") && !url.startsWith("https://") && url.length > 500)
+        val ehUrl = !ehBase64
 
         if (!ehUrl) {
             scope.launch {

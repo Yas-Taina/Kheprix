@@ -18,8 +18,8 @@ object RetrofitClient {
 
     // 10.0.2.2 is the Android emulator alias for the host machine's localhost.
     // For a physical device on the same Wi-Fi, use your machine's IP, e.g. 192.168.1.X
-    //const val BASE_URL = "http://192.168.15.10:3000/"
-    const val BASE_URL = "http://10.52.103.235:3000/"
+    const val BASE_URL = "http://192.168.15.10:3000/"
+    //const val BASE_URL = "http://10.52.103.235:3000/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

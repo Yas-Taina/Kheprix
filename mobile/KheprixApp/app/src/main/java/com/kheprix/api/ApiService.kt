@@ -20,6 +20,9 @@ interface ApiService {
     @POST("autenticacao/validar_token_redefinicao")
     suspend fun validarTokenRedefinicao(@Body body: TokenRequest): Response<ValidoResponse>
 
+    @POST("autenticacao/validar_token")
+    suspend fun validarToken(@Body body: TokenRequest): Response<ValidoResponse>
+
     @POST("autenticacao/redefinir_senha")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest): Response<MensagemResponse>
 
