@@ -20,14 +20,18 @@
       <input
         class="form-control"
         type="text"
+        dmsMask="lat"
         [(ngModel)]="latDMS"
         placeholder="-00°00'00&quot;"
+        inputmode="numeric"
       />
       <input
         class="form-control"
         type="text"
+        dmsMask="lng"
         [(ngModel)]="lngDMS"
-        placeholder="-00°00'00&quot;"
+        placeholder="-000°00'00&quot;"
+        inputmode="numeric"
       />
       <button
         class="btn-location"

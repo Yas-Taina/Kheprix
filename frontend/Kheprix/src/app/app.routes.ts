@@ -37,7 +37,7 @@ export const routes: Routes = [
     path: "inicio",
     loadComponent: () =>
       import("./pages/inicio/inicio.component").then((m) => m.InicioComponent),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
   {
     path: "registro-rapido",

@@ -6,13 +6,14 @@ import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.
 import { VariavelService } from "../../../core/services/variavel.service";
 import { Variavel, ValorVariavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
+import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
 
 @Component({
   selector: "app-unidade-novo",
   standalone: true,
   templateUrl: "./unidade-novo.component.html",
   styleUrls: ["./unidade-novo.component.css"],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DmsMaskDirective],
 })
 export class UnidadeNovoComponent implements OnInit {
   estudoId!: number;
@@ -58,8 +59,8 @@ export class UnidadeNovoComponent implements OnInit {
         .buscar(this.estudoId, this.campanhaId, this.unidadeId)
         .subscribe((u) => {
           this.nome = u.nome;
-          this.latDMS = this.util.decimalToDMS(u.latitude);
-          this.lngDMS = this.util.decimalToDMS(u.longitude);
+          this.latDMS = this.util.decimalToDMS(u.latitude, "lat");
+          this.lngDMS = this.util.decimalToDMS(u.longitude, "lng");
           this.raio = u.raio;
           this.metodoColeta = u.metodo_coleta ?? "";
           this.esforcoAmostral = u.esforco_amostral ?? "";

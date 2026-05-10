@@ -16,6 +16,7 @@ export class LoginComponent {
   senha = "";
   erro = "";
   loading = false;
+  mostrarSenha = false;
 
   constructor(
     private auth: AuthService,
