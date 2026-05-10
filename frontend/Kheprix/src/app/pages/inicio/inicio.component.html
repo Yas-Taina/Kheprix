@@ -58,6 +58,7 @@
     </ng-container>
 
     <ng-container *ngIf="!loading && dashboard">
+      <div style="width:900px; max-width: 900px; justify-content:center; align-self: center;">
       <div class="card ultimo-estudo-card">
         <div
           class="ultimo-estudo-header"
@@ -127,9 +128,11 @@
         <div class="stat-label">Quantidade total de indivíduos encontrados</div>
         <div class="stat-value">{{ dashboard.total_individuos | number }}</div>
       </div>
+    </div>
     </ng-container>
 
-    <ng-container *ngIf="!loading && !dashboard">
+    <ng-container *ngIf="!loading && !dashboard" >
+      <div style="width:900px; max-width: 900px; justify-content:center; align-self: center;">
       <div class="card text-center">
         <p class="text-muted">
           Nenhum estudo encontrado.
@@ -138,6 +141,7 @@
           >.
         </p>
       </div>
+    </div>
     </ng-container>
   </main>
 </div>
