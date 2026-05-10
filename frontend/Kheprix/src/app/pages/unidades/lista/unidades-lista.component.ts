@@ -64,8 +64,12 @@ export class UnidadesListaComponent implements OnInit {
     this.showDetalhes = !this.showDetalhes;
   }
 
-  formatCoord(dec: number): string {
-    return this.util.decimalToDMS(dec);
+  formatLat(dec: number): string {
+    return this.util.decimalToDMS(dec, "lat");
+  }
+
+  formatLng(dec: number): string {
+    return this.util.decimalToDMS(dec, "lng");
   }
 
   verEventos(u: UnidadeAmostral) {

@@ -83,7 +83,7 @@
     <tbody>
       <tr *ngFor="let u of unidades" (click)="verEventos(u)">
         <td>{{ u.nome }}</td>
-        <td>{{ formatCoord(u.latitude) }}, {{ formatCoord(u.longitude) }}</td>
+        <td>{{ formatLat(u.latitude) }}, {{ formatLng(u.longitude) }}</td>
         <td>{{ u.raio ? u.raio + "m" : "—" }}</td>
         <td (click)="$event.stopPropagation()">
           <div class="actions-cell">

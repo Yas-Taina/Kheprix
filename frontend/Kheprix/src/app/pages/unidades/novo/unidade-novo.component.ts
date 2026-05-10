@@ -40,7 +40,7 @@ export class UnidadeNovoComponent implements OnInit {
     private route: ActivatedRoute,
     public util: UtilService,
   ) {}
-
+ 
   ngOnInit() {
     this.estudoId = +this.route.snapshot.params["estudo_id"];
     this.campanhaId = +this.route.snapshot.params["campanha_id"];

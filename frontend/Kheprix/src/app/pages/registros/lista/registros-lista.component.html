@@ -112,8 +112,8 @@
         </td>
         <td>{{ util.formatDate(r.data) }}</td>
         <td>
-          {{ util.decimalToDMS(r.latitude) }},
-          {{ util.decimalToDMS(r.longitude) }}
+          {{ util.decimalToDMS(r.latitude, "lat") }},
+          {{ util.decimalToDMS(r.longitude, "lng") }}
         </td>
       </tr>
     </tbody>
