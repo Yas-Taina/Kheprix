@@ -50,4 +50,7 @@ Rails.application.routes.draw do
       to: "resultados_analise#show",
       as: :resultado_analise,
       constraints: { arquivo: /[^\/]+/ }
+
+  post "chatbot/query",    to: "chatbot#query"
+  post "chatbot/insights", to: "chatbot#insights"
 end

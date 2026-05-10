@@ -75,6 +75,8 @@ services:
       SMTP_STARTTLS: ${SMTP_STARTTLS}
       EMAIL_REMETENTE: ${EMAIL_REMETENTE}
       API_R_URL: http://api-r:8000
+      CHATBOT_URL: ${CHATBOT_URL:-http://chatbot:8001}
+      CHATBOT_INTERNAL_KEY: ${CHATBOT_INTERNAL_KEY}
     volumes:
       - ./backend:/rails
     healthcheck:

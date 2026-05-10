@@ -28,7 +28,8 @@ Pergunta do pesquisador
         │
         ▼
 ┌─────────────────────┐
-│   Guard de Entrada  │  ← detecta prompt injection, perguntas fora do domínio
+│   Guard de Entrada  │  ← detecta prompt injection, perguntas fora do domínio,
+│   (3 verificações)  │     encoding malicioso; substring matching para plurais
 └────────┬────────────┘
          │ pergunta válida
          ▼
@@ -74,17 +75,17 @@ Pergunta do pesquisador
 |---|---|
 | `main.py` | Aplicação FastAPI, endpoints, lifespan |
 | `config.py` | Variáveis de ambiente com validação de startup |
+| `query_engine.py` | Orquestra o pipeline Text-to-SQL (geração, execução, interpretação) |
 | `insights_engine.py` | Coleta de métricas predefinidas + narrativa analítica via LLM |
+| `schema_context.py` | Prompts do LLM (SYSTEM_PROMPT e INTERPRETACAO_PROMPT) |
 | `auth.py` | Autenticação serviço-a-serviço (X-Internal-Key) |
 | `rate_limiter.py` | Limite de 10 req/min por usuário (janela deslizante) |
 | `session_store.py` | Histórico de sessão em memória (multi-turn, TTL 30 min) |
 | `db.py` | Connection pool read-only para o DW |
-| `query_engine.py` | Orquestra o pipeline Text-to-SQL |
-| `schema_context.py` | Prompts do LLM (SYSTEM_PROMPT e INTERPRETACAO_PROMPT) |
 | `guards/base.py` | Tipo compartilhado `GuardResult` |
 | `guards/input_guard.py` | Validação de entrada (injection, domínio, encoding) |
 | `guards/sql_validator.py` | Validação de SQL gerado (DDL, multi-tenant, tabelas) |
-| `guards/output_guard.py` | Validação de saída (SQL system tables, vazamento, alucinação) |
+| `guards/output_guard.py` | Validação de saída (tabelas de sistema, vazamento, alucinação) |
 
 ### Multi-turn (contexto de sessão)
 
@@ -102,11 +103,24 @@ O histórico é armazenado **em memória** (sem banco de dados) e expira após 3
 
 ---
 
----
-
 ## Fluxo de Interação
 
 O chatbot expõe dois endpoints com propósitos distintos (`/query` e `/insights`). O **roteamento é determinado pela interface**, não por classificação automática de intenção — uma escolha deliberada para evitar ambiguidade sem custo adicional de tokens.
+
+### Acesso via FAB (Floating Action Button)
+
+O chatbot é acessado por um botão flutuante fixo no canto inferior direito de todas as páginas autenticadas do frontend (exceto a própria tela do chatbot):
+
+```
+┌─────────────────────────────────────────────┐
+│  [qualquer página autenticada]              │
+│                                             │
+│                                             │
+│                                    [🤖]     │  ← FAB fixo
+└─────────────────────────────────────────────┘
+```
+
+Clicar no FAB navega para `/chatbot`, que exibe a interface completa de conversa.
 
 ### Dois modos de entrada na UI
 
@@ -131,25 +145,24 @@ Essa separação garante que o relatório analítico seja sempre gerado com as q
 
 ### Fluxo de seleção de estudos para insights
 
-Quando o usuário clica em "Gerar Insights", o sistema não assume automaticamente todos os estudos acessíveis — em vez disso, apresenta uma seleção dentro do próprio chat:
+Quando o usuário clica em "Gerar Insights", o sistema apresenta uma seleção dentro do próprio chat:
 
 ```
 Usuário clica [📊 Gerar Insights]
         │
         ▼
-Rails busca estudos acessíveis ao usuário
-(SELECT estudos WHERE id IN colaboradores do usuário)
+Angular busca estudos acessíveis ao usuário via Rails
         │
         ▼
-Chat exibe mensagem do sistema com chips selecionáveis:
+Chat exibe card com chips selecionáveis:
 
   ┌──────────────────────────────────────────────┐
-  │ 🤖  Para quais estudos deseja gerar insights? │
+  │  Selecione os estudos para o relatório:       │
   │                                              │
   │  [Biodiversidade Cerrado]  [Mata Atlântica]  │
   │  [Coleoptera RS 2025]                        │
   │                                              │
-  │  [Selecionar todos]           [Confirmar →]  │
+  │       [Gerar Insights]        [Cancelar]     │
   └──────────────────────────────────────────────┘
 
         │ usuário seleciona e confirma
@@ -157,7 +170,7 @@ Chat exibe mensagem do sistema com chips selecionáveis:
 Rails chama POST /insights com os estudo_ids selecionados
         │
         ▼
-Chat exibe relatório narrativo + métricas em tabela
+Chat exibe relatório narrativo + métricas em tabela expansível
 ```
 
 **Por que seleção por nome, não por ID?**  
@@ -171,18 +184,18 @@ estudos = current_user.estudos.select(:id, :nome)
 # → [{ id: 16, nome: "Biodiversidade Cerrado" }, { id: 17, nome: "Mata Atlântica" }]
 
 # 2. Frontend renderiza chips com os nomes
-# 3. Usuário seleciona → frontend envia os nomes selecionados de volta
+# 3. Usuário seleciona → frontend envia os IDs dos estudos selecionados
 
-# 4. Controller resolve nomes → IDs (já valida autorização)
+# 4. Controller valida autorização (estudos pertencem ao usuário)
 ids_selecionados = current_user.estudos
-                               .where(nome: params[:estudos_selecionados])
+                               .where(id: params[:estudo_ids])
                                .pluck(:id)
 
-# 5. Chama /insights com os IDs resolvidos
+# 5. Chama /insights com os IDs validados
 chamar_chatbot_insights(ids_selecionados, current_user.id)
 ```
 
-A validação de autorização acontece no passo 4: `current_user.estudos.where(...)` garante que o usuário só consiga selecionar estudos que realmente pode acessar, mesmo que manipule o request.
+A validação de autorização acontece no passo 4: `current_user.estudos.where(id: ...)` garante que o usuário só acesse estudos que pode acessar, mesmo que manipule o request.
 
 ---
 
@@ -249,6 +262,29 @@ Frontend → Rails (JWT) → Chatbot (X-Internal-Key)
 5. Anti-alucinação → números na resposta validados contra dados reais do DW
 ```
 
+#### Guard de Entrada — detalhes
+
+O `input_guard.py` aplica três verificações em sequência:
+
+1. **Encoding** — bloqueia caracteres de controle (`\x00`–`\x1f`, `\x7f`)
+2. **Prompt injection** — detecta ~20 padrões em português e inglês (ex: "ignore as instruções anteriores", "jailbreak", "system prompt", DDL direto na pergunta)
+3. **Relevância de domínio** — usa correspondência por substring para capturar plurais e variações:
+   - `"estudo" in texto` captura "estudos", "do estudo", etc.
+   - Perguntas de ≥ 5 palavras sem nenhum termo do domínio entomológico são bloqueadas
+   - Termos explicitamente fora do domínio (culinária, entretenimento, finanças, política) bloqueiam independente do tamanho
+   - **Variáveis ecológicas** (temperatura, umidade, pH, altitude, precipitação) **não** estão na lista de bloqueio — podem ser métricas legítimas de estudos de campo
+
+#### Tratamento de erros de LLM
+
+O pipeline distingue dois tipos de falha do Groq:
+
+| Situação | Código HTTP | Mensagem ao usuário |
+|---|---|---|
+| Rate limit diário (100k tokens/dia esgotados) | 429 | "O limite de uso do serviço de IA foi atingido por hoje. Tente novamente mais tarde." |
+| Erro transiente (500/502/503) | — | Retry automático até 2× com backoff de 4s |
+| Erro permanente (outro) | — | "O serviço de IA está temporariamente indisponível." |
+| JSON inválido gerado pelo LLM | — | "Não consegui entender a pergunta. Tente reformulá-la." |
+
 O connection pool do DW é configurado como **read-only** via `set_session(readonly=True)`. Além disso, o chatbot usa o usuário PostgreSQL `kheprix_chatbot_ro`, que possui apenas `GRANT SELECT` nas tabelas `indicadores_dashboard` e `analises_estatisticas` — duas camadas de proteção independentes contra escrita acidental.
 
 ---
@@ -273,6 +309,9 @@ GROQ_MODEL=llama-3.3-70b-versatile   # padrão, pode omitir
 # Gere com: python -c "import secrets; print(secrets.token_hex(32))"
 CHATBOT_INTERNAL_KEY=<chave_hex_64_caracteres>
 
+# URL interna do chatbot (usada pelo Rails para proxy)
+CHATBOT_URL=http://chatbot:8001
+
 # DW (valores padrão funcionam com docker-compose)
 POSTGRES_DW_HOST=db_dw
 POSTGRES_DW_PORT=5432
@@ -296,11 +335,11 @@ A mesma chave deve estar em `CHATBOT_INTERNAL_KEY` no `.env` **e** configurada n
 ### Com Docker Compose (recomendado)
 
 ```bash
+# Subir tudo do zero (limpa volumes e reconstrói imagens)
+docker compose down -v --remove-orphans && docker compose up --build
+
 # Subir apenas o chatbot (assume DW já rodando)
 docker compose up chatbot --build -d
-
-# Subir tudo do zero
-docker compose up --build -d
 
 # Ver logs em tempo real
 docker compose logs chatbot -f
@@ -333,46 +372,6 @@ curl http://localhost:8001/health
 ```json
 {"status": "ok", "servico": "kheprix-chatbot"}
 ```
-
-### `POST /insights`
-
-Gera um relatório analítico sobre os estudos do usuário com métricas predefinidas.
-
-Diferente de `/query`, usa SQL fixo e auditável — sem geração dinâmica de código pelo LLM.
-
-**Headers obrigatórios:** mesmos de `/query`
-
-**Body:**
-```json
-{
-  "estudo_ids": [16, 17],
-  "usuario_id": 42
-}
-```
-
-**Response `200 OK`:**
-```json
-{
-  "narrativa": "### Visão Geral\nO estudo abrangeu 1 campanha e resultou em 30 registros...",
-  "metricas": {
-    "resumo":       [{"riqueza_total": 3, "abundancia_total": 395, ...}],
-    "top_especies": [{"nome_cientifico": "B2 tertius", "abundancia": 180, ...}],
-    "conservacao":  [{"especies_ameacadas": 2, "status_iucn": "CR, VU", ...}],
-    "sazonalidade": [{"estacao": "Outono", "total_individuos": 395, ...}],
-    "taxonomia":    []
-  },
-  "erro": null
-}
-```
-
-As seções de `metricas` cobertas:
-- `resumo` — riqueza, abundância, período, campanhas, nome do estudo
-- `top_especies` — top 5 mais abundantes com nome popular
-- `conservacao` — ameaçadas (com status IUCN), endêmicas, proporção
-- `sazonalidade` — distribuição por estação do ano
-- `taxonomia` — riqueza por ordem taxonômica (top 8)
-
----
 
 ### `POST /query`
 
@@ -445,6 +444,48 @@ curl -X POST http://localhost:8001/query \
     "usuario_id": 1
   }'
 ```
+
+---
+
+### `POST /insights`
+
+Gera um relatório analítico sobre os estudos do usuário com métricas predefinidas.
+
+Diferente de `/query`, usa SQL fixo e auditável — sem geração dinâmica de código pelo LLM.
+
+**Headers obrigatórios:** mesmos de `/query`
+
+**Body:**
+```json
+{
+  "estudo_ids": [16, 17],
+  "usuario_id": 42
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "narrativa": "Visão Geral\nO estudo abrangeu 1 campanha e resultou em 30 registros...",
+  "metricas": {
+    "resumo":       [{"riqueza_total": 3, "abundancia_total": 395, ...}],
+    "top_especies": [{"nome_cientifico": "B2 tertius", "abundancia": 180, ...}],
+    "conservacao":  [{"especies_ameacadas": 2, "status_iucn": "CR, VU", ...}],
+    "sazonalidade": [{"estacao": "Outono", "total_individuos": 395, ...}],
+    "taxonomia":    []
+  },
+  "erro": null
+}
+```
+
+As seções de `metricas` cobertas:
+- `resumo` — riqueza, abundância, período, campanhas, nome do estudo
+- `top_especies` — top 5 mais abundantes com nome popular
+- `conservacao` — ameaçadas (com status IUCN), endêmicas, proporção
+- `sazonalidade` — distribuição por estação do ano
+- `taxonomia` — riqueza por ordem taxonômica (top 8)
+
+A narrativa é texto puro em português (sem markdown), estruturada em 5 parágrafos correspondentes às seções acima.
 
 ---
 

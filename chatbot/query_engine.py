@@ -314,6 +314,24 @@ def processar_pergunta(
     # ------------------------------------------------------------------
     try:
         resultado_modelo = _gerar_sql(pergunta, historico)
+    except APIStatusError as exc:
+        if exc.status_code == 429:
+            logger.warning("rate_limit_groq", extra={"usuario_id": usuario_id})
+            return {
+                "resposta": "O limite de uso do serviço de IA foi atingido por hoje. Tente novamente mais tarde.",
+                "dados": [],
+                "sql": None,
+                "total": 0,
+                "erro": f"Rate limit: {exc.status_code}",
+            }
+        logger.error("falha_gerar_sql", extra={"usuario_id": usuario_id, "erro": str(exc)})
+        return {
+            "resposta": "O serviço de IA está temporariamente indisponível. Tente novamente em instantes.",
+            "dados": [],
+            "sql": None,
+            "total": 0,
+            "erro": f"Falha ao gerar SQL: {exc}",
+        }
     except Exception as exc:
         logger.error("falha_gerar_sql", extra={"usuario_id": usuario_id, "erro": str(exc)})
         return {
@@ -326,6 +344,7 @@ def processar_pergunta(
 
     sql = resultado_modelo.get("sql")
     explicacao = resultado_modelo.get("explicacao", "")
+    print(f"[DEBUG] sql_gerado: {sql}", flush=True)
 
     if not sql:
         logger.info(
@@ -418,12 +437,7 @@ def processar_pergunta(
 
     duracao_ms = round((time.monotonic() - inicio) * 1000)
     logger.info(
-        "consulta_concluida",
-        extra={
-            "usuario_id": usuario_id,
-            "total_registros": len(dados),
-            "duracao_ms": duracao_ms,
-        },
+        f"consulta_concluida | usuario={usuario_id} | registros={len(dados)} | duracao_ms={duracao_ms} | sql={sql}",
     )
 
     return {

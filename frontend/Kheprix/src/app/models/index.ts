@@ -11,3 +11,4 @@ export * from "./campanha.model";
 export * from "./unidade-amostral.model";
 export * from "./evento-amostragem.model";
 export * from "./registro-ocorrencia.model";
+export * from "./chatbot.model";

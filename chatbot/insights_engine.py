@@ -113,31 +113,18 @@ Você é um ecólogo analítico do sistema Kheprix, especializado em entomologia
 Com base nas métricas coletadas do banco de dados, gere um relatório de insights
 em português do Brasil para o pesquisador.
 
-## ESTRUTURA DO RELATÓRIO (use exatamente estas seções)
+Estruture o relatório em exatamente 5 parágrafos curtos, nesta ordem:
+1. Visão Geral: descreva o escopo — período, campanhas, riqueza e abundância total.
+2. Espécies em Destaque: cite as espécies mais abundantes e seus valores numéricos exatos.
+3. Conservação e Endemismo: cite espécies ameaçadas com status IUCN e proporção de endêmicas. Se não houver, diga isso.
+4. Padrões Temporais: descreva a distribuição por estação com os valores exatos dos dados.
+5. Composição Taxonômica: descreva as ordens presentes. Se não houver dados, diga isso.
 
-### Visão Geral
-Descreva o escopo do estudo: período, campanhas, riqueza e abundância total.
-
-### Espécies em Destaque
-Comente sobre as espécies mais abundantes e o que isso pode indicar ecologicamente.
-Seja factual — baseie-se apenas nos dados fornecidos.
-
-### Conservação e Endemismo
-Destaque espécies ameaçadas, seus status IUCN e a proporção de endêmicas.
-Se não houver espécies ameaçadas, diga isso claramente.
-
-### Padrões Temporais
-Analise a distribuição por estação: qual concentra mais registros e possíveis explicações
-baseadas nos dados (não em conhecimento geral sobre a espécie).
-
-### Composição Taxonômica
-Comente sobre a distribuição por ordens taxonômicas presentes.
-
-## REGRAS
-- Cite apenas valores que aparecem nos dados fornecidos.
-- Não faça recomendações de manejo ou conservação além dos dados.
-- Não mencione IDs de backend, nomes de tabelas ou SQL.
-- Máximo de 5 parágrafos curtos (um por seção).
+## REGRAS ABSOLUTAS
+- Cite APENAS valores que aparecem explicitamente nos dados fornecidos.
+- NUNCA use markdown (sem #, ##, ###, **, *, _, ---, etc.). Texto puro apenas.
+- NUNCA faça inferências, sugestões, recomendações ou afirmações como "isso pode indicar", "isso sugere", "pode ser explicado por".
+- NUNCA mencione IDs de backend, nomes de tabelas ou SQL.
 - Responda em português do Brasil.
 """
 
@@ -259,12 +246,19 @@ def gerar_insights(estudo_ids: list[int], usuario_id: int) -> dict:
 
     try:
         narrativa = _gerar_narrativa(metricas, estudo_ids)
+    except APIStatusError as exc:
+        if exc.status_code == 429:
+            logger.warning("rate_limit_groq_insights", extra={"usuario_id": usuario_id})
+            return {
+                "narrativa": "O limite de uso do serviço de IA foi atingido por hoje. Tente novamente mais tarde.",
+                "metricas": metricas,
+                "erro": f"Rate limit: {exc.status_code}",
+            }
+        logger.error("insights_llm_falhou", extra={"usuario_id": usuario_id, "erro": str(exc)})
+        narrativa = "Os dados foram coletados com sucesso, mas não foi possível gerar a narrativa analítica. Tente novamente em instantes."
     except Exception as exc:
         logger.error("insights_llm_falhou", extra={"usuario_id": usuario_id, "erro": str(exc)})
-        narrativa = (
-            f"Os dados foram coletados com sucesso, mas não foi possível gerar "
-            f"a narrativa analítica. Tente novamente em instantes."
-        )
+        narrativa = "Os dados foram coletados com sucesso, mas não foi possível gerar a narrativa analítica. Tente novamente em instantes."
 
     duracao_ms = round((time.monotonic() - inicio) * 1000)
     logger.info(
