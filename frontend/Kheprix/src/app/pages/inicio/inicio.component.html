@@ -58,90 +58,105 @@
     </ng-container>
 
     <ng-container *ngIf="!loading && dashboard">
-      <div style="width:900px; max-width: 900px;">
-      <div class="card ultimo-estudo-card">
-        <div
-          class="ultimo-estudo-header"
-          style="align-items: center; gap: 1rem; justify-content: center;"
-        >
-          <div class="ultimo-estudo-titulo" style="text-align: right">
-            <span class="section-title" style="font-size: 2rem;"
-              >Último<br />Estudo</span
-            >
-          </div>
-          <div class="ultimo-estudo-info" style="text-align: left">
-            <h2 class="study-name" style="font-size:1.5rem;">{{ dashboard.nome }}</h2>
-            <p class="study-date" style="font-size:1.2rem;">
-              Editado em {{ util.formatDate(dashboard.updated_at) }}
-            </p>
-          </div>
-        </div>
-        <div class="text-center mt-md">
-          <button
-            class="btn btn-primary"
-            (click)="router.navigate(['/estudos', dashboard.id])"
+      <div style="width: 900px; max-width: 900px">
+        <div class="card ultimo-estudo-card">
+          <div
+            class="ultimo-estudo-header"
+            style="align-items: center; gap: 1rem; justify-content: center"
           >
-            Visualizar Detalhes
-          </button>
-        </div>
-      </div>
-      <div class="stats-grid mt-lg">
-        <div class="stat-card">
-          <div class="stat-label">Data de início</div>
-          <div class="stat-value">
-            {{ util.formatDate(dashboard.data_inicio) }}
+            <div class="ultimo-estudo-titulo" style="text-align: right">
+              <span class="section-title" style="font-size: 2rem"
+                >Último<br />Estudo</span
+              >
+            </div>
+            <div class="ultimo-estudo-info" style="text-align: left">
+              <h2 class="study-name" style="font-size: 1.5rem">
+                {{ dashboard.nome }}
+              </h2>
+              <p class="study-date" style="font-size: 1.2rem">
+                Editado em {{ util.formatDate(dashboard.updated_at) }}
+              </p>
+            </div>
+          </div>
+          <div class="text-center mt-md">
+            <button
+              class="btn btn-primary"
+              (click)="router.navigate(['/estudos', dashboard.id])"
+            >
+              Visualizar Detalhes
+            </button>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stats-grid mt-lg">
+          <div class="stat-card">
+            <div class="stat-label">Data de início</div>
+            <div class="stat-value">
+              {{ util.formatDate(dashboard.data_inicio) }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              Quantidade total de registros de ocorrência
+            </div>
+            <div class="stat-value">
+              {{ dashboard.total_registros | number }}
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card mt-md">
+          <div class="stat-label">Quantidade total de espécies distintas</div>
+          <div class="stat-value">{{ dashboard.total_especies | number }}</div>
+        </div>
+
+        <div class="stats-grid mt-md">
+          <div
+            class="stat-card"
+            style="
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            "
+          >
+            <div class="stat-label">Espécies ameaçadas de extinção</div>
+            <div class="stat-value">
+              {{ dashboard.especies_ameacadas | number }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Espécies nativas</div>
+            <div class="stat-value">
+              {{ dashboard.especies_nativas | number }}
+            </div>
+            <div class="stat-label mt-sm">Espécies invasoras</div>
+            <div class="stat-value">
+              {{ dashboard.especies_invasoras | number }}
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card mt-md">
           <div class="stat-label">
-            Quantidade total de registros de ocorrência
+            Quantidade total de indivíduos encontrados
           </div>
-          <div class="stat-value">{{ dashboard.total_registros | number }}</div>
-        </div>
-      </div>
-
-      <div class="stat-card mt-md">
-        <div class="stat-label">Quantidade total de espécies distintas</div>
-        <div class="stat-value">{{ dashboard.total_especies | number }}</div>
-      </div>
-
-      <div class="stats-grid mt-md">
-        <div class="stat-card" style="display:flex; flex-direction:column; justify-content:center;">
-          <div class="stat-label">Espécies ameaçadas de extinção</div>
           <div class="stat-value">
-            {{ dashboard.especies_ameacadas | number }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Espécies nativas</div>
-          <div class="stat-value">
-            {{ dashboard.especies_nativas | number }}
-          </div>
-          <div class="stat-label mt-sm">Espécies invasoras</div>
-          <div class="stat-value">
-            {{ dashboard.especies_invasoras | number }}
+            {{ dashboard.total_individuos | number }}
           </div>
         </div>
       </div>
-
-      <div class="stat-card mt-md">
-        <div class="stat-label">Quantidade total de indivíduos encontrados</div>
-        <div class="stat-value">{{ dashboard.total_individuos | number }}</div>
-      </div>
-    </div>
     </ng-container>
 
-    <ng-container *ngIf="!loading && !dashboard" >
-      <div style="width:900px; max-width: 900px;">
-      <div class="card text-center">
-        <p class="text-muted">
-          Nenhum estudo encontrado.
-          <a (click)="router.navigate(['/estudos/novo'])"
-            >Crie seu primeiro estudo</a
-          >.
-        </p>
+    <ng-container *ngIf="!loading && !dashboard">
+      <div style="width: 900px; max-width: 900px">
+        <div class="card text-center">
+          <p class="text-muted">
+            Nenhum estudo encontrado.
+            <a (click)="router.navigate(['/estudos/novo'])"
+              >Crie seu primeiro estudo</a
+            >.
+          </p>
+        </div>
       </div>
-    </div>
     </ng-container>
   </main>
 </div>

@@ -1,4 +1,10 @@
-import { Directive, ElementRef, HostListener, Input, forwardRef } from "@angular/core";
+import {
+  Directive,
+  ElementRef,
+  HostListener,
+  Input,
+  forwardRef,
+} from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 
 @Directive({
@@ -167,7 +173,9 @@ export class DmsMaskDirective implements ControlValueAccessor {
     const newNegative = !negative;
     const rebuilt =
       digits.length === 0
-        ? newNegative ? "-" : ""
+        ? newNegative
+          ? "-"
+          : ""
         : this.buildMask(digits, newNegative);
 
     el.value = rebuilt;
