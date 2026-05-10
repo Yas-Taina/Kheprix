@@ -19,6 +19,8 @@ export class CadastroComponent {
   erro = "";
   sucesso = "";
   loading = false;
+  mostrarSenha = false;
+  mostrarSenhaC = false;
 
   constructor(
     private auth: AuthService,

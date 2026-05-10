@@ -37,7 +37,7 @@ export const routes: Routes = [
     path: "inicio",
     loadComponent: () =>
       import("./pages/inicio/inicio.component").then((m) => m.InicioComponent),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
   {
     path: "registro-rapido",
@@ -181,7 +181,7 @@ export const routes: Routes = [
       import("./pages/unidades/novo/unidade-novo.component").then(
         (m) => m.UnidadeNovoComponent,
       ),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/editar",
@@ -233,7 +233,7 @@ export const routes: Routes = [
       import("./pages/registros/novo/registro-novo.component").then(
         (m) => m.RegistroNovoComponent,
       ),
-    //canActivate: [authGuard],
+    canActivate: [authGuard],
   },
   {
     path: "estudos/:estudo_id/campanhas/:campanha_id/unidades/:unidade_id/eventos/:evento_id/registros/:registro_id/editar",

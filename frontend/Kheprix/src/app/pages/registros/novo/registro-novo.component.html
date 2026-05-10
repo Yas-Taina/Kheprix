@@ -4,7 +4,6 @@
   </h1>
   <div class="ornament-divider"><span>⸙</span></div>
 
-  <!-- Foto  -->
   <div class="form-group">
     <label class="form-label">Foto</label>
     <div class="photo-uploader">
@@ -215,13 +214,15 @@
     </div>
     <div class="form-group">
       <label class="form-label">Quantidade de Indivíduos</label>
-      <input
-        class="form-control"
-        type="number"
-        [(ngModel)]="qtdeIndividuos"
-        placeholder="Ex: 15"
-        min="0"
-      />
+<input
+  class="form-control"
+  type="number"
+  [(ngModel)]="qtdeIndividuos"
+  (blur)="ajustarQtde()"
+  min="0"
+  step="1"
+  placeholder="Ex: 15"
+/>
     </div>
   </div>
 

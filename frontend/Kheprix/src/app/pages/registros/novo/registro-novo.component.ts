@@ -107,7 +107,11 @@ export class RegistroNovoComponent implements OnInit {
       this.fotoPreview = b64;
     });
   }
-
+  ajustarQtde() {
+    if (this.qtdeIndividuos != null) {
+      this.qtdeIndividuos = Math.max(0, Math.floor(this.qtdeIndividuos));
+    }
+  }
   async obterLocalizacao() {
     this.gpsLoading = true;
     this.gpsErro = "";
