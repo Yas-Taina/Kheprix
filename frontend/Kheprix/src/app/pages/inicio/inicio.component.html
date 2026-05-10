@@ -58,7 +58,7 @@
     </ng-container>
 
     <ng-container *ngIf="!loading && dashboard">
-      <div style="width:900px; max-width: 900px; justify-content:center; align-self: center;">
+      <div style="width:900px; max-width: 900px;">
       <div class="card ultimo-estudo-card">
         <div
           class="ultimo-estudo-header"
@@ -106,7 +106,7 @@
       </div>
 
       <div class="stats-grid mt-md">
-        <div class="stat-card" style="align-items:center;">
+        <div class="stat-card" style="display:flex; flex-direction:column; justify-content:center;">
           <div class="stat-label">Espécies ameaçadas de extinção</div>
           <div class="stat-value">
             {{ dashboard.especies_ameacadas | number }}
@@ -132,7 +132,7 @@
     </ng-container>
 
     <ng-container *ngIf="!loading && !dashboard" >
-      <div style="width:900px; max-width: 900px; justify-content:center; align-self: center;">
+      <div style="width:900px; max-width: 900px;">
       <div class="card text-center">
         <p class="text-muted">
           Nenhum estudo encontrado.
