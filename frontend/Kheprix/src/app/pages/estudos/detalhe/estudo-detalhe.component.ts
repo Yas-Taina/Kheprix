@@ -11,7 +11,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EstudoService } from "../../../core/services/estudo.service";
 import { DashboardCompletoService } from "../../../core/services/dashboardcompleto.service";
-import { Estudo, TipoAgrupamento, FormatoExportacao, Variavel } from "../../../models";
+import { Estudo, TipoAgrupamento, FormatoExportacao, Variavel, NivelLabels, TipoLabels } from "../../../models";
 import {
   EstudoDashboard,
   AgrupamentoTempo,
@@ -198,6 +198,14 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
       },
     });
   }
+
+    NivelLabel(s: string): string {
+      return (NivelLabels as any)[s] || s;
+    }
+
+    TipoLabel(s: string): string {
+      return (TipoLabels as any)[s] || s;
+    }
 
   private inicializarGraficos(): void {
     const d = this.dashboard();

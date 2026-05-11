@@ -1,6 +1,19 @@
 export type NivelAplicacao = "campanha" | "unidade" | "evento" | "registro";
 export type TipoDado = "numerico" | "texto" | "logico";
 
+export const NivelLabels: Record<NivelAplicacao, string> = {
+  campanha: "Campanha de Coleta",
+  unidade: "Unidade Amostral",
+  evento: "Evento de Amostragem",
+  registro: "Registro de Ocorrência",
+};
+
+export const TipoLabels: Record<TipoDado, string> = {
+  numerico: "Numérico",
+  texto: "Texto",
+  logico: "Lógico",
+};
+
 export interface VariavelCreate {
   nome: string;
   nivel_aplicacao: NivelAplicacao;
