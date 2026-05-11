@@ -19,18 +19,7 @@ import com.kheprix.databinding.ActivityConvitesBinding
 import com.kheprix.models.ConviteRecebidoResponse
 import kotlinx.coroutines.launch
 
-/**
- * Convites de Colaboração recebidos.
- *
- * Exibe:
- *  - Botão "Realizar Autocadastro em Estudo" → AutocadastroEstudoActivity
- *  - Lista de convites pendentes com botões Aceitar / Recusar
- *
- * API:
- *  GET  /convites                → lista convites recebidos
- *  POST /convites/:token/aceitar → aceita
- *  POST /convites/:token/recusar → recusa
- */
+
 class ConvitesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityConvitesBinding
@@ -74,7 +63,6 @@ class ConvitesActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader()
                 )
                 if (resp.isSuccessful) {
-                    // Filtra apenas convites pendentes
                     val pendentes = (resp.body() ?: emptyList())
                         .filter { it.status.equals("pendente", ignoreCase = true) }
                     convites.clear()
@@ -112,8 +100,6 @@ class ConvitesActivity : BaseDrawerActivity() {
         }
     }
 }
-
-// ── Adapter ──────────────────────────────────────────────────────────────────
 
 class ConviteAdapter(
     private val items: List<ConviteRecebidoResponse>,

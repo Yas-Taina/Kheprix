@@ -1,13 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_nova_unidade.xml
-    Campos: Latitude/Longitude (com ícone GPS ◉), Raio, Método de Coleta,
-    Esforço Amostral, Variáveis de nível unidade (dinâmicas), Confirmar.
-
-    SUBSTITUIR ícones GPS:
-    ic_placeholder_beetle → ic_location_pin (#6B7A5E, pino de mapa)
-    Ao clicar, preenche os campos com coordenadas do dispositivo.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
@@ -18,14 +9,15 @@
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
         <ImageView android:id="@+id/ivMenuLateral"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
+            app:tint="@color/kheprix_green"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:layout_width="80dp" android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7"
+        <ImageView android:layout_width="120dp" android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
             android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
@@ -42,12 +34,20 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="Nova Unidade Amostral" android:textSize="26sp" android:textColor="#4A5240"
                 android:fontFamily="serif" android:gravity="center" android:layout_marginTop="20dp"/>
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A" android:layout_marginTop="8dp" android:layout_marginBottom="16dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
 
-            <!-- Nome da Unidade -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Nome da Unidade:" android:textSize="14sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace" android:layout_marginBottom="4dp"/>
@@ -59,7 +59,6 @@
                 android:inputType="textCapWords"
                 android:layout_marginBottom="12dp"/>
 
-            <!-- Latitude | Longitude (2 colunas) -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
@@ -75,14 +74,14 @@
                         <EditText android:id="@+id/etLatitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="30°34'45\"
+                            android:textColor="#4A5240" android:hint="00°00'00\"
                             android:inputType="text" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-                        <!-- SUBSTITUIR: ic_location_pin -->
+
                         <ImageView android:id="@+id/ivGpsLat"
                             android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                            android:src="@drawable/ic_location_pin" android:scaleType="fitCenter"
                             android:contentDescription="GPS" android:clickable="true" android:focusable="true"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
@@ -101,13 +100,13 @@
                         <EditText android:id="@+id/etLongitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="23°45'65\"
+                            android:textColor="#4A5240" android:hint="000°00'00\"
                             android:inputType="text" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
                         <ImageView android:id="@+id/ivGpsLon"
                             android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                            android:src="@drawable/ic_location_pin" android:scaleType="fitCenter"
                             android:contentDescription="GPS" android:clickable="true" android:focusable="true"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
@@ -116,7 +115,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Raio -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Raio (em metros):" android:textSize="14sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace" android:layout_marginTop="12dp"/>
@@ -124,10 +122,9 @@
                 android:layout_width="match_parent" android:layout_height="48dp"
                 android:background="@drawable/bg_field_green" android:paddingStart="10dp" android:paddingEnd="10dp"
                 android:textColor="#4A5240" android:inputType="numberDecimal"
-                android:hint="20" android:layout_marginTop="4dp" android:layout_marginBottom="12dp"
+                android:layout_marginTop="4dp" android:layout_marginBottom="12dp"
                 style="@style/Widget.AppCompat.EditText"/>
 
-            <!-- Método de Coleta | Esforço Amostral -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
@@ -138,7 +135,7 @@
                     <EditText android:id="@+id/etMetodoColeta"
                         android:layout_width="match_parent" android:layout_height="48dp"
                         android:background="@drawable/bg_field_green" android:paddingStart="10dp" android:paddingEnd="10dp"
-                        android:textColor="#4A5240" android:hint="Armadilha" android:layout_marginTop="4dp"/>
+                        android:textColor="#4A5240" android:hint="Ex: Armadilha" android:layout_marginTop="4dp"/>
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                     android:layout_height="wrap_content" android:orientation="vertical">
@@ -148,11 +145,10 @@
                     <EditText android:id="@+id/etEsforcoAmostral"
                         android:layout_width="match_parent" android:layout_height="48dp"
                         android:background="@drawable/bg_field_green" android:paddingStart="10dp" android:paddingEnd="10dp"
-                        android:textColor="#4A5240" android:hint="40" android:layout_marginTop="4dp"/>
+                        android:textColor="#4A5240" android:hint="Ex: 40" android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Variáveis nível unidade (dinâmicas) -->
             <TextView android:id="@+id/tvVariaveisTitle"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Variáveis:" android:textSize="16sp" android:textColor="#6B7A5E"

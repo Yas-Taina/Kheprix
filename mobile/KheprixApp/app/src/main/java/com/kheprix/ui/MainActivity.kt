@@ -7,14 +7,6 @@ import com.kheprix.R
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityMainBinding
 
-/**
- * Tela inicial do app (splash/welcome).
- * Se o usuário já estiver logado, redireciona direto para a HomeActivity (a criar).
- *
- * PLACEHOLDER – substituir depois:
- *  - Logo: troque R.drawable.ic_placeholder_beetle pelo seu drawable real (ex: R.drawable.kheprix_beetle)
- *  - Fonte: veja res/font/ e aplique via textAppearance ou TypefaceCompat
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -22,7 +14,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Se já logado, pula direto para home
         if (SessionManager.isLoggedIn()) {
             goToHome()
             return

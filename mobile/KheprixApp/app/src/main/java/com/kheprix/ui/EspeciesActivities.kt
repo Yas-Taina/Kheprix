@@ -37,14 +37,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-// ════════════════════════════════════════════════════════════════════════════
-// LISTA DE ESPÉCIES
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Lista de espécies de um estudo.
- * Extras: estudo_remote_id, estudo_nome
- */
 class EspeciesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspeciesBinding
@@ -115,7 +107,6 @@ class EspeciesActivity : BaseDrawerActivity() {
             }
 
             val repo = OfflineRepository(this@EspeciesActivity)
-            // Resolve estudo localId, cacheando da API se necessário.
             var estudoLocalId = if (this@EspeciesActivity.estudoLocalId > 0) this@EspeciesActivity.estudoLocalId
                 else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
                 else null
@@ -127,7 +118,6 @@ class EspeciesActivity : BaseDrawerActivity() {
                 } catch (_: Exception) { }
             }
 
-            // Espelha espécies online no SQLite para acesso offline posterior.
             estudoLocalId?.let { id ->
                 especiesOnline.forEach { e ->
                     try { repo.cacheEspecie(id, e) } catch (_: Exception) { }
@@ -137,13 +127,10 @@ class EspeciesActivity : BaseDrawerActivity() {
             especies.clear()
             especies.addAll(especiesOnline)
 
-            // Mescla com espécies offline (criadas localmente, ainda não sincronizadas).
             if (estudoLocalId != null) {
                 val remoteIds = especiesOnline.map { it.id }.toSet()
                 val offline = repo.listarEspeciesPorEstudoLocal(estudoLocalId!!)
                 offline.forEach { off ->
-                    // id < 0 ⇒ offline-only (codificado como -localId); senão
-                    // é remoteId e só adiciona se não veio da API.
                     if (off.id < 0 || !remoteIds.contains(off.id)) {
                         especies.add(off)
                     }
@@ -199,7 +186,6 @@ class EspeciesActivity : BaseDrawerActivity() {
     }
 }
 
-// Adapter da lista
 class EspecieAdapter(
     private val items: List<EspecieResponse>,
     private val scope: CoroutineScope,
@@ -217,7 +203,6 @@ class EspecieAdapter(
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
-        // Nome científico = genero + especie
         holder.tvNomeCientifico.text = "${item.genero} ${item.especie}"
         holder.tvNomePopular.text    = item.nomePopular ?: "—"
 
@@ -234,20 +219,6 @@ class EspecieAdapter(
     override fun getItemCount() = items.size
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// CADASTRO / EDIÇÃO DE ESPÉCIE
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Cadastro e edição de espécie.
- *
- * Foto: o usuário pode tirar foto (câmera) ou selecionar da galeria.
- * A foto é convertida para Base64 antes do envio.
- *
- * Extras recebidos:
- *   estudo_remote_id → Int  (obrigatório)
- *   especie_id       → Int  (se edição; -1 para criação)
- */
 class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCadastroEspecieBinding
@@ -303,16 +274,12 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Foto ──────────────────────────────────────────────────────────────
-
     private fun setupFotoListeners() {
-        // Ícone pasta → galeria
         binding.ivSelecionarGaleria.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(intent, REQ_GALERIA)
         }
 
-        // Ícone câmera → câmera
         binding.ivAbrirCamera.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -361,18 +328,13 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Spinner Status Conservação ────────────────────────────────────────
-
     private fun setupSpinnerStatus() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, STATUS_CONSERVACAO)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerStatus.adapter = adapter
     }
 
-    // ── Preencher campos no modo edição ───────────────────────────────────
-
     private fun carregarEspecieParaEdicao() {
-        // Online com IDs válidos: usa API.
         if (estudoRemoteId > 0 && especieId > 0) {
             lifecycleScope.launch {
                 try {
@@ -408,8 +370,7 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         binding.etEspecie.setText(e.especie)
         binding.etNomePopular.setText(e.nomePopular ?: "")
         binding.checkEndemismo.isChecked = e.endemismo
-        // fotoBase64 permanece null: se o usuário não escolher nova foto,
-        // o patch omite o campo e o backend preserva a atual.
+
         if (!e.foto.isNullOrBlank()) {
             binding.tvNomeFoto.text = "foto_atual.jpg"
             binding.ivPreviewFoto.visibility = View.VISIBLE
@@ -421,8 +382,6 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         }
         if (idx >= 0) binding.spinnerStatus.setSelection(idx)
     }
-
-    // ── API calls ─────────────────────────────────────────────────────────
 
     private fun criarEspecie() {
         val req = coletarFormulario() ?: return
@@ -491,7 +450,6 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
             foto = req.foto, nomePopular = req.nomePopular,
             statusConservacao = req.statusConservacao
         )
-        // Sem ids remotos válidos: edita direto no SQLite (espécie offline-only).
         if (estudoRemoteId <= 0 || especieId <= 0) {
             salvarEdicaoOffline(patchReq, "Espécie atualizada offline.")
             return
@@ -514,10 +472,7 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Persiste a edição no SQLite com sincronizado=0 e remote_id preservado.
-     * O sync posterior detecta remote_id != null + sincronizado=0 → PATCH.
-     */
+
     private fun salvarEdicaoOffline(req: EspeciePatchRequest, msg: String) {
         val repo = OfflineRepository(this)
         val localId = if (especieId < 0) (-especieId).toLong()
@@ -576,15 +531,6 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// DETALHE DE ESPÉCIE
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Exibe os detalhes de uma espécie com opção de editar (ícone caneta) e deletar (lixeira).
- *
- * Extras: estudo_remote_id, especie_id, estudo_nome
- */
 class EspecieDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspecieDetalheBinding
@@ -624,7 +570,6 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEspecie() {
-        // Espécie offline-only (id < 0) ou estudo offline-only: vai direto ao SQLite.
         if (especieId <= 0 || estudoRemoteId <= 0) {
             carregarEspecieOffline()
             return

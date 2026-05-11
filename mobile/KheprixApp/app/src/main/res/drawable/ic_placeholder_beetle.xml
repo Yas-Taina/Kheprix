@@ -1,88 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    PLACEHOLDER: ic_placeholder_beetle.xml
-    ════════════════════════════════════════════════════
-    Este é um vetor temporário (silhueta simples de besouro)
-    para que o projeto compile sem erros.
 
-    COMO SUBSTITUIR:
-      1. Exporte o SVG do besouro real do seu arquivo de design
-         (Figma: selecione > Export > SVG)
-      2. No Android Studio: File > New > Vector Asset
-         Selecione "Local file" e escolha o SVG exportado
-         Nomeie como "kheprix_beetle" (ou outro nome de sua escolha)
-      3. Nos layouts XML, troque:
-             android:src="@drawable/ic_placeholder_beetle"
-         por:
-             android:src="@drawable/kheprix_beetle"
-      4. Pode deletar este arquivo.
-
-    DICA: o besouro do design tem asas abertas e pernas visíveis.
-    O viewportWidth ideal é por volta de 500×600 para manter proporção.
-    Ajuste o alpha nos ImageViews (atualmente 0.5) conforme necessário.
-    ════════════════════════════════════════════════════
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="280dp"
     android:height="320dp"
     android:viewportWidth="280"
     android:viewportHeight="320">
 
-    <!-- Corpo central (abdômen) -->
+
     <path
         android:fillColor="#6B7A5E"
         android:pathData="M140,100 C170,100 195,130 195,170 C195,210 170,250 140,255
                           C110,250 85,210 85,170 C85,130 110,100 140,100 Z"/>
 
-    <!-- Cabeça -->
+
     <path
         android:fillColor="#6B7A5E"
         android:pathData="M140,80 C155,80 165,90 165,100 C165,110 155,118 140,118
                           C125,118 115,110 115,100 C115,90 125,80 140,80 Z"/>
 
-    <!-- Asa esquerda -->
+
     <path
         android:fillColor="#6B7A5E"
         android:alpha="0.6"
         android:pathData="M85,140 C60,120 20,115 10,135 C0,155 30,175 70,170
                           C90,168 95,165 85,155 Z"/>
 
-    <!-- Asa direita -->
+
     <path
         android:fillColor="#6B7A5E"
         android:alpha="0.6"
         android:pathData="M195,140 C220,120 260,115 270,135 C280,155 250,175 210,170
                           C190,168 185,165 195,155 Z"/>
 
-    <!-- Perna dianteira esquerda -->
+
     <path
         android:strokeColor="#6B7A5E"
         android:strokeWidth="3"
         android:fillColor="#00000000"
         android:pathData="M100,120 L65,105"/>
 
-    <!-- Perna dianteira direita -->
+
     <path
         android:strokeColor="#6B7A5E"
         android:strokeWidth="3"
         android:fillColor="#00000000"
         android:pathData="M180,120 L215,105"/>
 
-    <!-- Perna traseira esquerda -->
+
     <path
         android:strokeColor="#6B7A5E"
         android:strokeWidth="3"
         android:fillColor="#00000000"
         android:pathData="M90,200 L55,220"/>
 
-    <!-- Perna traseira direita -->
+
     <path
         android:strokeColor="#6B7A5E"
         android:strokeWidth="3"
         android:fillColor="#00000000"
         android:pathData="M190,200 L225,220"/>
 
-    <!-- Antenas -->
+
     <path
         android:strokeColor="#6B7A5E"
         android:strokeWidth="2"

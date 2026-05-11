@@ -1,21 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Item de formulário de variável (inflado dinamicamente em NovoEstudoActivity).
-    Cada linha tem: Nome, Nível de Estudo (spinner), Métrica, Tipo de Dado (spinner), botão ✕
 
-    SUBSTITUIR:
-    - ic_placeholder_beetle → ic_close_circle (#B88A8A, círculo vermelho com ✕)
-      que representa o botão de remover variável do design
-    - Spinners: estilize via theme para ter a seta ▼ do design
--->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_marginBottom="12dp">
 
-    <!-- Linha 1: Nome | Nível de Estudo -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -44,7 +35,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:textColor="#4A5240"
-                android:hint="Placeholder"
+                android:hint="Nome da Variável"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp"/>
         </LinearLayout>
@@ -63,16 +54,6 @@
                 android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
 
-            <!--
-                Spinner "Nível de Estudo"
-                OPÇÕES (res/values/arrays.xml):
-                  <string-array name="niveis_aplicacao">
-                    <item>Campanha</item>
-                    <item>Unidade</item>
-                    <item>Evento</item>
-                    <item>Registro</item>
-                  </string-array>
-            -->
             <Spinner
                 android:id="@+id/spinnerNivelAplicacao"
                 android:layout_width="match_parent"
@@ -83,7 +64,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Linha 2: Métrica | Tipo de Dado | ✕ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -113,7 +93,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:textColor="#4A5240"
-                android:hint="°C"
+                android:hint="Ex: °C"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp"/>
         </LinearLayout>
@@ -133,15 +113,6 @@
                 android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
 
-            <!--
-                Spinner "Tipo de Dado"
-                OPÇÕES (res/values/arrays.xml):
-                  <string-array name="tipos_dado">
-                    <item>Numérico</item>
-                    <item>Texto</item>
-                    <item>Booleano</item>
-                  </string-array>
-            -->
             <Spinner
                 android:id="@+id/spinnerTipoDado"
                 android:layout_width="match_parent"
@@ -151,20 +122,18 @@
                 android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- Botão ✕ remover variável
-             SUBSTITUIR: @drawable/ic_close_circle (círculo #B88A8A com X branco)
-             Tamanho: 36×36dp alinhado ao centro vertical -->
         <ImageView
             android:id="@+id/ivRemoverVariavel"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_close_circle"
             android:scaleType="fitCenter"
             android:contentDescription="Remover variável"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="bottom"
-            android:layout_marginBottom="6dp"/>
+            android:layout_marginBottom="6dp"
+            app:tint="@color/kheprix_red"/>
     </LinearLayout>
 </LinearLayout>

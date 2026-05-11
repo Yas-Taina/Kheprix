@@ -18,21 +18,7 @@ import com.kheprix.ui.adapters.EstudoAdapter
 import com.kheprix.ui.adapters.EstudoItem
 import kotlinx.coroutines.launch
 
-/**
- * Tela principal: lista de Estudos do usuário.
- *
- * Comportamento dos botões por estudo:
- *  - Sem dados offline → exibe "Salvar Offline"
- *  - Com dados offline → exibe "Limpar Armazenamento" + "Atualizar Dados"
- *  - Ícone lixeira → deletar estudo no servidor (com confirmação)
- *  - Ícone usuário+ → colaboradores (somente se perfil == "proprietario")
- *  - Botão filtrar → abre FilterDialog (a implementar)
- *
- * Navegação:
- *  - "Adicionar Estudo" → NovoEstudoActivity
- *  - Clique no item → EstudoDetalheActivity
- *  - Ícone usuário+ → ColaboradoresActivity
- */
+
 class EstudosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEstudosBinding
@@ -92,7 +78,6 @@ class EstudosActivity : BaseDrawerActivity() {
 
         binding.btnFiltrar.setOnClickListener { mostrarFiltroDialog() }
 
-        // Header: menu lateral e perfil
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
@@ -105,7 +90,6 @@ class EstudosActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             val estudosOnline = mutableListOf<EstudoItem>()
 
-            // Tenta carregar da API (se online)
             try {
                 val token = SessionManager.getAuthHeader()
                 val response = RetrofitClient.apiService.getEstudos(token, nome = filtro.ifEmpty { null })
@@ -113,8 +97,6 @@ class EstudosActivity : BaseDrawerActivity() {
                 if (response.isSuccessful) {
                     val repo = OfflineRepository(this@EstudosActivity)
                     response.body()?.forEach { estudo ->
-                        // Espelha o estudo no SQLite para permitir acesso offline
-                        // sem depender do fluxo explícito "Salvar Offline".
                         val localId = try { repo.cacheEstudo(estudo) }
                                       catch (_: Exception) { buscarLocalIdPorRemoteId(estudo.id) }
                         val explicito = localId?.let {
@@ -136,19 +118,14 @@ class EstudosActivity : BaseDrawerActivity() {
                     }
                 }
             } catch (_: Exception) {
-                // Offline: tudo bem, vamos usar SQLite abaixo
             }
 
-            // Merge com SQLite (inclui offline-only + já-sincronizados)
             val estudosOffline = EstudoDao(this@EstudosActivity).listarTodos()
             val remoteIds = estudosOnline.mapNotNull { it.remoteId }.toSet()
 
             estudos.clear()
             estudos.addAll(estudosOnline)
 
-            // Adicionar offline-only (não presentes na API). Filtra para
-            // mostrar apenas os explicitamente salvos offline (ou criados
-            // localmente) — não os apenas espelhados via cacheEstudo.
             estudosOffline.forEach { off ->
                 val isOfflineOnly = off.remoteId == null || !remoteIds.contains(off.remoteId)
                 if (!isOfflineOnly) return@forEach
@@ -173,7 +150,6 @@ class EstudosActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEstudosLocais() {
-        // Carrega estudos do SQLite em modo offline
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         val cursor = db.rawQuery(
             "SELECT local_id, remote_id, nome, perfil, created_at, updated_at FROM estudos ORDER BY updated_at DESC",
@@ -198,7 +174,6 @@ class EstudosActivity : BaseDrawerActivity() {
         adapter.notifyDataSetChanged()
     }
 
-    /** Retorna o local_id de um estudo pelo remote_id, ou null se não estiver salvo. */
     private fun buscarLocalIdPorRemoteId(remoteId: Int): Long? {
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         val cursor = db.rawQuery(

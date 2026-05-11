@@ -23,18 +23,7 @@ import com.kheprix.db.OfflineRepository
 import com.kheprix.models.CampanhaResponse
 import kotlinx.coroutines.launch
 
-/**
- * Lista de Campanhas de um Estudo.
- *
- * Extras recebidos:
- *   estudo_remote_id → Int
- *   estudo_nome      → String
- *
- * Ações:
- *  - "Adicionar Campanha" → NovaCampanhaActivity (a criar)
- *  - Clique num item → detalhe/edição da campanha (a criar)
- *  - Lixeira → deletar campanha (com confirmação)
- */
+
 class CampanhasActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCampanhasBinding
@@ -81,11 +70,7 @@ class CampanhasActivity : BaseDrawerActivity() {
         )
     }
 
-    /**
-     * Resolve o local_id da campanha para passar adiante na navegação.
-     * - id < 0: já é -localId (campanha offline-only) → retorna abs(id).
-     * - id > 0: é remote_id → consulta no SQLite (pode retornar -1 se não cacheada).
-     */
+
     private fun resolveCampanhaLocalId(campanhaId: Int): Long {
         if (campanhaId < 0) return (-campanhaId).toLong()
         if (estudoLocalId <= 0) return -1L
@@ -107,7 +92,6 @@ class CampanhasActivity : BaseDrawerActivity() {
     }
 
     private fun carregarCampanhas() {
-        // Estudo offline-only: id codifica -localId. Pula API e lista do SQLite.
         if (estudoRemoteId <= 0) {
             val estudoLocal = if (estudoLocalId > 0) estudoLocalId
                 else EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }?.localId
@@ -121,7 +105,6 @@ class CampanhasActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             val campanhasOnline = mutableListOf<CampanhaResponse>()
 
-            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getCampanhas(
                     SessionManager.getAuthHeader(), estudoRemoteId
@@ -131,12 +114,8 @@ class CampanhasActivity : BaseDrawerActivity() {
                 }
             } catch (_: Exception) { }
 
-            // Merge com SQLite
             val campanhaDao = CampanhaDao(this@CampanhasActivity)
             val repo = OfflineRepository(this@CampanhasActivity)
-            // Garante que o estudo esteja espelhado no SQLite para que as
-            // campanhas carregadas online possam ser associadas e ficar
-            // acessíveis offline (sem precisar do fluxo "Salvar Offline").
             var estudoLocalId = EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             if (estudoLocalId == null && campanhasOnline.isNotEmpty()) {
                 try {
@@ -147,7 +126,6 @@ class CampanhasActivity : BaseDrawerActivity() {
             }
             if (estudoLocalId == null) return@launch
 
-            // Espelha as campanhas carregadas online no SQLite.
             campanhasOnline.forEach { c ->
                 try { repo.cacheCampanha(estudoLocalId!!, c) } catch (_: Exception) { }
             }
@@ -158,7 +136,6 @@ class CampanhasActivity : BaseDrawerActivity() {
             campanhas.clear()
             campanhas.addAll(campanhasOnline)
 
-            // Adicionar offline-only (não presentes na API)
             offline.forEach { off ->
                 if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
                     campanhas.add(CampanhaResponse(
@@ -202,7 +179,6 @@ class CampanhasActivity : BaseDrawerActivity() {
             .setMessage("Deletar \"${campanha.nome}\"?")
             .setPositiveButton("Deletar") { _, _ ->
                 if (campanha.id < 0 || estudoRemoteId <= 0) {
-                    // Campanha offline-only: deleta apenas no SQLite.
                     val localId = if (campanha.id < 0) (-campanha.id).toLong()
                         else CampanhaDao(this).listarTodos().firstOrNull { it.remoteId == campanha.id }?.localId
                     if (localId != null) {
@@ -229,8 +205,6 @@ class CampanhasActivity : BaseDrawerActivity() {
             .setNegativeButton("Cancelar", null).show()
     }
 }
-
-// ── Adapter inline ──────────────────────────────────────────────────────────
 
 class CampanhaAdapter(
     private val items: List<CampanhaResponse>,

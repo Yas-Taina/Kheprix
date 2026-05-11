@@ -1,38 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_registro_rapido.xml
-    4 spinners em cascata: Estudo → Campanha → Unidade Amostral → Evento
-    Botão "Prosseguir" navega para o formulário de registro em si.
--->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:background="#EDE9DE">
 
-    <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent" android:layout_height="96dp"
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
         <ImageView android:id="@+id/ivMenuLateral"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
+            app:tint="@color/kheprix_bg" 
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:layout_width="80dp" android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7"
+        <ImageView android:layout_width="120dp" android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
             android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
         <ImageView android:id="@+id/ivPerfil"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
+            app:tint="@color/kheprix_bg" 
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
@@ -49,12 +46,19 @@
                 android:textSize="26sp" android:textColor="#4A5240"
                 android:fontFamily="serif" android:layout_marginTop="20dp"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="8dp" android:layout_marginBottom="24dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Spinner Estudo -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Estudo:" android:textSize="16sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
@@ -63,7 +67,6 @@
                 android:background="@drawable/bg_field_green" android:paddingStart="12dp"
                 android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
 
-            <!-- Spinner Campanha -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Campanha de Coleta:" android:textSize="16sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
@@ -72,7 +75,6 @@
                 android:background="@drawable/bg_field_green" android:paddingStart="12dp"
                 android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
 
-            <!-- Spinner Unidade Amostral -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Unidade Amostral:" android:textSize="16sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
@@ -81,7 +83,6 @@
                 android:background="@drawable/bg_field_green" android:paddingStart="12dp"
                 android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
 
-            <!-- Spinner Evento de Amostragem -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Evento de Amostragem:" android:textSize="16sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>

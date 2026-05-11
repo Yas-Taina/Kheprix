@@ -1,31 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Recuperação de Senha — 3 etapas em um único layout
-    As etapas são controladas por visibility na Activity:
 
-    ETAPA 1  (STEP_EMAIL):      tvLabelEmail + etEmail + btnEnviarToken visíveis
-    ETAPA 2  (STEP_TOKEN):      groupToken + btnConfirmarToken visíveis
-    ETAPA 3  (STEP_NOVA_SENHA): groupNovaSenha + btnRedefinirSenha visíveis
-
-    Design: fundo #A8B89A, título "Recuperação de Senha" com Small Caps,
-    besouro ao centro, instrução, campos progressivos, dois botões.
-
-    ════════════════════════════════════════════════════
-    PLACEHOLDERS — o que substituir:
-    ════════════════════════════════════════════════════
-    1. IMAGEM DO BESOURO
-       - @drawable/ic_placeholder_beetle  →  @drawable/kheprix_beetle
-
-    2. FONTES
-       - Título: fontFamily="serif"  → @font/sua_fonte_display
-         O design usa Small Caps; aplique via:
-           android:textAllCaps="false"
-           e capitalize apenas a primeira letra de cada palavra no string resource
-       - Labels: fontFamily="monospace"  → @font/sua_fonte_mono
-
-    3. CORES — mesmas da tela de login
-    ════════════════════════════════════════════════════
--->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -39,12 +13,6 @@
         android:layout_height="wrap_content"
         android:paddingBottom="40dp">
 
-        <!-- ── Título "Recuperação de Senha" ────────────────────────────
-             FONTE PLACEHOLDER: fontFamily="serif"
-             No design, usa estilo Small Caps. Aproximação: textAllCaps="false"
-             com capitalize manual no string ou via SpannableString na Activity.
-             SUBSTITUIR: android:fontFamily="@font/sua_fonte_display"
-        -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="0dp"
@@ -61,14 +29,12 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Imagem do besouro ─────────────────────────────────────────
-             SUBSTITUIR src por @drawable/kheprix_beetle
-        -->
+
         <ImageView
             android:id="@+id/ivBesouro"
             android:layout_width="0dp"
             android:layout_height="220dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/kheprix_beetle"
             android:scaleType="fitCenter"
             android:contentDescription="Ilustração do besouro"
             android:alpha="0.5"
@@ -77,7 +43,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="4dp"/>
 
-        <!-- ── Instrução (fixa em todas as etapas) ───────────────────── -->
         <TextView
             android:id="@+id/tvInstrucao"
             android:layout_width="0dp"
@@ -94,12 +59,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ══════════════════════════════════════════════════════════════
-             ETAPA 1 — Campo E-mail + botão "Enviar Token"
-             Visível apenas no STEP_EMAIL (etapa 1)
-        ══════════════════════════════════════════════════════════════════ -->
 
-        <!-- Label E-mail (etapa 1) -->
         <TextView
             android:id="@+id/tvLabelEmail"
             android:layout_width="wrap_content"
@@ -114,7 +74,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvInstrucao"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- Campo E-mail (etapa 1) -->
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="0dp"
@@ -134,7 +93,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Botão "Enviar Token" (etapa 1) -->
         <Button
             android:id="@+id/btnEnviarToken"
             android:layout_width="0dp"
@@ -152,13 +110,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ══════════════════════════════════════════════════════════════
-             ETAPA 2 — Campo Token + botão "Confirmar"
-             Visível apenas no STEP_TOKEN (etapa 2)
-             groupToken agrupa label + campo para facilitar o controle de visibility
-        ══════════════════════════════════════════════════════════════════ -->
-
-        <!-- Grupo Token (label + campo) -->
         <LinearLayout
             android:id="@+id/groupToken"
             android:layout_width="0dp"
@@ -194,7 +145,6 @@
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <!-- Botão "Confirmar" (etapa 2 – valida token) -->
         <Button
             android:id="@+id/btnConfirmarToken"
             android:layout_width="0dp"
@@ -212,12 +162,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ══════════════════════════════════════════════════════════════
-             ETAPA 3 — Nova senha + Confirmar senha + botão "Confirmar"
-             Visível apenas no STEP_NOVA_SENHA (etapa 3)
-        ══════════════════════════════════════════════════════════════════ -->
-
-        <!-- Grupo Nova Senha -->
         <LinearLayout
             android:id="@+id/groupNovaSenha"
             android:layout_width="0dp"
@@ -231,7 +175,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Label Nova senha -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -252,7 +195,6 @@
                 android:textCursorDrawable="@null"
                 android:layout_marginTop="4dp"/>
 
-            <!-- Label Confirmar nova senha -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -275,7 +217,6 @@
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <!-- Botão "Confirmar" (etapa 3 – redefine a senha) -->
         <Button
             android:id="@+id/btnRedefinirSenha"
             android:layout_width="0dp"
@@ -293,7 +234,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── ProgressBar (compartilhado entre etapas) ────────────────── -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

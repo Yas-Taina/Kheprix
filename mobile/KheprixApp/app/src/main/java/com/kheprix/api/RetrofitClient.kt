@@ -8,16 +8,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-/**
- * Singleton that provides the configured Retrofit [ApiService].
- *
- * The base URL points to the local development server (localhost:3000).
- * On a physical device, replace 10.0.2.2 with your machine's LAN IP.
- */
 object RetrofitClient {
 
-    // 10.0.2.2 is the Android emulator alias for the host machine's localhost.
-    // For a physical device on the same Wi-Fi, use your machine's IP, e.g. 192.168.1.X
     const val BASE_URL = "http://192.168.15.10:3000/"
     //const val BASE_URL = "http://10.52.103.235:3000/"
 
@@ -42,15 +34,6 @@ object RetrofitClient {
     }
 }
 
-/**
- * Manages the JWT token and user session using SharedPreferences.
- *
- * Usage:
- *   SessionManager.init(context)         // call once in Application.onCreate()
- *   SessionManager.saveToken("...")
- *   SessionManager.getAuthHeader()       // returns "Bearer <token>"
- *   SessionManager.logout()
- */
 object SessionManager {
 
     private const val PREFS_NAME = "session_prefs"
@@ -66,27 +49,18 @@ object SessionManager {
             .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    // ── Token ──────────────────────────────────────────────────────────────
-
     fun saveToken(token: String) {
         prefs.edit().putString(KEY_TOKEN, token).apply()
     }
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
 
-    /**
-     * Returns the Bearer header value ready to be passed to Retrofit, e.g.
-     * "Bearer eyJhbGciOiJIUzI1Ni..."
-     * Returns an empty string if no token is stored (unauthenticated state).
-     */
     fun getAuthHeader(): String {
         val token = getToken() ?: return ""
         return "Bearer $token"
     }
 
     fun isLoggedIn(): Boolean = getToken() != null
-
-    // ── User info ──────────────────────────────────────────────────────────
 
     fun saveUser(id: Int, name: String, email: String) {
         prefs.edit()
@@ -100,16 +74,6 @@ object SessionManager {
     fun getUserName(): String? = prefs.getString(KEY_USER_NAME, null)
     fun getUserEmail(): String? = prefs.getString(KEY_USER_EMAIL, null)
 
-    // ── Logout ─────────────────────────────────────────────────────────────
-
-    /**
-     * Clears all session data from SharedPreferences.
-     * Call this on logout; then navigate the user to the login screen.
-     *
-     * Note: this does NOT delete local offline study data from SQLite.
-     * Call [com.kheprix.db.EstudoOfflineManager.deletarDadosEstudo] separately
-     * if you also want to wipe offline data.
-     */
     fun logout() {
         prefs.edit().clear().apply()
     }

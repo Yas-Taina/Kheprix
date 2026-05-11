@@ -12,21 +12,7 @@ import com.kheprix.databinding.ActivityEstudoDetalheBinding
 import com.kheprix.db.EstudoOfflineManager
 import kotlinx.coroutines.launch
 
-/**
- * Detalhes de um Estudo.
- *
- * Exibe:
- *  - Nome do estudo + contagem de registros offline
- *  - Botão "Sincronizar Dados" (sincroniza local → servidor)
- *  - Botão "Visualizar Detalhes" → expande/colapsa um card inline com dados cadastrados
- *  - Cards de navegação: Campanhas, Espécies, Cadastrar Espécie
- *
- * Extras recebidos:
- *   EXTRA_ESTUDO_REMOTE_ID → Int
- *   EXTRA_ESTUDO_LOCAL_ID  → Long (-1 se não salvo offline)
- *   EXTRA_ESTUDO_NOME      → String
- *   EXTRA_PERFIL           → String
- */
+
 class EstudoDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEstudoDetalheBinding
@@ -64,7 +50,6 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun setupListeners() {
-        // "Sincronizar Dados" → push local → servidor
         binding.btnSincronizar.setOnClickListener {
             if (estudoLocalId == -1L) {
                 Toast.makeText(this, "Estudo não salvo offline", Toast.LENGTH_SHORT).show()
@@ -89,13 +74,11 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             }
         }
 
-        // "Visualizar Detalhes" → toggle do card inline
         binding.btnVisualizarDetalhes.setOnClickListener {
             val cardVisivel = binding.cardDetalhes.visibility == View.VISIBLE
             binding.cardDetalhes.visibility = if (cardVisivel) View.GONE else View.VISIBLE
         }
 
-        // Navegação para Campanhas
         binding.cardCampanhas.setOnClickListener {
             val intent = Intent(this, CampanhasActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
@@ -104,7 +87,6 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             startActivity(intent)
         }
 
-        // Navegação para lista de Espécies
         binding.cardEspecies.setOnClickListener {
             val intent = Intent(this, EspeciesActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
@@ -113,7 +95,6 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             startActivity(intent)
         }
 
-        // Navegação para Cadastro de Espécie
         binding.cardCadastrarEspecie.setOnClickListener {
             val intent = Intent(this, CadastroEspecieActivity::class.java)
             intent.putExtra("estudo_remote_id", estudoRemoteId)
@@ -121,7 +102,6 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
             startActivity(intent)
         }
 
-        // Header
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener { startActivity(android.content.Intent(this, PerfilActivity::class.java)) }
     }
@@ -133,7 +113,6 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         binding.tvRegistrosOffline.visibility = if (count > 0) View.VISIBLE else View.GONE
     }
 
-    /** Carrega os dados do estudo do servidor para preencher o card de detalhes */
     private fun carregarDetalhes() {
         lifecycleScope.launch {
             if (estudoRemoteId > 0) {

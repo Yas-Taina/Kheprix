@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    item_colaborador.xml
-    Cada item: nome centrado, linha com spinner perfil + botão "Alterar Acesso" + lixeira
 
-    SUBSTITUIR: ic_placeholder_beetle → ic_delete (lixeira #B88A8A)
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="vertical" android:paddingTop="10dp" android:paddingBottom="6dp">
 
-    <!-- Nome do colaborador -->
     <TextView android:id="@+id/tvColabNome"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="Mariazinha"
@@ -18,14 +12,9 @@
         android:fontFamily="monospace" android:letterSpacing="0.08"
         android:gravity="center" android:layout_marginBottom="6dp"/>
 
-    <!-- Linha: spinner + botão + lixeira -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent" android:layout_height="wrap_content">
 
-        <!--
-            Spinner perfil: opções "Colaborador" / "Proprietário"
-            Estilize via theme para ter a seta ▼ do design
-        -->
         <Spinner android:id="@+id/spinnerPerfil"
             android:layout_width="0dp" android:layout_height="44dp"
             android:background="@drawable/bg_field_green"
@@ -36,7 +25,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginEnd="8dp"/>
 
-        <!-- Botão "Alterar Acesso" (verde) -->
         <Button android:id="@+id/btnAlterarAcesso"
             android:layout_width="wrap_content" android:layout_height="44dp"
             android:text="Alterar Acesso"
@@ -47,14 +35,14 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginEnd="8dp"/>
 
-        <!-- Lixeira — SUBSTITUIR: @drawable/ic_delete (#B88A8A) -->
         <ImageView android:id="@+id/ivDeletarColab"
             android:layout_width="32dp" android:layout_height="32dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_delete"
             android:scaleType="fitCenter"
             android:contentDescription="Remover colaborador"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/kheprix_red"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>

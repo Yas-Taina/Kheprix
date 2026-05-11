@@ -12,18 +12,6 @@ import com.kheprix.databinding.ActivityLoginBinding
 import com.kheprix.models.LoginRequest
 import kotlinx.coroutines.launch
 
-/**
- * Tela de Login.
- *
- * Fluxo:
- *  1. Usuário preenche e-mail + senha
- *  2. POST /autenticacao/login → token salvo via SessionManager
- *  3. Redireciona para HomeActivity (a criar)
- *
- * Links:
- *  - "aqui" (cadastro) → CadastroActivity
- *  - "Esqueci minha senha" → RecuperacaoSenhaActivity
- */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
@@ -33,17 +21,14 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Navegar para cadastro
         binding.tvLinkCadastro.setOnClickListener {
             startActivity(Intent(this, CadastroActivity::class.java))
         }
 
-        // Navegar para recuperação de senha
         binding.tvEsqueciSenha.setOnClickListener {
             startActivity(Intent(this, RecuperacaoSenhaActivity::class.java))
         }
 
-        // Confirmar login
         binding.btnConfirmar.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val senha = binding.etSenha.text.toString()
@@ -77,11 +62,8 @@ class LoginActivity : AppCompatActivity() {
                     val token = response.body()?.token
                     if (token != null) {
                         SessionManager.saveToken(token)
-                        // Persiste nome+email para o PerfilActivity
-                        // O endpoint de login só retorna token; buscamos os dados
-                        // do usuário via autocadastro response ou armazenamos o email
                         SessionManager.saveUser(
-                            id    = 0,  // será sobrescrito se o app fizer GET /me
+                            id    = 0, 
                             name  = binding.etEmail.text.toString().split("@").first(),
                             email = binding.etEmail.text.toString()
                         )

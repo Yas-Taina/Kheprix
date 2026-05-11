@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_autocadastro_estudo.xml
-    Campos: Código (com ícone QR scan) + Senha + botão Confirmar
-
-    SUBSTITUIR ic_placeholder_beetle → ic_qr_scan
-    (ícone de scan: quadrado com cantos marcados, estilo do design)
-    Tamanho recomendado: 40×40dp, cor #6B7A5E
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
@@ -17,24 +9,26 @@
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
         <ImageView android:id="@+id/ivMenuLateral"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:layout_width="80dp" android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7"
+        <ImageView android:layout_width="120dp" android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
             android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
         <ImageView android:id="@+id/ivPerfil"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
@@ -51,18 +45,24 @@
                 android:textSize="28sp" android:textColor="#4A5240"
                 android:fontFamily="serif" android:layout_marginTop="24dp"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="8dp" android:layout_marginBottom="32dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Label Código -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Código:"
                 android:textSize="17sp" android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
 
-            <!-- Campo Código + ícone QR -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent" android:layout_height="52dp"
                 android:layout_marginTop="4dp" android:layout_marginBottom="24dp">
@@ -78,26 +78,20 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <!--
-                    Ícone de scan QR
-                    SUBSTITUIR: @drawable/ic_qr_scan
-                    (quadrado com cantos marcados para indicar scan)
-                    Cor: #6B7A5E
-                -->
                 <ImageView android:id="@+id/ivScanQr"
                     android:layout_width="36dp" android:layout_height="36dp"
-                    android:src="@drawable/ic_placeholder_beetle"
+                    android:src="@drawable/ic_qr_scan"
                     android:scaleType="fitCenter"
                     android:contentDescription="Escanear QR Code"
                     android:clickable="true" android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/kheprix_green"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:layout_marginEnd="8dp"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Label Senha -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Senha"
                 android:textSize="17sp" android:textColor="#6B7A5E"

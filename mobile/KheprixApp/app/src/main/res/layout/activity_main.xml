@@ -1,33 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Tela Inicial (Welcome / Splash)
-    Baseado no design: fundo bege claro, logotipo "KHEPRIX" (serifado espaçado),
-    imagem do besouro centralizada, dois botões empilhados.
 
-    ════════════════════════════════════════════════════
-    PLACEHOLDERS — o que substituir:
-    ════════════════════════════════════════════════════
-    1. IMAGEM DO BESOURO
-       - Atual  : @drawable/ic_placeholder_beetle  (crie um drawable simples ou use um vetor temporário)
-       - Substituir por: @drawable/kheprix_beetle  (importe o SVG/PNG do design no Android Studio)
-       - Menu > File > New > Vector Asset  OU  arraste o PNG para res/drawable/
-
-    2. FONTE "KHEPRIX" (título)
-       - O design usa uma sans-serif display espaçada (estilo Cormorant Garamond / Optima)
-       - Para usar fonte customizada:
-           a) Adicione o .ttf em res/font/  (ex: res/font/cormorant_garamond_light.ttf)
-           b) No TextView, adicione:  android:fontFamily="@font/cormorant_garamond_light"
-       - Por ora usa fontFamily="serif" como aproximação
-
-    3. CORES
-       - Fundo : #EDE9DE  (bege claro)
-       - Botões : #6B7A5E  (verde musgo)
-       - Texto título : #6B7A5E
-       - Defina em res/values/colors.xml:
-           <color name="kheprix_bg">#EDE9DE</color>
-           <color name="kheprix_green">#6B7A5E</color>
-    ════════════════════════════════════════════════════
--->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -35,12 +7,6 @@
     android:layout_height="match_parent"
     android:background="#EDE9DE">
 
-    <!-- ── Título KHEPRIX ───────────────────────────────────────────────── -->
-    <!--
-        FONTE PLACEHOLDER: fontFamily="serif"
-        SUBSTITUIR: android:fontFamily="@font/cormorant_garamond_light"
-        Após adicionar o .ttf em res/font/
-    -->
     <TextView
         android:id="@+id/tvTitulo"
         android:layout_width="wrap_content"
@@ -55,18 +21,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- ── Imagem do besouro ─────────────────────────────────────────────
-         PLACEHOLDER: usa ic_placeholder_beetle
-         SUBSTITUIR:
-           1. Coloque o arquivo PNG/SVG em res/drawable/
-           2. Troque o src para @drawable/kheprix_beetle
-         O scaleType="fitCenter" preserva proporção.
-    ─────────────────────────────────────────────────────────────────────-->
     <ImageView
         android:id="@+id/ivBesouro"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:src="@drawable/ic_placeholder_beetle"
+        android:src="@drawable/kheprix_beetle"
         android:scaleType="fitCenter"
         android:contentDescription="Ilustração do besouro Kheprix"
         android:alpha="0.55"
@@ -76,7 +35,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.5"/>
 
-    <!-- ── Botão Login ───────────────────────────────────────────────────── -->
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="0dp"
@@ -93,7 +51,6 @@
         android:layout_marginEnd="80dp"
         android:layout_marginBottom="12dp"/>
 
-    <!-- ── Botão Cadastro ────────────────────────────────────────────────── -->
     <Button
         android:id="@+id/btnCadastro"
         android:layout_width="0dp"

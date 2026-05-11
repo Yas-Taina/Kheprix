@@ -10,18 +10,6 @@ import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityPerfilBinding
 import com.kheprix.db.EstudoOfflineManager
 
-/**
- * Tela de Perfil do usuário logado.
- *
- * Exibe:
- *  - Nome e e-mail salvos localmente pelo SessionManager após o login
- *  - Contagem total de registros offline em todos os estudos salvos
- *  - Botão "Logout" que limpa a sessão e vai para MainActivity
- *
- * Para exibir esta tela, os dados do usuário precisam ter sido salvos
- * com SessionManager.saveUser(id, name, email) após o login.
- * (Veja LoginActivity — adicione a chamada após salvar o token.)
- */
 class PerfilActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityPerfilBinding
@@ -41,8 +29,6 @@ class PerfilActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Dados do usuário ──────────────────────────────────────────────────
-
     private fun exibirDadosUsuario() {
         val nome  = SessionManager.getUserName()
         val email = SessionManager.getUserEmail()
@@ -50,8 +36,6 @@ class PerfilActivity : BaseDrawerActivity() {
         binding.tvNomeUsuario.text  = nome  ?: "—"
         binding.tvEmailUsuario.text = email ?: "—"
     }
-
-    // ── Resumo offline ────────────────────────────────────────────────────
 
     private fun exibirResumoOffline() {
         try {
@@ -78,8 +62,6 @@ class PerfilActivity : BaseDrawerActivity() {
             binding.tvRegistrosOffline.visibility = View.GONE
         }
     }
-
-    // ── Logout ────────────────────────────────────────────────────────────
 
     private fun confirmarLogout() {
         AlertDialog.Builder(this)

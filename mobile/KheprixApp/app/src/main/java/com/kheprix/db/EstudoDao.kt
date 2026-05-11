@@ -5,10 +5,6 @@ import com.kheprix.db.DatabaseHelper.Companion.COL_LOCAL_ID
 import com.kheprix.db.DatabaseHelper.Companion.COL_REMOTE_ID
 import com.kheprix.db.DatabaseHelper.Companion.TABLE_ESTUDOS
 
-/**
- * DAO para leitura de estudos offline do SQLite.
- * Retorna objetos que espelham EstudoResponse com campo local_id adicional.
- */
 class EstudoDao(context: Context) {
 
     private val dbHelper = DatabaseHelper(context.applicationContext)

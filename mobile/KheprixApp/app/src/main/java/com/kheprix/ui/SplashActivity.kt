@@ -8,13 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.kheprix.R
 import com.kheprix.api.SessionManager
 
-/**
- * SplashActivity — primeira tela exibida ao abrir o app.
- *
- * Exibe o logo Kheprix por 2 segundos e depois redireciona:
- *  - Para HomeActivity se já existe sessão salva
- *  - Para MainActivity (tela de boas-vindas) se não há sessão
- */
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

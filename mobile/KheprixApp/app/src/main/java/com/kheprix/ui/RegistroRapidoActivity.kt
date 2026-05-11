@@ -20,18 +20,6 @@ import com.kheprix.models.EventoResponse
 import com.kheprix.models.UnidadeResponse
 import kotlinx.coroutines.launch
 
-/**
- * Cadastro Rápido de Registro de Ocorrência.
- *
- * Etapa 1 (esta activity): seleção do contexto via 4 spinners em cascata:
- *   Estudo → Campanha de Coleta → Unidade Amostral → Evento de Amostragem
- *
- * Ao clicar "Prosseguir", navega para RegistroRapidoFormActivity
- * passando os IDs selecionados para preenchimento do registro em si.
- *
- * Os spinners são dependentes: ao selecionar um Estudo, carrega as Campanhas;
- * ao selecionar a Campanha, carrega as Unidades; e assim por diante.
- */
 class RegistroRapidoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistroRapidoBinding
@@ -57,10 +45,7 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         carregarEstudos()
     }
 
-    // ── Spinners em cascata ───────────────────────────────────────────────
-
     private fun setupSpinners() {
-        // Spinner Estudo
         binding.spinnerEstudo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
                 if (pos == 0) return
@@ -70,7 +55,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        // Spinner Campanha
         binding.spinnerCampanha.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
                 if (pos == 0) return
@@ -81,7 +65,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        // Spinner Unidade
         binding.spinnerUnidade.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
                 if (pos == 0) return
@@ -94,8 +77,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Carregamento em cascata ───────────────────────────────────────────
-
     private fun carregarEstudos() {
         lifecycleScope.launch {
             estudos.clear()
@@ -104,8 +85,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) estudos.addAll(resp.body() ?: emptyList())
             } catch (_: Exception) { }
 
-            // Inclui apenas estudos com dados offline reais (criados localmente
-            // ou explicitamente salvos), não os meramente cacheados via cacheEstudo.
             val offlineMgr = EstudoOfflineManager(this@RegistroRapidoActivity)
             val offlineEstudos = EstudoDao(this@RegistroRapidoActivity).listarTodos()
             val remoteIds = estudos.mapNotNull { it.id }.toSet()
@@ -136,7 +115,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
 
-        // Estudo offline-only: id codifica -localId.
         if (estudoId <= 0) {
             val localId = if (estudoId < 0) (-estudoId).toLong()
                 else estudoSelecionado()?.let { sel ->
@@ -152,7 +130,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) campanhas.addAll(resp.body() ?: emptyList())
             } catch (_: Exception) { }
 
-            // Merge com SQLite (campanhas criadas offline para esse estudo).
             val estudoLocalId = EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId
             if (estudoLocalId != null) {
                 val offline = CampanhaDao(this@RegistroRapidoActivity).listarPorEstudoLocal(estudoLocalId)
@@ -200,7 +177,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
 
-        // Campanha offline-only: id codifica -localId.
         if (campanhaId <= 0) {
             val localId = if (campanhaId < 0) (-campanhaId).toLong() else null
             if (localId != null) carregarUnidadesOffline(localId)
@@ -215,7 +191,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 } catch (_: Exception) { }
             }
 
-            // Merge com SQLite — busca campanha local pelo remote_id.
             val estudoLocalId = if (estudoId > 0)
                 EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId else null
             val campanhaLocalId = estudoLocalId?.let {
@@ -269,7 +244,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         eventos.clear()
         popularSpinner(binding.spinnerEvento, emptyList())
 
-        // Unidade offline-only: id codifica -localId.
         if (unidadeId <= 0) {
             val localId = if (unidadeId < 0) (-unidadeId).toLong() else null
             if (localId != null) carregarEventosOffline(localId)
@@ -284,7 +258,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 } catch (_: Exception) { }
             }
 
-            // Merge com SQLite — busca a unidade local correspondente.
             val estudoLocalId = if (estudoId > 0)
                 EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId else null
             val campanhaLocalId = estudoLocalId?.let {
@@ -346,8 +319,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         spinner.adapter = adapter
     }
 
-    // ── Navegar para formulário de registro ───────────────────────────────
-
     private fun prosseguir() {
         val estudo   = estudoSelecionado()
         val campanha = campanhaSelecionada()
@@ -359,8 +330,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
             return
         }
 
-        // Resolve local_ids para fluxo offline. Se id < 0, é -localId direto;
-        // se > 0, busca o localId em SQLite (pode ser -1L se não cacheado).
         val estudoLocalId = if (estudo.id < 0) (-estudo.id).toLong()
             else EstudoDao(this).buscarPorRemoteId(estudo.id)?.localId ?: -1L
         val campanhaLocalId = if (campanha.id < 0) (-campanha.id).toLong()
@@ -385,8 +354,6 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         }
         startActivity(intent)
     }
-
-    // ── Helpers de seleção ────────────────────────────────────────────────
 
     private fun estudoSelecionado(): EstudoResponse? {
         val pos = binding.spinnerEstudo.selectedItemPosition

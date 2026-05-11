@@ -13,33 +13,10 @@ import com.kheprix.models.RedefinirSenhaRequest
 import com.kheprix.models.TokenRequest
 import kotlinx.coroutines.launch
 
-/**
- * Tela de Recuperação de Senha — fluxo em 3 etapas gerenciadas por ViewFlipper:
- *
- *  Etapa 1 (STEP_EMAIL):
- *    - Usuário digita o e-mail
- *    - POST /autenticacao/solicitar_redefinicao
- *    - Avança para etapa 2 ao receber sucesso
- *
- *  Etapa 2 (STEP_TOKEN):
- *    - Usuário digita o token recebido por e-mail
- *    - POST /autenticacao/validar_token_redefinicao
- *    - Avança para etapa 3 se token válido
- *
- *  Etapa 3 (STEP_NOVA_SENHA):
- *    - Usuário digita e confirma nova senha
- *    - POST /autenticacao/redefinir_senha  (usando token da etapa 2)
- *    - Redireciona para LoginActivity
- *
- * O layout usa um ViewFlipper com 3 filhos, cada um correspondendo a uma etapa.
- * As etapas 1 e 2 são exibidas no mesmo layout (activity_recuperacao_senha.xml),
- * que apresenta progressivamente os campos conforme o design.
- */
 class RecuperacaoSenhaActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRecuperacaoSenhaBinding
 
-    /** Token validado na etapa 2, guardado para uso na etapa 3 */
     private var tokenValidado: String = ""
 
     companion object {
@@ -53,10 +30,8 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
         binding = ActivityRecuperacaoSenhaBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inicia na etapa 1
         mostrarEtapa(STEP_EMAIL)
 
-        // ── Etapa 1: Enviar token ──────────────────────────────────────────
         binding.btnEnviarToken.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             if (email.isEmpty()) {
@@ -66,7 +41,6 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
             solicitarToken(email)
         }
 
-        // ── Etapa 2: Validar token ─────────────────────────────────────────
         binding.btnConfirmarToken.setOnClickListener {
             val token = binding.etToken.text.toString().trim()
             if (token.isEmpty()) {
@@ -76,7 +50,6 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
             validarToken(token)
         }
 
-        // ── Etapa 3: Redefinir senha ───────────────────────────────────────
         binding.btnRedefinirSenha.setOnClickListener {
             val novaSenha    = binding.etNovaSenha.text.toString()
             val confirmacao  = binding.etConfirmarNovaSenha.text.toString()
@@ -96,8 +69,6 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
             redefinirSenha(tokenValidado, novaSenha)
         }
     }
-
-    // ── Etapa 1 ──────────────────────────────────────────────────────────────
 
     private fun solicitarToken(email: String) {
         setLoading(true)
@@ -122,8 +93,6 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
         }
     }
 
-    // ── Etapa 2 ──────────────────────────────────────────────────────────────
-
     private fun validarToken(token: String) {
         setLoading(true)
         lifecycleScope.launch {
@@ -142,8 +111,6 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
             }
         }
     }
-
-    // ── Etapa 3 ──────────────────────────────────────────────────────────────
 
     private fun redefinirSenha(token: String, novaSenha: String) {
         setLoading(true)
@@ -173,25 +140,17 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Controla qual conjunto de campos está visível usando visibility.
-     * O layout tem grupos nomeados para cada etapa.
-     */
     private fun mostrarEtapa(etapa: Int) {
-        // Etapa 1: e-mail + botão enviar token
+
         val showEtapa1 = etapa == STEP_EMAIL
         binding.etEmail.visibility     = if (showEtapa1) View.VISIBLE else View.GONE
         binding.tvLabelEmail.visibility = if (showEtapa1) View.VISIBLE else View.GONE
         binding.btnEnviarToken.visibility = if (showEtapa1) View.VISIBLE else View.GONE
 
-        // Etapa 2: campo token + botão confirmar token
         val showEtapa2 = etapa == STEP_TOKEN
         binding.groupToken.visibility = if (showEtapa2) View.VISIBLE else View.GONE
         binding.btnConfirmarToken.visibility = if (showEtapa2) View.VISIBLE else View.GONE
 
-        // Etapa 3: nova senha + confirmar senha + botão redefinir
         val showEtapa3 = etapa == STEP_NOVA_SENHA
         binding.groupNovaSenha.visibility = if (showEtapa3) View.VISIBLE else View.GONE
         binding.btnRedefinirSenha.visibility = if (showEtapa3) View.VISIBLE else View.GONE

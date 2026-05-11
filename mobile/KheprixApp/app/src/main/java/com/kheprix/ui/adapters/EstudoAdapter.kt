@@ -9,13 +9,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.kheprix.R
 
-/**
- * Modelo de item da lista de estudos (UI layer).
- *
- * @param perfil  "proprietario" | "colaborador"
- * @param salvosOffline true se existe entrada na tabela local de estudos
- * @param registrosOffline  quantidade de rows não sincronizadas
- */
 data class EstudoItem(
     val remoteId: Int,
     val localId: Long?,
@@ -60,11 +53,9 @@ class EstudoAdapter(
         holder.tvNome.text = item.nome
         holder.tvData.text = formatarData(item.createdAt)
 
-        // Colaboradores: somente proprietário
         holder.ivColaboradores.visibility =
             if (item.isProprietario) View.VISIBLE else View.GONE
 
-        // Botões offline
         if (item.salvosOffline) {
             holder.btnSalvarOffline.visibility = View.GONE
             holder.btnLimpar.visibility        = View.VISIBLE
@@ -85,7 +76,6 @@ class EstudoAdapter(
 
     override fun getItemCount() = estudos.size
 
-    /** Converte "2026-12-31T00:00:00Z" → "31/12/2026" */
     private fun formatarData(iso: String): String {
         return try {
             val parts = iso.substring(0, 10).split("-")

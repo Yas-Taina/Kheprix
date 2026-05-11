@@ -1,32 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Tela de Login
-    Design: fundo verde-musgo claro (#A8B89A), título "LOGIN" em caps espaçado,
-    imagem do besouro, dois campos (E-mail / Senha), link "Esqueci minha senha",
-    botão "Confirmar".
 
-    ════════════════════════════════════════════════════
-    PLACEHOLDERS — o que substituir:
-    ════════════════════════════════════════════════════
-    1. IMAGEM DO BESOURO
-       - Atual  : @drawable/ic_placeholder_beetle
-       - Substituir por: @drawable/kheprix_beetle (SVG/PNG importado)
-
-    2. FONTES
-       - Títulos (LOGIN): fontFamily="serif"  →  @font/sua_fonte_display
-       - Corpo (labels, campos): fontFamily="monospace"  →  @font/sua_fonte_mono
-       - O design usa uma fonte monoespaçada estilo "Courier" para labels e corpo
-
-    3. CORES
-       - Fundo : #A8B89A  (verde musgo claro)
-       - Campos : #B8C9AB  (levemente mais escuro)
-       - Título : #4A5240  (musgo escuro)
-       - Defina em res/values/colors.xml:
-           <color name="kheprix_bg_green">#A8B89A</color>
-           <color name="kheprix_field_bg">#B8C9AB</color>
-           <color name="kheprix_dark_text">#4A5240</color>
-    ════════════════════════════════════════════════════
--->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -40,11 +13,6 @@
         android:layout_height="wrap_content"
         android:paddingBottom="40dp">
 
-        <!-- ── Título LOGIN ─────────────────────────────────────────────── -->
-        <!--
-            FONTE PLACEHOLDER: fontFamily="serif"
-            SUBSTITUIR: android:fontFamily="@font/sua_fonte_display"
-        -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="wrap_content"
@@ -59,14 +27,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Imagem do besouro ─────────────────────────────────────────
-             SUBSTITUIR src por @drawable/kheprix_beetle
-        ────────────────────────────────────────────────────────────────-->
         <ImageView
             android:id="@+id/ivBesouro"
             android:layout_width="0dp"
             android:layout_height="260dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/kheprix_beetle"
             android:scaleType="fitCenter"
             android:contentDescription="Ilustração do besouro"
             android:alpha="0.5"
@@ -75,10 +40,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="4dp"/>
 
-        <!-- ── Texto de instrução ────────────────────────────────────────
-             FONTE PLACEHOLDER: fontFamily="monospace"
-             SUBSTITUIR: android:fontFamily="@font/courier_prime" (ou similar)
-        -->
         <TextView
             android:id="@+id/tvInstrucao"
             android:layout_width="0dp"
@@ -94,7 +55,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="@id/tvLinkCadastro"/>
 
-        <!-- Link "aqui" inline — posicionado à direita do texto instrução -->
         <TextView
             android:id="@+id/tvLinkCadastro"
             android:layout_width="wrap_content"
@@ -110,7 +70,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="16dp"/>
 
-        <!-- ── Label E-mail ──────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelEmail"
             android:layout_width="wrap_content"
@@ -124,7 +83,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvInstrucao"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo E-mail ──────────────────────────────────────────── -->
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="0dp"
@@ -143,7 +101,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Label Senha ───────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelSenha"
             android:layout_width="wrap_content"
@@ -157,7 +114,6 @@
             app:layout_constraintTop_toBottomOf="@id/etEmail"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo Senha ───────────────────────────────────────────── -->
         <EditText
             android:id="@+id/etSenha"
             android:layout_width="0dp"
@@ -175,7 +131,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Link Esqueci senha ────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvEsqueciSenha"
             android:layout_width="wrap_content"
@@ -191,7 +146,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Botão Confirmar ───────────────────────────────────────── -->
         <Button
             android:id="@+id/btnConfirmar"
             android:layout_width="0dp"
@@ -208,7 +162,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── ProgressBar (visível durante loading) ─────────────────── -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

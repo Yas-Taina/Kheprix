@@ -1,40 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_especies.xml
-    Lista de espécies: título duplo, botão + filtro, RecyclerView
--->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:background="#EDE9DE">
 
-    <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent" android:layout_height="96dp"
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
 
         <ImageView android:id="@+id/ivMenuLateral"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <ImageView android:layout_width="80dp" android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7"
+        <ImageView android:layout_width="120dp" android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
             android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
 
         <ImageView android:id="@+id/ivPerfil"
             android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
@@ -59,12 +57,19 @@
                 android:fontFamily="serif" android:gravity="center"
                 android:layout_marginTop="4dp"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="8dp" android:layout_marginBottom="12dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Botão Adicionar + Filtrar -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:gravity="center_vertical"
                 android:layout_marginBottom="12dp">
@@ -75,14 +80,14 @@
                     android:textColor="#FFFFFF" android:fontFamily="serif"
                     android:backgroundTint="#6B7A5E"/>
 
-                <!-- SUBSTITUIR: @drawable/ic_filter -->
                 <ImageView android:id="@+id/btnFiltrar"
                     android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                    android:src="@drawable/ic_filter" android:scaleType="fitCenter"
                     android:contentDescription="Filtrar"
                     android:clickable="true" android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:layout_marginStart="8dp"/>
+                    android:layout_marginStart="8dp"
+                    app:tint="@color/kheprix_green"/>
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView

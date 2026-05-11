@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Lista de Estudos
-    ════════════════════════════════════════════════════
-    PLACEHOLDERS — substituir:
-    1. @drawable/ic_placeholder_header_beetle → logotipo alado do header
-    2. @drawable/ic_menu  → ícone hamburguer (3 linhas)
-    3. @drawable/ic_profile → ícone de perfil (círculo + silhueta)
-    4. @drawable/ic_filter → ícone funil de filtro
-    5. @drawable/ic_divider_ornament → ornamento decorativo horizontal (≈◦◆◦)
-    Fontes: fontFamily="serif" → @font/sua_fonte_display (Small Caps)
-    ════════════════════════════════════════════════════
--->
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -19,7 +8,6 @@
     android:orientation="vertical"
     android:background="#EDE9DE">
 
-    <!-- ── Header ─────────────────────────────────────────────────────── -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="96dp"
@@ -27,30 +15,26 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
-        <!-- Ícone menu lateral
-             SUBSTITUIR: @drawable/ic_menu (3 linhas)
-             Ex: menu hamburguer vetorial -->
         <ImageView
             android:id="@+id/ivMenuLateral"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_menu"
             android:scaleType="fitCenter"
             android:contentDescription="Menu lateral"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <!-- Logo central (besouro alado)
-             SUBSTITUIR: @drawable/kheprix_header_beetle -->
         <ImageView
             android:id="@+id/ivHeaderBeetle"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:layout_width="120dp"
+            android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle"
             android:scaleType="fitCenter"
             android:contentDescription="Kheprix"
             android:alpha="0.7"
@@ -59,24 +43,22 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <!-- Ícone perfil
-             SUBSTITUIR: @drawable/ic_profile -->
         <ImageView
             android:id="@+id/ivPerfil"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_profile"
             android:scaleType="fitCenter"
             android:contentDescription="Perfil"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- ── Conteúdo scrollável ────────────────────────────────────────── -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -90,7 +72,6 @@
             android:paddingEnd="16dp"
             android:paddingBottom="32dp">
 
-            <!-- Título "Estudos" -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -101,20 +82,19 @@
                 android:gravity="center"
                 android:layout_marginTop="24dp"/>
 
-            <!-- Ornamento decorativo
-                 SUBSTITUIR: por @drawable/ic_divider_ornament
-                 (linha horizontal com florzinha central, como no design)
-                 Pode ser um ImageView com um SVG ornamental -->
-            <View
+            <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"/>
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Botão "Adicionar Estudo ⊕" -->
             <Button
                 android:id="@+id/btnAdicionarEstudo"
                 android:layout_width="wrap_content"
@@ -127,23 +107,20 @@
                 android:layout_gravity="end"
                 android:layout_marginTop="12dp"/>
 
-            <!-- Ícone funil de filtro (alinhado à direita)
-                 SUBSTITUIR: @drawable/ic_filter (funil)
-                 Cor: #B88A8A (rosa/vinho do design) -->
             <ImageView
                 android:id="@+id/btnFiltrar"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:src="@drawable/ic_placeholder_beetle"
+                android:src="@drawable/ic_filter"
                 android:scaleType="fitCenter"
                 android:contentDescription="Filtrar"
                 android:layout_gravity="end"
                 android:layout_marginTop="4dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless"/>
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/kheprix_green"/>
 
-            <!-- ProgressBar global da lista -->
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
@@ -152,7 +129,6 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"/>
 
-            <!-- Lista de estudos via RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvEstudos"
                 android:layout_width="match_parent"

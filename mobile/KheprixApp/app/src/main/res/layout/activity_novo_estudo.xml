@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Novo Estudo / Editar Estudo
-    ════════════════════════════════════════════
-    PLACEHOLDERS:
-    - Header: mesmos ícones da EstudosActivity
-    - Ornamento decorativo: View simples até ter o SVG
-    - Spinners usam android spinner padrão; estilize via theme
-    ════════════════════════════════════════════
--->
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,7 +8,6 @@
     android:orientation="vertical"
     android:background="#EDE9DE">
 
-    <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="96dp"
@@ -28,20 +19,21 @@
             android:id="@+id/ivMenuLateral"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_menu"
             android:scaleType="fitCenter"
             android:contentDescription="Menu"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:layout_width="120dp"
+            android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle"
             android:scaleType="fitCenter"
             android:alpha="0.7"
             android:contentDescription="Kheprix"
@@ -53,15 +45,15 @@
         <ImageView
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/ic_profile"
             android:scaleType="fitCenter"
             android:contentDescription="Perfil"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Conteúdo scrollável -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -75,7 +67,6 @@
             android:paddingEnd="20dp"
             android:paddingBottom="100dp">
 
-            <!-- Título -->
             <TextView
                 android:id="@+id/tvTitulo"
                 android:layout_width="match_parent"
@@ -87,17 +78,19 @@
                 android:gravity="center"
                 android:layout_marginTop="20dp"/>
 
-            <!-- Ornamento (SUBSTITUIR por ImageView com SVG decorativo) -->
-            <View
+            <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"/>
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Label Nome -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -106,7 +99,6 @@
                 android:textColor="#6B7A5E"
                 android:fontFamily="monospace"/>
 
-            <!-- Campo Nome -->
             <EditText
                 android:id="@+id/etNomeEstudo"
                 android:layout_width="match_parent"
@@ -115,12 +107,11 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:textColor="#4A5240"
-                android:hint="Placeholder"
+                android:hint="Nome do Estudo"
                 android:textCursorDrawable="@null"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp"/>
 
-            <!-- Título seção variáveis + botão ⊕ -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/tvVariaveisTitle"
                 android:layout_width="match_parent"
@@ -137,7 +128,6 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <!-- Botão ⊕ adicionar variável -->
                 <TextView
                     android:id="@+id/btnAdicionarVariavel"
                     android:layout_width="36dp"
@@ -154,7 +144,6 @@
                     app:layout_constraintBottom_toBottomOf="parent"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Container dinâmico de linhas de variável -->
             <LinearLayout
                 android:id="@+id/layoutVariaveis"
                 android:layout_width="match_parent"
@@ -162,7 +151,6 @@
                 android:orientation="vertical"
                 android:layout_marginTop="8dp"/>
 
-            <!-- Observações -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -181,12 +169,11 @@
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
                 android:textColor="#4A5240"
-                android:hint="Placeholder"
+                android:hint="Observações do Estudo"
                 android:gravity="top"
                 android:inputType="textMultiLine"
                 android:layout_marginTop="4dp"/>
 
-            <!-- ProgressBar -->
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
@@ -198,7 +185,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Botão Confirmar fixo na parte inferior -->
     <Button
         android:id="@+id/btnConfirmar"
         android:layout_width="wrap_content"

@@ -26,32 +26,6 @@ import com.kheprix.models.ConviteListResponse
 import com.kheprix.models.CodigoAcessoPatchRequest
 import kotlinx.coroutines.launch
 
-/**
- * Tela de Colaboradores do Estudo (somente proprietário).
- *
- * Seções:
- *  1. "Convidar Colaboradores" — campo e-mail + botão Confirmar
- *     POST /estudos/:id/convites
- *
- *  2. Lista de colaboradores — nome, spinner perfil, "Alterar Acesso", lixeira
- *     GET  /estudos/:id/colaboradores
- *     PATCH /estudos/:id/colaboradores/:id
- *     DELETE /estudos/:id/colaboradores/:id
- *
- *  3. "Configurar Autocadastro de Colaborador"
- *     - QR Code gerado localmente com o código do estudo
- *     - Exibe código + campo senha de autocadastro editável
- *     GET  /estudos/:id/codigo_acesso
- *     PATCH /estudos/:id/codigo_acesso  { senha_autocadastro }
- *
- * Extras recebidos:
- *   estudo_remote_id → Int
- *   estudo_nome      → String
- *
- * Dependência para QR Code (build.gradle):
- *   implementation 'com.google.zxing:core:3.5.1'
- *   (ZXing Android Embedded já inclui o core)
- */
 class ColaboradoresActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityColaboradoresBinding
@@ -81,8 +55,6 @@ class ColaboradoresActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Adapter ──────────────────────────────────────────────────────────
-
     private fun setupAdapter() {
         adapter = ColaboradorAdapter(colaboradores,
             onAlterarAcesso = { colab, novoPerfil -> alterarAcesso(colab, novoPerfil) },
@@ -91,8 +63,6 @@ class ColaboradoresActivity : BaseDrawerActivity() {
         binding.rvColaboradores.layoutManager = LinearLayoutManager(this)
         binding.rvColaboradores.adapter = adapter
     }
-
-    // ── Seção: Convidar ───────────────────────────────────────────────────
 
     private fun setupConviteSection() {
         binding.btnAdicionarColaboradores.setOnClickListener {
@@ -124,8 +94,6 @@ class ColaboradoresActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Seção: Convites enviados (pendentes) ─────────────────────────
-
     private val convitesPendentes = mutableListOf<ConviteListResponse>()
 
     private fun carregarConvitesPendentes() {
@@ -142,7 +110,7 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     )
                     atualizarListaConvitesPendentes()
                 }
-            } catch (_: Exception) { /* silencioso */ }
+            } catch (_: Exception) {}
         }
     }
 
@@ -204,8 +172,6 @@ class ColaboradoresActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Seção: Autocadastro ───────────────────────────────────────────────
-
     private fun setupAutocadastroSection() {
         binding.btnAlterarSenha.setOnClickListener {
             val novaSenha = binding.etSenhaAutocadastro.text.toString().trim()
@@ -229,7 +195,7 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     binding.etSenhaAutocadastro.setText(body.senhaAutocadastro)
                     gerarQrCode(body.codigo)
                 }
-            } catch (_: Exception) { /* silencioso */ }
+            } catch (_: Exception) {}
         }
     }
 
@@ -251,12 +217,7 @@ class ColaboradoresActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Gera um Bitmap de QR Code com o código do estudo usando ZXing core.
-     *
-     * ATIVAR após adicionar:
-     *   implementation 'com.google.zxing:core:3.5.1'
-     */
+
     private fun gerarQrCode(conteudo: String) {
         try {
             val writer = QRCodeWriter()
@@ -269,12 +230,9 @@ class ColaboradoresActivity : BaseDrawerActivity() {
             }
             binding.ivQrCode.setImageBitmap(bmp)
         } catch (e: Exception) {
-            // ZXing não disponível: exibe placeholder
             binding.ivQrCode.setImageResource(R.drawable.ic_placeholder_beetle)
         }
     }
-
-    // ── Carregar colaboradores ────────────────────────────────────────────
 
     private fun carregarColaboradores() {
         lifecycleScope.launch {
@@ -294,8 +252,6 @@ class ColaboradoresActivity : BaseDrawerActivity() {
             } catch (_: Exception) { }
         }
     }
-
-    // ── Ações sobre colaboradores ─────────────────────────────────────────
 
     private fun totalProprietarios() = todosColaboradores.count { it.perfil == "proprietario" }
 
@@ -342,15 +298,12 @@ class ColaboradoresActivity : BaseDrawerActivity() {
             .setNegativeButton("Cancelar", null).show()
     }
 
-    /** Converte label PT-BR → valor da API */
     private fun perfilParaApi(label: String) = when (label) {
         "Proprietário" -> "proprietario"
         "Colaborador"  -> "colaborador"
         else           -> label.lowercase()
     }
 }
-
-// ── Adapter ──────────────────────────────────────────────────────────────────
 
 class ColaboradorAdapter(
     private val items: List<ColaboradorResponse>,
@@ -381,7 +334,6 @@ class ColaboradorAdapter(
         ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         holder.spinner.adapter = spinnerAdapter
 
-        // Pré-selecionar perfil atual
         val perfilLabel = when (item.perfil) {
             "proprietario" -> "Proprietário"
             else           -> "Colaborador"
