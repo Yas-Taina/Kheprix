@@ -66,7 +66,7 @@ export class EventoNovoComponent implements OnInit {
           this.esforcoReal = ev.esforco_real ?? "";
           if (this.variaveis.length > 0) {
             this.valoresVars = this.variaveis.map((v) => {
-              const existente = this.eventoCarregado?.valores_variaveis?.find(
+              const existente = ev.valores_variaveis?.find(
                 (val) => val.variavel_id === v.id,
               );
               return { variavel_id: v.id, valor: existente?.valor ?? "" };
