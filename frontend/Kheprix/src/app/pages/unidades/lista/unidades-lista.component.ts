@@ -4,7 +4,12 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { CampanhaService } from "../../../core/services/campanha.service";
 import { EstudoService } from "../../../core/services/estudo.service";
-import { UnidadeAmostral, Campanha, Variavel, ValorVariavel } from "../../../models";
+import {
+  UnidadeAmostral,
+  Campanha,
+  Variavel,
+  ValorVariavel,
+} from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { VariavelService } from "../../../core/services/variavel.service";
 

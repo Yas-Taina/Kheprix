@@ -100,7 +100,6 @@ export const NOME_CATEGORIA: Record<CategoriaAnalise, string> = {
 };
 
 export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
-  // Modelos de distribuição — apenas gráfico
   {
     chave: "lognormal",
     nome: "Log-Normal",

@@ -147,15 +147,15 @@
         ><span>{{ util.formatDate(eventoDetalhe.created_at) }}</span>
       </div>
       <div class="detail-field">
-          <ng-container *ngIf="variaveis.length > 0">
-            <div class="mt-sm">
-              <label class="section-title">Variáveis</label>
-              <div *ngFor="let v of variaveis" class="detail-field mt-sm">
+        <ng-container *ngIf="variaveis.length > 0">
+          <div class="mt-sm">
+            <label class="section-title">Variáveis</label>
+            <div *ngFor="let v of variaveis" class="detail-field mt-sm">
               <label>{{ v.nome }}</label>
               <span>{{ getValor(v.id) }} {{ v.metrica }}</span>
-              </div>
             </div>
-          </ng-container>
+          </div>
+        </ng-container>
       </div>
     </div>
   </div>

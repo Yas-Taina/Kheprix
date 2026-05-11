@@ -5,7 +5,13 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { EspecieService } from "../../../core/services/especie.service";
-import { RegistroOcorrencia, EventoAmostragem, Especie, ValorVariavel, Variavel } from "../../../models";
+import {
+  RegistroOcorrencia,
+  EventoAmostragem,
+  Especie,
+  ValorVariavel,
+  Variavel,
+} from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 import { VariavelService } from "../../../core/services/variavel.service";
