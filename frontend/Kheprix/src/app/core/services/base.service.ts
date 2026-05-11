@@ -80,13 +80,6 @@ export class BaseService {
       .pipe(catchError(this.handleError));
   }
 
-  protected getHeadersBlob(accept: string): HttpHeaders {
-  const token = localStorage.getItem("kheprix_token");
-  let headers = new HttpHeaders({ Accept: accept });
-  if (token) headers = headers.set("Authorization", `Bearer ${token}`);
-  return headers;
-}
-
   private handleError(error: unknown): Observable<never> {
     console.error("API Error:", error);
     return throwError(() => error);
