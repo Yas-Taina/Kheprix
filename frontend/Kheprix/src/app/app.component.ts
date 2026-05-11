@@ -17,7 +17,10 @@ export class App {
 
   private readonly rotasPublicas = ["", "login", "cadastro", "recuperar-senha"];
 
-  constructor(public router: Router, private authService: AuthService) {}
+  constructor(
+    public router: Router,
+    private authService: AuthService,
+  ) {}
 
   get isLogged(): boolean {
     return this.authService.isLoggedIn();

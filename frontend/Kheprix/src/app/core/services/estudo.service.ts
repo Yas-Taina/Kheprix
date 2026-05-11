@@ -59,6 +59,11 @@ export class EstudoService extends BaseService {
         params,
         responseType: "blob",
       })
-      .pipe(catchError((e) => { console.error("API Error:", e); throw e; }));
+      .pipe(
+        catchError((e) => {
+          console.error("API Error:", e);
+          throw e;
+        }),
+      );
   }
 }

@@ -37,7 +37,7 @@ export const appConfig: ApplicationConfig = {
       useClass: TipoDadoInterceptor,
       multi: true,
     },
-/*     {
+    /*     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true,

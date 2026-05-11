@@ -4,7 +4,12 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EspecieService } from "../../../core/services/especie.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { RegistroOcorrencia, Especie, Variavel, ValorVariavel } from "../../../models";
+import {
+  RegistroOcorrencia,
+  Especie,
+  Variavel,
+  ValorVariavel,
+} from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 
@@ -69,7 +74,10 @@ export class RegistroDetalheComponent implements OnInit {
   }
 
   getValor(variavelId: number): string {
-    return this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor || "—";
+    return (
+      this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor ||
+      "—"
+    );
   }
 
   editar() {

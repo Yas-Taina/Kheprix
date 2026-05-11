@@ -246,7 +246,10 @@ export const routes: Routes = [
 
   {
     path: "chatbot",
-    loadComponent: () => import("./pages/chatbot/chatbot.component").then((m) => m.ChatbotComponent),
+    loadComponent: () =>
+      import("./pages/chatbot/chatbot.component").then(
+        (m) => m.ChatbotComponent,
+      ),
     //canActivate: [authGuard],
   },
 

@@ -1,4 +1,9 @@
-export type TipoMensagem = 'usuario' | 'bot' | 'sistema' | 'insights' | 'carregando';
+export type TipoMensagem =
+  | "usuario"
+  | "bot"
+  | "sistema"
+  | "insights"
+  | "carregando";
 
 export interface DadosTabela {
   colunas: string[];

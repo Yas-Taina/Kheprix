@@ -7,6 +7,7 @@ export interface Campanha {
   descricao: string;
   created_at: string;
   updated_at: string;
+  valores_variaveis?: ValorVariavel[];
 }
 
 export interface CampanhaCreate {
