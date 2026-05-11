@@ -31,11 +31,11 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
     private var campanhaLocalId = -1L
-    private var unidadeId      = -1
-    private var modoEdicao     = false
+    private var unidadeId = -1
+    private var modoEdicao = false
 
     private var latDecimal: Double? = null
     private var lonDecimal: Double? = null
@@ -47,7 +47,8 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
             if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            ) {
                 obterLocalizacao()
             } else {
                 Toast.makeText(this, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
@@ -62,14 +63,15 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
         campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
-        unidadeId      = intent.getIntExtra("unidade_id", -1)
-        modoEdicao     = unidadeId != -1
+        unidadeId = intent.getIntExtra("unidade_id", -1)
+        modoEdicao = unidadeId != -1
 
-        binding.tvTitulo.text = if (modoEdicao) "Editar Unidade Amostral" else "Nova Unidade Amostral"
+        binding.tvTitulo.text =
+            if (modoEdicao) "Editar Unidade Amostral" else "Nova Unidade Amostral"
 
         binding.ivGpsLat.setOnClickListener { verificarPermissaoGps() }
         binding.ivGpsLon.setOnClickListener { verificarPermissaoGps() }
@@ -91,7 +93,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     }
 
     private fun verificarPermissaoGps() {
-        val fine   = Manifest.permission.ACCESS_FINE_LOCATION
+        val fine = Manifest.permission.ACCESS_FINE_LOCATION
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
         if (ContextCompat.checkSelfPermission(this, fine) == PackageManager.PERMISSION_GRANTED) {
             obterLocalizacao()
@@ -109,7 +111,8 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 binding.etLatitude.setText(decimalToDms(loc.latitude))
                 binding.etLongitude.setText(decimalToDms(loc.longitude))
             } else {
-                Toast.makeText(this, "Localização não disponível. Ative o GPS.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Localização não disponível. Ative o GPS.", Toast.LENGTH_SHORT)
+                    .show()
             }
         }.addOnFailureListener {
             Toast.makeText(this, "Erro ao obter localização", Toast.LENGTH_SHORT).show()
@@ -117,9 +120,12 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     }
 
     private fun decimalToDms(dec: Double): String {
-        val neg = dec < 0; val abs = Math.abs(dec)
-        val deg = abs.toInt(); val minD = (abs - deg) * 60
-        val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
+        val neg = dec < 0;
+        val abs = Math.abs(dec)
+        val deg = abs.toInt();
+        val minD = (abs - deg) * 60
+        val min = minD.toInt();
+        val sec = ((minD - min) * 60).toInt()
         return "${if (neg) "-" else ""}%02d°%02d'%02d\"".format(deg, min, sec)
     }
 
@@ -150,7 +156,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     if (result != raw) {
                         s.replace(0, s.length, result)
                         prevLen = result.length
-                        try { et.setSelection(result.length) } catch (_: Exception) {}
+                        try {
+                            et.setSelection(result.length)
+                        } catch (_: Exception) {
+                        }
                     }
                 }
                 editing = false
@@ -172,7 +181,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     }
 
     private fun carregarVariaveis() {
-        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
+        if (estudoRemoteId <= 0) {
+            carregarVariaveisOffline(); return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -183,12 +194,16 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
-            } catch (_: Exception) { carregarVariaveisOffline() }
+            } catch (_: Exception) {
+                carregarVariaveisOffline()
+            }
         }
     }
 
     private fun carregarVariaveisOffline() {
-        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        if (estudoLocalId <= 0) {
+            renderizarVariaveis(); return
+        }
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         variaveis.clear()
         db.rawQuery(
@@ -197,15 +212,17 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
-                variaveis.add(VariavelResponse(
-                    id = rid,
-                    nome = c.getString(1),
-                    nivelAplicacao = c.getString(2),
-                    tipoDado = c.getString(3),
-                    metrica = c.getString(4),
-                    createdAt = c.getString(5) ?: "",
-                    updatedAt = c.getString(6) ?: ""
-                ))
+                variaveis.add(
+                    VariavelResponse(
+                        id = rid,
+                        nome = c.getString(1),
+                        nivelAplicacao = c.getString(2),
+                        tipoDado = c.getString(3),
+                        metrica = c.getString(4),
+                        createdAt = c.getString(5) ?: "",
+                        updatedAt = c.getString(6) ?: ""
+                    )
+                )
             }
         }
         renderizarVariaveis()
@@ -214,7 +231,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private fun renderizarVariaveis() {
         binding.layoutVariaveis.removeAllViews()
         camposVariavel.clear()
-        if (variaveis.isEmpty()) { binding.tvVariaveisTitle.visibility = View.GONE; return }
+        if (variaveis.isEmpty()) {
+            binding.tvVariaveisTitle.visibility = View.GONE; return
+        }
         binding.tvVariaveisTitle.visibility = View.VISIBLE
 
         variaveis.forEachIndexed { i, v ->
@@ -257,11 +276,12 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 is Spinner -> {
                     val idx = when (vv.valor.trim().lowercase()) {
                         "true", "verdadeiro" -> 1
-                        "false", "falso"     -> 2
-                        else                 -> 0
+                        "false", "falso" -> 2
+                        else -> 0
                     }
                     view.setSelection(idx)
                 }
+
                 is EditText -> view.setText(vv.valor)
                 else -> {}
             }
@@ -284,6 +304,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     listOf("—", "Verdadeiro", "Falso")
                 ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
             }
+
             else -> EditText(this).apply {
                 layoutParams = lp
                 background = bg
@@ -293,6 +314,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
                             android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
                             android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+
                     else -> android.text.InputType.TYPE_CLASS_TEXT
                 }
             }
@@ -318,7 +340,8 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                         aplicarValoresVariaveis()
                         return@launch
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             preencherDadosEdicaoOffline()
         }
@@ -330,10 +353,11 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             campanhaLocalId > 0 -> campanhaLocalId
             campanhaId > 0 -> {
                 val eL = if (estudoLocalId > 0) estudoLocalId
-                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                         else null
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
                 eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: return
             }
+
             else -> return
         }
         val u: UnidadeDao.UnidadeOffline = when {
@@ -341,6 +365,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 val uLocal = (-unidadeId).toLong()
                 UnidadeDao(this).listarPorCampanhaLocal(cLocal).firstOrNull { it.localId == uLocal }
             }
+
             unidadeId > 0 -> UnidadeDao(this).buscarPorRemoteIdEscopo(unidadeId, cLocal)
             else -> null
         } ?: return
@@ -375,14 +400,21 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, req
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovaUnidadeActivity, "Unidade criada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@NovaUnidadeActivity, "Unidade criada!", Toast.LENGTH_SHORT)
+                        .show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovaUnidadeActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaUnidadeActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarOffline(req)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -398,14 +430,24 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, req
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovaUnidadeActivity, "Unidade atualizada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaUnidadeActivity,
+                        "Unidade atualizada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovaUnidadeActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaUnidadeActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 editarUnidadeOffline(req)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -415,13 +457,15 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             campanhaLocalId > 0 -> campanhaLocalId
             campanhaId > 0 -> {
                 val eL = if (estudoLocalId > 0) estudoLocalId
-                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                         else null
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
                 eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) } ?: run {
-                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT)
+                        .show()
                     return
                 }
             }
+
             else -> return
         }
         val uLocalId: Long = when {
@@ -430,6 +474,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 Toast.makeText(this, "Unidade não encontrada offline", Toast.LENGTH_SHORT).show()
                 return
             }
+
             else -> return
         }
         try {
@@ -477,9 +522,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             val valor = when (view) {
                 is Spinner -> when (view.selectedItem?.toString()) {
                     "Verdadeiro" -> "true"
-                    "Falso"      -> "false"
-                    else         -> null
+                    "Falso" -> "false"
+                    else -> null
                 }
+
                 is EditText -> view.text.toString().trim().ifEmpty { null }
                 else -> null
             } ?: return@mapNotNull null
@@ -505,6 +551,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 repo.estudoLocalIdFromRemote(estudoRemoteId)?.let {
                     repo.campanhaLocalIdFromRemote(it, campanhaId)
                 }
+
             else -> null
         }
         if (campanhaResolved == null) {

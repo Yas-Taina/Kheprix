@@ -108,7 +108,8 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
                 NavigationView::class.java
                     .getMethod("setSubheaderColor", android.content.res.ColorStateList::class.java)
                     .invoke(this, ColorStateListSimples(Color.parseColor("#4A5240")))
-            } catch (_: Throwable) { }
+            } catch (_: Throwable) {
+            }
             setNavigationItemSelectedListener(this@BaseDrawerActivity)
         }
         val widthPx = (280 * resources.displayMetrics.density).toInt()
@@ -139,31 +140,37 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
                     startActivity(Intent(this, PerfilActivity::class.java))
                 true
             }
+
             R.id.nav_home -> {
                 if (this !is HomeActivity)
                     startActivity(Intent(this, HomeActivity::class.java))
                 true
             }
+
             R.id.nav_registro_rapido -> {
                 if (this !is RegistroRapidoActivity)
                     startActivity(Intent(this, RegistroRapidoActivity::class.java))
                 true
             }
+
             R.id.nav_estudos -> {
                 if (this !is EstudosActivity)
                     startActivity(Intent(this, EstudosActivity::class.java))
                 true
             }
+
             R.id.nav_novo_estudo -> {
                 if (this !is NovoEstudoActivity)
                     startActivity(Intent(this, NovoEstudoActivity::class.java))
                 true
             }
+
             R.id.nav_convites -> {
                 if (this !is ConvitesActivity)
                     startActivity(Intent(this, ConvitesActivity::class.java))
                 true
             }
+
             R.id.nav_logout -> {
                 SessionManager.logout()
                 val intent = Intent(this, MainActivity::class.java)
@@ -171,6 +178,7 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
                 startActivity(intent)
                 true
             }
+
             else -> false
         }
     }

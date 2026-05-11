@@ -19,7 +19,7 @@ class HomeActivity : BaseDrawerActivity() {
     private lateinit var offlineManager: EstudoOfflineManager
 
     private var ultimoEstudoRemoteId = -1
-    private var ultimoEstudoLocalId  = -1L
+    private var ultimoEstudoLocalId = -1L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +62,10 @@ class HomeActivity : BaseDrawerActivity() {
             startActivity(Intent(this, EstudoDetalheActivity::class.java).apply {
                 putExtra(EstudoDetalheActivity.EXTRA_ESTUDO_REMOTE_ID, ultimoEstudoRemoteId)
                 putExtra(EstudoDetalheActivity.EXTRA_ESTUDO_LOCAL_ID, ultimoEstudoLocalId)
-                putExtra(EstudoDetalheActivity.EXTRA_ESTUDO_NOME, binding.tvUltimoEstudoNome.text.toString())
+                putExtra(
+                    EstudoDetalheActivity.EXTRA_ESTUDO_NOME,
+                    binding.tvUltimoEstudoNome.text.toString()
+                )
             })
         }
         binding.cardUltimoEstudo.setOnClickListener { binding.btnVisualizarUltimo.performClick() }
@@ -75,32 +78,45 @@ class HomeActivity : BaseDrawerActivity() {
                 when {
                     resp.isSuccessful -> {
                         val dash = resp.body()
-                        if (dash == null) { binding.cardUltimoEstudo.visibility = View.GONE; return@launch }
+                        if (dash == null) {
+                            binding.cardUltimoEstudo.visibility = View.GONE; return@launch
+                        }
                         ultimoEstudoRemoteId = dash.id
-                        ultimoEstudoLocalId  = buscarLocalId(dash.id)
+                        ultimoEstudoLocalId = buscarLocalId(dash.id)
                         binding.tvUltimoEstudoNome.text = dash.nome
-                        binding.tvUltimoEstudoData.text = "Editado em ${formatarData(dash.updatedAt)}"
-                        val c = if (ultimoEstudoLocalId != -1L) offlineManager.contarRegistrosOffline(ultimoEstudoLocalId) else 0
+                        binding.tvUltimoEstudoData.text =
+                            "Editado em ${formatarData(dash.updatedAt)}"
+                        val c =
+                            if (ultimoEstudoLocalId != -1L) offlineManager.contarRegistrosOffline(
+                                ultimoEstudoLocalId
+                            ) else 0
                         binding.tvOfflineCount.text = "$c Registros Offline"
                         binding.tvOfflineCount.visibility = if (c > 0) View.VISIBLE else View.GONE
                         binding.cardUltimoEstudo.visibility = View.VISIBLE
                     }
+
                     resp.code() == 404 -> binding.cardUltimoEstudo.visibility = View.GONE
                     else -> carregarUltimoEstudoLocal()
                 }
-            } catch (_: Exception) { carregarUltimoEstudoLocal() }
+            } catch (_: Exception) {
+                carregarUltimoEstudoLocal()
+            }
         }
     }
 
     private fun carregarUltimoEstudoLocal() {
         val db = DatabaseHelper(this).readableDatabase
-        db.rawQuery("SELECT local_id, remote_id, nome, updated_at FROM estudos ORDER BY updated_at DESC LIMIT 1", null)
+        db.rawQuery(
+            "SELECT local_id, remote_id, nome, updated_at FROM estudos ORDER BY updated_at DESC LIMIT 1",
+            null
+        )
             .use { cur ->
                 if (cur.moveToFirst()) {
-                    ultimoEstudoLocalId  = cur.getLong(0)
+                    ultimoEstudoLocalId = cur.getLong(0)
                     ultimoEstudoRemoteId = if (cur.isNull(1)) -1 else cur.getInt(1)
                     binding.tvUltimoEstudoNome.text = cur.getString(2) ?: "—"
-                    binding.tvUltimoEstudoData.text = "Editado em ${formatarData(cur.getString(3) ?: "")}"
+                    binding.tvUltimoEstudoData.text =
+                        "Editado em ${formatarData(cur.getString(3) ?: "")}"
                     val c = offlineManager.contarRegistrosOffline(ultimoEstudoLocalId)
                     binding.tvOfflineCount.text = "$c Registros Offline"
                     binding.tvOfflineCount.visibility = if (c > 0) View.VISIBLE else View.GONE
@@ -111,11 +127,16 @@ class HomeActivity : BaseDrawerActivity() {
 
     private fun buscarLocalId(remoteId: Int): Long {
         val db = DatabaseHelper(this).readableDatabase
-        return db.rawQuery("SELECT local_id FROM estudos WHERE remote_id = ?", arrayOf(remoteId.toString()))
+        return db.rawQuery(
+            "SELECT local_id FROM estudos WHERE remote_id = ?",
+            arrayOf(remoteId.toString())
+        )
             .use { if (it.moveToFirst()) it.getLong(0) else -1L }
     }
 
     private fun formatarData(iso: String) = try {
         val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 }

@@ -48,18 +48,18 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
     private var campanhaLocalId = -1L
-    private var unidadeId      = -1
+    private var unidadeId = -1
     private var unidadeLocalId = -1L
-    private var eventoId       = -1
-    private var eventoLocalId  = -1L
-    private var eventoNome     = ""
+    private var eventoId = -1
+    private var eventoLocalId = -1L
+    private var eventoNome = ""
 
-    private val registros     = mutableListOf<RegistroResponse>()
+    private val registros = mutableListOf<RegistroResponse>()
     private val registrosFiltrados = mutableListOf<RegistroResponse>()
-    private val especies      = mutableListOf<EspecieResponse>()
+    private val especies = mutableListOf<EspecieResponse>()
     private lateinit var adapter: RegistroAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,21 +68,22 @@ class RegistrosActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
         campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
-        unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeId = intent.getIntExtra("unidade_id", -1)
         unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
         if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
-        eventoId       = intent.getIntExtra("evento_id", -1)
-        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        eventoId = intent.getIntExtra("evento_id", -1)
+        eventoLocalId = intent.getLongExtra("evento_local_id", -1L)
         if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
-        eventoNome     = intent.getStringExtra("evento_nome") ?: ""
+        eventoNome = intent.getStringExtra("evento_nome") ?: ""
 
         binding.tvEventoNome.text = formatarDataHora(eventoNome)
 
-        adapter = RegistroAdapter(registrosFiltrados, lifecycleScope,
+        adapter = RegistroAdapter(
+            registrosFiltrados, lifecycleScope,
             onItemClick = { r -> abrirDetalhe(r) },
             buscarEspecie = { id -> especies.firstOrNull { it.id == id } }
         )
@@ -144,17 +145,26 @@ class RegistrosActivity : BaseDrawerActivity() {
             val online = mutableListOf<EspecieResponse>()
             if (estudoRemoteId > 0) {
                 try {
-                    val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
+                    val resp = RetrofitClient.apiService.getEspecies(
+                        SessionManager.getAuthHeader(),
+                        estudoRemoteId
+                    )
                     if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             val repo = OfflineRepository(this@RegistrosActivity)
             val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                else null
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
             resolvedEstudoLocal?.let { id ->
-                online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
+                online.forEach { e ->
+                    try {
+                        repo.cacheEspecie(id, e)
+                    } catch (_: Exception) {
+                    }
+                }
             }
 
             especies.clear()
@@ -174,14 +184,19 @@ class RegistrosActivity : BaseDrawerActivity() {
             if (eventoId > 0 && estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getEvento(
-                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
+                        SessionManager.getAuthHeader(),
+                        estudoRemoteId,
+                        campanhaId,
+                        unidadeId,
+                        eventoId
                     )
                     resp.body()?.let { e ->
                         preencherCardEvento(e.horarioInicio, e.esforcoReal, e.updatedAt)
                         renderizarValoresCard(e.valoresVariaveis, fetchVarNomesApi())
                         return@launch
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             preencherDetalhesEventoOffline()
         }
@@ -192,12 +207,14 @@ class RegistrosActivity : BaseDrawerActivity() {
         return try {
             RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
                 .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
-        } catch (_: Exception) { emptyMap() }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 
     private fun preencherCardEvento(inicio: String, esforco: String?, updatedAt: String? = null) {
-        binding.tvDetalheInicio.text    = formatarDataHora(inicio)
-        binding.tvDetalheEsforco.text   = esforco ?: "—"
+        binding.tvDetalheInicio.text = formatarDataHora(inicio)
+        binding.tvDetalheEsforco.text = esforco ?: "—"
         binding.tvDetalheUpdatedAt.text = updatedAt?.let { formatarDataHora(it) } ?: "—"
     }
 
@@ -208,14 +225,18 @@ class RegistrosActivity : BaseDrawerActivity() {
         val h = if (partes.size > 1) partes[1].take(5) else ""
         val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
         if (h.isNotEmpty()) "$data, ${h}h" else data
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 
     private fun preencherDetalhesEventoOffline() {
         val eventoDao = EventoDao(this)
         val repo = OfflineRepository(this)
         val evento = when {
             eventoLocalId > 0 -> eventoDao.listarTodos().firstOrNull { it.localId == eventoLocalId }
-            eventoId < 0 -> eventoDao.listarTodos().firstOrNull { it.localId == (-eventoId).toLong() }
+            eventoId < 0 -> eventoDao.listarTodos()
+                .firstOrNull { it.localId == (-eventoId).toLong() }
+
             eventoId > 0 -> eventoDao.listarTodos().firstOrNull { it.remoteId == eventoId }
             else -> eventoDao.listarTodos().firstOrNull { it.horarioInicio == eventoNome }
         } ?: return
@@ -272,8 +293,9 @@ class RegistrosActivity : BaseDrawerActivity() {
     private fun carregarRegistros() {
         if (eventoId <= 0) {
             val localId = if (eventoLocalId > 0) eventoLocalId
-                else if (eventoId < 0) (-eventoId).toLong()
-                else EventoDao(this).listarTodos().firstOrNull { it.horarioInicio == eventoNome }?.localId
+            else if (eventoId < 0) (-eventoId).toLong()
+            else EventoDao(this).listarTodos()
+                .firstOrNull { it.horarioInicio == eventoNome }?.localId
             if (localId != null) {
                 eventoLocalId = localId
                 carregarRegistrosOffline(localId)
@@ -295,17 +317,21 @@ class RegistrosActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     registrosOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
 
             registros.clear()
             registros.addAll(registrosOnline)
 
-            val estudoLocalId = EstudoDao(this@RegistrosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            val estudoLocalId =
+                EstudoDao(this@RegistrosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             val campanhaLocalId = estudoLocalId?.let {
-                com.kheprix.db.CampanhaDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
+                com.kheprix.db.CampanhaDao(this@RegistrosActivity)
+                    .buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
             val unidadeLocalId = campanhaLocalId?.let {
-                com.kheprix.db.UnidadeDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
+                com.kheprix.db.UnidadeDao(this@RegistrosActivity)
+                    .buscarPorRemoteIdEscopo(unidadeId, it)?.localId
             }
             val eventoLocalId = unidadeLocalId?.let {
                 EventoDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(eventoId, it)?.localId
@@ -317,19 +343,21 @@ class RegistrosActivity : BaseDrawerActivity() {
                 val remoteIds = registrosOnline.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                        registros.add(RegistroResponse(
-                            id = off.remoteId ?: -off.localId.toInt(),
-                            especieId = off.especieRemoteId,
-                            eventoAmostragemId = off.eventoLocalId.toInt(),
-                            data = off.data,
-                            hora = off.hora,
-                            latitude = off.latitude,
-                            longitude = off.longitude,
-                            qtdeIndividuos = off.qtdeIndividuos,
-                            foto = off.foto,
-                            ausenciaEspecie = off.ausenciaEspecie,
-                            createdAt = off.createdAt ?: ""
-                        ))
+                        registros.add(
+                            RegistroResponse(
+                                id = off.remoteId ?: -off.localId.toInt(),
+                                especieId = off.especieRemoteId,
+                                eventoAmostragemId = off.eventoLocalId.toInt(),
+                                data = off.data,
+                                hora = off.hora,
+                                latitude = off.latitude,
+                                longitude = off.longitude,
+                                qtdeIndividuos = off.qtdeIndividuos,
+                                foto = off.foto,
+                                ausenciaEspecie = off.ausenciaEspecie,
+                                createdAt = off.createdAt ?: ""
+                            )
+                        )
                     }
                 }
             }
@@ -402,9 +430,9 @@ class RegistroAdapter(
 ) : RecyclerView.Adapter<RegistroAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvId: TextView     = view.findViewById(R.id.tvRegistroId)
-        val tvData: TextView   = view.findViewById(R.id.tvRegistroData)
-        val ivFoto: ImageView  = view.findViewById(R.id.ivRegistroFoto)
+        val tvId: TextView = view.findViewById(R.id.tvRegistroId)
+        val tvData: TextView = view.findViewById(R.id.tvRegistroData)
+        val ivFoto: ImageView = view.findViewById(R.id.ivRegistroFoto)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -413,7 +441,8 @@ class RegistroAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         val especie = buscarEspecie(item.especieId)
-        holder.tvId.text   = if (especie != null) "${especie.genero} ${especie.especie}" else "Registro #${item.id}"
+        holder.tvId.text =
+            if (especie != null) "${especie.genero} ${especie.especie}" else "Registro #${item.id}"
         holder.tvData.text = item.data.split("-").let { p ->
             if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else item.data
         }
@@ -434,18 +463,18 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     private lateinit var binding: ActivityNovoRegistroBinding
 
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
     private var campanhaLocalId = -1L
-    private var unidadeId      = -1
+    private var unidadeId = -1
     private var unidadeLocalId = -1L
-    private var eventoId       = -1
-    private var eventoLocalId  = -1L
-    private var registroId     = -1
-    private var modoEdicao     = false
+    private var eventoId = -1
+    private var eventoLocalId = -1L
+    private var registroId = -1
+    private var modoEdicao = false
 
     private var fotoBase64: String? = null
-    private var cameraUri: Uri?     = null
+    private var cameraUri: Uri? = null
     private var dataStr = ""
     private var horaStr = ""
     private var latDecimal: Double? = null
@@ -463,13 +492,15 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             else Toast.makeText(this, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
         }
 
-    private val galeria = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        if (r.resultCode == Activity.RESULT_OK) processarImagem(r.data?.data)
-    }
+    private val galeria =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+            if (r.resultCode == Activity.RESULT_OK) processarImagem(r.data?.data)
+        }
 
-    private val camera = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        if (r.resultCode == Activity.RESULT_OK) processarImagem(cameraUri)
-    }
+    private val camera =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+            if (r.resultCode == Activity.RESULT_OK) processarImagem(cameraUri)
+        }
 
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -483,20 +514,21 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
         campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
-        unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeId = intent.getIntExtra("unidade_id", -1)
         unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
         if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
-        eventoId       = intent.getIntExtra("evento_id", -1)
-        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        eventoId = intent.getIntExtra("evento_id", -1)
+        eventoLocalId = intent.getLongExtra("evento_local_id", -1L)
         if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
-        registroId     = intent.getIntExtra("registro_id", -1)
-        modoEdicao     = registroId != -1
+        registroId = intent.getIntExtra("registro_id", -1)
+        modoEdicao = registroId != -1
 
-        binding.tvTitulo.text = if (modoEdicao) "Editar Registro:" else "Novo Registro de Ocorrência:"
+        binding.tvTitulo.text =
+            if (modoEdicao) "Editar Registro:" else "Novo Registro de Ocorrência:"
 
         binding.ivGaleria.setOnClickListener {
             galeria.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))
@@ -526,7 +558,12 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     private fun processarImagem(uri: Uri?) {
         uri ?: return
         lifecycleScope.launch {
-            val base64 = withContext(Dispatchers.IO) { PhotoUtils.uriToBase64(this@NovoRegistroActivity, uri) }
+            val base64 = withContext(Dispatchers.IO) {
+                PhotoUtils.uriToBase64(
+                    this@NovoRegistroActivity,
+                    uri
+                )
+            }
             fotoBase64 = base64
             binding.tvNomeFoto.text = uri.lastPathSegment ?: "foto.jpg"
             if (base64 != null) {
@@ -536,14 +573,19 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     binding.ivPreviewFoto.visibility = View.VISIBLE
                 }
             } else {
-                Toast.makeText(this@NovoRegistroActivity, "Não foi possível carregar a foto", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@NovoRegistroActivity,
+                    "Não foi possível carregar a foto",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
     private fun verificarPermissaoCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED) {
+            == PackageManager.PERMISSION_GRANTED
+        ) {
             abrirCamera()
         } else {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -574,15 +616,22 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     binding.etLatitude.setText(decimalToDms(loc.latitude))
                     binding.etLongitude.setText(decimalToDms(loc.longitude))
                 } else {
-                    Toast.makeText(this, "GPS indisponível. Ative a localização.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "GPS indisponível. Ative a localização.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
 
     private fun decimalToDms(dec: Double): String {
-        val neg = dec < 0; val abs = Math.abs(dec)
-        val deg = abs.toInt(); val minD = (abs - deg) * 60
-        val min = minD.toInt(); val sec = ((minD - min) * 60).toInt()
+        val neg = dec < 0;
+        val abs = Math.abs(dec)
+        val deg = abs.toInt();
+        val minD = (abs - deg) * 60
+        val min = minD.toInt();
+        val sec = ((minD - min) * 60).toInt()
         return "${if (neg) "-" else ""}%02d°%02d'%02d\"".format(deg, min, sec)
     }
 
@@ -613,7 +662,10 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     if (result != raw) {
                         s.replace(0, s.length, result)
                         prevLen = result.length
-                        try { et.setSelection(result.length) } catch (_: Exception) {}
+                        try {
+                            et.setSelection(result.length)
+                        } catch (_: Exception) {
+                        }
                     }
                 }
                 editing = false
@@ -625,7 +677,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         texto.trim().toDoubleOrNull()?.let { return it }
         val r = Regex("""(-?\d+)°(\d+)'(\d+)""").find(texto.trim()) ?: return null
         val (d, m, s) = r.destructured
-        val dv = d.toInt(); val abs = Math.abs(dv) + m.toInt() / 60.0 + s.toInt() / 3600.0
+        val dv = d.toInt();
+        val abs = Math.abs(dv) + m.toInt() / 60.0 + s.toInt() / 3600.0
         return if (dv < 0) -abs else abs
     }
 
@@ -650,17 +703,26 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             val online = mutableListOf<EspecieResponse>()
             if (estudoRemoteId > 0) {
                 try {
-                    val resp = RetrofitClient.apiService.getEspecies(SessionManager.getAuthHeader(), estudoRemoteId)
+                    val resp = RetrofitClient.apiService.getEspecies(
+                        SessionManager.getAuthHeader(),
+                        estudoRemoteId
+                    )
                     if (resp.isSuccessful) online.addAll(resp.body() ?: emptyList())
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             val repo = OfflineRepository(this@NovoRegistroActivity)
             val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                else null
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
             resolvedEstudoLocal?.let { id ->
-                online.forEach { e -> try { repo.cacheEspecie(id, e) } catch (_: Exception) { } }
+                online.forEach { e ->
+                    try {
+                        repo.cacheEspecie(id, e)
+                    } catch (_: Exception) {
+                    }
+                }
             }
 
             especies.clear()
@@ -680,7 +742,9 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     }
 
     private fun carregarVariaveis() {
-        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
+        if (estudoRemoteId <= 0) {
+            carregarVariaveisOffline(); return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -690,12 +754,16 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     variaveis.clear(); variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
-            } catch (_: Exception) { carregarVariaveisOffline() }
+            } catch (_: Exception) {
+                carregarVariaveisOffline()
+            }
         }
     }
 
     private fun carregarVariaveisOffline() {
-        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        if (estudoLocalId <= 0) {
+            renderizarVariaveis(); return
+        }
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         variaveis.clear()
         db.rawQuery(
@@ -704,15 +772,17 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
-                variaveis.add(VariavelResponse(
-                    id = rid,
-                    nome = c.getString(1),
-                    nivelAplicacao = c.getString(2),
-                    tipoDado = c.getString(3),
-                    metrica = c.getString(4),
-                    createdAt = c.getString(5) ?: "",
-                    updatedAt = c.getString(6) ?: ""
-                ))
+                variaveis.add(
+                    VariavelResponse(
+                        id = rid,
+                        nome = c.getString(1),
+                        nivelAplicacao = c.getString(2),
+                        tipoDado = c.getString(3),
+                        metrica = c.getString(4),
+                        createdAt = c.getString(5) ?: "",
+                        updatedAt = c.getString(6) ?: ""
+                    )
+                )
             }
         }
         renderizarVariaveis()
@@ -720,18 +790,24 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun renderizarVariaveis() {
         binding.layoutVariaveis.removeAllViews(); camposVariavel.clear()
-        if (variaveis.isEmpty()) { binding.tvVariaveisTitle.visibility = View.GONE; return }
+        if (variaveis.isEmpty()) {
+            binding.tvVariaveisTitle.visibility = View.GONE; return
+        }
         binding.tvVariaveisTitle.visibility = View.VISIBLE
         variaveis.forEachIndexed { i, v ->
             val label = TextView(this).apply {
                 text = "${v.nome}:"; textSize = 13f; setTextColor(0xFF6B7A5E.toInt())
-                setPadding(0, if (i > 0) 12 else 0, 0, 0); typeface = android.graphics.Typeface.MONOSPACE
+                setPadding(0, if (i > 0) 12 else 0, 0, 0); typeface =
+                android.graphics.Typeface.MONOSPACE
             }
             binding.layoutVariaveis.addView(label)
             val linha = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = 4 }
+                orientation = LinearLayout.HORIZONTAL; gravity =
+                android.view.Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also { it.topMargin = 4 }
             }
             val campo: View = criarCampoVariavel(v.tipoDado)
             camposVariavel[v.id] = campo; linha.addView(campo)
@@ -752,11 +828,14 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         if (camposVariavel.isEmpty()) return
         r.valoresVariaveis?.forEach { vv ->
             when (val view = camposVariavel[vv.variavelId]) {
-                is Spinner -> view.setSelection(when (vv.valor.trim().lowercase()) {
-                    "true", "verdadeiro" -> 1
-                    "false", "falso"     -> 2
-                    else                 -> 0
-                })
+                is Spinner -> view.setSelection(
+                    when (vv.valor.trim().lowercase()) {
+                        "true", "verdadeiro" -> 1
+                        "false", "falso" -> 2
+                        else -> 0
+                    }
+                )
+
                 is EditText -> view.setText(vv.valor)
                 else -> {}
             }
@@ -777,6 +856,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     listOf("—", "Verdadeiro", "Falso")
                 ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
             }
+
             else -> EditText(this).apply {
                 layoutParams = lp
                 background = bg
@@ -785,6 +865,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                     "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
                             android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
                             android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+
                     else -> android.text.InputType.TYPE_CLASS_TEXT
                 }
             }
@@ -796,11 +877,18 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             lifecycleScope.launch {
                 try {
                     val resp = RetrofitClient.apiService.getRegistro(
-                        SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                        SessionManager.getAuthHeader(),
+                        estudoRemoteId,
+                        campanhaId,
+                        unidadeId,
+                        eventoId,
+                        registroId
                     )
                     val r = resp.body()
                     if (r != null) preencherForm(r) else preencherFormOffline()
-                } catch (_: Exception) { preencherFormOffline() }
+                } catch (_: Exception) {
+                    preencherFormOffline()
+                }
             }
         } else {
             preencherFormOffline()
@@ -813,8 +901,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         else {
             val repo = OfflineRepository(this)
             val eL = if (estudoLocalId > 0) estudoLocalId
-                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                else null
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
             val cL = eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) }
             val uL = cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) }
             uL?.let { repo.eventoLocalIdFromRemote(it, eventoId) }
@@ -858,7 +946,12 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         if (!r.foto.isNullOrBlank()) {
             binding.tvNomeFoto.text = "foto_atual.jpg"
             binding.ivPreviewFoto.visibility = View.VISIBLE
-            ImagemLoader.load(lifecycleScope, binding.ivPreviewFoto, r.foto, R.drawable.ic_placeholder_beetle)
+            ImagemLoader.load(
+                lifecycleScope,
+                binding.ivPreviewFoto,
+                r.foto,
+                R.drawable.ic_placeholder_beetle
+            )
         }
         val idx = especies.indexOfFirst { it.id == r.especieId }
         if (idx >= 0) binding.spinnerEspecie.setSelection(idx + 1)
@@ -875,17 +968,32 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.postRegistro(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, req
+                    SessionManager.getAuthHeader(),
+                    estudoRemoteId,
+                    campanhaId,
+                    unidadeId,
+                    eventoId,
+                    req
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovoRegistroActivity, "Registro criado!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovoRegistroActivity,
+                        "Registro criado!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovoRegistroActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovoRegistroActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 mostrarDialogOffline(req)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -905,17 +1013,33 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.patchRegistro(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId, patchReq
+                    SessionManager.getAuthHeader(),
+                    estudoRemoteId,
+                    campanhaId,
+                    unidadeId,
+                    eventoId,
+                    registroId,
+                    patchReq
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovoRegistroActivity, "Registro atualizado!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovoRegistroActivity,
+                        "Registro atualizado!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovoRegistroActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovoRegistroActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarEdicaoOffline(patchReq, "Sem conexão — alterações salvas offline.")
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -927,8 +1051,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             return
         }
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-            else null
+        else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+        else null
         val novoEspecieLocalId = req.especieId?.let { eid ->
             resolvedEstudoLocal?.let { repo.resolveEspecieLocalId(it, eid) }
         }
@@ -943,7 +1067,9 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun coletarFormulario(): RegistroRequest? {
         val espPos = binding.spinnerEspecie.selectedItemPosition
-        if (espPos == 0) { Toast.makeText(this, "Selecione a espécie", Toast.LENGTH_SHORT).show(); return null }
+        if (espPos == 0) {
+            Toast.makeText(this, "Selecione a espécie", Toast.LENGTH_SHORT).show(); return null
+        }
         val especie = especies.getOrNull(espPos - 1) ?: return null
 
         val dataFinal = dataStr.ifEmpty {
@@ -960,7 +1086,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         val lat = latDecimal ?: parseCoordenada(binding.etLatitude.text.toString())
         val lon = lonDecimal ?: parseCoordenada(binding.etLongitude.text.toString())
         if (lat == null || lon == null) {
-            Toast.makeText(this, "Preencha coordenadas válidas", Toast.LENGTH_SHORT).show(); return null
+            Toast.makeText(this, "Preencha coordenadas válidas", Toast.LENGTH_SHORT)
+                .show(); return null
         }
         return RegistroRequest(
             especieId = especie.id, data = dataFinal, hora = horaFinal,
@@ -982,9 +1109,10 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             val valor = when (view) {
                 is Spinner -> when (view.selectedItem?.toString()) {
                     "Verdadeiro" -> "true"
-                    "Falso"      -> "false"
-                    else         -> null
+                    "Falso" -> "false"
+                    else -> null
                 }
+
                 is EditText -> view.text.toString().trim().ifEmpty { null }
                 else -> null
             } ?: return@mapNotNull null
@@ -1023,19 +1151,23 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                         }
                     }
                 }
+
             else -> null
         }
         if (eventoResolved == null) {
-            Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+            Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG)
+                .show(); return false
         }
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-            else null
+        else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+        else null
         if (resolvedEstudoLocal == null) {
-            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG).show(); return false
+            Toast.makeText(this, "Estudo não está salvo offline.", Toast.LENGTH_LONG)
+                .show(); return false
         }
         val especieLocalId = repo.resolveEspecieLocalId(resolvedEstudoLocal, req.especieId) ?: run {
-            Toast.makeText(this, "Espécie não está salva offline.", Toast.LENGTH_LONG).show(); return false
+            Toast.makeText(this, "Espécie não está salva offline.", Toast.LENGTH_LONG)
+                .show(); return false
         }
         return try {
             repo.criarRegistroOffline(eventoResolved, especieLocalId, req)
@@ -1056,14 +1188,14 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosDetalheBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
     private var campanhaLocalId = -1L
-    private var unidadeId      = -1
+    private var unidadeId = -1
     private var unidadeLocalId = -1L
-    private var eventoId       = -1
-    private var eventoLocalId  = -1L
-    private var registroId     = -1
+    private var eventoId = -1
+    private var eventoLocalId = -1L
+    private var registroId = -1
 
     private var registroCarregado: RegistroResponse? = null
     private val variaveis = mutableListOf<VariavelResponse>()
@@ -1074,17 +1206,17 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
         campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
-        unidadeId      = intent.getIntExtra("unidade_id", -1)
+        unidadeId = intent.getIntExtra("unidade_id", -1)
         unidadeLocalId = intent.getLongExtra("unidade_local_id", -1L)
         if (unidadeId < 0 && unidadeLocalId <= 0) unidadeLocalId = (-unidadeId).toLong()
-        eventoId       = intent.getIntExtra("evento_id", -1)
-        eventoLocalId  = intent.getLongExtra("evento_local_id", -1L)
+        eventoId = intent.getIntExtra("evento_id", -1)
+        eventoLocalId = intent.getLongExtra("evento_local_id", -1L)
         if (eventoId < 0 && eventoLocalId <= 0) eventoLocalId = (-eventoId).toLong()
-        registroId     = intent.getIntExtra("registro_id", -1)
+        registroId = intent.getIntExtra("registro_id", -1)
 
         binding.ivEditar.setOnClickListener {
             startActivity(Intent(this, NovoRegistroActivity::class.java).apply {
@@ -1121,11 +1253,18 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getRegistro(
-                    SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId, registroId
+                    SessionManager.getAuthHeader(),
+                    estudoRemoteId,
+                    campanhaId,
+                    unidadeId,
+                    eventoId,
+                    registroId
                 )
                 val r = resp.body()
                 if (r != null) preencherRegistro(r) else carregarRegistroOffline()
-            } catch (_: Exception) { carregarRegistroOffline() }
+            } catch (_: Exception) {
+                carregarRegistroOffline()
+            }
         }
     }
 
@@ -1135,8 +1274,8 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         else {
             val repo = OfflineRepository(this)
             val eL = if (estudoLocalId > 0) estudoLocalId
-                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                else null
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
             val cL = eL?.let { repo.campanhaLocalIdFromRemote(it, campanhaId) }
             val uL = cL?.let { repo.unidadeLocalIdFromRemote(it, unidadeId) }
             uL?.let { repo.eventoLocalIdFromRemote(it, eventoId) }
@@ -1168,10 +1307,10 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
 
     private fun preencherRegistro(r: RegistroResponse) {
         registroCarregado = r
-        binding.tvQtde.text      = r.qtdeIndividuos?.toString() ?: "—"
-        binding.tvLatitude.text  = r.latitude.toString()
+        binding.tvQtde.text = r.qtdeIndividuos?.toString() ?: "—"
+        binding.tvLatitude.text = r.latitude.toString()
         binding.tvLongitude.text = r.longitude.toString()
-        binding.tvData.text      = r.data.split("-").let { p ->
+        binding.tvData.text = r.data.split("-").let { p ->
             if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else r.data
         }
         binding.tvHora.text = "${r.hora.take(5)}h"
@@ -1196,7 +1335,9 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     )
                     val e = resp.body()
                     if (e != null) preencherEspecie(e) else carregarEspecieOffline(especieId)
-                } catch (_: Exception) { carregarEspecieOffline(especieId) }
+                } catch (_: Exception) {
+                    carregarEspecieOffline(especieId)
+                }
             }
         } else {
             carregarEspecieOffline(especieId)
@@ -1206,8 +1347,8 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     private fun carregarEspecieOffline(especieId: Int) {
         val repo = OfflineRepository(this)
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-            else null
+        else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+        else null
         if (resolvedEstudoLocal == null) return
         val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
             .firstOrNull { it.id == especieId }
@@ -1216,13 +1357,15 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun preencherEspecie(e: com.kheprix.models.EspecieResponse) {
-        binding.tvTitulo.text         = "${e.genero} ${e.especie}"
+        binding.tvTitulo.text = "${e.genero} ${e.especie}"
         binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
-        binding.tvNomePopular.text    = e.nomePopular ?: "—"
+        binding.tvNomePopular.text = e.nomePopular ?: "—"
     }
 
     private fun carregarVariaveis() {
-        if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
+        if (estudoRemoteId <= 0) {
+            carregarVariaveisOffline(); return
+        }
         lifecycleScope.launch {
             try {
                 val resp = RetrofitClient.apiService.getVariaveis(
@@ -1233,12 +1376,16 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     variaveis.addAll(resp.body() ?: emptyList())
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
-            } catch (_: Exception) { carregarVariaveisOffline() }
+            } catch (_: Exception) {
+                carregarVariaveisOffline()
+            }
         }
     }
 
     private fun carregarVariaveisOffline() {
-        if (estudoLocalId <= 0) { renderizarVariaveis(); return }
+        if (estudoLocalId <= 0) {
+            renderizarVariaveis(); return
+        }
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         variaveis.clear()
         db.rawQuery(
@@ -1247,15 +1394,17 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
-                variaveis.add(VariavelResponse(
-                    id = rid,
-                    nome = c.getString(1),
-                    nivelAplicacao = c.getString(2),
-                    tipoDado = c.getString(3),
-                    metrica = c.getString(4),
-                    createdAt = c.getString(5) ?: "",
-                    updatedAt = c.getString(6) ?: ""
-                ))
+                variaveis.add(
+                    VariavelResponse(
+                        id = rid,
+                        nome = c.getString(1),
+                        nivelAplicacao = c.getString(2),
+                        tipoDado = c.getString(3),
+                        metrica = c.getString(4),
+                        createdAt = c.getString(5) ?: "",
+                        updatedAt = c.getString(6) ?: ""
+                    )
+                )
             }
         }
         renderizarVariaveis()
@@ -1298,8 +1447,8 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
         return if (tipoDado == "boolean") {
             when (valor.trim().lowercase()) {
                 "true", "verdadeiro" -> "Verdadeiro"
-                "false", "falso"     -> "Falso"
-                else                 -> valor
+                "false", "falso" -> "Falso"
+                else -> valor
             }
         } else valor
     }
@@ -1313,7 +1462,11 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     val localId = resolveRegistroLocalId()
                     if (localId != null) {
                         com.kheprix.db.DatabaseHelper(this).writableDatabase
-                            .delete("registros_ocorrencia", "local_id = ?", arrayOf(localId.toString()))
+                            .delete(
+                                "registros_ocorrencia",
+                                "local_id = ?",
+                                arrayOf(localId.toString())
+                            )
                     }
                     finish()
                     return@setPositiveButton
@@ -1326,11 +1479,19 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                         )
                         resolveRegistroLocalId()?.let { lid ->
                             com.kheprix.db.DatabaseHelper(this@RegistroDetalheActivity).writableDatabase
-                                .delete("registros_ocorrencia", "local_id = ?", arrayOf(lid.toString()))
+                                .delete(
+                                    "registros_ocorrencia",
+                                    "local_id = ?",
+                                    arrayOf(lid.toString())
+                                )
                         }
                         finish()
                     } catch (_: Exception) {
-                        Toast.makeText(this@RegistroDetalheActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@RegistroDetalheActivity,
+                            "Sem conexão",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }

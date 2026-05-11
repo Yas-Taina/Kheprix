@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -27,7 +26,7 @@
             android:layout_marginEnd="16dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
 
         <ImageView
@@ -41,7 +40,7 @@
             app:layout_constraintTop_toBottomOf="@id/tvTitulo"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
 
         <TextView
             android:id="@+id/tvInstrucao"
@@ -57,7 +56,7 @@
             android:layout_marginEnd="24dp"
             app:layout_constraintTop_toBottomOf="@id/ivBesouro"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
 
         <TextView
@@ -72,7 +71,7 @@
             android:layout_marginStart="64dp"
             android:visibility="visible"
             app:layout_constraintTop_toBottomOf="@id/tvInstrucao"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/etEmail"
@@ -91,7 +90,7 @@
             android:layout_marginEnd="64dp"
             app:layout_constraintTop_toBottomOf="@id/tvLabelEmail"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
             android:id="@+id/btnEnviarToken"
@@ -108,7 +107,7 @@
             android:layout_marginEnd="80dp"
             app:layout_constraintTop_toBottomOf="@id/etEmail"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <LinearLayout
             android:id="@+id/groupToken"
@@ -129,7 +128,7 @@
                 android:text="Token:"
                 android:textSize="17sp"
                 android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+                android:fontFamily="monospace" />
 
             <EditText
                 android:id="@+id/etToken"
@@ -142,7 +141,7 @@
                 android:textColor="#4A5240"
                 android:textCursorDrawable="@null"
                 android:importantForAutofill="no"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp" />
         </LinearLayout>
 
         <Button
@@ -160,7 +159,7 @@
             android:layout_marginEnd="80dp"
             app:layout_constraintTop_toBottomOf="@id/groupToken"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <LinearLayout
             android:id="@+id/groupNovaSenha"
@@ -181,7 +180,7 @@
                 android:text="Nova senha:"
                 android:textSize="17sp"
                 android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+                android:fontFamily="monospace" />
 
             <EditText
                 android:id="@+id/etNovaSenha"
@@ -193,7 +192,7 @@
                 android:paddingEnd="12dp"
                 android:textColor="#4A5240"
                 android:textCursorDrawable="@null"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -202,7 +201,7 @@
                 android:textSize="17sp"
                 android:textColor="#4A5240"
                 android:fontFamily="monospace"
-                android:layout_marginTop="12dp"/>
+                android:layout_marginTop="12dp" />
 
             <EditText
                 android:id="@+id/etConfirmarNovaSenha"
@@ -214,7 +213,7 @@
                 android:paddingEnd="12dp"
                 android:textColor="#4A5240"
                 android:textCursorDrawable="@null"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp" />
         </LinearLayout>
 
         <Button
@@ -232,7 +231,7 @@
             android:layout_marginEnd="80dp"
             app:layout_constraintTop_toBottomOf="@id/groupNovaSenha"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -243,7 +242,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintTop_toBottomOf="@id/btnRedefinirSenha"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

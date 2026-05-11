@@ -31,7 +31,8 @@ class ConvitesActivity : BaseDrawerActivity() {
         binding = ActivityConvitesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        adapter = ConviteAdapter(convites,
+        adapter = ConviteAdapter(
+            convites,
             onAceitar = { convite -> responderConvite(convite, aceitar = true) },
             onRecusar = { convite -> responderConvite(convite, aceitar = false) }
         )
@@ -82,7 +83,7 @@ class ConvitesActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             try {
                 val token = SessionManager.getAuthHeader()
-                val resp  = if (aceitar)
+                val resp = if (aceitar)
                     RetrofitClient.apiService.aceitarConvite(token, convite.token)
                 else
                     RetrofitClient.apiService.recusarConvite(token, convite.token)
@@ -92,7 +93,11 @@ class ConvitesActivity : BaseDrawerActivity() {
                     Toast.makeText(this@ConvitesActivity, msg, Toast.LENGTH_SHORT).show()
                     carregarConvites()
                 } else {
-                    Toast.makeText(this@ConvitesActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ConvitesActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 Toast.makeText(this@ConvitesActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
@@ -108,10 +113,10 @@ class ConviteAdapter(
 ) : RecyclerView.Adapter<ConviteAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvNomeEstudo: TextView  = view.findViewById(R.id.tvConviteEstudo)
-        val tvRemetente: TextView   = view.findViewById(R.id.tvConviteRemetente)
-        val btnAceitar: Button      = view.findViewById(R.id.btnAceitar)
-        val btnRecusar: Button      = view.findViewById(R.id.btnRecusar)
+        val tvNomeEstudo: TextView = view.findViewById(R.id.tvConviteEstudo)
+        val tvRemetente: TextView = view.findViewById(R.id.tvConviteRemetente)
+        val btnAceitar: Button = view.findViewById(R.id.btnAceitar)
+        val btnRecusar: Button = view.findViewById(R.id.btnRecusar)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -120,7 +125,7 @@ class ConviteAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.tvNomeEstudo.text = item.nomeEstudo
-        holder.tvRemetente.text  = item.nomeRemetente
+        holder.tvRemetente.text = item.nomeRemetente
         holder.btnAceitar.setOnClickListener { onAceitar(item) }
         holder.btnRecusar.setOnClickListener { onRecusar(item) }
     }

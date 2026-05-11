@@ -56,9 +56,10 @@ class ColaboradoresActivity : BaseDrawerActivity() {
     }
 
     private fun setupAdapter() {
-        adapter = ColaboradorAdapter(colaboradores,
+        adapter = ColaboradorAdapter(
+            colaboradores,
             onAlterarAcesso = { colab, novoPerfil -> alterarAcesso(colab, novoPerfil) },
-            onDeletar       = { colab -> confirmarDeletar(colab) }
+            onDeletar = { colab -> confirmarDeletar(colab) }
         )
         binding.rvColaboradores.layoutManager = LinearLayoutManager(this)
         binding.rvColaboradores.adapter = adapter
@@ -83,10 +84,18 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     ConviteRequest(emailConvidado = email)
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@ColaboradoresActivity, "Convite enviado para $email", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Convite enviado para $email",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     binding.etEmailConvite.text?.clear()
                 } else {
-                    Toast.makeText(this@ColaboradoresActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 Toast.makeText(this@ColaboradoresActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
@@ -110,7 +119,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     )
                     atualizarListaConvitesPendentes()
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -134,7 +144,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                 setTextColor(0xFF4A5240.toInt())
                 typeface = android.graphics.Typeface.MONOSPACE
                 layoutParams = android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+                )
             }
             val btnCancelar = android.widget.Button(this).apply {
                 text = "Cancelar"
@@ -149,7 +160,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
 
             val divider = android.view.View(this).apply {
                 layoutParams = android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1)
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1
+                )
                 setBackgroundColor(0xFFC8D4BE.toInt())
             }
             container.addView(divider)
@@ -163,7 +175,11 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, conviteId
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@ColaboradoresActivity, "Convite cancelado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Convite cancelado",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     carregarConvitesPendentes()
                 }
             } catch (_: Exception) {
@@ -195,7 +211,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     binding.etSenhaAutocadastro.setText(body.senhaAutocadastro)
                     gerarQrCode(body.codigo)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -207,9 +224,17 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     CodigoAcessoPatchRequest(senhaAutocadastro = novaSenha)
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@ColaboradoresActivity, "Senha atualizada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Senha atualizada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } else {
-                    Toast.makeText(this@ColaboradoresActivity, "Erro ao atualizar", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Erro ao atualizar",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 Toast.makeText(this@ColaboradoresActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
@@ -249,7 +274,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     colaboradores.addAll(todos.filter { it.idUsuario != meuId })
                     adapter.notifyDataSetChanged()
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -257,7 +283,11 @@ class ColaboradoresActivity : BaseDrawerActivity() {
 
     private fun alterarAcesso(colab: ColaboradorResponse, novoPerfil: String) {
         if (colab.perfil == "proprietario" && novoPerfil != "Proprietário" && totalProprietarios() <= 1) {
-            Toast.makeText(this, "Não é possível alterar o acesso do único proprietário do estudo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Não é possível alterar o acesso do único proprietário do estudo",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         lifecycleScope.launch {
@@ -267,9 +297,17 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                     ColaboradorPatchRequest(perfil = perfilParaApi(novoPerfil))
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@ColaboradoresActivity, "Acesso atualizado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Acesso atualizado",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } else {
-                    Toast.makeText(this@ColaboradoresActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ColaboradoresActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 Toast.makeText(this@ColaboradoresActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
@@ -279,7 +317,11 @@ class ColaboradoresActivity : BaseDrawerActivity() {
 
     private fun confirmarDeletar(colab: ColaboradorResponse) {
         if (colab.perfil == "proprietario" && totalProprietarios() <= 1) {
-            Toast.makeText(this, "Não é possível remover o único proprietário do estudo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Não é possível remover o único proprietário do estudo",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         AlertDialog.Builder(this)
@@ -292,7 +334,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
                             SessionManager.getAuthHeader(), estudoRemoteId, colab.idUsuario
                         )
                         carregarColaboradores()
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
             }
             .setNegativeButton("Cancelar", null).show()
@@ -300,8 +343,8 @@ class ColaboradoresActivity : BaseDrawerActivity() {
 
     private fun perfilParaApi(label: String) = when (label) {
         "Proprietário" -> "proprietario"
-        "Colaborador"  -> "colaborador"
-        else           -> label.lowercase()
+        "Colaborador" -> "colaborador"
+        else -> label.lowercase()
     }
 }
 
@@ -314,10 +357,10 @@ class ColaboradorAdapter(
     private val perfis = listOf("Colaborador", "Proprietário")
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvNome: TextView       = view.findViewById(R.id.tvColabNome)
-        val spinner: Spinner       = view.findViewById(R.id.spinnerPerfil)
-        val btnAlterar: Button     = view.findViewById(R.id.btnAlterarAcesso)
-        val ivDeletar: ImageView   = view.findViewById(R.id.ivDeletarColab)
+        val tvNome: TextView = view.findViewById(R.id.tvColabNome)
+        val spinner: Spinner = view.findViewById(R.id.spinnerPerfil)
+        val btnAlterar: Button = view.findViewById(R.id.btnAlterarAcesso)
+        val ivDeletar: ImageView = view.findViewById(R.id.ivDeletarColab)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -336,7 +379,7 @@ class ColaboradorAdapter(
 
         val perfilLabel = when (item.perfil) {
             "proprietario" -> "Proprietário"
-            else           -> "Colaborador"
+            else -> "Colaborador"
         }
         holder.spinner.setSelection(perfis.indexOf(perfilLabel).coerceAtLeast(0))
 
