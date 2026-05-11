@@ -45,17 +45,16 @@ export class EstudoService extends BaseService {
     formato: FormatoExportacao = "csv",
   ): Observable<Blob> {
     let params = new HttpParams().set("formato", formato);
-
+ 
     if (formato !== "xml" && agrupamento) {
       params = params.set("agrupamento", agrupamento);
     }
-
+ 
     const acceptHeader = formato === "xml" ? "application/xml" : "text/csv";
-    const headers = this.getHeaders().set("Accept", acceptHeader);
-
+ 
     return this.http
       .get(`${this.apiUrl}/estudos/${id}/exportar_dados`, {
-        headers,
+        headers: this.getHeadersBlob(acceptHeader),
         params,
         responseType: "blob",
       })
