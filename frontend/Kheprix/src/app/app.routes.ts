@@ -90,14 +90,6 @@ export const routes: Routes = [
     //canActivate: [authGuard],
   },
   {
-    path: "estudos/:estudo_id/editar",
-    loadComponent: () =>
-      import("./pages/estudos/editar/estudo-editar.component").then(
-        (m) => m.EstudoEditarComponent,
-      ),
-    //canActivate: [authGuard],
-  },
-  {
     path: "estudos/:estudo_id/colaboradores",
     loadComponent: () =>
       import("./pages/estudos/colaboradores/colaboradores.component").then(
