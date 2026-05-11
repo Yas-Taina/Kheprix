@@ -76,13 +76,38 @@
       class="d-flex gap-sm mt-md"
       style="flex-wrap: wrap; justify-content: space-evenly"
     >
-      <button class="btn btn-primary btn-sm" (click)="irParaEditar()">
+      <button class="btn btn-primary btn-sm" (click)="verDetalhes = !verDetalhes">
+        {{ verDetalhes ? "Esconder Detalhes" : "Ver Detalhes do Estudo" }}
         Visualizar Detalhes
       </button>
       <button class="btn btn-secondary btn-sm" (click)="abrirExportar()">
         Exportar Dados
       </button>
     </div>
+    <div *ngIf="verDetalhes" class="estudo-detalhes mt-md">
+      <h2 class="section-title">Detalhes do Estudo</h2>
+      <div class="detail-grid mt-sm">
+        <div class="detail-field">
+          <label>Descrição</label>
+          <span>{{ estudo.descricao || "—" }}</span>
+        </div>
+        <div class="detail-field">
+          <label>Data de Criação</label>
+          <span>{{ util.formatDate(estudo.created_at) }}</span>
+        </div>
+        <div class="detail-field">
+          <label>Última Edição</label>
+          <span>{{ util.formatDate(estudo.updated_at) }}</span>
+        </div>
+        <div
+          *ngFor="let v of variaveis; let i = index"
+          class="detail-field mt-sm"
+        >
+          <label>{{ v.nome }}</label>
+          <span>Tipo de Dado: {{ v.tipo_dado }}</span> 
+          <span>Métrica: {{ v.metrica || "—" }}</span>
+        </div>
+      </div>
   </div>
 
   <ng-container *ngIf="dashboard() as d">

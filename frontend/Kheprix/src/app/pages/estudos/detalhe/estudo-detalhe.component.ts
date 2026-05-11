@@ -11,7 +11,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EstudoService } from "../../../core/services/estudo.service";
 import { DashboardCompletoService } from "../../../core/services/dashboardcompleto.service";
-import { Estudo, TipoAgrupamento, FormatoExportacao } from "../../../models";
+import { Estudo, TipoAgrupamento, FormatoExportacao, Variavel } from "../../../models";
 import {
   EstudoDashboard,
   AgrupamentoTempo,
@@ -33,6 +33,7 @@ import {
   Filler,
 } from "chart.js";
 import * as L from "leaflet";
+import { VariavelService } from "../../../core/services/variavel.service";
 
 Chart.register(
   LineController,
@@ -62,6 +63,8 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
   loading = true;
   estudoId!: number;
   showExportar = false;
+  verDetalhes = false;
+  variaveis: Variavel[] = [];
   agrupamento: TipoAgrupamento = "registro_ocorrencia";
   formato: FormatoExportacao = "csv";
   exportLoading = false;
@@ -91,6 +94,7 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
 
   constructor(
     private estudoService: EstudoService,
+    private variavelService: VariavelService,
     private dashboardService: DashboardCompletoService,
     private route: ActivatedRoute,
     public router: Router,
@@ -109,6 +113,9 @@ export class EstudoDetalheComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
     });
+      this.variavelService.listar(this.estudoId).subscribe((vars) => {
+        this.variaveis = vars;
+      });
 
     this.carregarDashboard();
   }
