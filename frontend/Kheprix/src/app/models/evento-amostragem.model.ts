@@ -7,6 +7,7 @@ export interface EventoAmostragem {
   esforco_real: string;
   created_at: string;
   updated_at: string;
+  valores_variaveis?: ValorVariavel[];
 }
 
 export interface EventoAmostragemCreate {
