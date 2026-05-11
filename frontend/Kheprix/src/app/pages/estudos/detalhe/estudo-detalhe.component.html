@@ -99,13 +99,14 @@
           <label>Última Edição</label>
           <span>{{ util.formatDate(estudo.updated_at) }}</span>
         </div>
+        <label>Váriaveis Cadastradas</label>
         <div
           *ngFor="let v of variaveis; let i = index"
           class="detail-field mt-sm"
         >
-          <label>{{ v.nome }}</label>
-          <span>Tipo de Dado: {{ v.tipo_dado }}</span> 
-          <span>Métrica: {{ v.metrica || "—" }}</span>
+          <span style="font-size: 0.9rem;">{{ v.nome }}</span><br />
+          <span style="font-size: 0.7rem;">Tipo de Dado: {{ v.tipo_dado }}</span> <br />
+          <span style="font-size: 0.7rem;">Métrica: {{ v.metrica || "—" }}</span>
         </div>
       </div>
   </div>

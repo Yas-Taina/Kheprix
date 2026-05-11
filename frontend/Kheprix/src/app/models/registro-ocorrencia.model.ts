@@ -12,6 +12,7 @@ export interface RegistroOcorrencia {
   foto: string;
   ausencia_especie: boolean;
   created_at: string;
+  valores_variaveis?: ValorVariavel[];
 }
 
 export interface RegistroOcorrenciaCreate {
