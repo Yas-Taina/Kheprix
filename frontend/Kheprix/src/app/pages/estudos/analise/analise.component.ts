@@ -461,5 +461,4 @@ export class AnalisesComponent implements OnInit {
     a.download = "";
     a.click();
   }
-
 }

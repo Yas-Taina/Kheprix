@@ -5,7 +5,12 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EspecieService } from "../../../core/services/especie.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { Especie, Variavel, ValorVariavel, RegistroOcorrencia } from "../../../models";
+import {
+  Especie,
+  Variavel,
+  ValorVariavel,
+  RegistroOcorrencia,
+} from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";

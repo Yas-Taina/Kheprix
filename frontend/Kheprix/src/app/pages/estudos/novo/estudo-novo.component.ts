@@ -52,18 +52,17 @@ export class EstudoNovoComponent {
     this.loading = true;
     this.erro = "";
 
-
-      const payload = {
-        nome: this.nome,
-        observacoes: this.observacoes,
-        variaveis: this.variaveis.map(({ _id, ...v }) => v),
-      };
-      this.estudoService.criar(payload).subscribe({
-        next: (e) => this.router.navigate(["/estudos", e.id]),
-        error: () => {
-          this.erro = "Erro ao criar estudo.";
-          this.loading = false;
-        },
-      });
+    const payload = {
+      nome: this.nome,
+      observacoes: this.observacoes,
+      variaveis: this.variaveis.map(({ _id, ...v }) => v),
+    };
+    this.estudoService.criar(payload).subscribe({
+      next: (e) => this.router.navigate(["/estudos", e.id]),
+      error: () => {
+        this.erro = "Erro ao criar estudo.";
+        this.loading = false;
+      },
+    });
   }
 }

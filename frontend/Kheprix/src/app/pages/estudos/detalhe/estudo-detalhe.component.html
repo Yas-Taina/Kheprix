@@ -76,7 +76,10 @@
       class="d-flex gap-sm mt-md"
       style="flex-wrap: wrap; justify-content: space-evenly"
     >
-      <button class="btn btn-primary btn-sm" (click)="verDetalhes = !verDetalhes">
+      <button
+        class="btn btn-primary btn-sm"
+        (click)="verDetalhes = !verDetalhes"
+      >
         {{ verDetalhes ? "Esconder Detalhes" : "Ver Detalhes do Estudo" }}
       </button>
       <button class="btn btn-secondary btn-sm" (click)="abrirExportar()">
@@ -104,178 +107,190 @@
           *ngFor="let v of variaveis; let i = index"
           class="detail-field mt-sm"
         >
-          <span style="font-size: 0.9rem;">{{ v.nome }}</span><br />
-          <span style="font-size: 0.7rem;">Tipo de Dado: {{ TipoLabel(v.tipo_dado) }}</span> <br />
-          <span style="font-size: 0.7rem;">Nivel de Estudo: {{ NivelLabel(v.nivel_aplicacao) }}</span> <br />
-          <span style="font-size: 0.7rem;">Métrica: {{ v.metrica || "—" }}</span>
+          <span style="font-size: 0.9rem">{{ v.nome }}</span
+          ><br />
+          <span style="font-size: 0.7rem"
+            >Tipo de Dado: {{ TipoLabel(v.tipo_dado) }}</span
+          >
+          <br />
+          <span style="font-size: 0.7rem"
+            >Nivel de Estudo: {{ NivelLabel(v.nivel_aplicacao) }}</span
+          >
+          <br />
+          <span style="font-size: 0.7rem">Métrica: {{ v.metrica || "—" }}</span>
         </div>
       </div>
+    </div>
+
+    <ng-container *ngIf="dashboard() as d">
+      <div class="db-grid mt-md">
+        <div class="db-col-esquerda">
+          <div class="card db-chart-card">
+            <h3 class="section-title db-chart-title">
+              Ocorrências por Espécie
+            </h3>
+            <div class="db-chart-wrap db-chart-wrap--donut">
+              <canvas id="chart-ocorrencias"></canvas>
+            </div>
+          </div>
+
+          <div class="card db-chart-card">
+            <h3 class="section-title db-chart-title">
+              Registros por Espécie ao Longo do Tempo
+            </h3>
+            <select
+              class="form-control db-select"
+              [ngModel]="selectedEspecie()"
+              (ngModelChange)="selectedEspecie.set($event); onEspecieChange()"
+            >
+              <option value="">Selecione uma Espécie</option>
+              <option *ngFor="let esp of especiesDisponiveis()" [value]="esp">
+                {{ esp }}
+              </option>
+            </select>
+            <div class="db-chart-wrap db-chart-wrap--line">
+              <canvas id="chart-especie-tempo"></canvas>
+            </div>
+          </div>
+
+          <div class="card db-chart-card">
+            <div class="db-chart-wrap db-chart-wrap--barh">
+              <canvas id="chart-nativas-invasoras"></canvas>
+            </div>
+          </div>
+
+          <div class="card db-chart-card">
+            <h3 class="section-title db-chart-title">
+              Quantidade de Espécies Distintas
+            </h3>
+            <select
+              class="form-control db-select"
+              [ngModel]="selectedAgrupamento()"
+              (ngModelChange)="
+                selectedAgrupamento.set($event); onAgrupamentoChange()
+              "
+            >
+              <option value="mes">Por mês</option>
+              <option value="ano">Por ano</option>
+            </select>
+            <div
+              class="db-chart-wrap db-chart-wrap--barh db-chart-wrap--barh-tall"
+            >
+              <canvas id="chart-especies-distintas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="db-col-direita"
+          style="display: flex; flex-direction: column; height: 100%"
+        >
+          <div class="card db-mapa-card">
+            <div id="mapa-registros" class="db-mapa"></div>
+          </div>
+
+          <div class="card db-chart-card" style="margin-top: auto">
+            <h3 class="section-title db-chart-title">
+              Quantidade de Espécies Distintas ao Longo do Tempo
+            </h3>
+            <div class="db-chart-wrap db-chart-wrap--line">
+              <canvas id="chart-especies-distintas-tempo"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </div>
 
-  <ng-container *ngIf="dashboard() as d">
-    <div class="db-grid mt-md">
-      <div class="db-col-esquerda">
-        <div class="card db-chart-card">
-          <h3 class="section-title db-chart-title">Ocorrências por Espécie</h3>
-          <div class="db-chart-wrap db-chart-wrap--donut">
-            <canvas id="chart-ocorrencias"></canvas>
-          </div>
-        </div>
-
-        <div class="card db-chart-card">
-          <h3 class="section-title db-chart-title">
-            Registros por Espécie ao Longo do Tempo
-          </h3>
-          <select
-            class="form-control db-select"
-            [ngModel]="selectedEspecie()"
-            (ngModelChange)="selectedEspecie.set($event); onEspecieChange()"
-          >
-            <option value="">Selecione uma Espécie</option>
-            <option *ngFor="let esp of especiesDisponiveis()" [value]="esp">
-              {{ esp }}
-            </option>
-          </select>
-          <div class="db-chart-wrap db-chart-wrap--line">
-            <canvas id="chart-especie-tempo"></canvas>
-          </div>
-        </div>
-
-        <div class="card db-chart-card">
-          <div class="db-chart-wrap db-chart-wrap--barh">
-            <canvas id="chart-nativas-invasoras"></canvas>
-          </div>
-        </div>
-
-        <div class="card db-chart-card">
-          <h3 class="section-title db-chart-title">
-            Quantidade de Espécies Distintas
-          </h3>
-          <select
-            class="form-control db-select"
-            [ngModel]="selectedAgrupamento()"
-            (ngModelChange)="
-              selectedAgrupamento.set($event); onAgrupamentoChange()
-            "
-          >
-            <option value="mes">Por mês</option>
-            <option value="ano">Por ano</option>
-          </select>
-          <div
-            class="db-chart-wrap db-chart-wrap--barh db-chart-wrap--barh-tall"
-          >
-            <canvas id="chart-especies-distintas"></canvas>
-          </div>
-        </div>
-      </div>
-
+  <div
+    class="modal-backdrop"
+    *ngIf="showExportar"
+    (click)="fecharExportar()"
+    style="z-index: 99999"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
       <div
-        class="db-col-direita"
-        style="display: flex; flex-direction: column; height: 100%"
+        style="
+          background: var(--color-bg-green-light);
+          padding: var(--space-md);
+          border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+          margin: calc(-1 * var(--space-2xl)) calc(-1 * var(--space-2xl))
+            var(--space-xl);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
       >
-        <div class="card db-mapa-card">
-          <div id="mapa-registros" class="db-mapa"></div>
-        </div>
-
-        <div class="card db-chart-card" style="margin-top: auto">
-          <h3 class="section-title db-chart-title">
-            Quantidade de Espécies Distintas ao Longo do Tempo
-          </h3>
-          <div class="db-chart-wrap db-chart-wrap--line">
-            <canvas id="chart-especies-distintas-tempo"></canvas>
-          </div>
-        </div>
+        <h2 class="page-title" style="color: var(--color-text-on-green)">
+          Estudos
+        </h2>
+        <button class="modal-close" (click)="fecharExportar()">✕</button>
       </div>
-    </div>
-  </ng-container>
-</div>
 
-<div
-  class="modal-backdrop"
-  *ngIf="showExportar"
-  (click)="fecharExportar()"
-  style="z-index: 99999"
->
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div
-      style="
-        background: var(--color-bg-green-light);
-        padding: var(--space-md);
-        border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
-        margin: calc(-1 * var(--space-2xl)) calc(-1 * var(--space-2xl))
-          var(--space-xl);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      "
-    >
-      <h2 class="page-title" style="color: var(--color-text-on-green)">
-        Estudos
-      </h2>
-      <button class="modal-close" (click)="fecharExportar()">✕</button>
-    </div>
+      <h3 class="page-title" style="font-size: 1.4rem">Exportar Dados</h3>
+      <div class="ornament-divider"><span>⸙</span></div>
 
-    <h3 class="page-title" style="font-size: 1.4rem">Exportar Dados</h3>
-    <div class="ornament-divider"><span>⸙</span></div>
-
-    <div class="form-group">
-      <label class="form-label">Salvar resultado como:</label>
-      <div class="db-formato-grupo">
-        <label
-          class="db-formato-opcao"
-          [class.db-formato-opcao--ativo]="formato === 'csv'"
-        >
-          <input
-            type="radio"
-            name="formato"
-            value="csv"
-            [(ngModel)]="formato"
-          />
-          <span class="db-formato-label">CSV</span>
-          <span class="db-formato-desc">Compatível com Excel e planilhas</span>
-        </label>
-        <label
-          class="db-formato-opcao"
-          [class.db-formato-opcao--ativo]="formato === 'xml'"
-        >
-          <input
-            type="radio"
-            name="formato"
-            value="xml"
-            [(ngModel)]="formato"
-          />
-          <span class="db-formato-label">XML</span>
-          <span class="db-formato-desc"
-            >Estruturado para integração de sistemas</span
+      <div class="form-group">
+        <label class="form-label">Salvar resultado como:</label>
+        <div class="db-formato-grupo">
+          <label
+            class="db-formato-opcao"
+            [class.db-formato-opcao--ativo]="formato === 'csv'"
           >
-        </label>
+            <input
+              type="radio"
+              name="formato"
+              value="csv"
+              [(ngModel)]="formato"
+            />
+            <span class="db-formato-label">CSV</span>
+            <span class="db-formato-desc"
+              >Compatível com Excel e planilhas</span
+            >
+          </label>
+          <label
+            class="db-formato-opcao"
+            [class.db-formato-opcao--ativo]="formato === 'xml'"
+          >
+            <input
+              type="radio"
+              name="formato"
+              value="xml"
+              [(ngModel)]="formato"
+            />
+            <span class="db-formato-label">XML</span>
+            <span class="db-formato-desc"
+              >Estruturado para integração de sistemas</span
+            >
+          </label>
+        </div>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label class="form-label">Agrupar por:</label>
-      <select class="form-control" [(ngModel)]="agrupamento">
-        <option value="registro_ocorrencia">Registro de ocorrência</option>
-        <option value="evento_amostragem">Evento de amostragem</option>
-        <option value="unidade_amostral">Unidade amostral</option>
-        <option value="campanha">Campanha</option>
-        <option value="especie">Espécie</option>
-      </select>
-    </div>
+      <div class="form-group">
+        <label class="form-label">Agrupar por:</label>
+        <select class="form-control" [(ngModel)]="agrupamento">
+          <option value="registro_ocorrencia">Registro de ocorrência</option>
+          <option value="evento_amostragem">Evento de amostragem</option>
+          <option value="unidade_amostral">Unidade amostral</option>
+          <option value="campanha">Campanha</option>
+          <option value="especie">Espécie</option>
+        </select>
+      </div>
 
-    <div *ngIf="exportLoading" class="loading-overlay">
-      <div class="spinner"></div>
-    </div>
-    <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
+      <div *ngIf="exportLoading" class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+      <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
 
-    <div class="text-center mt-lg">
-      <button
-        class="btn btn-primary"
-        (click)="exportar()"
-        [disabled]="exportLoading"
-      >
-        Baixar
-      </button>
+      <div class="text-center mt-lg">
+        <button
+          class="btn btn-primary"
+          (click)="exportar()"
+          [disabled]="exportLoading"
+        >
+          Baixar
+        </button>
+      </div>
     </div>
   </div>
 </div>
