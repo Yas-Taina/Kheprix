@@ -71,7 +71,7 @@
         class="detail-field mt-sm"
       >
         <label>{{ v.nome }}</label>
-        <span>{{ valoresExibicao[i] || "—" }} {{ v.metrica }}</span>
+        <span>{{ valoresVars[i]?.valor || "—" }} {{ v.metrica }}</span>
       </div>
     </div>
   </ng-container>

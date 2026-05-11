@@ -4,7 +4,7 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EspecieService } from "../../../core/services/especie.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { RegistroOcorrencia, Especie, Variavel } from "../../../models";
+import { RegistroOcorrencia, Especie, Variavel, ValorVariavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 
@@ -26,6 +26,7 @@ export class RegistroDetalheComponent implements OnInit {
   unidadeId!: number;
   eventoId!: number;
   registroId!: number;
+  valoresVars: ValorVariavel[] = [];
   apiUrl = environment.apiUrl;
   placeholderImg =
     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180"%3E%3Ccircle cx="90" cy="90" r="88" fill="%23D4CDBA"/%3E%3Ctext x="50%25" y="55%25" text-anchor="middle" font-size="14" fill="%238A7D6E"%3EFoto%3C/text%3E%3C/svg%3E';
@@ -64,7 +65,7 @@ export class RegistroDetalheComponent implements OnInit {
 
     this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresExibicao = vars.map(() => "");
+      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
     });
   }
 
