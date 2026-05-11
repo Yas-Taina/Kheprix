@@ -4,8 +4,9 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { CampanhaService } from "../../../core/services/campanha.service";
 import { EstudoService } from "../../../core/services/estudo.service";
-import { UnidadeAmostral, Campanha } from "../../../models";
+import { UnidadeAmostral, Campanha, Variavel, ValorVariavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
+import { VariavelService } from "../../../core/services/variavel.service";
 
 @Component({
   selector: "app-unidades-lista",
@@ -19,6 +20,8 @@ export class UnidadesListaComponent implements OnInit {
   campanhaDetalhe: Campanha | null = null;
   estudoId!: number;
   campanhaId!: number;
+  variaveis: Variavel[] = [];
+  valoresVars: ValorVariavel[] = [];
   nomeCampanha = "";
   perfilEstudo = "";
   loading = true;
@@ -28,6 +31,7 @@ export class UnidadesListaComponent implements OnInit {
     private unidadeService: UnidadeAmostralService,
     private campanhaService: CampanhaService,
     private estudoService: EstudoService,
+    private variavelService: VariavelService,
     public router: Router,
     private route: ActivatedRoute,
     public util: UtilService,
@@ -48,12 +52,23 @@ export class UnidadesListaComponent implements OnInit {
       .subscribe((c) => {
         this.campanhaDetalhe = c;
         this.nomeCampanha = c.nome;
+        this.valoresVars = c.valores_variaveis ?? [];
       });
 
     this.estudoService.listar().subscribe((l) => {
       const estudo = l.find((e) => e.id === this.estudoId);
       this.perfilEstudo = estudo?.perfil ?? "";
     });
+    this.variavelService.listar(this.estudoId, "campanha").subscribe((vars) => {
+      this.variaveis = vars;
+    });
+  }
+
+  getValor(variavelId: number): string {
+    return (
+      this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor ||
+      "—"
+    );
   }
 
   isProprietario(): boolean {
