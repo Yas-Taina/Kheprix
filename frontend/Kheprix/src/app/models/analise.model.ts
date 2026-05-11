@@ -133,7 +133,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: false,
     tem_grafico: true,
   },
-  // Rarefação — apenas valor
   {
     chave: "rarefacao",
     nome: "Rarefação",
@@ -142,7 +141,6 @@ export const CATALOGO_ANALISES: readonly CatalogoAnalise[] = [
     tem_valor: true,
     tem_grafico: false,
   },
-  // Estimadores de riqueza — apenas valor
   {
     chave: "jackknife1",
     nome: "Jackknife 1ª Ordem",

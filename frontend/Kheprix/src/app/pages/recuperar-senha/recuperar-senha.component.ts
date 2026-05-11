@@ -21,6 +21,8 @@ export class RecuperarSenhaComponent {
   loadingStep1 = false;
   loadingStep2 = false;
   loadingStep3 = false;
+  mostrarSenha = false;
+  mostrarSenhaC = false;
   erroStep1 = "";
   msgStep1 = "";
   erroStep3 = "";
