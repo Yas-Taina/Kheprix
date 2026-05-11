@@ -92,13 +92,17 @@ class EstudosActivity : BaseDrawerActivity() {
 
             try {
                 val token = SessionManager.getAuthHeader()
-                val response = RetrofitClient.apiService.getEstudos(token, nome = filtro.ifEmpty { null })
+                val response =
+                    RetrofitClient.apiService.getEstudos(token, nome = filtro.ifEmpty { null })
 
                 if (response.isSuccessful) {
                     val repo = OfflineRepository(this@EstudosActivity)
                     response.body()?.forEach { estudo ->
-                        val localId = try { repo.cacheEstudo(estudo) }
-                                      catch (_: Exception) { buscarLocalIdPorRemoteId(estudo.id) }
+                        val localId = try {
+                            repo.cacheEstudo(estudo)
+                        } catch (_: Exception) {
+                            buscarLocalIdPorRemoteId(estudo.id)
+                        }
                         val explicito = localId?.let {
                             offlineManager.isExplicitamenteSalvoOffline(it)
                         } ?: false
@@ -106,15 +110,17 @@ class EstudosActivity : BaseDrawerActivity() {
                             offlineManager.contarRegistrosOffline(it)
                         } ?: 0
 
-                        estudosOnline.add(EstudoItem(
-                            remoteId = estudo.id,
-                            localId = localId,
-                            nome = estudo.nome,
-                            createdAt = estudo.createdAt,
-                            perfil = estudo.perfil ?: "",
-                            salvosOffline = explicito,
-                            registrosOffline = offlineCount
-                        ))
+                        estudosOnline.add(
+                            EstudoItem(
+                                remoteId = estudo.id,
+                                localId = localId,
+                                nome = estudo.nome,
+                                createdAt = estudo.createdAt,
+                                perfil = estudo.perfil ?: "",
+                                salvosOffline = explicito,
+                                registrosOffline = offlineCount
+                            )
+                        )
                     }
                 }
             } catch (_: Exception) {
@@ -130,18 +136,24 @@ class EstudosActivity : BaseDrawerActivity() {
                 val isOfflineOnly = off.remoteId == null || !remoteIds.contains(off.remoteId)
                 if (!isOfflineOnly) return@forEach
                 if (!offlineManager.isExplicitamenteSalvoOffline(off.localId)) return@forEach
-                if (filtro.isNotEmpty() && !off.nome.contains(filtro, ignoreCase = true)) return@forEach
+                if (filtro.isNotEmpty() && !off.nome.contains(
+                        filtro,
+                        ignoreCase = true
+                    )
+                ) return@forEach
 
                 val offlineCount = offlineManager.contarRegistrosOffline(off.localId)
-                estudos.add(EstudoItem(
-                    remoteId = off.remoteId ?: -off.localId.toInt(),
-                    localId = off.localId,
-                    nome = off.nome,
-                    createdAt = off.createdAt ?: "",
-                    perfil = off.perfil ?: "",
-                    salvosOffline = true,
-                    registrosOffline = offlineCount
-                ))
+                estudos.add(
+                    EstudoItem(
+                        remoteId = off.remoteId ?: -off.localId.toInt(),
+                        localId = off.localId,
+                        nome = off.nome,
+                        createdAt = off.createdAt ?: "",
+                        perfil = off.perfil ?: "",
+                        salvosOffline = true,
+                        registrosOffline = offlineCount
+                    )
+                )
             }
 
             adapter.notifyDataSetChanged()
@@ -157,18 +169,20 @@ class EstudosActivity : BaseDrawerActivity() {
         )
         cursor.use { c ->
             while (c.moveToNext()) {
-                val localId  = c.getLong(0)
+                val localId = c.getLong(0)
                 val remoteId = if (c.isNull(1)) -1 else c.getInt(1)
                 val offlineCount = offlineManager.contarRegistrosOffline(localId)
-                estudos.add(EstudoItem(
-                    remoteId    = remoteId,
-                    localId     = localId,
-                    nome        = c.getString(2) ?: "—",
-                    createdAt   = c.getString(4) ?: "",
-                    perfil      = c.getString(3) ?: "",
-                    salvosOffline = true,
-                    registrosOffline = offlineCount
-                ))
+                estudos.add(
+                    EstudoItem(
+                        remoteId = remoteId,
+                        localId = localId,
+                        nome = c.getString(2) ?: "—",
+                        createdAt = c.getString(4) ?: "",
+                        perfil = c.getString(3) ?: "",
+                        salvosOffline = true,
+                        registrosOffline = offlineCount
+                    )
+                )
             }
         }
         adapter.notifyDataSetChanged()
@@ -188,11 +202,19 @@ class EstudosActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             offlineManager.salvarEstudoOffline(item.remoteId)
                 .onSuccess {
-                    Toast.makeText(this@EstudosActivity, "Estudo salvo offline!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@EstudosActivity,
+                        "Estudo salvo offline!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     carregarEstudos()
                 }
                 .onFailure {
-                    Toast.makeText(this@EstudosActivity, "Erro ao salvar offline: ${it.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@EstudosActivity,
+                        "Erro ao salvar offline: ${it.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             setLoading(false)
         }
@@ -204,11 +226,13 @@ class EstudosActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             offlineManager.atualizarDadosEstudo(localId)
                 .onSuccess {
-                    Toast.makeText(this@EstudosActivity, "Dados atualizados!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EstudosActivity, "Dados atualizados!", Toast.LENGTH_SHORT)
+                        .show()
                     carregarEstudos()
                 }
                 .onFailure {
-                    Toast.makeText(this@EstudosActivity, "Erro: ${it.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@EstudosActivity, "Erro: ${it.message}", Toast.LENGTH_LONG)
+                        .show()
                 }
             setLoading(false)
         }
@@ -223,7 +247,13 @@ class EstudosActivity : BaseDrawerActivity() {
                 lifecycleScope.launch {
                     offlineManager.deletarDadosEstudo(localId)
                         .onSuccess { carregarEstudos() }
-                        .onFailure { Toast.makeText(this@EstudosActivity, "Erro: ${it.message}", Toast.LENGTH_LONG).show() }
+                        .onFailure {
+                            Toast.makeText(
+                                this@EstudosActivity,
+                                "Erro: ${it.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -247,10 +277,12 @@ class EstudosActivity : BaseDrawerActivity() {
                 )
                 if (response.isSuccessful || response.code() == 204 || response.code() == 200) {
                     item.localId?.let { offlineManager.deletarDadosEstudoLocal(it) }
-                    Toast.makeText(this@EstudosActivity, "Estudo removido", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EstudosActivity, "Estudo removido", Toast.LENGTH_SHORT)
+                        .show()
                     carregarEstudos()
                 } else {
-                    Toast.makeText(this@EstudosActivity, "Erro ao deletar", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EstudosActivity, "Erro ao deletar", Toast.LENGTH_SHORT)
+                        .show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@EstudosActivity, "Sem conexão", Toast.LENGTH_SHORT).show()

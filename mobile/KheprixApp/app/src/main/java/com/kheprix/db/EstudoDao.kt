@@ -29,16 +29,18 @@ class EstudoDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<EstudoOffline>()
             while (c.moveToNext()) {
-                list.add(EstudoOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    nome = c.getString(2),
-                    observacoes = c.getString(3),
-                    perfil = c.getString(4),
-                    sincronizado = c.getInt(5),
-                    createdAt = c.getString(6),
-                    updatedAt = c.getString(7)
-                ))
+                list.add(
+                    EstudoOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        nome = c.getString(2),
+                        observacoes = c.getString(3),
+                        perfil = c.getString(4),
+                        sincronizado = c.getInt(5),
+                        createdAt = c.getString(6),
+                        updatedAt = c.getString(7)
+                    )
+                )
             }
             list
         }

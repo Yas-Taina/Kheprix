@@ -29,16 +29,18 @@ class EventoDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<EventoOffline>()
             while (c.moveToNext()) {
-                list.add(EventoOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    unidadeLocalId = c.getLong(2),
-                    horarioInicio = c.getString(3),
-                    horarioFim = c.getString(4),
-                    esforcoReal = c.getString(5),
-                    sincronizado = c.getInt(6),
-                    createdAt = c.getString(7)
-                ))
+                list.add(
+                    EventoOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        unidadeLocalId = c.getLong(2),
+                        horarioInicio = c.getString(3),
+                        horarioFim = c.getString(4),
+                        esforcoReal = c.getString(5),
+                        sincronizado = c.getInt(6),
+                        createdAt = c.getString(7)
+                    )
+                )
             }
             list
         }
@@ -53,16 +55,18 @@ class EventoDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<EventoOffline>()
             while (c.moveToNext()) {
-                list.add(EventoOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    unidadeLocalId = c.getLong(2),
-                    horarioInicio = c.getString(3),
-                    horarioFim = c.getString(4),
-                    esforcoReal = c.getString(5),
-                    sincronizado = c.getInt(6),
-                    createdAt = c.getString(7)
-                ))
+                list.add(
+                    EventoOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        unidadeLocalId = c.getLong(2),
+                        horarioInicio = c.getString(3),
+                        horarioFim = c.getString(4),
+                        esforcoReal = c.getString(5),
+                        sincronizado = c.getInt(6),
+                        createdAt = c.getString(7)
+                    )
+                )
             }
             list
         }

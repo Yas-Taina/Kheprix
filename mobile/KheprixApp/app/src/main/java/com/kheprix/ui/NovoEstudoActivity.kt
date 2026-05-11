@@ -27,8 +27,8 @@ class NovoEstudoActivity : BaseDrawerActivity() {
 
     companion object {
         const val EXTRA_ESTUDO_REMOTE_ID = "estudo_remote_id"
-        const val EXTRA_ESTUDO_NOME      = "estudo_nome"
-        const val EXTRA_ESTUDO_OBS       = "estudo_obs"
+        const val EXTRA_ESTUDO_NOME = "estudo_nome"
+        const val EXTRA_ESTUDO_OBS = "estudo_obs"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,16 +95,21 @@ class NovoEstudoActivity : BaseDrawerActivity() {
     private fun coletarVariaveis(): List<VariavelRequest>? {
         val lista = mutableListOf<VariavelRequest>()
         for (view in variavelViews) {
-            val nome  = view.findViewById<EditText>(R.id.etNomeVariavel).text.toString().trim()
-            val nivel = view.findViewById<Spinner>(R.id.spinnerNivelAplicacao).selectedItem?.toString() ?: ""
-            val tipo  = view.findViewById<Spinner>(R.id.spinnerTipoDado).selectedItem?.toString() ?: ""
+            val nome = view.findViewById<EditText>(R.id.etNomeVariavel).text.toString().trim()
+            val nivel =
+                view.findViewById<Spinner>(R.id.spinnerNivelAplicacao).selectedItem?.toString()
+                    ?: ""
+            val tipo =
+                view.findViewById<Spinner>(R.id.spinnerTipoDado).selectedItem?.toString() ?: ""
             val metrica = view.findViewById<EditText>(R.id.etMetrica).text.toString().trim()
 
             if (nome.isEmpty()) {
-                Toast.makeText(this, "Preencha o nome de todas as variáveis", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Preencha o nome de todas as variáveis", Toast.LENGTH_SHORT)
+                    .show()
                 return null
             }
-            lista.add(VariavelRequest(
+            lista.add(
+                VariavelRequest(
                 nome = nome,
                 nivelAplicacao = nivelParaApi(nivel),
                 tipoDado = tipoParaApi(tipo),
@@ -116,7 +121,7 @@ class NovoEstudoActivity : BaseDrawerActivity() {
 
     private fun criarEstudo() {
         val nome = binding.etNomeEstudo.text.toString().trim()
-        val obs  = binding.etObservacoes.text.toString().trim()
+        val obs = binding.etObservacoes.text.toString().trim()
 
         if (nome.isEmpty()) {
             binding.etNomeEstudo.error = "Informe o nome do estudo"
@@ -137,10 +142,15 @@ class NovoEstudoActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), req
                 )
                 if (response.isSuccessful) {
-                    Toast.makeText(this@NovoEstudoActivity, "Estudo criado!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@NovoEstudoActivity, "Estudo criado!", Toast.LENGTH_SHORT)
+                        .show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovoEstudoActivity, "Erro: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovoEstudoActivity,
+                        "Erro: ${response.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarEstudoOffline(req)
@@ -174,18 +184,18 @@ class NovoEstudoActivity : BaseDrawerActivity() {
 
     private fun nivelParaApi(label: String) = when (label) {
         "Campanha" -> "campanha"
-        "Unidade"  -> "unidade"
-        "Evento"   -> "evento"
+        "Unidade" -> "unidade"
+        "Evento" -> "evento"
         "Registro" -> "registro"
-        else       -> label.lowercase()
+        else -> label.lowercase()
     }
 
     private fun tipoParaApi(label: String) = when (label) {
         "Numérico" -> "number"
-        "Texto"    -> "string"
+        "Texto" -> "string"
         "Booleano" -> "boolean"
-        "Data"     -> "date"
-        else       -> label.lowercase()
+        "Data" -> "date"
+        else -> label.lowercase()
     }
 
     private fun setLoading(loading: Boolean) {

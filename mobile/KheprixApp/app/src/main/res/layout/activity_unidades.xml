@@ -2,49 +2,95 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#EDE9DE">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#EDE9DE">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent" android:layout_height="96dp"
-        android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
-        <ImageView android:id="@+id/ivMenuLateral"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="#A8B89A"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <ImageView
+            android:id="@+id/ivMenuLateral"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_menu"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
             app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:layout_width="120dp" android:layout_height="95dp"
-            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
-            android:contentDescription="Kheprix" android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:id="@+id/ivPerfil"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle"
+            android:alpha="0.7"
+            android:contentDescription="Kheprix"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageView
+            android:id="@+id/ivPerfil"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_profile"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
             app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="32dp">
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-            <TextView android:id="@+id/tvCampanhaNome"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Nome da Campanha" android:textSize="18sp" android:textColor="#4A5240"
-                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="16dp"/>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Unidades Amostrais" android:textSize="28sp" android:textColor="#4A5240"
-                android:fontFamily="serif" android:gravity="center" android:layout_marginTop="4dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:id="@+id/tvCampanhaNome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nome da Campanha"
+                android:textSize="18sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Unidades Amostrais"
+                android:textSize="28sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="4dp" />
+
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
@@ -58,54 +104,139 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/kheprix_green" />
 
-            <Button android:id="@+id/btnAdicionarUnidade"
-                android:layout_width="wrap_content" android:layout_height="48dp"
+            <Button
+                android:id="@+id/btnAdicionarUnidade"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
                 android:text="Adicionar Unidade  ⊕"
-                android:textColor="#FFFFFF" android:fontFamily="serif" android:backgroundTint="#6B7A5E"
-                android:layout_gravity="center_horizontal"/>
+                android:textColor="#FFFFFF"
+                android:fontFamily="serif"
+                android:backgroundTint="#6B7A5E"
+                android:layout_gravity="center_horizontal" />
 
-            <Button android:id="@+id/btnVisualizarDetalhes"
-                android:layout_width="wrap_content" android:layout_height="48dp"
+            <Button
+                android:id="@+id/btnVisualizarDetalhes"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
                 android:text="Visualizar Detalhes"
-                android:textColor="#FFFFFF" android:fontFamily="serif" android:backgroundTint="#7A8A6E"
-                android:layout_gravity="center_horizontal" android:layout_marginTop="8dp"/>
+                android:textColor="#FFFFFF"
+                android:fontFamily="serif"
+                android:backgroundTint="#7A8A6E"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp" />
 
-            <androidx.cardview.widget.CardView android:id="@+id/cardDetalhesCampanha"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:visibility="gone" android:layout_marginTop="8dp"
-                app:cardBackgroundColor="#EDE9DE" app:cardElevation="2dp" app:cardCornerRadius="8dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Nome:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <TextView android:id="@+id/tvDetalheNome" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Data início:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <TextView android:id="@+id/tvDetalheInicio" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Descrição:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <TextView android:id="@+id/tvDetalheDescricao" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="6dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Última alteração:" android:textSize="12sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
-                    <TextView android:id="@+id/tvDetalheUpdatedAt" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="—" android:textSize="14sp" android:textColor="#4A5240" android:fontFamily="monospace" android:layout_marginBottom="8dp"/>
-                    <LinearLayout android:id="@+id/layoutVariaveisDetalhe"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="vertical"/>
-                    <Button android:id="@+id/btnEditarCampanha"
-                        android:layout_width="wrap_content" android:layout_height="40dp"
-                        android:text="Editar Campanha" android:textColor="#FFFFFF"
-                        android:backgroundTint="#6B7A5E" android:textSize="13sp"
-                        android:layout_gravity="end"/>
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardDetalhesCampanha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="#EDE9DE"
+                app:cardElevation="2dp"
+                app:cardCornerRadius="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nome:"
+                        android:textSize="12sp"
+                        android:textColor="#6B7A5E"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvDetalheNome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textSize="14sp"
+                        android:textColor="#4A5240"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Data início:"
+                        android:textSize="12sp"
+                        android:textColor="#6B7A5E"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvDetalheInicio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textSize="14sp"
+                        android:textColor="#4A5240"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Descrição:"
+                        android:textSize="12sp"
+                        android:textColor="#6B7A5E"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvDetalheDescricao"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textSize="14sp"
+                        android:textColor="#4A5240"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Última alteração:"
+                        android:textSize="12sp"
+                        android:textColor="#6B7A5E"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvDetalheUpdatedAt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textSize="14sp"
+                        android:textColor="#4A5240"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutVariaveisDetalhe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <Button
+                        android:id="@+id/btnEditarCampanha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Editar Campanha"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#6B7A5E"
+                        android:textSize="13sp"
+                        android:layout_gravity="end" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvUnidades"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" android:layout_marginTop="16dp"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvUnidades"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginTop="16dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

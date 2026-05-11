@@ -63,8 +63,8 @@ class LoginActivity : AppCompatActivity() {
                     if (token != null) {
                         SessionManager.saveToken(token)
                         SessionManager.saveUser(
-                            id    = 0, 
-                            name  = binding.etEmail.text.toString().split("@").first(),
+                            id = 0,
+                            name = binding.etEmail.text.toString().split("@").first(),
                             email = binding.etEmail.text.toString()
                         )
                         irParaHome()

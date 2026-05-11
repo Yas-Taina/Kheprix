@@ -1,49 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent" android:layout_height="wrap_content">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <TextView android:id="@+id/tvConviteEstudo"
-            android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tvConviteEstudo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="Nome do Estudo"
-            android:textSize="19sp" android:textColor="#4A5240"
-            android:fontFamily="monospace" android:letterSpacing="0.05"
+            android:textSize="19sp"
+            android:textColor="#4A5240"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.05"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btnAceitar"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView android:id="@+id/tvConviteRemetente"
-            android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tvConviteRemetente"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="Proprietário"
-            android:textSize="14sp" android:textColor="#7A9169"
-            android:fontFamily="monospace" android:layout_marginTop="2dp"
+            android:textSize="14sp"
+            android:textColor="#7A9169"
+            android:fontFamily="monospace"
+            android:layout_marginTop="2dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btnAceitar"
-            app:layout_constraintTop_toBottomOf="@id/tvConviteEstudo"/>
+            app:layout_constraintTop_toBottomOf="@id/tvConviteEstudo" />
 
-        <Button android:id="@+id/btnAceitar"
-            android:layout_width="120dp" android:layout_height="40dp"
+        <Button
+            android:id="@+id/btnAceitar"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
             android:text="Aceitar"
-            android:textColor="#FFFFFF" android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
             android:backgroundTint="#6B7A5E"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <Button android:id="@+id/btnRecusar"
-            android:layout_width="120dp" android:layout_height="40dp"
+        <Button
+            android:id="@+id/btnRecusar"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
             android:text="Recusar"
-            android:textColor="#FFFFFF" android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
             android:backgroundTint="#B87878"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/btnAceitar"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp"
-        android:background="#C8D4BE" android:layout_marginTop="12dp"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#C8D4BE"
+        android:layout_marginTop="12dp" />
 </LinearLayout>

@@ -19,15 +19,15 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
     private lateinit var offlineManager: EstudoOfflineManager
 
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var estudoNome     = ""
-    private var perfil         = ""
+    private var estudoLocalId = -1L
+    private var estudoNome = ""
+    private var perfil = ""
 
     companion object {
         const val EXTRA_ESTUDO_REMOTE_ID = "estudo_remote_id"
-        const val EXTRA_ESTUDO_LOCAL_ID  = "estudo_local_id"
-        const val EXTRA_ESTUDO_NOME      = "estudo_nome"
-        const val EXTRA_PERFIL           = "perfil"
+        const val EXTRA_ESTUDO_LOCAL_ID = "estudo_local_id"
+        const val EXTRA_ESTUDO_NOME = "estudo_nome"
+        const val EXTRA_PERFIL = "perfil"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +36,9 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra(EXTRA_ESTUDO_REMOTE_ID, -1)
-        estudoLocalId  = intent.getLongExtra(EXTRA_ESTUDO_LOCAL_ID, -1L)
-        estudoNome     = intent.getStringExtra(EXTRA_ESTUDO_NOME) ?: ""
-        perfil         = intent.getStringExtra(EXTRA_PERFIL) ?: ""
+        estudoLocalId = intent.getLongExtra(EXTRA_ESTUDO_LOCAL_ID, -1L)
+        estudoNome = intent.getStringExtra(EXTRA_ESTUDO_NOME) ?: ""
+        perfil = intent.getStringExtra(EXTRA_PERFIL) ?: ""
 
         offlineManager = EstudoOfflineManager(this)
 
@@ -60,15 +60,24 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
                 offlineManager.sincronizarDadosEstudo(estudoLocalId)
                     .onSuccess {
                         atualizarContadorOffline()
-                        val pendentes = offlineManager.listarRegistrosOfflinePendentes(estudoLocalId)
+                        val pendentes =
+                            offlineManager.listarRegistrosOfflinePendentes(estudoLocalId)
                         if (pendentes.isEmpty()) {
-                            Toast.makeText(this@EstudoDetalheActivity, "Sincronizado!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@EstudoDetalheActivity,
+                                "Sincronizado!",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
                             mostrarPendentes(pendentes)
                         }
                     }
                     .onFailure {
-                        Toast.makeText(this@EstudoDetalheActivity, "Erro: ${it.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@EstudoDetalheActivity,
+                            "Erro: ${it.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 setLoading(false)
             }
@@ -103,7 +112,14 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         }
 
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
-        binding.ivPerfil.setOnClickListener { startActivity(android.content.Intent(this, PerfilActivity::class.java)) }
+        binding.ivPerfil.setOnClickListener {
+            startActivity(
+                android.content.Intent(
+                    this,
+                    PerfilActivity::class.java
+                )
+            )
+        }
     }
 
     private fun atualizarContadorOffline() {
@@ -121,10 +137,17 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
                     val response = RetrofitClient.apiService.getEstudos(token)
                     val estudo = response.body()?.firstOrNull { it.id == estudoRemoteId }
                     if (estudo != null) {
-                        preencherDetalhes(estudo.nome, estudo.observacoes, estudo.perfil, estudo.createdAt, estudo.updatedAt)
+                        preencherDetalhes(
+                            estudo.nome,
+                            estudo.observacoes,
+                            estudo.perfil,
+                            estudo.createdAt,
+                            estudo.updatedAt
+                        )
                         return@launch
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             preencherDetalhesOffline()
         }
@@ -146,7 +169,13 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         }
     }
 
-    private fun preencherDetalhes(nome: String, obs: String?, perfil: String?, createdAt: String, updatedAt: String) {
+    private fun preencherDetalhes(
+        nome: String,
+        obs: String?,
+        perfil: String?,
+        createdAt: String,
+        updatedAt: String
+    ) {
         binding.tvDetalheNome.text = nome
         binding.tvDetalheObs.text = obs ?: "—"
         binding.tvDetalhePerfil.text = perfil ?: "—"
@@ -158,7 +187,9 @@ class EstudoDetalheActivity : BaseDrawerActivity() {
         return try {
             val parts = iso.substring(0, 10).split("-")
             "${parts[2]}/${parts[1]}/${parts[0]}"
-        } catch (e: Exception) { iso }
+        } catch (e: Exception) {
+            iso
+        }
     }
 
     private fun setLoading(loading: Boolean) {
