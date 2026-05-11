@@ -12,7 +12,7 @@ import urllib.error
 
 CHATBOT_URL         = "http://localhost:8001/query"
 CHATBOT_INSIGHTS_URL = "http://localhost:8001/insights"
-INTERNAL_KEY        = "21ad3f4dc7c3e45e886ec6ef1a9fbf45e78c1b35e2a61f1c988967b26cf695d4"
+INTERNAL_KEY        = "91786970142fd7fc7a1ab06ae1a931c1b79348bd4290cd098ac889d3c33a5e07"
 USUARIO_ID          = 1
 USUARIO_ID_INSIGHTS = 98   # usuario isolado para testes de insights
 USUARIO_ID_MT       = 99   # usuario isolado para testes multi-turn
