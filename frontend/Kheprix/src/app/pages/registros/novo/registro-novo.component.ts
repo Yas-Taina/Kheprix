@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EspecieService } from "../../../core/services/especie.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { Especie, Variavel, ValorVariavel } from "../../../models";
+import { Especie, Variavel, ValorVariavel, RegistroOcorrencia } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
@@ -43,6 +43,8 @@ export class RegistroNovoComponent implements OnInit {
   gpsErro = "";
   apiUrl = environment.apiUrl;
 
+  private registroCarregado: RegistroOcorrencia | null = null;
+
   constructor(
     private registroService: RegistroOcorrenciaService,
     private especieService: EspecieService,
@@ -65,9 +67,16 @@ export class RegistroNovoComponent implements OnInit {
     this.especieService
       .listar(this.estudoId)
       .subscribe((e) => (this.especies = e));
+
     this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
+      // Se o registro já foi carregado, cruza os valores; senão inicializa vazio
+      this.valoresVars = vars.map((v) => {
+        const existente = this.registroCarregado?.valores_variaveis?.find(
+          (val) => val.variavel_id === v.id,
+        );
+        return { variavel_id: v.id, valor: existente?.valor ?? "" };
+      });
     });
 
     if (this.isEdit && this.registroId) {
@@ -80,6 +89,7 @@ export class RegistroNovoComponent implements OnInit {
           this.registroId,
         )
         .subscribe((r) => {
+          this.registroCarregado = r;
           this.data = r.data;
           this.hora = r.hora;
           this.latDMS = this.util.decimalToDMS(r.latitude, "lat");
@@ -89,6 +99,14 @@ export class RegistroNovoComponent implements OnInit {
           this.ausenciaEspecie = r.ausencia_especie;
           if (r.foto)
             this.fotoPreview = this.util.buildFotoUrl(this.apiUrl, r.foto);
+          if (this.variaveis.length > 0) {
+            this.valoresVars = this.variaveis.map((v) => {
+              const existente = r.valores_variaveis?.find(
+                (val) => val.variavel_id === v.id,
+              );
+              return { variavel_id: v.id, valor: existente?.valor ?? "" };
+            });
+          }
         });
     }
   }
