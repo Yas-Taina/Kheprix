@@ -14,6 +14,7 @@ import { routes } from "./app.routes";
 import { TipoDadoInterceptor } from "./core/interceptors/tipo-dado.interceptor";
 import { AuthInterceptor } from "./core/interceptors/auth.interceptor";
 import { TokenValidatorService } from "./core/services/token-validator.service";
+import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 
 function initTokenValidator(validator: TokenValidatorService) {
   return () => {
@@ -27,6 +28,8 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({
       eventCoalescing: true,
     }),
+
+    provideAnimationsAsync(),
 
     provideRouter(routes, withComponentInputBinding()),
 
