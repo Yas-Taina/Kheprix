@@ -226,10 +226,10 @@
         </h2>
         <button class="modal-close" (click)="fecharExportar()">✕</button>
       </div>
-
+ 
       <h3 class="page-title" style="font-size: 1.4rem">Exportar Dados</h3>
       <div class="ornament-divider"><span>⸙</span></div>
-
+ 
       <div class="form-group">
         <label class="form-label">Salvar resultado como:</label>
         <div class="db-formato-grupo">
@@ -265,8 +265,8 @@
           </label>
         </div>
       </div>
-
-      <div class="form-group">
+ 
+      <div class="form-group" *ngIf="formato !== 'xml'">
         <label class="form-label">Agrupar por:</label>
         <select class="form-control" [(ngModel)]="agrupamento">
           <option value="registro_ocorrencia">Registro de ocorrência</option>
@@ -276,12 +276,12 @@
           <option value="especie">Espécie</option>
         </select>
       </div>
-
+ 
       <div *ngIf="exportLoading" class="loading-overlay">
         <div class="spinner"></div>
       </div>
       <div *ngIf="exportMsg" class="alert alert-success">{{ exportMsg }}</div>
-
+ 
       <div class="text-center mt-lg">
         <button
           class="btn btn-primary"

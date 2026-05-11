@@ -67,7 +67,7 @@ export class RegistrosListaComponent implements OnInit {
     this.especieService
       .listar(this.estudoId)
       .subscribe((e) => (this.especies = e));
-    this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
+    this.variavelService.listar(this.estudoId, "evento").subscribe((vars) => {
       this.variaveis = vars;
     });
   }
