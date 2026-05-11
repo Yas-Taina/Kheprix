@@ -5,7 +5,12 @@ import { EventoAmostragemService } from "../../../core/services/evento-amostrage
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { EstudoService } from "../../../core/services/estudo.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { EventoAmostragem, UnidadeAmostral, ValorVariavel, Variavel } from "../../../models";
+import {
+  EventoAmostragem,
+  UnidadeAmostral,
+  ValorVariavel,
+  Variavel,
+} from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 
 @Component({
@@ -66,7 +71,6 @@ export class EventosListaComponent implements OnInit {
     this.variavelService.listar(this.estudoId, "unidade").subscribe((vars) => {
       this.variaveis = vars;
     });
-  
   }
 
   getValor(variavelId: number): string {

@@ -2,7 +2,7 @@
   <header class="page-header">
     <div class="header-center">
       <h1 class="page-title">Análises</h1>
-      <div class="title-rule"></div>
+      <div class="ornament-divider"><span>⸙</span></div>
     </div>
   </header>
 
@@ -443,8 +443,8 @@
               <input
                 class="field-input"
                 type="text"
-                [ngModel]="latMinMask"
-                (ngModelChange)="onCoordInput('latMin', $event)"
+                dmsMask="lat"
+                [(ngModel)]="latMinMask"
                 placeholder="-00°00'00&quot;"
               />
             </div>
@@ -453,8 +453,8 @@
               <input
                 class="field-input"
                 type="text"
-                [ngModel]="latMaxMask"
-                (ngModelChange)="onCoordInput('latMax', $event)"
+                dmsMask="lat"
+                [(ngModel)]="latMaxMask"
                 placeholder="-00°00'00&quot;"
               />
             </div>
@@ -463,9 +463,9 @@
               <input
                 class="field-input"
                 type="text"
-                [ngModel]="lngMinMask"
-                (ngModelChange)="onCoordInput('lngMin', $event)"
-                placeholder="-00°00'00&quot;"
+                dmsMask="lng"
+                [(ngModel)]="lngMinMask"
+                placeholder="-000°00'00&quot;"
               />
             </div>
             <div class="filtro-item">
@@ -473,9 +473,9 @@
               <input
                 class="field-input"
                 type="text"
-                [ngModel]="lngMaxMask"
-                (ngModelChange)="onCoordInput('lngMax', $event)"
-                placeholder="ex.: -00°00'00&quot;"
+                dmsMask="lng"
+                [(ngModel)]="lngMaxMask"
+                placeholder="-000°00'00&quot;"
               />
             </div>
           }

@@ -11,6 +11,7 @@ import { CampanhaService } from "../../../core/services/campanha.service";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { UtilService } from "../../../core/services/util.service";
 import { ActivatedRoute } from "@angular/router";
+import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
 
 import {
   CATALOGO_ANALISES,
@@ -53,7 +54,7 @@ const TIPOS_COM_AMOSTRA = new Set([
 @Component({
   selector: "app-analises",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DmsMaskDirective],
   templateUrl: "./analise.component.html",
   styleUrls: ["./analise.component.css"],
   animations: [
@@ -340,35 +341,22 @@ export class AnalisesComponent implements OnInit {
     return this[lista].includes(id);
   }
 
-  onCoordInput(
-    campo: "latMin" | "latMax" | "lngMin" | "lngMax",
-    raw: string,
-  ): void {
-    const masked = this.applyCoordMask(raw);
-    (this as any)[campo + "Mask"] = masked;
-    if (/^-?\d{1,3}°\d{2}'\d{2}"$/.test(masked)) {
-      (this as any)[campo] = this.util.dmsTodecimal(masked);
-    } else {
-      (this as any)[campo] = undefined;
-    }
-  }
-
-  private applyCoordMask(raw: string): string {
-    const isNeg = raw.trimStart().startsWith("-");
-    const digits = raw.replace(/\D/g, "");
-    if (!digits) return isNeg ? "-" : "";
-    const d1 = digits.slice(0, 3);
-    const d2 = digits.slice(3, 5);
-    const d3 = digits.slice(5, 7);
-    let r = (isNeg ? "-" : "") + d1;
-    if (digits.length > 3) r += `°${d2}`;
-    if (digits.length > 5) r += `'${d3}"`;
-    else if (digits.length === 5) r += `'`;
-    return r;
-  }
-
   executar(): void {
     if (!this.analiseAtual) return;
+
+    const dmsRegex = /^-?\d{1,3}°\d{2}'\d{2}"$/;
+    this.latMin = dmsRegex.test(this.latMinMask)
+      ? this.util.dmsTodecimal(this.latMinMask)
+      : undefined;
+    this.latMax = dmsRegex.test(this.latMaxMask)
+      ? this.util.dmsTodecimal(this.latMaxMask)
+      : undefined;
+    this.lngMin = dmsRegex.test(this.lngMinMask)
+      ? this.util.dmsTodecimal(this.lngMinMask)
+      : undefined;
+    this.lngMax = dmsRegex.test(this.lngMaxMask)
+      ? this.util.dmsTodecimal(this.lngMaxMask)
+      : undefined;
 
     const payload: ExecutarAnaliseRequest = {
       chave: this.chaveEscolhida as ChaveAnalise,

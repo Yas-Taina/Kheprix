@@ -14,6 +14,7 @@ import { routes } from "./app.routes";
 import { TipoDadoInterceptor } from "./core/interceptors/tipo-dado.interceptor";
 import { AuthInterceptor } from "./core/interceptors/auth.interceptor";
 import { TokenValidatorService } from "./core/services/token-validator.service";
+import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 
 function initTokenValidator(validator: TokenValidatorService) {
   return () => {
@@ -28,6 +29,8 @@ export const appConfig: ApplicationConfig = {
       eventCoalescing: true,
     }),
 
+    provideAnimationsAsync(),
+
     provideRouter(routes, withComponentInputBinding()),
 
     provideHttpClient(withInterceptorsFromDi()),
@@ -37,7 +40,7 @@ export const appConfig: ApplicationConfig = {
       useClass: TipoDadoInterceptor,
       multi: true,
     },
-    /*     {
+    {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true,
@@ -48,6 +51,6 @@ export const appConfig: ApplicationConfig = {
       useFactory: initTokenValidator,
       deps: [TokenValidatorService],
       multi: true,
-    }, */
+    },
   ],
 };
