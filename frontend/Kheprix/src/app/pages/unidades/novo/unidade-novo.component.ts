@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { Variavel, ValorVariavel } from "../../../models";
+import { Variavel, ValorVariavel, UnidadeAmostral } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
 
@@ -33,6 +33,8 @@ export class UnidadeNovoComponent implements OnInit {
   erro = "";
   gpsErro = "";
 
+  private unidadeCarregada: UnidadeAmostral | null = null;
+
   constructor(
     private unidadeService: UnidadeAmostralService,
     private variavelService: VariavelService,
@@ -51,19 +53,33 @@ export class UnidadeNovoComponent implements OnInit {
 
     this.variavelService.listar(this.estudoId, "unidade").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
+      this.valoresVars = vars.map((v) => {
+        const existente = this.unidadeCarregada?.valores_variaveis?.find(
+          (val) => val.variavel_id === v.id,
+        );
+        return { variavel_id: v.id, valor: existente?.valor ?? "" };
+      });
     });
 
     if (this.isEdit && this.unidadeId) {
       this.unidadeService
         .buscar(this.estudoId, this.campanhaId, this.unidadeId)
         .subscribe((u) => {
+          this.unidadeCarregada = u;
           this.nome = u.nome;
           this.latDMS = this.util.decimalToDMS(u.latitude, "lat");
           this.lngDMS = this.util.decimalToDMS(u.longitude, "lng");
           this.raio = u.raio;
           this.metodoColeta = u.metodo_coleta ?? "";
           this.esforcoAmostral = u.esforco_amostral ?? "";
+          if (this.variaveis.length > 0) {
+            this.valoresVars = this.variaveis.map((v) => {
+              const existente = u.valores_variaveis?.find(
+                (val) => val.variavel_id === v.id,
+              );
+              return { variavel_id: v.id, valor: existente?.valor ?? "" };
+            });
+          }
         });
     }
   }

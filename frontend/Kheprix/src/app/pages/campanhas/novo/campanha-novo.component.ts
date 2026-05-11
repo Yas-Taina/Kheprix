@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { CampanhaService } from "../../../core/services/campanha.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { Variavel, ValorVariavel } from "../../../models";
+import { Variavel, ValorVariavel, Campanha } from "../../../models";
 
 @Component({
   selector: "app-campanha-novo",
@@ -25,6 +25,8 @@ export class CampanhaNovoComponent implements OnInit {
   loading = false;
   erro = "";
 
+  private campanhaCarregada: Campanha | null = null;
+
   constructor(
     private campanhaService: CampanhaService,
     private variavelService: VariavelService,
@@ -40,15 +42,29 @@ export class CampanhaNovoComponent implements OnInit {
     this.isEdit = !!this.campanhaId;
     this.variavelService.listar(this.estudoId, "campanha").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
+      this.valoresVars = vars.map((v) => {
+        const existente = this.campanhaCarregada?.valores_variaveis?.find(
+          (val) => val.variavel_id === v.id,
+        );
+        return { variavel_id: v.id, valor: existente?.valor ?? "" };
+      });
     });
     if (this.isEdit && this.campanhaId) {
       this.campanhaService
         .buscar(this.estudoId, this.campanhaId)
         .subscribe((c) => {
+          this.campanhaCarregada = c;
           this.nome = c.nome;
           this.dataInicio = c.data_inicio;
           this.descricao = c.descricao ?? "";
+          if (this.variaveis.length > 0) {
+            this.valoresVars = this.variaveis.map((v) => {
+              const existente = c.valores_variaveis?.find(
+                (val) => val.variavel_id === v.id,
+              );
+              return { variavel_id: v.id, valor: existente?.valor ?? "" };
+            });
+          }
         });
     }
   }

@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { VariavelService } from "../../../core/services/variavel.service";
-import { Variavel, ValorVariavel } from "../../../models";
+import { Variavel, ValorVariavel, EventoAmostragem } from "../../../models";
 
 @Component({
   selector: "app-evento-novo",
@@ -27,6 +27,8 @@ export class EventoNovoComponent implements OnInit {
   loading = false;
   erro = "";
 
+  private eventoCarregado: EventoAmostragem | null = null;
+
   constructor(
     private eventoService: EventoAmostragemService,
     private variavelService: VariavelService,
@@ -45,7 +47,12 @@ export class EventoNovoComponent implements OnInit {
 
     this.variavelService.listar(this.estudoId, "evento").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
+      this.valoresVars = vars.map((v) => {
+        const existente = this.eventoCarregado?.valores_variaveis?.find(
+          (val) => val.variavel_id === v.id,
+        );
+        return { variavel_id: v.id, valor: existente?.valor ?? "" };
+      });
     });
 
     if (this.isEdit && this.eventoId) {
@@ -53,9 +60,18 @@ export class EventoNovoComponent implements OnInit {
         .buscar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId)
         .subscribe((ev) => {
           const dtInicio = new Date(ev.horario_inicio);
+          this.eventoCarregado = ev;
           this.dataInicio = dtInicio.toISOString().split("T")[0];
           this.horaInicio = dtInicio.toTimeString().substring(0, 5);
           this.esforcoReal = ev.esforco_real ?? "";
+          if (this.variaveis.length > 0) {
+            this.valoresVars = this.variaveis.map((v) => {
+              const existente = ev.valores_variaveis?.find(
+                (val) => val.variavel_id === v.id,
+              );
+              return { variavel_id: v.id, valor: existente?.valor ?? "" };
+            });
+          }
         });
     }
   }

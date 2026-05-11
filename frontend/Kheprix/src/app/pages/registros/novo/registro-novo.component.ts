@@ -75,7 +75,6 @@ export class RegistroNovoComponent implements OnInit {
 
     this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
       this.variaveis = vars;
-      // Se o registro já foi carregado, cruza os valores; senão inicializa vazio
       this.valoresVars = vars.map((v) => {
         const existente = this.registroCarregado?.valores_variaveis?.find(
           (val) => val.variavel_id === v.id,
