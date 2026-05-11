@@ -1,5 +1,5 @@
 <div class="page-container" style="max-width: 750px">
-  <h1 class="page-title">{{ isEdit ? "Editar Estudo" : "Novo Estudo" }}</h1>
+  <h1 class="page-title">Novo Estudo</h1>
   <div class="ornament-divider"><span>⸙</span></div>
 
   <div class="form-group">
@@ -12,7 +12,6 @@
     />
   </div>
 
-  <ng-container *ngIf="!isEdit">
     <div class="d-flex align-center justify-between mb-md">
       <label class="form-label" style="margin: 0">Variáveis Estudadas</label>
       <button
@@ -87,37 +86,6 @@
         </div>
       </div>
     </div>
-  </ng-container>
-
-  <ng-container *ngIf="isEdit && variaveisEdit.length > 0">
-    <label class="form-label">Variáveis cadastradas (não editáveis)</label>
-    <div
-      class="variable-group"
-      *ngFor="let v of variaveisEdit"
-      style="opacity: 0.7"
-    >
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Nome</label>
-          <input class="form-control" [value]="v.nome" readonly />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nível</label>
-          <input class="form-control" [value]="v.nivel_aplicacao" readonly />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Tipo</label>
-          <input class="form-control" [value]="v.tipo_dado" readonly />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Métrica</label>
-          <input class="form-control" [value]="v.metrica" readonly />
-        </div>
-      </div>
-    </div>
-  </ng-container>
 
   <div class="form-group">
     <label class="form-label">Observações</label>
