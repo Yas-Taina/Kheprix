@@ -133,7 +133,6 @@
         <th>Nome</th>
         <th>Data de Criação</th>
         <th>Última Alteração</th>
-        <th>Perfil de Usuário</th>
         <th></th>
       </tr>
     </thead>
@@ -142,7 +141,6 @@
         <td>{{ e.nome }}</td>
         <td>{{ util.formatDate(e.created_at) }}</td>
         <td>{{ util.formatDate(e.updated_at) }}</td>
-        <td> {{ e.perfil }}</td>
         <td (click)="$event.stopPropagation()">
           <div class="actions-cell">
             <ng-container *ngIf="isProprietario(e)">

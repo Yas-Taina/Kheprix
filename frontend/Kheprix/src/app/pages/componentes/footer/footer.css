@@ -6,7 +6,7 @@ footer {
 .footer-content {
   display: flex;
   overflow: hidden;
-  height: 600px;
+  height: 100vh;
 }
 
 .footer-image {
