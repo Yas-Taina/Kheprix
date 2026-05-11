@@ -19,14 +19,13 @@ export class RegistroDetalheComponent implements OnInit {
   registro: RegistroOcorrencia | null = null;
   especie: Especie | null = null;
   variaveis: Variavel[] = [];
-  valoresExibicao: string[] = [];
+  valoresVars: ValorVariavel[] = [];
   loading = true;
   estudoId!: number;
   campanhaId!: number;
   unidadeId!: number;
   eventoId!: number;
   registroId!: number;
-  valoresVars: ValorVariavel[] = [];
   apiUrl = environment.apiUrl;
   placeholderImg =
     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180"%3E%3Ccircle cx="90" cy="90" r="88" fill="%23D4CDBA"/%3E%3Ctext x="50%25" y="55%25" text-anchor="middle" font-size="14" fill="%238A7D6E"%3EFoto%3C/text%3E%3C/svg%3E';
@@ -57,6 +56,7 @@ export class RegistroDetalheComponent implements OnInit {
       )
       .subscribe((r) => {
         this.registro = r;
+        this.valoresVars = r.valores_variaveis ?? [];
         this.especieService
           .buscar(this.estudoId, r.especie_id)
           .subscribe((e) => (this.especie = e));
@@ -65,8 +65,11 @@ export class RegistroDetalheComponent implements OnInit {
 
     this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
       this.variaveis = vars;
-      this.valoresVars = vars.map((v) => ({ variavel_id: v.id, valor: "" }));
     });
+  }
+
+  getValor(variavelId: number): string {
+    return this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor || "—";
   }
 
   editar() {

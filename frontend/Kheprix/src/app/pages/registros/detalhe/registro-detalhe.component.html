@@ -64,17 +64,17 @@
     >
   </div>
 
-  <ng-container *ngIf="variaveis.length > 0">
-    <div class="mt-lg">
-      <div
-        *ngFor="let v of variaveis; let i = index"
-        class="detail-field mt-sm"
-      >
-        <label>{{ v.nome }}</label>
-        <span>{{ valoresVars[i]?.valor || "—" }} {{ v.metrica }}</span>
-      </div>
+<ng-container *ngIf="variaveis.length > 0">
+  <div class="mt-lg">
+    <div
+      *ngFor="let v of variaveis"
+      class="detail-field mt-sm"
+    >
+      <label>{{ v.nome }}</label>
+      <span>{{ getValor(v.id) }} {{ v.metrica }}</span>
     </div>
-  </ng-container>
+  </div>
+</ng-container>
 
   <div class="d-flex justify-end gap-sm mt-xl">
     <button class="btn-icon" (click)="editar()" title="Editar">
