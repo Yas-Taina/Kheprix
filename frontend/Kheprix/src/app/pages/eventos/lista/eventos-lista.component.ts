@@ -4,7 +4,8 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.service";
 import { EstudoService } from "../../../core/services/estudo.service";
-import { EventoAmostragem, UnidadeAmostral } from "../../../models";
+import { VariavelService } from "../../../core/services/variavel.service";
+import { EventoAmostragem, UnidadeAmostral, ValorVariavel, Variavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 
 @Component({
@@ -20,6 +21,8 @@ export class EventosListaComponent implements OnInit {
   estudoId!: number;
   perfilEstudo = "";
   campanhaId!: number;
+  variaveis: Variavel[] = [];
+  valoresVars: ValorVariavel[] = [];
   unidadeId!: number;
   nomeUnidade = "";
   loading = true;
@@ -28,6 +31,7 @@ export class EventosListaComponent implements OnInit {
   constructor(
     private eventoService: EventoAmostragemService,
     private unidadeService: UnidadeAmostralService,
+    private variavelService: VariavelService,
     private estudoService: EstudoService,
     public router: Router,
     private route: ActivatedRoute,
@@ -52,12 +56,24 @@ export class EventosListaComponent implements OnInit {
       .subscribe((u) => {
         this.unidadeDetalhe = u;
         this.nomeUnidade = u.nome;
+        this.valoresVars = u.valores_variaveis || [];
       });
 
     this.estudoService.listar().subscribe((l) => {
       const estudo = l.find((e) => e.id === this.estudoId);
       this.perfilEstudo = estudo?.perfil ?? "";
     });
+    this.variavelService.listar(this.estudoId, "unidade").subscribe((vars) => {
+      this.variaveis = vars;
+    });
+  
+  }
+
+  getValor(variavelId: number): string {
+    return (
+      this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor ||
+      "—"
+    );
   }
 
   toggleDetalhes() {
