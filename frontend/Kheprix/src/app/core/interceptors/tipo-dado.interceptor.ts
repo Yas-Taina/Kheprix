@@ -26,7 +26,6 @@ export class TipoDadoInterceptor implements HttpInterceptor {
     req: HttpRequest<any>,
     next: HttpHandler,
   ): Observable<HttpEvent<any>> {
-    // FRONT → BACK
     const newReq = req.clone({
       body: this.transformRequest(req.body),
     });
@@ -34,6 +33,9 @@ export class TipoDadoInterceptor implements HttpInterceptor {
     return next.handle(newReq).pipe(
       map((event) => {
         if (event instanceof HttpResponse) {
+          if (event.body instanceof Blob) {
+            return event;
+          }
           return event.clone({
             body: this.transformResponse(event.body),
           });
