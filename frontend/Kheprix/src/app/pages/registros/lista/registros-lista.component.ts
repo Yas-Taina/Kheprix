@@ -5,9 +5,10 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { RegistroOcorrenciaService } from "../../../core/services/registro-ocorrencia.service";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { EspecieService } from "../../../core/services/especie.service";
-import { RegistroOcorrencia, EventoAmostragem, Especie } from "../../../models";
+import { RegistroOcorrencia, EventoAmostragem, Especie, ValorVariavel, Variavel } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
+import { VariavelService } from "../../../core/services/variavel.service";
 
 @Component({
   selector: "app-registros-lista",
@@ -25,6 +26,8 @@ export class RegistrosListaComponent implements OnInit {
   campanhaId!: number;
   unidadeId!: number;
   eventoId!: number;
+  variaveis: Variavel[] = [];
+  valoresVars: ValorVariavel[] = [];
   loading = true;
   showDetalhes = false;
   busca = "";
@@ -36,6 +39,7 @@ export class RegistrosListaComponent implements OnInit {
     private registroService: RegistroOcorrenciaService,
     private eventoService: EventoAmostragemService,
     private especieService: EspecieService,
+    private variavelService: VariavelService,
     public router: Router,
     private route: ActivatedRoute,
     public util: UtilService,
@@ -63,6 +67,9 @@ export class RegistrosListaComponent implements OnInit {
     this.especieService
       .listar(this.estudoId)
       .subscribe((e) => (this.especies = e));
+    this.variavelService.listar(this.estudoId, "registro").subscribe((vars) => {
+      this.variaveis = vars;
+    });
   }
 
   filtrar() {
@@ -79,6 +86,13 @@ export class RegistrosListaComponent implements OnInit {
   getNomeEspecie(id: number): string {
     const e = this.especies.find((x) => x.id === id);
     return e ? `${e.genero} ${e.especie}` : `Espécie #${id}`;
+  }
+
+  getValor(variavelId: number): string {
+    return (
+      this.valoresVars.find((val) => val.variavel_id === variavelId)?.valor ||
+      "—"
+    );
   }
 
   toggleDetalhes() {
