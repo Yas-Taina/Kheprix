@@ -87,8 +87,8 @@
       <h2 class="section-title">Detalhes do Estudo</h2>
       <div class="detail-grid mt-sm">
         <div class="detail-field">
-          <label>Descrição</label>
-          <span>{{ estudo.descricao || "—" }}</span>
+          <label>Observações</label>
+          <span>{{ estudo.observacoes || "—" }}</span>
         </div>
         <div class="detail-field">
           <label>Data de Criação</label>
@@ -104,7 +104,8 @@
           class="detail-field mt-sm"
         >
           <span style="font-size: 0.9rem;">{{ v.nome }}</span><br />
-          <span style="font-size: 0.7rem;">Tipo de Dado: {{ v.tipo_dado }}</span> <br />
+          <span style="font-size: 0.7rem;">Tipo de Dado: {{ TipoLabel(v.tipo_dado) }}</span> <br />
+          <span style="font-size: 0.7rem;">Nivel de Estudo: {{ NivelLabel(v.nivel_aplicacao) }}</span> <br />
           <span style="font-size: 0.7rem;">Métrica: {{ v.metrica || "—" }}</span>
         </div>
       </div>
