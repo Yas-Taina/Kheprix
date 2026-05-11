@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { BaseService } from "./base.service";
 import {
   Estudo,
@@ -43,12 +44,21 @@ export class EstudoService extends BaseService {
     agrupamento?: TipoAgrupamento,
     formato: FormatoExportacao = "csv",
   ): Observable<Blob> {
-    const params: Record<string, string> = { formato };
- 
+    let params = new HttpParams().set("formato", formato);
+
     if (formato !== "xml" && agrupamento) {
-      params["agrupamento"] = agrupamento;
+      params = params.set("agrupamento", agrupamento);
     }
- 
-    return this.getBlob(`/estudos/${id}/exportar_dados`, params);
+
+    const acceptHeader = formato === "xml" ? "application/xml" : "text/csv";
+    const headers = this.getHeaders().set("Accept", acceptHeader);
+
+    return this.http
+      .get(`${this.apiUrl}/estudos/${id}/exportar_dados`, {
+        headers,
+        params,
+        responseType: "blob",
+      })
+      .pipe(catchError((e) => { console.error("API Error:", e); throw e; }));
   }
 }
