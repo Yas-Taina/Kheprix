@@ -18,24 +18,7 @@ import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 
-/**
- * Cadastro e edição de Campanha — com campos dinâmicos de variáveis.
- *
- * As variáveis de nível "campanha" cadastradas no estudo são carregadas
- * automaticamente via GET /estudos/:id/variaveis?nivel_aplicacao=campanha
- * e exibidas como campos de texto com a métrica ao lado (ex: °C).
- *
- * O formulário inclui:
- *  - Data de início (com DatePicker)
- *  - Campos dinâmicos de variáveis nível campanha
- *  - Descrição (multiline)
- *
- * Extras recebidos:
- *   estudo_remote_id → Int
- *   estudo_nome      → String
- *   campanha_id      → Int (-1 para criação)
- *   campanha_nome    → String (pré-preenchimento em edição)
- */
+
 class NovaCampanhaActivityV2 : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovaCampanhaV2Binding
@@ -45,11 +28,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     private var campanhaId     = -1
     private var modoEdicao     = false
 
-    /** Variáveis de nível campanha carregadas da API */
     private val variaveis = mutableListOf<VariavelResponse>()
-
-    /** Views dos campos de variáveis, mapeadas por variavel.id.
-     *  Para tipo "boolean" a view é um Spinner; para os demais tipos é um EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +47,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             binding.etNome.setText(intent.getStringExtra("campanha_nome") ?: "")
         }
 
-        // Campo e ícone calendário: abrem DatePickerDialog
         binding.ivCalendario.setOnClickListener { abrirDatePicker() }
         binding.etDataInicio.setOnClickListener { abrirDatePicker() }
 
@@ -84,10 +62,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         carregarVariaveis()
     }
 
-    // ── Variáveis dinâmicas ───────────────────────────────────────────────
-
     private fun carregarVariaveis() {
-        // Estudo offline-only: lê variáveis do SQLite.
         if (estudoRemoteId <= 0) {
             carregarVariaveisOffline()
             return
@@ -205,7 +180,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                 view.setSelection(idx)
             }
             is EditText -> view.setText(valor)
-            else -> { /* tipo desconhecido: ignora */ }
+            else -> {}
         }
     }
 
@@ -228,7 +203,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         }
 
         variaveis.forEachIndexed { index, variavel ->
-            // Label: "Variável N:"
             val label = TextView(this).apply {
                 text = "${variavel.nome}:"
                 textSize = 14f
@@ -238,7 +212,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             }
             binding.layoutVariaveis.addView(label)
 
-            // Linha: campo de texto + unidade (métrica)
             val linha = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = android.view.Gravity.CENTER_VERTICAL
@@ -252,7 +225,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             camposVariavel[variavel.id] = campo
             linha.addView(campo)
 
-            // Unidade/métrica ao lado
             if (!variavel.metrica.isNullOrEmpty()) {
                 val unidade = TextView(this).apply {
                     text = variavel.metrica
@@ -271,7 +243,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     private fun Int.dpToPx() =
         (this * resources.displayMetrics.density).toInt()
 
-    /** Cria a view de entrada adequada ao tipoDado da variável. */
     private fun criarCampoVariavel(tipoDado: String): View {
         val lp = LinearLayout.LayoutParams(0, 52.dpToPx(), 1f)
         val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
@@ -302,12 +273,8 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         }
     }
 
-
-    // ── DatePicker ────────────────────────────────────────────────────────
-
     private fun abrirDatePicker() {
         val cal = java.util.Calendar.getInstance()
-        // Pré-seleciona data já preenchida, se houver
         val atual = binding.etDataInicio.text.toString().trim()
         if (atual.isNotEmpty()) {
             val partes = atual.split("/")
@@ -328,7 +295,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         ).show()
     }
 
-    /** Converte "dd/MM/yyyy" em "yyyy-MM-dd"; retorna null se inválido. */
     private fun brParaIso(br: String): String? {
         val partes = br.split("/")
         if (partes.size != 3) return null
@@ -337,7 +303,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         }.getOrNull()
     }
 
-    /** Converte "yyyy-MM-dd" em "dd/MM/yyyy"; retorna a string original se não casar. */
     private fun isoParaBr(iso: String): String {
         val base = iso.take(10)
         val partes = base.split("-")
@@ -346,8 +311,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             "%02d/%02d/%04d".format(partes[2].toInt(), partes[1].toInt(), partes[0].toInt())
         }.getOrDefault(iso)
     }
-
-    // ── Montar valores das variáveis ──────────────────────────────────────
 
     private fun coletarValoresVariaveis(): List<ValorVariavelRequest> {
         return camposVariavel.entries.mapNotNull { (varId, view) ->
@@ -363,8 +326,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             ValorVariavelRequest(variavelId = varId, valor = valor)
         }
     }
-
-    // ── API ───────────────────────────────────────────────────────────────
 
     private fun criarCampanha() {
         val nome   = binding.etNome.text.toString().trim()
@@ -388,7 +349,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             valoresVariaveis = coletarValoresVariaveis()
         )
 
-        // Estudo pai é offline-only: persistir direto no SQLite (não tente API).
         if (estudoRemoteId <= 0) {
             salvarCampanhaOffline(req)
             return
@@ -412,13 +372,9 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Persiste a campanha no SQLite. Requer que o estudo pai esteja salvo
-     * offline — se não estiver, aborta com aviso e NÃO grava órfão.
-     */
+
     private fun salvarCampanhaOffline(req: CampanhaRequest) {
         val repo = OfflineRepository(this)
-        // Resolve localId: prefere o passado pelo Intent; senão tenta lookup pelo remote_id.
         val resolvedLocalId = when {
             estudoLocalId > 0 -> estudoLocalId
             estudoRemoteId > 0 -> repo.estudoLocalIdFromRemote(estudoRemoteId)
@@ -467,7 +423,6 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             valoresVariaveis = coletarValoresVariaveis()
         )
 
-        // Campanha offline-only (negative ID) or offline study: persist to SQLite directly.
         if (campanhaId < 0 || estudoRemoteId <= 0) {
             editarCampanhaOffline(req)
             return
@@ -520,5 +475,3 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         binding.btnConfirmar.isEnabled = !loading
     }
 }
-
-// Alias para retrocompatibilidade — CampanhasActivity ainda referencia NovaCampanhaActivity

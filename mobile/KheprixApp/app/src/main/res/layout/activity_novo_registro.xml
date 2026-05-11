@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_novo_registro.xml
-    Campos: Foto (galeria + câmera), Data+Hora, Lat+Lon (GPS), Espécie (spinner),
-    Quantidade, Variáveis nível registro (dinâmicas), Confirmar.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
@@ -13,12 +8,13 @@
         android:layout_width="match_parent" android:layout_height="96dp"
         android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
         <ImageView android:id="@+id/ivMenuLateral" android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Menu"
+            app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView android:layout_width="80dp" android:layout_height="80dp"
-            android:src="@drawable/ic_placeholder_beetle" android:alpha="0.7" android:contentDescription="Kheprix" android:scaleType="fitCenter"
+        <ImageView android:layout_width="120dp" android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle" android:alpha="0.7" android:contentDescription="Kheprix" android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
         <View android:id="@+id/ivPerfil" android:layout_width="0dp" android:layout_height="0dp"
@@ -33,10 +29,19 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="Novo Registro de Ocorrência:" android:textSize="24sp" android:textColor="#4A5240"
                 android:fontFamily="serif" android:layout_marginTop="20dp"/>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#9AAB8A"
-                android:layout_marginTop="8dp" android:layout_marginBottom="16dp" android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
-            <!-- Foto -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Foto:" android:textSize="15sp" android:textColor="#6B7A5E" android:fontFamily="monospace"/>
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -44,21 +49,23 @@
                 android:background="@drawable/bg_field_green" android:layout_marginTop="4dp" android:layout_marginBottom="12dp">
                 <TextView android:id="@+id/tvNomeFoto"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:text="Placeholder.jpeg" android:textSize="14sp" android:textColor="#4A5240" android:paddingStart="12dp"
+                    android:text="Foto do Registro" android:textSize="14sp" android:textColor="#4A5240" android:paddingStart="12dp"
                     app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/ivGaleria"
                     app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
-                <!-- SUBSTITUIR: @drawable/ic_folder -->
+
                 <ImageView android:id="@+id/ivGaleria" android:layout_width="32dp" android:layout_height="32dp"
-                    android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                    android:src="@drawable/ic_folder" android:scaleType="fitCenter"
                     android:contentDescription="Galeria" android:clickable="true" android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/kheprix_green"
                     app:layout_constraintEnd_toStartOf="@id/ivCamera" app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="4dp"/>
-                <!-- SUBSTITUIR: @drawable/ic_camera -->
+
                 <ImageView android:id="@+id/ivCamera" android:layout_width="32dp" android:layout_height="32dp"
-                    android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                    android:src="@drawable/ic_camera" android:scaleType="fitCenter"
                     android:contentDescription="Câmera" android:clickable="true" android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/kheprix_green"
                     app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="8dp"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -70,7 +77,6 @@
                 android:visibility="gone"
                 android:layout_marginBottom="4dp"/>
 
-            <!-- Data | Hora -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
                     android:orientation="vertical" android:layout_marginEnd="8dp">
@@ -88,9 +94,10 @@
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
                         <ImageView android:id="@+id/ivCalendario"
                             android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                            android:src="@drawable/ic_calendar" android:scaleType="fitCenter"
                             android:contentDescription="Calendário" android:clickable="true" android:focusable="true"
                             android:background="?attr/selectableItemBackgroundBorderless"
+                            app:tint="@color/kheprix_green"
                             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="4dp"/>
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -106,7 +113,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Latitude | Longitude -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="12dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
@@ -119,14 +125,15 @@
                         <EditText android:id="@+id/etLatitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="30°34'45\" android:textCursorDrawable="@null"
+                            android:textColor="#4A5240" android:hint="00°00'00\" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
                         <ImageView android:id="@+id/ivGpsLat"
                             android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                            android:src="@drawable/ic_location_pin" android:scaleType="fitCenter"
                             android:contentDescription="GPS" android:clickable="true" android:focusable="true"
                             android:background="?attr/selectableItemBackgroundBorderless"
+                            app:tint="@color/kheprix_green"
                             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="4dp"/>
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -140,21 +147,21 @@
                         <EditText android:id="@+id/etLongitude"
                             android:layout_width="0dp" android:layout_height="match_parent"
                             android:background="@null" android:paddingStart="10dp" android:paddingEnd="36dp"
-                            android:textColor="#4A5240" android:hint="23°45'65\" android:textCursorDrawable="@null"
+                            android:textColor="#4A5240" android:hint="00°00'00\" android:textCursorDrawable="@null"
                             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
                         <ImageView android:id="@+id/ivGpsLon"
                             android:layout_width="28dp" android:layout_height="28dp"
-                            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+                            android:src="@drawable/ic_location_pin" android:scaleType="fitCenter"
                             android:contentDescription="GPS" android:clickable="true" android:focusable="true"
                             android:background="?attr/selectableItemBackgroundBorderless"
+                            app:tint="@color/kheprix_green"
                             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="4dp"/>
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Espécie | Quantidade -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="12dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
@@ -171,11 +178,10 @@
                     <EditText android:id="@+id/etQtde"
                         android:layout_width="match_parent" android:layout_height="48dp"
                         android:background="@drawable/bg_field_green" android:paddingStart="10dp"
-                        android:textColor="#4A5240" android:hint="12" android:inputType="number" android:layout_marginTop="4dp"/>
+                        android:textColor="#4A5240" android:hint="01" android:inputType="number" android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Variáveis nível registro (dinâmicas) -->
             <TextView android:id="@+id/tvVariaveisTitle"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Variáveis:" android:textSize="16sp" android:textColor="#6B7A5E"

@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Drawable: Fundo dos campos de texto (EditText)
-    Bordas arredondadas finas, cor levemente mais escura que o fundo.
-
-    ════════════════════════════════════════════════════
-    CORES:
-      - stroke: #7A9169  (borda verde musgo médio)
-      - solid : #B8C9AB  (preenchimento levemente mais escuro que o fundo)
-    Ajuste conforme o design final.
-    ════════════════════════════════════════════════════
--->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 

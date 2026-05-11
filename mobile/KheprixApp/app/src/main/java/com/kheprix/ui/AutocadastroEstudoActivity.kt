@@ -17,26 +17,10 @@ import com.kheprix.databinding.ActivityAutocadastroEstudoBinding
 import com.kheprix.models.IngressarRequest
 import kotlinx.coroutines.launch
 
-/**
- * Autocadastro em Estudo — ingresso via código + senha ou escaneamento de QR Code.
- *
- * API: POST /estudos/ingressar  { codigo, senha_autocadastro }
- *
- * QR Code:
- *  O QR gerado na tela de colaboradores contém o código do estudo.
- *  Ao escanear, o campo etCodigo é preenchido automaticamente.
- *
- * Dependência necessária para o QR (adicionar ao build.gradle):
- *   implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
- *
- * SUBSTITUIR o ícone de QR (ivScanQr):
- *   @drawable/ic_qr_scan → ícone de scan (quadrado com cantos marcados, como no design)
- */
 class AutocadastroEstudoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityAutocadastroEstudoBinding
 
-    // Launcher para permissão de câmera
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) iniciarScanQr()
@@ -66,8 +50,6 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── QR Code ───────────────────────────────────────────────────────────
-
     private fun verificarPermissaoCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED) {
@@ -92,8 +74,6 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
             binding.etCodigo.setText(result.contents)
         }
     }
-
-    // ── API ───────────────────────────────────────────────────────────────
 
     private fun ingressarEstudo(codigo: String, senha: String) {
         setLoading(true)

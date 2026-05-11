@@ -2,10 +2,6 @@ package com.kheprix.models
 
 import com.google.gson.annotations.SerializedName
 
-// ──────────────────────────────────────────────
-// AUTENTICAÇÃO
-// ──────────────────────────────────────────────
-
 data class LoginRequest(
     val email: String,
     val senha: String
@@ -36,10 +32,6 @@ data class MensagemResponse(
     val mensagem: String
 )
 
-// ──────────────────────────────────────────────
-// USUÁRIOS
-// ──────────────────────────────────────────────
-
 data class AutocadastroRequest(
     val nome: String,
     val email: String,
@@ -52,10 +44,6 @@ data class UsuarioResponse(
     val email: String,
     @SerializedName("created_at") val createdAt: String
 )
-
-// ──────────────────────────────────────────────
-// ESTUDOS
-// ──────────────────────────────────────────────
 
 data class EstudoRequest(
     val nome: String,
@@ -72,10 +60,6 @@ data class EstudoResponse(
     @SerializedName("updated_at") val updatedAt: String
 )
 
-// ──────────────────────────────────────────────
-// DASHBOARD
-// ──────────────────────────────────────────────
-
 data class DashboardResponse(
     val id: Int,
     val nome: String,
@@ -88,10 +72,6 @@ data class DashboardResponse(
     @SerializedName("especies_invasoras") val especiesInvasoras: Int,
     @SerializedName("total_individuos") val totalIndividuos: Int
 )
-
-// ──────────────────────────────────────────────
-// VARIÁVEIS
-// ──────────────────────────────────────────────
 
 data class VariavelRequest(
     val nome: String,
@@ -110,10 +90,6 @@ data class VariavelResponse(
     @SerializedName("updated_at") val updatedAt: String
 )
 
-// ──────────────────────────────────────────────
-// ESPÉCIES
-// ──────────────────────────────────────────────
-
 data class EspecieRequest(
     val classe: String,
     val ordem: String,
@@ -121,7 +97,6 @@ data class EspecieRequest(
     val genero: String,
     val especie: String,
     val endemismo: Boolean,
-    /** Base64-encoded image */
     val foto: String? = null,
     @SerializedName("nome_popular") val nomePopular: String? = null,
     @SerializedName("status_conservacao") val statusConservacao: String? = null
@@ -134,7 +109,6 @@ data class EspeciePatchRequest(
     val genero: String? = null,
     val especie: String? = null,
     val endemismo: Boolean? = null,
-    /** Base64-encoded image */
     val foto: String? = null,
     @SerializedName("nome_popular") val nomePopular: String? = null,
     @SerializedName("status_conservacao") val statusConservacao: String? = null
@@ -143,7 +117,6 @@ data class EspeciePatchRequest(
 data class EspecieResponse(
     val id: Int,
     @SerializedName("estudo_id") val estudoId: Int,
-    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     val classe: String,
     val ordem: String,
@@ -156,10 +129,6 @@ data class EspecieResponse(
     @SerializedName("created_at") val createdAt: String
 )
 
-// ──────────────────────────────────────────────
-// COLABORADORES
-// ──────────────────────────────────────────────
-
 data class ColaboradorResponse(
     @SerializedName("id_usuario") val idUsuario: Int,
     val nome: String,
@@ -170,10 +139,6 @@ data class ColaboradorResponse(
 data class ColaboradorPatchRequest(
     val perfil: String
 )
-
-// ──────────────────────────────────────────────
-// CONVITES
-// ──────────────────────────────────────────────
 
 data class ConviteRequest(
     @SerializedName("email_convidado") val emailConvidado: String
@@ -217,10 +182,6 @@ data class ConviteDetalheResponse(
     @SerializedName("data_expiracao") val dataExpiracao: String
 )
 
-// ──────────────────────────────────────────────
-// CÓDIGO DE ACESSO
-// ──────────────────────────────────────────────
-
 data class CodigoAcessoResponse(
     val codigo: String,
     @SerializedName("senha_autocadastro") val senhaAutocadastro: String
@@ -229,10 +190,6 @@ data class CodigoAcessoResponse(
 data class CodigoAcessoPatchRequest(
     @SerializedName("senha_autocadastro") val senhaAutocadastro: String
 )
-
-// ──────────────────────────────────────────────
-// AUTOCADASTRO EM ESTUDO
-// ──────────────────────────────────────────────
 
 data class IngressarRequest(
     val codigo: String,
@@ -244,10 +201,6 @@ data class IngressarResponse(
     @SerializedName("nome_estudo") val nomeEstudo: String,
     val perfil: String
 )
-
-// ──────────────────────────────────────────────
-// CAMPANHAS
-// ──────────────────────────────────────────────
 
 data class CampanhaRequest(
     val nome: String,
@@ -280,10 +233,6 @@ data class ValorVariavelResponse(
     val id: Int? = null
 )
 
-// ──────────────────────────────────────────────
-// UNIDADES AMOSTRAIS
-// ──────────────────────────────────────────────
-
 data class UnidadeRequest(
     val nome: String,
     val latitude: Double,
@@ -308,10 +257,6 @@ data class UnidadeResponse(
     @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )
 
-// ──────────────────────────────────────────────
-// EVENTOS DE AMOSTRAGEM
-// ──────────────────────────────────────────────
-
 data class EventoRequest(
     @SerializedName("horario_inicio") val horarioInicio: String,
     @SerializedName("horario_fim") val horarioFim: String? = null,
@@ -330,10 +275,6 @@ data class EventoResponse(
     @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelResponse>? = null
 )
 
-// ──────────────────────────────────────────────
-// REGISTROS DE OCORRÊNCIA
-// ──────────────────────────────────────────────
-
 data class RegistroRequest(
     @SerializedName("especie_id") val especieId: Int,
     val data: String,
@@ -341,7 +282,6 @@ data class RegistroRequest(
     val latitude: Double,
     val longitude: Double,
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int? = null,
-    /** Base64-encoded image */
     val foto: String? = null,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null,
     @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
@@ -354,7 +294,6 @@ data class RegistroPatchRequest(
     val latitude: Double? = null,
     val longitude: Double? = null,
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int? = null,
-    /** Base64-encoded image */
     val foto: String? = null,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean? = null,
     @SerializedName("valores_variaveis") val valoresVariaveis: List<ValorVariavelRequest>? = null
@@ -369,7 +308,6 @@ data class RegistroResponse(
     val latitude: Double,
     val longitude: Double,
     @SerializedName("qtde_individuos") val qtdeIndividuos: Int?,
-    /** URL absoluta da foto (servida pelo backend). */
     val foto: String?,
     @SerializedName("ausencia_especie") val ausenciaEspecie: Boolean?,
     @SerializedName("created_at") val createdAt: String,

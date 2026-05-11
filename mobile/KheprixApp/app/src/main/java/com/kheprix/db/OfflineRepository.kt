@@ -32,27 +32,12 @@ import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
 import com.kheprix.models.ValorVariavelResponse
 
-/**
- * Fonte única de persistência offline com validação de integridade.
- *
- * Invariantes:
- *  - Nada é inserido sem que o pai exista localmente (FK lógica obrigatória).
- *  - Linhas criadas offline têm remote_id = NULL e sincronizado = 0.
- *  - Unicidade de remote_id é garantida no schema via índice UNIQUE parcial
- *    (ver DatabaseHelper.criarIndicesUnicidade).
- *
- * Todas as funções criarXOffline lançam [OfflineIntegrityException] se o pai
- * informado não existir no SQLite — impede rastros órfãos.
- */
+
 class OfflineRepository(context: Context) {
 
     private val dbHelper = DatabaseHelper(context.applicationContext)
 
     class OfflineIntegrityException(message: String) : IllegalStateException(message)
-
-    // ════════════════════════════════════════════════════════════════════════
-    // RESOLUÇÃO remote_id → local_id
-    // ════════════════════════════════════════════════════════════════════════
 
     fun estudoLocalIdFromRemote(remoteId: Int): Long? =
         lookupLocalId(TABLE_ESTUDOS, remoteId, parentCol = null, parentLocalId = null)
@@ -69,10 +54,6 @@ class OfflineRepository(context: Context) {
     fun especieLocalIdFromRemote(estudoLocalId: Long, remoteId: Int): Long? =
         lookupLocalId(TABLE_ESPECIES, remoteId, "estudo_local_id", estudoLocalId)
 
-    // ════════════════════════════════════════════════════════════════════════
-    // VALIDAÇÃO DE EXISTÊNCIA (lança OfflineIntegrityException se faltar)
-    // ════════════════════════════════════════════════════════════════════════
-
     fun requireEstudoExists(localId: Long) =
         requireRowExists(TABLE_ESTUDOS, localId, "Estudo")
 
@@ -87,10 +68,6 @@ class OfflineRepository(context: Context) {
 
     fun requireEspecieExists(localId: Long) =
         requireRowExists(TABLE_ESPECIES, localId, "Espécie")
-
-    // ════════════════════════════════════════════════════════════════════════
-    // CRIAÇÃO OFFLINE — remote_id = NULL, sincronizado = 0
-    // ════════════════════════════════════════════════════════════════════════
 
     fun criarEstudoOffline(req: EstudoRequest): Long {
         val db = dbHelper.writableDatabase
@@ -244,10 +221,6 @@ class OfflineRepository(context: Context) {
         }
     }
 
-    /**
-     * Atualiza registro no SQLite com sincronizado=0 (preservando remote_id).
-     * Foto null/vazia preserva a existente.
-     */
     fun editarRegistroOffline(localId: Long, req: RegistroPatchRequest, especieLocalId: Long? = null) {
         val db = dbHelper.writableDatabase
         db.transactionTo {
@@ -329,13 +302,6 @@ class OfflineRepository(context: Context) {
         }
     }
 
-    /**
-     * Atualiza uma espécie no SQLite e marca sincronizado=0 (preservando o
-     * remote_id). O sync posterior usa o remote_id para PATCH em vez de POST.
-     *
-     * Se [req.foto] for null/vazio, NÃO sobrescreve a foto existente — assim
-     * uma edição que não troca a foto preserva a URL/Base64 atual.
-     */
     fun editarEspecieOffline(localId: Long, req: EspeciePatchRequest) {
         val db = dbHelper.writableDatabase
         val cv = ContentValues().apply {
@@ -371,12 +337,6 @@ class OfflineRepository(context: Context) {
             put(COL_CREATED_AT, nowIso())
         })
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // CACHE DE DADOS ONLINE — upsert com sincronizado = 1
-    // Usado para espelhar dados recém-carregados da API no SQLite, permitindo
-    // acesso offline sem exigir o fluxo explícito de "Salvar Offline".
-    // ════════════════════════════════════════════════════════════════════════
 
     fun cacheEstudo(e: EstudoResponse): Long {
         val db = dbHelper.writableDatabase
@@ -500,10 +460,6 @@ class OfflineRepository(context: Context) {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // VALORES DE VARIÁVEIS — leitura offline
-    // ════════════════════════════════════════════════════════════════════════
-
     fun listarValoresPorCampanha(campanhaLocalId: Long): List<ValorVariavelResponse> =
         listarValores("campanha_local_id", campanhaLocalId)
 
@@ -535,14 +491,6 @@ class OfflineRepository(context: Context) {
         return list
     }
 
-    /**
-     * Lista espécies do SQLite como EspecieResponse. Útil para UIs que
-     * precisam mostrar espécies offline (cacheadas ou criadas localmente).
-     *
-     * Para distinguir espécies criadas offline (ainda não sincronizadas),
-     * o campo `id` é preenchido com `-localId` (negativo). Espécies com
-     * remote_id têm o próprio remote_id como `id` (positivo).
-     */
     fun listarEspeciesPorEstudoLocal(estudoLocalId: Long): List<EspecieResponse> {
         val db = dbHelper.readableDatabase
         val list = mutableListOf<EspecieResponse>()
@@ -572,11 +520,6 @@ class OfflineRepository(context: Context) {
         return list
     }
 
-    /**
-     * Resolve o local_id de uma espécie a partir do id usado na UI:
-     * - id > 0: é o remote_id → busca normal.
-     * - id < 0: é `-localId` (espécie criada offline) → retorna abs(id).
-     */
     fun resolveEspecieLocalId(estudoLocalId: Long, id: Int): Long? {
         if (id < 0) {
             val localId = (-id).toLong()
@@ -590,11 +533,6 @@ class OfflineRepository(context: Context) {
         return especieLocalIdFromRemote(estudoLocalId, id)
     }
 
-    /**
-     * Resolve o local_id de um evento a partir do id usado na UI:
-     * - id > 0: é o remote_id → busca normal.
-     * - id < 0: é `-localId` (evento criado offline) → retorna abs(id).
-     */
     fun resolveEventoLocalId(unidadeLocalId: Long, id: Int): Long? {
         if (id < 0) {
             val localId = (-id).toLong()
@@ -623,10 +561,6 @@ class OfflineRepository(context: Context) {
             args
         ).use { if (it.moveToFirst()) it.getLong(0) else null }
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // HELPERS PRIVADOS
-    // ════════════════════════════════════════════════════════════════════════
 
     private fun lookupLocalId(
         table: String,

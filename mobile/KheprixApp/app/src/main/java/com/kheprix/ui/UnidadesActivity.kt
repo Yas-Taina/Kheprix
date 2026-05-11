@@ -26,20 +26,6 @@ import com.kheprix.models.UnidadeResponse
 import com.kheprix.models.ValorVariavelResponse
 import kotlinx.coroutines.launch
 
-/**
- * Lista de Unidades Amostrais de uma Campanha.
- *
- * Exibe:
- *  - Botão "Adicionar Unidade" → NovaUnidadeActivity
- *  - Botão "Visualizar Detalhes" → toggle card inline com dados da campanha + botão editar
- *  - Lista: nome da unidade + coordenadas formatadas em DMS, lixeira
- *
- * Extras recebidos:
- *   estudo_remote_id  → Int
- *   campanha_id       → Int
- *   campanha_nome     → String
- *   estudo_nome       → String
- */
 class UnidadesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityUnidadesBinding
@@ -63,7 +49,6 @@ class UnidadesActivity : BaseDrawerActivity() {
         campanhaNome   = intent.getStringExtra("campanha_nome") ?: ""
         estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
 
-        // Decodifica negativo: campanhaId codificado como -localId.
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
 
         binding.tvCampanhaNome.text = campanhaNome
@@ -84,13 +69,11 @@ class UnidadesActivity : BaseDrawerActivity() {
             })
         }
 
-        // "Visualizar Detalhes" → toggle card da campanha
         binding.btnVisualizarDetalhes.setOnClickListener {
             val visivel = binding.cardDetalhesCampanha.visibility == View.VISIBLE
             binding.cardDetalhesCampanha.visibility = if (visivel) View.GONE else View.VISIBLE
         }
 
-        // Botão editar dentro do card de detalhes
         binding.btnEditarCampanha.setOnClickListener {
             startActivity(Intent(this, NovaCampanhaActivityV2::class.java).apply {
                 putExtra("estudo_remote_id", estudoRemoteId)
@@ -117,7 +100,6 @@ class UnidadesActivity : BaseDrawerActivity() {
     }
 
     private fun carregarDetalhes() {
-        // Campanha offline-only: lê do SQLite.
         if (estudoRemoteId <= 0 || campanhaId <= 0) {
             preencherDetalhesOffline()
             return
@@ -216,7 +198,6 @@ class UnidadesActivity : BaseDrawerActivity() {
     }
 
     private fun carregarUnidades() {
-        // Campanha offline-only: lista do SQLite.
         if (campanhaId <= 0) {
             val localId = if (campanhaLocalId > 0) campanhaLocalId
                 else CampanhaDao(this).listarTodos().firstOrNull { it.nome == campanhaNome }?.localId
@@ -230,7 +211,6 @@ class UnidadesActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             val unidadesOnline = mutableListOf<UnidadeResponse>()
 
-            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getUnidades(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
@@ -240,11 +220,8 @@ class UnidadesActivity : BaseDrawerActivity() {
                 }
             } catch (_: Exception) { }
 
-            // Merge com SQLite
             val unidadeDao = UnidadeDao(this@UnidadesActivity)
             val repo = OfflineRepository(this@UnidadesActivity)
-            // Resolve estudo localId; se não existir, tenta espelhar da API
-            // para permitir cache das unidades carregadas online.
             var estudoLocalId = EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             if (estudoLocalId == null && unidadesOnline.isNotEmpty()) {
                 try {
@@ -255,8 +232,6 @@ class UnidadesActivity : BaseDrawerActivity() {
             }
             if (estudoLocalId == null) return@launch
 
-            // Espelha a campanha no SQLite (caso ainda não exista), usando
-            // dados da API; sem isso, as unidades online não podem ser associadas.
             var campanhaLocalId = CampanhaDao(this@UnidadesActivity)
                 .buscarPorRemoteIdEscopo(campanhaId, estudoLocalId!!)?.localId
             if (campanhaLocalId == null && unidadesOnline.isNotEmpty()) {
@@ -269,7 +244,6 @@ class UnidadesActivity : BaseDrawerActivity() {
             }
             if (campanhaLocalId == null) return@launch
 
-            // Espelha as unidades carregadas online.
             unidadesOnline.forEach { u ->
                 try { repo.cacheUnidade(campanhaLocalId!!, u) } catch (_: Exception) { }
             }
@@ -280,7 +254,6 @@ class UnidadesActivity : BaseDrawerActivity() {
             unidades.clear()
             unidades.addAll(unidadesOnline)
 
-            // Adicionar offline-only (não presentes na API)
             offline.forEach { off ->
                 if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
                     unidades.add(UnidadeResponse(
@@ -385,8 +358,6 @@ class UnidadesActivity : BaseDrawerActivity() {
     } catch (_: Exception) { iso }
 }
 
-// ── Adapter ──────────────────────────────────────────────────────────────────
-
 class UnidadeAdapter(
     private val items: List<UnidadeResponse>,
     private val onItemClick: (UnidadeResponse) -> Unit,
@@ -411,8 +382,6 @@ class UnidadeAdapter(
     }
 
     override fun getItemCount() = items.size
-
-    /** Converte decimal (−25.43) para DMS "−25°25'48\"" */
     private fun decimalToDms(dec: Double): String {
         val neg  = dec < 0
         val abs  = Math.abs(dec)

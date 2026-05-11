@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/values/colors.xml -->
 <resources>
-    <!-- ── Paleta Kheprix ─────────────────────────────────────────────── -->
     <color name="kheprix_bg">#EDE9DE</color>           <!-- Fundo bege (tela inicial / home) -->
     <color name="kheprix_bg_green">#A8B89A</color>     <!-- Fundo verde claro (header / formulários auth) -->
     <color name="kheprix_field_bg">#B8C9AB</color>     <!-- Fundo de campos EditText -->

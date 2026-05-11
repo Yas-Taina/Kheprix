@@ -1,22 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout: Tela de Cadastro
-    Design: mesmo estilo da tela de login — fundo #A8B89A,
-    título "CADASTRE-SE", besouro, 4 campos + botão.
 
-    ════════════════════════════════════════════════════
-    PLACEHOLDERS — o que substituir:
-    ════════════════════════════════════════════════════
-    1. IMAGEM DO BESOURO
-       - @drawable/ic_placeholder_beetle  →  @drawable/kheprix_beetle
-
-    2. FONTE do título (fontFamily="serif")
-       - Substituir por: android:fontFamily="@font/sua_fonte_display"
-
-    3. FONTE dos labels (fontFamily="monospace")
-       - Substituir por: android:fontFamily="@font/sua_fonte_mono"
-    ════════════════════════════════════════════════════
--->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -30,7 +13,6 @@
         android:layout_height="wrap_content"
         android:paddingBottom="40dp">
 
-        <!-- ── Título CADASTRE-SE ─────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="0dp"
@@ -48,14 +30,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Imagem do besouro ─────────────────────────────────────────
-             SUBSTITUIR src por @drawable/kheprix_beetle
-        -->
         <ImageView
             android:id="@+id/ivBesouro"
             android:layout_width="0dp"
             android:layout_height="220dp"
-            android:src="@drawable/ic_placeholder_beetle"
+            android:src="@drawable/kheprix_beetle"
             android:scaleType="fitCenter"
             android:contentDescription="Ilustração do besouro"
             android:alpha="0.5"
@@ -64,7 +43,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="4dp"/>
 
-        <!-- ── Texto instrução ─────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvInstrucao"
             android:layout_width="0dp"
@@ -95,7 +73,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="16dp"/>
 
-        <!-- ── Label Nome ──────────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelNome"
             android:layout_width="wrap_content"
@@ -109,7 +86,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvInstrucao"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo Nome ──────────────────────────────────────────────── -->
         <EditText
             android:id="@+id/etNome"
             android:layout_width="0dp"
@@ -128,7 +104,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Label E-mail ────────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelEmail"
             android:layout_width="wrap_content"
@@ -142,7 +117,6 @@
             app:layout_constraintTop_toBottomOf="@id/etNome"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo E-mail ────────────────────────────────────────────── -->
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="0dp"
@@ -161,7 +135,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Label Senha ─────────────────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelSenha"
             android:layout_width="wrap_content"
@@ -175,7 +148,6 @@
             app:layout_constraintTop_toBottomOf="@id/etEmail"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo Senha ─────────────────────────────────────────────── -->
         <EditText
             android:id="@+id/etSenha"
             android:layout_width="0dp"
@@ -193,7 +165,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Label Confirme a senha ──────────────────────────────────── -->
         <TextView
             android:id="@+id/tvLabelConfirmarSenha"
             android:layout_width="wrap_content"
@@ -207,7 +178,6 @@
             app:layout_constraintTop_toBottomOf="@id/etSenha"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- ── Campo Confirmar Senha ───────────────────────────────────── -->
         <EditText
             android:id="@+id/etConfirmarSenha"
             android:layout_width="0dp"
@@ -225,7 +195,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── Botão Confirmar ─────────────────────────────────────────── -->
         <Button
             android:id="@+id/btnConfirmar"
             android:layout_width="0dp"
@@ -242,7 +211,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- ── ProgressBar ─────────────────────────────────────────────── -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

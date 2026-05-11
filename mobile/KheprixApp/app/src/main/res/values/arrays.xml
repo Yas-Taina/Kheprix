@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    res/values/arrays.xml
-    Arrays usados pelos Spinners em NovoEstudoActivity e CadastroEspecieActivity.
-    Coloque este arquivo em: app/src/main/res/values/arrays.xml
--->
 <resources>
 
-    <!-- Níveis de aplicação de variáveis (API: campanha|unidade|evento|registro) -->
     <string-array name="niveis_aplicacao">
         <item>Campanha</item>
         <item>Unidade</item>
@@ -14,18 +8,12 @@
         <item>Registro</item>
     </string-array>
 
-    <!-- Tipos de dado de variáveis -->
     <string-array name="tipos_dado">
         <item>Numérico</item>
         <item>Texto</item>
         <item>Booleano</item>
     </string-array>
 
-    <!--
-        Status de conservação (IUCN).
-        Estes valores são enviados diretamente para o campo status_conservacao da API.
-        Ajuste conforme os valores aceitos pelo seu backend.
-    -->
     <string-array name="status_conservacao">
         <item>Não avaliada</item>
         <item>Dados insuficientes</item>

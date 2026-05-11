@@ -13,13 +13,6 @@ import com.kheprix.db.DatabaseHelper
 import com.kheprix.db.EstudoOfflineManager
 import kotlinx.coroutines.launch
 
-/**
- * Tela inicial (Home / Dashboard).
- *
- * Herda de BaseDrawerActivity para o menu lateral hamburguer.
- * O layout activity_home.xml deve ter um DrawerLayout como raiz
- * com ids: drawerLayout e navigationView.
- */
 class HomeActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityHomeBinding
@@ -33,7 +26,6 @@ class HomeActivity : BaseDrawerActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Conecta o Drawer ao BaseDrawerActivity
         setupDrawer(binding.drawerLayout, binding.navigationView)
 
         offlineManager = EstudoOfflineManager(this)

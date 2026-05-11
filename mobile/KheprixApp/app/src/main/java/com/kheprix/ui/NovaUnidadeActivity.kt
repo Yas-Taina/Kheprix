@@ -25,25 +25,6 @@ import com.kheprix.models.ValorVariavelRequest
 import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 
-/**
- * Cadastro e edição de Unidade Amostral.
- *
- * Campos:
- *  - Latitude / Longitude (com ícone GPS que preenche automaticamente)
- *  - Raio (em metros, opcional)
- *  - Método de Coleta (opcional)
- *  - Esforço Amostral (opcional)
- *  - Variáveis de nível "unidade" do estudo (dinâmicas)
- *
- * Coordenadas são exibidas em formato DMS mas enviadas como decimal (Double).
- * O ícone de localização usa FusedLocationProviderClient para GPS.
- *
- * Extras recebidos:
- *   estudo_remote_id → Int
- *   campanha_id      → Int
- *   unidade_id       → Int (-1 para criação)
- *   (dados para pré-preenchimento em modo edição)
- */
 class NovaUnidadeActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovaUnidadeBinding
@@ -60,11 +41,7 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
     private var lonDecimal: Double? = null
 
     private val variaveis = mutableListOf<VariavelResponse>()
-    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
-
-    /** Unidade carregada em modo edição — usada para preencher campos e
-     *  recuperar os ids dos valores_variaveis existentes ao salvar. */
     private var unidadeCarregada: UnidadeResponse? = null
 
     private val locationPermissionLauncher =
@@ -94,7 +71,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
 
         binding.tvTitulo.text = if (modoEdicao) "Editar Unidade Amostral" else "Nova Unidade Amostral"
 
-        // Ícones GPS: preenchem lat/lon com localização do dispositivo
         binding.ivGpsLat.setOnClickListener { verificarPermissaoGps() }
         binding.ivGpsLon.setOnClickListener { verificarPermissaoGps() }
 
@@ -113,8 +89,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         if (modoEdicao) preencherDadosEdicao()
         carregarVariaveis()
     }
-
-    // ── GPS ───────────────────────────────────────────────────────────────
 
     private fun verificarPermissaoGps() {
         val fine   = Manifest.permission.ACCESS_FINE_LOCATION
@@ -142,7 +116,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         }
     }
 
-    /** Converte decimal → DMS string para exibição */
     private fun decimalToDms(dec: Double): String {
         val neg = dec < 0; val abs = Math.abs(dec)
         val deg = abs.toInt(); val minD = (abs - deg) * 60
@@ -185,12 +158,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         })
     }
 
-    /** Tenta fazer parse de DMS ou decimal puro digitado pelo usuário */
     private fun parseCoordenada(texto: String): Double? {
         val trimmed = texto.trim()
-        // Tenta decimal direto
         trimmed.toDoubleOrNull()?.let { return it }
-        // Tenta formato DMS: -25°25'48"
         val regex = Regex("""(-?\d+)°(\d+)'(\d+)""")
         val match = regex.find(trimmed) ?: return null
         val (d, m, s) = match.destructured
@@ -200,8 +170,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         }
         return v
     }
-
-    // ── Variáveis dinâmicas (nível unidade) ───────────────────────────────
 
     private fun carregarVariaveis() {
         if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
@@ -278,13 +246,9 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             binding.layoutVariaveis.addView(linha)
         }
 
-        // Em modo edição, se a unidade já chegou, preencher imediatamente.
         aplicarValoresVariaveis()
     }
 
-    /** Aplica os valores das variáveis da unidade carregada nos campos
-     *  renderizados. Idempotente — chamado tanto após renderizar quanto
-     *  após carregar a unidade, pois os fluxos são assíncronos. */
     private fun aplicarValoresVariaveis() {
         val u = unidadeCarregada ?: return
         if (camposVariavel.isEmpty()) return
@@ -299,14 +263,13 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                     view.setSelection(idx)
                 }
                 is EditText -> view.setText(vv.valor)
-                else -> { /* tipo desconhecido: ignora */ }
+                else -> {}
             }
         }
     }
 
     private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
 
-    /** Cria a view de entrada adequada ao tipoDado da variável. */
     private fun criarCampoVariavel(tipoDado: String): View {
         val lp = LinearLayout.LayoutParams(0, 48.dpToPx(), 1f)
         val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
@@ -335,8 +298,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             }
         }
     }
-
-    // ── Edição ────────────────────────────────────────────────────────────
 
     private fun preencherDadosEdicao() {
         lifecycleScope.launch {
@@ -401,11 +362,8 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         aplicarValoresVariaveis()
     }
 
-    // ── API ───────────────────────────────────────────────────────────────
-
     private fun criarUnidade() {
         val req = coletarFormulario() ?: return
-        // Pais offline-only: salva direto no SQLite (sem chamar API).
         if (estudoRemoteId <= 0 || campanhaId <= 0) {
             salvarOffline(req)
             return
@@ -493,7 +451,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
             Toast.makeText(this, "Preencha coordenadas válidas", Toast.LENGTH_SHORT).show()
             return null
         }
-        // Usa decimal atualizado pelo GPS se disponível, senão parse do texto
         val finalLat = latDecimal ?: lat
         val finalLon = lonDecimal ?: lon
         return UnidadeRequest(
@@ -508,15 +465,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         )
     }
 
-    /** Monta os valores_variaveis a enviar.
-     *
-     * Em criação: cada item carrega `variavel_id` + `valor`.
-     * Em edição: o backend (`sincronizar_valores_variaveis`) só atualiza
-     * registros existentes, identificados por `id`. Para variáveis sem
-     * valor prévio salvo na unidade, ainda enviamos `variavel_id` (que o
-     * backend ignora no PATCH); itens com valor preenchido e id existente
-     * são atualizados; itens omitidos são removidos via soft delete.
-     */
     private fun coletarValoresVariaveis(): List<ValorVariavelRequest>? {
         if (camposVariavel.isEmpty()) return null
         val idPorVariavel: Map<Int, Int> =
@@ -549,10 +497,6 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
         return itens.ifEmpty { null }
     }
 
-    /**
-     * Persiste a unidade no SQLite. Requer que o estudo e a campanha pai
-     * estejam salvos offline — se não estiverem, aborta e NÃO grava órfão.
-     */
     private fun salvarOffline(req: UnidadeRequest) {
         val repo = OfflineRepository(this)
         val campanhaResolved = when {

@@ -7,10 +7,6 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    // ──────────────────────────────────────────────
-    // AUTENTICAÇÃO
-    // ──────────────────────────────────────────────
-
     @POST("autenticacao/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
 
@@ -26,25 +22,15 @@ interface ApiService {
     @POST("autenticacao/redefinir_senha")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest): Response<MensagemResponse>
 
-    // ──────────────────────────────────────────────
-    // USUÁRIOS
-    // ──────────────────────────────────────────────
 
     @POST("usuarios/autocadastro")
     suspend fun autocadastro(@Body body: AutocadastroRequest): Response<UsuarioResponse>
 
-    // ──────────────────────────────────────────────
-    // DASHBOARD
-    // ──────────────────────────────────────────────
 
     @GET("dashboard")
     suspend fun getDashboard(
         @Header("Authorization") token: String
     ): Response<DashboardResponse>
-
-    // ──────────────────────────────────────────────
-    // ESTUDOS
-    // ──────────────────────────────────────────────
 
     @GET("estudos")
     suspend fun getEstudos(
@@ -68,20 +54,12 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ResponseBody>
 
-    // ──────────────────────────────────────────────
-    // VARIÁVEIS
-    // ──────────────────────────────────────────────
-
     @GET("estudos/{estudo_id}/variaveis")
     suspend fun getVariaveis(
         @Header("Authorization") token: String,
         @Path("estudo_id") estudoId: Int,
         @Query("nivel_aplicacao") nivelAplicacao: String? = null
     ): Response<List<VariavelResponse>>
-
-    // ──────────────────────────────────────────────
-    // ESPÉCIES
-    // ──────────────────────────────────────────────
 
     @GET("estudos/{estudo_id}/especies")
     suspend fun getEspecies(
@@ -119,10 +97,6 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ResponseBody>
 
-    // ──────────────────────────────────────────────
-    // COLABORADORES
-    // ──────────────────────────────────────────────
-
     @GET("estudos/{estudo_id}/colaboradores")
     suspend fun getColaboradores(
         @Header("Authorization") token: String,
@@ -144,10 +118,6 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ResponseBody>
 
-    // ──────────────────────────────────────────────
-    // CONVITES (enviados)
-    // ──────────────────────────────────────────────
-
     @POST("estudos/{estudo_id}/convites")
     suspend fun postConvite(
         @Header("Authorization") token: String,
@@ -168,10 +138,6 @@ interface ApiService {
         @Path("estudo_id") estudoId: Int,
         @Path("id") id: Int
     ): Response<ResponseBody>
-
-    // ──────────────────────────────────────────────
-    // CONVITES (recebidos)
-    // ──────────────────────────────────────────────
 
     @GET("convites")
     suspend fun getConvitesRecebidos(
@@ -195,10 +161,6 @@ interface ApiService {
         @Path("token") token: String
     ): Response<MensagemResponse>
 
-    // ──────────────────────────────────────────────
-    // CÓDIGO DE ACESSO
-    // ──────────────────────────────────────────────
-
     @GET("estudos/{estudo_id}/codigo_acesso")
     suspend fun getCodigoAcesso(
         @Header("Authorization") token: String,
@@ -212,19 +174,11 @@ interface ApiService {
         @Body body: CodigoAcessoPatchRequest
     ): Response<CodigoAcessoResponse>
 
-    // ──────────────────────────────────────────────
-    // AUTOCADASTRO EM ESTUDO
-    // ──────────────────────────────────────────────
-
     @POST("estudos/ingressar")
     suspend fun ingressarEstudo(
         @Header("Authorization") token: String,
         @Body body: IngressarRequest
     ): Response<IngressarResponse>
-
-    // ──────────────────────────────────────────────
-    // CAMPANHAS
-    // ──────────────────────────────────────────────
 
     @GET("estudos/{estudo_id}/campanhas")
     suspend fun getCampanhas(
@@ -260,10 +214,6 @@ interface ApiService {
         @Path("estudo_id") estudoId: Int,
         @Path("id") id: Int
     ): Response<ResponseBody>
-
-    // ──────────────────────────────────────────────
-    // UNIDADES AMOSTRAIS
-    // ──────────────────────────────────────────────
 
     @GET("estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais")
     suspend fun getUnidades(
@@ -304,10 +254,6 @@ interface ApiService {
         @Path("campanha_id") campanhaId: Int,
         @Path("id") id: Int
     ): Response<ResponseBody>
-
-    // ──────────────────────────────────────────────
-    // EVENTOS DE AMOSTRAGEM
-    // ──────────────────────────────────────────────
 
     @GET("estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_id}/eventos_amostragem")
     suspend fun getEventos(
@@ -353,10 +299,6 @@ interface ApiService {
         @Path("unidade_id") unidadeId: Int,
         @Path("id") id: Int
     ): Response<ResponseBody>
-
-    // ──────────────────────────────────────────────
-    // REGISTROS DE OCORRÊNCIA
-    // ──────────────────────────────────────────────
 
     @GET("estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_id}/eventos_amostragem/{evento_id}/registro_ocorrencias")
     suspend fun getRegistros(

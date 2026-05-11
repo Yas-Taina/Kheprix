@@ -43,21 +43,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Calendar
 
-// ════════════════════════════════════════════════════════════════════════════
-// LISTA DE REGISTROS
-// ════════════════════════════════════════════════════════════════════════════
 
-/**
- * Lista de Registros de Ocorrência de um Evento de Amostragem.
- *
- * Recursos:
- *  - Filtro por espécie (ícone funil)
- *  - "Visualizar Detalhes" → card inline com dados do evento + botão editar
- *  - Clique num registro → NovoRegistroActivity (edição)
- *  - Botão "Adicionar Registro" → NovoRegistroActivity (criação)
- *
- * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, evento_nome
- */
 class RegistrosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosBinding
@@ -134,7 +120,6 @@ class RegistrosActivity : BaseDrawerActivity() {
             })
         }
 
-        // Filtro por espécie
         binding.btnFiltrar.setOnClickListener { mostrarFiltroEspecie() }
 
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
@@ -186,7 +171,6 @@ class RegistrosActivity : BaseDrawerActivity() {
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            // Tenta API se todos os pais têm remote ids válidos.
             if (eventoId > 0 && estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getEvento(
@@ -286,8 +270,6 @@ class RegistrosActivity : BaseDrawerActivity() {
     }
 
     private fun carregarRegistros() {
-        // Evento offline-only: id < 0 codifica -localId. id == -1 é o marcador
-        // antigo (sem localId disponível); cai no lookup por horárioInicio.
         if (eventoId <= 0) {
             val localId = if (eventoLocalId > 0) eventoLocalId
                 else if (eventoId < 0) (-eventoId).toLong()
@@ -306,7 +288,6 @@ class RegistrosActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             val registrosOnline = mutableListOf<RegistroResponse>()
 
-            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getRegistros(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId, eventoId
@@ -319,9 +300,6 @@ class RegistrosActivity : BaseDrawerActivity() {
             registros.clear()
             registros.addAll(registrosOnline)
 
-            // Tenta mesclar registros offline-only. Se qualquer pai não estiver
-            // no SQLite, o merge é pulado — mas os registros online ainda
-            // aparecem.
             val estudoLocalId = EstudoDao(this@RegistrosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             val campanhaLocalId = estudoLocalId?.let {
                 com.kheprix.db.CampanhaDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
@@ -380,8 +358,6 @@ class RegistrosActivity : BaseDrawerActivity() {
         })
         aplicarFiltro(especieIdFiltro)
     }
-
-    // ── Filtro ────────────────────────────────────────────────────────────
 
     private var especieIdFiltro: Int? = null
 
@@ -453,25 +429,6 @@ class RegistroAdapter(
     override fun getItemCount() = items.size
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// NOVO REGISTRO
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Cadastro e edição de Registro de Ocorrência.
- *
- * Campos:
- *  - Foto (galeria ou câmera) → Base64
- *  - Data (DatePicker) + Hora (TimePicker)
- *  - Latitude / Longitude com ícone GPS
- *  - Espécie (Spinner carregado da API)
- *  - Quantidade de indivíduos
- *  - Variáveis de nível "registro" do estudo
- *
- * Detecta offline e exibe OfflineWarningDialog antes de salvar localmente.
- *
- * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id (-1 novo)
- */
 class NovoRegistroActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoRegistroBinding
@@ -496,7 +453,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private val especies = mutableListOf<EspecieResponse>()
     private val variaveis = mutableListOf<VariavelResponse>()
-    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
 
     private var registroCarregado: RegistroResponse? = null
@@ -567,8 +523,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         if (modoEdicao) preencherEdicao()
     }
 
-    // ── Foto ──────────────────────────────────────────────────────────────
-
     private fun processarImagem(uri: Uri?) {
         uri ?: return
         lifecycleScope.launch {
@@ -603,8 +557,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
         })
     }
-
-    // ── GPS ───────────────────────────────────────────────────────────────
 
     private fun verificarPermissaoGps() {
         val fine = Manifest.permission.ACCESS_FINE_LOCATION
@@ -677,8 +629,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         return if (dv < 0) -abs else abs
     }
 
-    // ── DatePicker / TimePicker ───────────────────────────────────────────
-
     private fun abrirDatePicker() {
         val cal = Calendar.getInstance()
         DatePickerDialog(this, { _, y, m, d ->
@@ -694,8 +644,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             binding.etHora.setText("%02d:%02d".format(h, m))
         }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
-
-    // ── Espécies (spinner) ────────────────────────────────────────────────
 
     private fun carregarEspecies() {
         lifecycleScope.launch {
@@ -730,8 +678,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         }
     }
-
-    // ── Variáveis nível registro ──────────────────────────────────────────
 
     private fun carregarVariaveis() {
         if (estudoRemoteId <= 0) { carregarVariaveisOffline(); return }
@@ -817,7 +763,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         }
     }
 
-    /** Cria a view de entrada adequada ao tipoDado da variável. */
     private fun criarCampoVariavel(tipoDado: String): View {
         val lp = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
         val bg = ContextCompat.getDrawable(this, R.drawable.bg_field_green)
@@ -846,10 +791,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         }
     }
 
-    // ── Preencher edição ──────────────────────────────────────────────────
-
     private fun preencherEdicao() {
-        // Online com IDs válidos: API. Senão: SQLite.
         if (estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 && eventoId > 0 && registroId > 0) {
             lifecycleScope.launch {
                 try {
@@ -865,11 +807,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Resolve o local_id do registro no SQLite considerando todos os cenários
-     * possíveis de IDs (offline-only, online com eventoLocalId conhecido, ou
-     * online com eventoLocalId ausente mas remote IDs disponíveis na hierarquia).
-     */
     private fun resolveRegistroLocalId(): Long? {
         if (registroId < 0) return (-registroId).toLong()
         val evtLocal = if (eventoLocalId > 0) eventoLocalId
@@ -928,11 +865,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         aplicarValoresVariaveis()
     }
 
-    // ── API ───────────────────────────────────────────────────────────────
-
     private fun criarRegistro() {
         val req = coletarFormulario() ?: return
-        // Pais offline-only: salva direto no SQLite.
         if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
             mostrarDialogOffline(req)
             return
@@ -963,7 +897,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             qtdeIndividuos = form.qtdeIndividuos, foto = form.foto,
             valoresVariaveis = form.valoresVariaveis
         )
-        // Sem ids remotos válidos: edita direto no SQLite.
         if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) {
             salvarEdicaoOffline(patchReq, "Registro atualizado offline.")
             return
@@ -986,10 +919,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Persiste a edição no SQLite com sincronizado=0 e remote_id preservado.
-     * O sync posterior detecta remote_id != null + sincronizado=0 → PATCH.
-     */
     private fun salvarEdicaoOffline(req: RegistroPatchRequest, msg: String) {
         val repo = OfflineRepository(this)
         val localId = resolveRegistroLocalId()
@@ -997,7 +926,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             Toast.makeText(this, "Registro não encontrado offline.", Toast.LENGTH_LONG).show()
             return
         }
-        // Resolve novo especie_local_id se a espécie foi trocada.
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
             else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
             else null
@@ -1074,14 +1002,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         return itens.ifEmpty { null }
     }
 
-    /**
-     * Persiste o registro no SQLite. Requer que estudo→campanha→unidade→evento
-     * e a espécie estejam salvos offline — se algum faltar, nada é inserido
-     * (para não gerar registro órfão) e o usuário é avisado.
-     *
-     * Quando req==null estamos em modo edição sem sucesso na API: apenas mostra
-     * o OfflineWarning sem persistir (PATCH offline é tratado em fase posterior).
-     */
     private fun mostrarDialogOffline(req: RegistroRequest?) {
         if (req != null) {
             val salvo = salvarRegistroOffline(req)
@@ -1091,12 +1011,8 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         finish()
     }
 
-    /**
-     * @return true se gravou, false se faltou integridade (aborta sem inserir).
-     */
     private fun salvarRegistroOffline(req: RegistroRequest): Boolean {
         val repo = OfflineRepository(this)
-        // Resolve evento_local_id: prefere o passado pelo Intent.
         val eventoResolved = when {
             eventoLocalId > 0 -> eventoLocalId
             estudoRemoteId > 0 && campanhaId > 0 && unidadeId > 0 && eventoId > 0 ->
@@ -1112,7 +1028,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         if (eventoResolved == null) {
             Toast.makeText(this, "Evento não está salvo offline.", Toast.LENGTH_LONG).show(); return false
         }
-        // Resolve espécie: precisa do estudo_local_id.
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
             else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
             else null
@@ -1137,18 +1052,6 @@ class NovoRegistroActivity : BaseDrawerActivity() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// DETALHE DE REGISTRO
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Exibe os detalhes de um Registro de Ocorrência com opção de editar e deletar.
- *
- * Campos: foto, nome científico/popular (da espécie), qtde indivíduos,
- * latitude/longitude, data, hora e variáveis de nível "registro" do estudo.
- *
- * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id, registro_id
- */
 class RegistroDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistrosDetalheBinding
@@ -1211,7 +1114,6 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun carregarRegistro() {
-        // Registro offline-only ou pais offline-only: vai direto pro SQLite.
         if (registroId <= 0 || estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0) {
             carregarRegistroOffline()
             return
@@ -1286,7 +1188,6 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEspecie(especieId: Int) {
-        // Online com IDs válidos: API. Senão: SQLite.
         if (estudoRemoteId > 0 && especieId > 0) {
             lifecycleScope.launch {
                 try {
@@ -1437,23 +1338,12 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// AVISO OFFLINE
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Tela/Dialog de aviso de modo offline.
- * Exibe um card centralizado informando que os registros serão salvos localmente
- * e que a sincronização poderá ser feita quando houver conexão.
- * Botão "Continuar" fecha a tela.
- */
 class OfflineWarningActivity : BaseDrawerActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_offline_warning)
 
-        // Fundo transparente para parecer um dialog sobreposto
         window.setBackgroundDrawableResource(android.R.color.transparent)
 
         findViewById<Button>(R.id.btnContinuar).setOnClickListener {

@@ -15,25 +15,11 @@ import com.kheprix.models.EstudoRequest
 import com.kheprix.models.VariavelRequest
 import kotlinx.coroutines.launch
 
-/**
- * Tela de criação de estudo (também usada para edição de nome/observações).
- *
- * Regras:
- *  - Variáveis podem ser adicionadas dinamicamente clicando em ⊕
- *  - Variáveis podem ser removidas clicando no ✕ vermelho
- *  - Variáveis NÃO podem ser editadas após criação (somente excluídas + recriadas)
- *  - Em modo edição (EXTRA_ESTUDO_REMOTE_ID presente), a seção de variáveis fica oculta
- *
- * Extras recebidos (modo edição):
- *   EXTRA_ESTUDO_REMOTE_ID → Int   (id no servidor)
- *   EXTRA_ESTUDO_NOME      → String
- *   EXTRA_ESTUDO_OBS       → String
- */
+
 class NovoEstudoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEstudoBinding
 
-    /** Container onde as linhas de variável são adicionadas dinamicamente */
     private val variavelViews = mutableListOf<View>()
 
     private var modoEdicao = false
@@ -50,7 +36,6 @@ class NovoEstudoActivity : BaseDrawerActivity() {
         binding = ActivityNovoEstudoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Detectar modo edição
         estudoRemoteId = intent.getIntExtra(EXTRA_ESTUDO_REMOTE_ID, -1)
         modoEdicao = estudoRemoteId != -1
 
@@ -58,12 +43,10 @@ class NovoEstudoActivity : BaseDrawerActivity() {
             binding.tvTitulo.text = "Editar Estudo"
             binding.etNomeEstudo.setText(intent.getStringExtra(EXTRA_ESTUDO_NOME) ?: "")
             binding.etObservacoes.setText(intent.getStringExtra(EXTRA_ESTUDO_OBS) ?: "")
-            // Variáveis não editáveis: ocultar seção inteira
             binding.layoutVariaveis.visibility = View.GONE
             binding.tvVariaveisTitle.visibility = View.GONE
             binding.btnAdicionarVariavel.visibility = View.GONE
         } else {
-            // Adicionar primeira linha de variável automaticamente
             adicionarLinhaVariavel()
         }
 
@@ -76,13 +59,10 @@ class NovoEstudoActivity : BaseDrawerActivity() {
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
     }
 
-    // ── Variáveis dinâmicas ───────────────────────────────────────────────
-
     private fun adicionarLinhaVariavel() {
         val inflater = LayoutInflater.from(this)
         val linha = inflater.inflate(R.layout.item_variavel_form, binding.layoutVariaveis, false)
 
-        // Spinner "Nível de Estudo"
         val spinnerNivel = linha.findViewById<Spinner>(R.id.spinnerNivelAplicacao)
         ArrayAdapter.createFromResource(
             this,
@@ -93,7 +73,6 @@ class NovoEstudoActivity : BaseDrawerActivity() {
             spinnerNivel.adapter = adapter
         }
 
-        // Spinner "Tipo de Dado"
         val spinnerTipo = linha.findViewById<Spinner>(R.id.spinnerTipoDado)
         ArrayAdapter.createFromResource(
             this,
@@ -104,7 +83,6 @@ class NovoEstudoActivity : BaseDrawerActivity() {
             spinnerTipo.adapter = adapter
         }
 
-        // Botão ✕ remover linha
         linha.findViewById<ImageView>(R.id.ivRemoverVariavel).setOnClickListener {
             binding.layoutVariaveis.removeView(linha)
             variavelViews.remove(linha)
@@ -135,8 +113,6 @@ class NovoEstudoActivity : BaseDrawerActivity() {
         }
         return lista
     }
-
-    // ── API calls ─────────────────────────────────────────────────────────
 
     private fun criarEstudo() {
         val nome = binding.etNomeEstudo.text.toString().trim()
@@ -174,10 +150,6 @@ class NovoEstudoActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Persiste o estudo no SQLite com sincronizado=0. Será enviado quando a
-     * conexão voltar (via sincronizarDadosEstudo).
-     */
     private fun salvarEstudoOffline(req: EstudoRequest) {
         try {
             OfflineRepository(this).criarEstudoOffline(req)
@@ -197,14 +169,9 @@ class NovoEstudoActivity : BaseDrawerActivity() {
     }
 
     private fun editarEstudo() {
-        // A API não possui PATCH /estudos/:id no spec atual.
-        // Quando disponível, chame aqui o endpoint de atualização.
         Toast.makeText(this, "Funcionalidade em implementação", Toast.LENGTH_SHORT).show()
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-
-    /** Converte label PT-BR → valor aceito pela API */
     private fun nivelParaApi(label: String) = when (label) {
         "Campanha" -> "campanha"
         "Unidade"  -> "unidade"

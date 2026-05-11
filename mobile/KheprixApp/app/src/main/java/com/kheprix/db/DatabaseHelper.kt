@@ -4,19 +4,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-/**
- * SQLite database schema for offline study data.
- *
- * Every table has:
- *   - local_id      : local autoincrement PK (never sent to server)
- *   - remote_id     : nullable server-side id (null = not yet synced)
- *   - sincronizado  : 0 = offline only, 1 = synced with server
- *
- * The nested hierarchy is:
- *   estudos → campanhas → unidades_amostrais → eventos_amostragem → registros_ocorrencia
- *
- * Especies and Variaveis are scoped to a study (estudo).
- */
 class DatabaseHelper(context: Context) :
     SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
 
@@ -24,7 +11,6 @@ class DatabaseHelper(context: Context) :
         const val DB_NAME = "estudos_offline.db"
         const val DB_VERSION = 4
 
-        // ── TABLE NAMES ──────────────────────────────────────────────────────
         const val TABLE_ESTUDOS             = "estudos"
         const val TABLE_VARIAVEIS           = "variaveis"
         const val TABLE_ESPECIES            = "especies"
@@ -35,10 +21,9 @@ class DatabaseHelper(context: Context) :
         const val TABLE_REGISTROS           = "registros_ocorrencia"
         const val TABLE_IMAGENS_CACHE       = "imagens_cache"
 
-        // ── COMMON COLUMNS ───────────────────────────────────────────────────
         const val COL_LOCAL_ID      = "local_id"
         const val COL_REMOTE_ID     = "remote_id"
-        const val COL_SINCRONIZADO  = "sincronizado"  // 0 = offline, 1 = synced
+        const val COL_SINCRONIZADO  = "sincronizado"  
         const val COL_CREATED_AT    = "created_at"
         const val COL_UPDATED_AT    = "updated_at"
     }
@@ -93,10 +78,6 @@ class DatabaseHelper(context: Context) :
         db.execSQL("ALTER TABLE valores_variaveis_v4 RENAME TO valores_variaveis")
     }
 
-    /**
-     * Remove linhas duplicadas pelo mesmo (parentLocalId, remoteId) antes de
-     * criar os índices UNIQUE. Mantém a linha mais antiga (menor local_id).
-     */
     private fun removerDuplicatasRemoteId(db: SQLiteDatabase) {
         val alvos = listOf(
             TABLE_ESTUDOS    to null,
@@ -123,11 +104,6 @@ class DatabaseHelper(context: Context) :
         }
     }
 
-    /**
-     * Índices UNIQUE parciais. A cláusula WHERE remote_id IS NOT NULL permite
-     * que múltiplas linhas offline (remote_id=NULL) coexistam, ao passo que
-     * duplicatas com o mesmo remote_id dentro do mesmo pai são proibidas.
-     */
     private fun criarIndicesUnicidade(db: SQLiteDatabase) {
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_ESTUDOS}_remote    ON $TABLE_ESTUDOS($COL_REMOTE_ID)                     WHERE $COL_REMOTE_ID IS NOT NULL")
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_VARIAVEIS}_remote  ON $TABLE_VARIAVEIS(estudo_local_id, $COL_REMOTE_ID) WHERE $COL_REMOTE_ID IS NOT NULL")
@@ -137,8 +113,6 @@ class DatabaseHelper(context: Context) :
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_EVENTOS}_remote    ON $TABLE_EVENTOS(unidade_local_id, $COL_REMOTE_ID)   WHERE $COL_REMOTE_ID IS NOT NULL")
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_${TABLE_REGISTROS}_remote  ON $TABLE_REGISTROS(evento_local_id, $COL_REMOTE_ID)  WHERE $COL_REMOTE_ID IS NOT NULL")
     }
-
-    // ── DDL ─────────────────────────────────────────────────────────────────
 
     private val SQL_CREATE_ESTUDOS = """
         CREATE TABLE $TABLE_ESTUDOS (

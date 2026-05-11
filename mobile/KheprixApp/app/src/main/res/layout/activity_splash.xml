@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_splash.xml — Tela de Splash
-    Fundo bege com logo centralizado e nome do app.
 
-    SUBSTITUIR:
-    - @drawable/ic_placeholder_beetle → @drawable/kheprix_logo (logo alado do header)
-    - Fonte: android:fontFamily="serif" → @font/cormorant_garamond_light
--->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,9 +9,9 @@
 
     <ImageView
         android:id="@+id/ivSplashLogo"
-        android:layout_width="200dp"
+        android:layout_width="450dp"
         android:layout_height="200dp"
-        android:src="@drawable/ic_placeholder_beetle"
+        android:src="@drawable/kheprix_beetle"
         android:scaleType="fitCenter"
         android:alpha="0.75"
         android:contentDescription="Kheprix Logo"

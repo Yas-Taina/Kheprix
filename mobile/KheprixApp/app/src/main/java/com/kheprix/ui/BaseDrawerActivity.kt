@@ -20,20 +20,7 @@ import com.kheprix.api.SessionManager
 import com.kheprix.models.TokenRequest
 import kotlinx.coroutines.launch
 
-/**
- * Activity base que injeta o menu lateral (Navigation Drawer) em qualquer
- * layout, sem exigir que o XML tenha um DrawerLayout.
- *
- * Uso: a activity herda de BaseDrawerActivity e chama setContentView normalmente
- * (com binding.root, layoutResId ou View). O drawer é montado em volta do
- * conteúdo, com o menu padrão (drawer_menu.xml) e o cabeçalho (nav_drawer_header).
- *
- * Para abrir o drawer ao clicar no botão hamburguer da activity:
- *     binding.ivMenuLateral.setOnClickListener { openDrawer() }
- *
- * Se o layout original já é um DrawerLayout (como activity_home.xml), o wrap
- * é dispensado e o NavigationView interno é reutilizado.
- */
+
 abstract class BaseDrawerActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
 
@@ -57,7 +44,6 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
                     mostrarDialogTokenInvalido()
                 }
             } catch (_: Exception) {
-                // Falha de rede: usuário está offline, não exibir dialog de sessão expirada
             }
         }
     }
@@ -118,8 +104,6 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
             inflateHeaderView(R.layout.nav_drawer_header)
             itemTextColor = ColorStateListSimples(Color.parseColor("#4A5240"))
             itemIconTintList = ColorStateListSimples(Color.parseColor("#6B7A5E"))
-            // setSubheaderColor exige Material Components 1.12.0+. Reflection
-            // mantem compativel: em versoes antigas, simplesmente nao aplica.
             try {
                 NavigationView::class.java
                     .getMethod("setSubheaderColor", android.content.res.ColorStateList::class.java)
@@ -137,7 +121,6 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
         return drawer
     }
 
-    /** Helper de compatibilidade: HomeActivity ainda chama isto. No-op. */
     protected fun setupDrawer(drawer: DrawerLayout, navView: NavigationView) {
         drawerLayout = drawer
         navigationView = navView
@@ -201,7 +184,6 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
     }
 }
 
-/** ColorStateList que retorna a mesma cor pra todos os estados. */
 @Suppress("FunctionName")
 private fun ColorStateListSimples(color: Int): android.content.res.ColorStateList =
     android.content.res.ColorStateList.valueOf(color)

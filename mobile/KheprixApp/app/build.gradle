@@ -16,21 +16,17 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Permite multi-dex para API 19 (minSdk < 21)
         multiDexEnabled true
     }
 
     buildTypes {
         debug {
-            // Para apontar para localhost via emulador: 10.0.2.2:3000
-            // Para dispositivo físico: altere em RetrofitClient.kt
             debuggable true
             minifyEnabled false
         }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // IMPORTANTE: configure sua keystore antes de gerar release
         }
     }
 
@@ -47,14 +43,12 @@ android {
         jvmTarget = '1.8'
     }
 
-    // Suporte a resources para API 19
     lint {
         abortOnError false
     }
 }
 
 dependencies {
-    // ── AndroidX Core ─────────────────────────────────────────────────
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -62,33 +56,25 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    // ── Material Design ────────────────────────────────────────────────
     implementation 'com.google.android.material:material:1.12.0'
 
-    // ── Navigation Drawer ─────────────────────────────────────────────
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
 
-    // ── ViewModel + LiveData + Coroutines ─────────────────────────────
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
-    // ── Retrofit + OkHttp (API REST) ──────────────────────────────────
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
 
-    // ── Localização GPS ───────────────────────────────────────────────
     implementation 'com.google.android.gms:play-services-location:21.1.0'
 
-    // ── QR Code (ZXing) ───────────────────────────────────────────────
-    // Para leitura de QR (AutocadastroEstudoActivity)
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
-    // Para geração de QR (ColaboradoresActivity)
+
     implementation 'com.google.zxing:core:3.5.1'
 
-    // ── Testes ────────────────────────────────────────────────────────
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

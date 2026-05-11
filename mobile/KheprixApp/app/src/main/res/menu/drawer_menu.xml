@@ -1,46 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/menu/drawer_menu.xml — Itens do menu lateral (Navigation Drawer) -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
 
         <item
             android:id="@+id/nav_home"
-            android:icon="@drawable/ic_placeholder_beetle"
+            android:icon="@drawable/ic_insect"
             android:title="Início"/>
 
         <item
             android:id="@+id/nav_registro_rapido"
-            android:icon="@drawable/ic_placeholder_beetle"
+            android:icon="@drawable/ic_insect"
             android:title="Registro Rápido de Ocorrência"/>
 
         <item
             android:id="@+id/nav_estudos"
-            android:icon="@drawable/ic_placeholder_beetle"
+            android:icon="@drawable/ic_insect"
             android:title="Visualizar Estudos"/>
 
         <item
             android:id="@+id/nav_novo_estudo"
-            android:icon="@drawable/ic_placeholder_beetle"
+            android:icon="@drawable/ic_insect"
             android:title="Cadastrar Novo Estudo"/>
 
         <item
             android:id="@+id/nav_convites"
-            android:icon="@drawable/ic_placeholder_beetle"
+            android:icon="@drawable/ic_insect"
             android:title="Convites de Colaboração"/>
 
     </group>
 
     <item
         android:id="@+id/nav_perfil"
-        android:icon="@drawable/ic_placeholder_beetle"
+        android:icon="@drawable/ic_insect"
         android:title="Meu Perfil"/>
 
     <item android:title="Conta">
         <menu>
             <item
                 android:id="@+id/nav_logout"
-                android:icon="@drawable/ic_placeholder_beetle"
+                android:icon="@drawable/ic_insect"
                 android:title="Sair (Logout)"/>
         </menu>
     </item>

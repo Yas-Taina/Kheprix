@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- item_unidade.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -26,13 +25,13 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivDeleteUnidade"
             app:layout_constraintTop_toBottomOf="@id/tvUnidadeNome"/>
-        <!-- SUBSTITUIR: @drawable/ic_delete (#B88A8A) -->
         <ImageView android:id="@+id/ivDeleteUnidade"
             android:layout_width="32dp" android:layout_height="32dp"
-            android:src="@drawable/ic_placeholder_beetle" android:scaleType="fitCenter"
+            android:src="@drawable/ic_delete" android:scaleType="fitCenter"
             android:clickable="true" android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Deletar"
+            app:tint="@color/kheprix_red"
             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>

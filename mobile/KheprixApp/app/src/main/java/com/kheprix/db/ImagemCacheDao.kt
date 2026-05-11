@@ -4,12 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 
-/**
- * Cache local (SQLite) de imagens baixadas por URL.
- *
- * A chave é a URL completa da imagem; o conteúdo é salvo como BLOB.
- * Usado por [com.kheprix.util.ImagemLoader] para evitar redownload.
- */
 class ImagemCacheDao(context: Context) {
 
     private val helper = DatabaseHelper(context.applicationContext)

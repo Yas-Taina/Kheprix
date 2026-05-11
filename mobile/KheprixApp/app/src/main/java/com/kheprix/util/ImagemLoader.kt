@@ -16,14 +16,6 @@ import okhttp3.Request
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-/**
- * Carrega uma imagem de uma URL em um [ImageView], usando cache local em SQLite.
- *
- * Fluxo:
- *   1. Se a URL estiver em [ImagemCacheDao], decodifica os bytes e exibe.
- *   2. Caso contrário, baixa via OkHttp, grava no cache e exibe.
- *   3. Em qualquer falha (URL nula, rede ou decodificação), mostra [placeholder].
- */
 object ImagemLoader {
 
     private val client = OkHttpClient.Builder()
@@ -44,10 +36,6 @@ object ImagemLoader {
 
         target.setImageResource(placeholder)
 
-        // Fotos offline são salvas com prefixo "data:image/jpeg;base64," (novas) ou
-        // como raw Base64 sem prefixo (registros salvos antes da correção). Raw
-        // JPEG Base64 começa com "/9j/" que colide com paths relativos; por isso
-        // usamos comprimento > 500 como heurística para distinguir Base64 de URL.
         val ehBase64 = url.startsWith("data:") ||
             (!url.startsWith("http://") && !url.startsWith("https://") && url.length > 500)
         val ehUrl = !ehBase64
@@ -84,13 +72,6 @@ object ImagemLoader {
         }
     }
 
-    /**
-     * Reescreve a URL para usar a [RetrofitClient.BASE_URL] quando:
-     *   - a URL é relativa (começa com "/"); ou
-     *   - é absoluta mas aponta para localhost/127.0.0.1 (caso comum quando
-     *     BACKEND_URL não está setado no servidor).
-     * Caso contrário, devolve a URL original.
-     */
     private fun resolverUrl(url: String): String {
         val base = RetrofitClient.BASE_URL.trimEnd('/')
         if (!url.startsWith("http://") && !url.startsWith("https://")) {

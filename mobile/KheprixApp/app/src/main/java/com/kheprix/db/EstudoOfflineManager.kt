@@ -20,52 +20,29 @@ import com.kheprix.db.DatabaseHelper.Companion.TABLE_VALORES_VARIAVEIS
 import com.kheprix.db.DatabaseHelper.Companion.TABLE_VARIAVEIS
 import com.kheprix.models.*
 
-/**
- * Manages offline storage and synchronisation of study data.
- *
- * All public functions are suspending and should be called from a coroutine
- * (e.g. viewModelScope.launch { … }).
- *
- * The five main operations are:
- *   1. [salvarEstudoOffline]    – download study from server and persist locally
- *   2. [sincronizarDadosEstudo] – push unsynced local records to the server
- *   3. [atualizarDadosEstudo]   – sync up, then refresh the local copy from server
- *   4. [deletarDadosEstudo]     – sync up, then wipe the local copy
- *   5. [contarRegistrosOffline] – count rows not yet synced per study
- */
 class EstudoOfflineManager(context: Context) {
 
     private val dbHelper = DatabaseHelper(context)
     private val api: ApiService = RetrofitClient.apiService
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 1. SALVAR ESTUDO OFFLINE
-    //    Downloads the complete study tree from the server and stores it in
-    //    SQLite with sincronizado = 1 (already in sync).
-    // ════════════════════════════════════════════════════════════════════════
-
     suspend fun salvarEstudoOffline(estudoRemoteId: Int): Result<Unit> = runCatching {
         val token = SessionManager.getAuthHeader()
         val db = dbHelper.writableDatabase
 
-        // Fetch study root
         val estudosResp = api.getEstudos(token).body()
             ?: error("Falha ao buscar estudos")
         val estudo = estudosResp.firstOrNull { it.id == estudoRemoteId }
             ?: error("Estudo $estudoRemoteId não encontrado")
 
-        // Upsert study row
         val estudoLocalId = upsertEstudo(db, estudo)
 
-        // Variables
         val variaveis = api.getVariaveis(token, estudoRemoteId).body() ?: emptyList()
-        val varLocalIds = mutableMapOf<Int, Long>() // remoteId -> localId
+        val varLocalIds = mutableMapOf<Int, Long>() 
         variaveis.forEach { v ->
             val localId = upsertVariavel(db, v, estudoLocalId)
             varLocalIds[v.id] = localId
         }
 
-        // Species
         val especies = api.getEspecies(token, estudoRemoteId).body() ?: emptyList()
         val espLocalIds = mutableMapOf<Int, Long>()
         especies.forEach { e ->
@@ -73,22 +50,18 @@ class EstudoOfflineManager(context: Context) {
             espLocalIds[e.id] = localId
         }
 
-        // Campaigns
         val campanhas = api.getCampanhas(token, estudoRemoteId).body() ?: emptyList()
         campanhas.forEach { campanha ->
             val campanhaLocalId = upsertCampanha(db, campanha, estudoLocalId)
 
-            // Sampling units
             val unidades = api.getUnidades(token, estudoRemoteId, campanha.id).body() ?: emptyList()
             unidades.forEach { unidade ->
                 val unidadeLocalId = upsertUnidade(db, unidade, campanhaLocalId)
 
-                // Sampling events
                 val eventos = api.getEventos(token, estudoRemoteId, campanha.id, unidade.id).body() ?: emptyList()
                 eventos.forEach { evento ->
                     val eventoLocalId = upsertEvento(db, evento, unidadeLocalId)
 
-                    // Occurrence records
                     val registros = api.getRegistros(token, estudoRemoteId, campanha.id, unidade.id, evento.id).body() ?: emptyList()
                     registros.forEach { registro ->
                         val espLocalId = espLocalIds[registro.especieId]
@@ -102,22 +75,13 @@ class EstudoOfflineManager(context: Context) {
         Log.d("OfflineManager", "Estudo $estudoRemoteId salvo offline com sucesso.")
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 2. SINCRONIZAR DADOS DO ESTUDO
-    //    Pushes all rows with sincronizado = 0 to the server.
-    //    Local IDs are NOT sent; the server generates its own IDs.
-    // ════════════════════════════════════════════════════════════════════════
-
     suspend fun sincronizarDadosEstudo(estudoLocalId: Long): Result<Unit> = runCatching {
         val token = SessionManager.getAuthHeader()
         val db = dbHelper.writableDatabase
 
-        // ── Study itself ─────────────────────────────────────────────────────
         val estudo = queryEstudoByLocalId(db, estudoLocalId)
         var estudoRemoteId = estudo.remoteId
 
-        // Load local variables up front — the backend requires them in the
-        // study creation payload (POST /estudos rejects empty `variaveis`).
         val variaveisLocais = queryUnsyncedVariaveis(db, estudoLocalId)
 
         if (estudo.sincronizado == 0) {
@@ -144,10 +108,6 @@ class EstudoOfflineManager(context: Context) {
 
         val remoteEstudoId = estudoRemoteId ?: error("Estudo remoto não disponível")
 
-        // ── Variables ────────────────────────────────────────────────────────
-        // After the study POST the server has created the variables; fetch them
-        // back and match by (nome, nivel_aplicacao, tipo_dado) to stamp remote
-        // IDs on the local rows.
         val varLocalToRemote = mutableMapOf<Long, Int>()
         if (variaveisLocais.isNotEmpty()) {
             val remotas = api.getVariaveis(token, remoteEstudoId).body() ?: emptyList()
@@ -164,18 +124,14 @@ class EstudoOfflineManager(context: Context) {
             }
         }
 
-        // ── Species ──────────────────────────────────────────────────────────
         val especies = queryUnsyncedEspecies(db, estudoLocalId)
         val espLocalToRemote = mutableMapOf<Long, Int>()
         especies.forEach { e ->
-            // Envia foto apenas se for Base64 (data URI ou raw Base64 longo).
-            // URLs do servidor não são reenviadas.
             val fotoEnvio = e.foto?.takeIf { f ->
                 f.startsWith("data:") || (!f.startsWith("http://") && !f.startsWith("https://") && f.length > 500)
             }
 
             if (e.remoteId != null && e.remoteId > 0) {
-                // Edição offline de espécie já sincronizada → PATCH.
                 val patchReq = EspeciePatchRequest(
                     classe = e.classe,
                     ordem = e.ordem,
@@ -194,7 +150,6 @@ class EstudoOfflineManager(context: Context) {
                 espLocalToRemote[e.localId] = e.remoteId
                 markSynced(db, TABLE_ESPECIES, e.localId, e.remoteId)
             } else {
-                // Espécie criada offline → POST.
                 val req = EspecieRequest(
                     classe = e.classe,
                     ordem = e.ordem,
@@ -213,20 +168,15 @@ class EstudoOfflineManager(context: Context) {
             }
         }
 
-        // Also load already-synced species for use in records
         queryAllEspecies(db, estudoLocalId).forEach { e ->
             if (e.remoteId != null) espLocalToRemote[e.localId] = e.remoteId
         }
 
-        // ── Campaigns ────────────────────────────────────────────────────────
         val campanhas = queryAllCampanhas(db, estudoLocalId)
         campanhas.forEach { campanha ->
             var campanhaRemoteId = campanha.remoteId
 
             if (campanha.sincronizado == 0) {
-                // Coleta valores_variaveis da campanha; resolve variavel_id remoto
-                // a partir do varLocalToRemote (variáveis recém-sincronizadas) ou
-                // do próprio variavel_remote_id armazenado.
                 val valoresLocais = queryUnsyncedValoresVariaveisDeCampanha(db, campanha.localId)
                 val valoresReq = valoresLocais.mapNotNull { vv ->
                     val varRemoteId = varLocalToRemote[vv.variavelLocalId]
@@ -250,8 +200,6 @@ class EstudoOfflineManager(context: Context) {
                 markSynced(db, TABLE_CAMPANHAS, campanha.localId, resp.id)
                 markValoresVariaveisCampanhaSynced(db, campanha.localId)
             } else if (campanhaRemoteId != null && campanhaRemoteId > 0) {
-                // Campanha já sincronizada, mas pode ter valores_variaveis órfãos
-                // (criados offline em sync anterior antes do fix). Faz PATCH.
                 val orfaos = queryUnsyncedValoresVariaveisDeCampanha(db, campanha.localId)
                 if (orfaos.isNotEmpty()) {
                     val valoresReq = orfaos.mapNotNull { vv ->
@@ -281,8 +229,6 @@ class EstudoOfflineManager(context: Context) {
             }
 
             val remoteCampanhaId = campanhaRemoteId ?: error("Campanha remota não disponível")
-
-            // ── Sampling units ──────────────────────────────────────────────
             val unidades = queryAllUnidades(db, campanha.localId)
             unidades.forEach { unidade ->
                 var unidadeRemoteId = unidade.remoteId
@@ -314,8 +260,6 @@ class EstudoOfflineManager(context: Context) {
                 }
 
                 val remoteUnidadeId = unidadeRemoteId ?: error("Unidade remota não disponível")
-
-                // ── Sampling events ─────────────────────────────────────────
                 val eventos = queryAllEventos(db, unidade.localId)
                 eventos.forEach { evento ->
                     var eventoRemoteId = evento.remoteId
@@ -344,8 +288,6 @@ class EstudoOfflineManager(context: Context) {
                     }
 
                     val remoteEventoId = eventoRemoteId ?: error("Evento remoto não disponível")
-
-                    // ── Occurrence records ───────────────────────────────────
                     val registros = queryAllRegistros(db, evento.localId)
                     registros.forEach { registro ->
                         if (registro.sincronizado == 0) {
@@ -412,33 +354,19 @@ class EstudoOfflineManager(context: Context) {
         Log.d("OfflineManager", "Estudo localId=$estudoLocalId sincronizado com sucesso.")
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 3. ATUALIZAR DADOS DO ESTUDO
-    //    Sync up → wipe local → download fresh copy from server.
-    // ════════════════════════════════════════════════════════════════════════
-
     suspend fun atualizarDadosEstudo(estudoLocalId: Long): Result<Unit> = runCatching {
-        // Push any local-only data first so nothing is lost
         sincronizarDadosEstudo(estudoLocalId).getOrThrow()
 
-        // Retrieve the remote id before wiping
         val db = dbHelper.readableDatabase
         val estudo = queryEstudoByLocalId(db, estudoLocalId)
         val remoteId = estudo.remoteId ?: error("Estudo ainda não possui ID remoto após sincronização")
 
-        // Delete local copy
         deletarDadosEstudoLocal(estudoLocalId)
 
-        // Re-download fresh copy
         salvarEstudoOffline(remoteId).getOrThrow()
 
         Log.d("OfflineManager", "Estudo localId=$estudoLocalId atualizado com sucesso.")
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 4. DELETAR DADOS DO ESTUDO
-    //    Sync up → wipe all local rows for this study tree.
-    // ════════════════════════════════════════════════════════════════════════
 
     suspend fun deletarDadosEstudo(estudoLocalId: Long): Result<Unit> = runCatching {
         sincronizarDadosEstudo(estudoLocalId).getOrThrow()
@@ -446,10 +374,8 @@ class EstudoOfflineManager(context: Context) {
         Log.d("OfflineManager", "Dados locais do estudo localId=$estudoLocalId deletados.")
     }
 
-    /** Wipes all local rows for the study tree without syncing first. */
     fun deletarDadosEstudoLocal(estudoLocalId: Long) {
         val db = dbHelper.writableDatabase
-        // Delete all valores_variaveis whose variavel belongs to this study (covers all levels)
         db.execSQL(
             "DELETE FROM $TABLE_VALORES_VARIAVEIS WHERE variavel_local_id IN (SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE estudo_local_id = ?)",
             arrayOf(estudoLocalId.toString())
@@ -472,19 +398,6 @@ class EstudoOfflineManager(context: Context) {
         db.delete(TABLE_ESTUDOS,   COL_LOCAL_ID + " = ?", arrayOf(estudoLocalId.toString()))
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 5. CONTAR REGISTROS OFFLINE
-    //    Returns the total count of rows with sincronizado = 0 for the
-    //    entire study tree (study + all child levels).
-    // ════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Indica se o estudo foi explicitamente salvo offline pelo usuário
-     * (vs. apenas espelhado via `cacheEstudo` durante navegação online).
-     *
-     * Heurística: presença de variáveis locais. `salvarEstudoOffline` e
-     * `criarEstudoOffline` inserem variáveis; `cacheEstudo` não.
-     */
     fun isExplicitamenteSalvoOffline(estudoLocalId: Long): Boolean {
         val db = dbHelper.readableDatabase
         return db.rawQuery(
@@ -493,11 +406,6 @@ class EstudoOfflineManager(context: Context) {
         ).use { it.moveToFirst() }
     }
 
-    /**
-     * Diagnóstico: lista descrições legíveis de cada linha com sincronizado=0
-     * dentro do estudo. Útil para mostrar ao usuário "quem" ainda está pendente
-     * após uma tentativa de sincronização que reportou sucesso mas deixou contagem > 0.
-     */
     fun listarRegistrosOfflinePendentes(estudoLocalId: Long): List<String> {
         val db = dbHelper.readableDatabase
         val items = mutableListOf<String>()
@@ -585,19 +493,15 @@ class EstudoOfflineManager(context: Context) {
         val db = dbHelper.readableDatabase
         var total = 0
 
-        // Study itself
         total += countUnsyncedRows(db, TABLE_ESTUDOS, "local_id = ? AND $COL_SINCRONIZADO = 0", estudoLocalId.toString())
 
-        // Variables & Species
         total += countUnsyncedRows(db, TABLE_VARIAVEIS, "estudo_local_id = ? AND $COL_SINCRONIZADO = 0", estudoLocalId.toString())
         total += countUnsyncedRows(db, TABLE_ESPECIES,  "estudo_local_id = ? AND $COL_SINCRONIZADO = 0", estudoLocalId.toString())
 
-        // Campaigns
         val campanhaLocalIds = queryCampanhaLocalIds(db, estudoLocalId)
         total += countUnsyncedRows(db, TABLE_CAMPANHAS, "estudo_local_id = ? AND $COL_SINCRONIZADO = 0", estudoLocalId.toString())
 
         campanhaLocalIds.forEach { campanhaLocalId ->
-            // Campaign variable values
             total += countUnsyncedRows(db, TABLE_VALORES_VARIAVEIS, "campanha_local_id = ? AND $COL_SINCRONIZADO = 0", campanhaLocalId.toString())
 
             val unidadeLocalIds = queryUnidadeLocalIds(db, campanhaLocalId)
@@ -615,10 +519,6 @@ class EstudoOfflineManager(context: Context) {
 
         return total
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS – UPSERT
-    // ════════════════════════════════════════════════════════════════════════
 
     private fun upsertEstudo(db: android.database.sqlite.SQLiteDatabase, e: EstudoResponse): Long {
         val existing = findByRemoteId(db, TABLE_ESTUDOS, e.id)
@@ -802,10 +702,6 @@ class EstudoOfflineManager(context: Context) {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS – QUERIES
-    // ════════════════════════════════════════════════════════════════════════
-
     private fun markSynced(
         db: android.database.sqlite.SQLiteDatabase,
         table: String, localId: Long, remoteId: Int
@@ -862,8 +758,6 @@ class EstudoOfflineManager(context: Context) {
         while (cursor.moveToNext()) list.add(cursor.getLong(0))
         return list
     }
-
-    // ── Local-only data helpers (rows with sincronizado = 0) ─────────────────
 
     private fun queryUnsyncedVariaveis(db: android.database.sqlite.SQLiteDatabase, estudoLocalId: Long): List<LocalVariavel> {
         val cursor = db.rawQuery(
@@ -1078,10 +972,6 @@ class EstudoOfflineManager(context: Context) {
             )
         }
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // PRIVATE DATA CLASSES – local row representations
-    // ════════════════════════════════════════════════════════════════════════
 
     private data class LocalEstudo(val localId: Long, val remoteId: Int?, val sincronizado: Int, val nome: String, val observacoes: String?)
     private data class LocalVariavel(val localId: Long, val remoteId: Int?, val nome: String, val nivelAplicacao: String, val tipoDado: String, val metrica: String?)

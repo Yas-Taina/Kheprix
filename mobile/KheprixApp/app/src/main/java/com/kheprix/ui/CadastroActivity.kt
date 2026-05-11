@@ -12,15 +12,6 @@ import com.kheprix.databinding.ActivityCadastroBinding
 import com.kheprix.models.AutocadastroRequest
 import kotlinx.coroutines.launch
 
-/**
- * Tela de Cadastro de novo usuário.
- *
- * Fluxo:
- *  1. Usuário preenche nome, e-mail, senha e confirmação de senha
- *  2. Valida se as senhas coincidem
- *  3. POST /usuarios/autocadastro
- *  4. Em caso de sucesso, redireciona para LoginActivity
- */
 class CadastroActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCadastroBinding
@@ -30,7 +21,6 @@ class CadastroActivity : AppCompatActivity() {
         binding = ActivityCadastroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Link "aqui" → voltar para login
         binding.tvLinkLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -83,7 +73,6 @@ class CadastroActivity : AppCompatActivity() {
 
                 if (response.isSuccessful) {
                     response.body()?.let { user ->
-                        // Salva dados para pré-preenchimento após login
                         SessionManager.saveUser(user.id, user.nome, user.email)
                     }
                     Toast.makeText(

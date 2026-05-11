@@ -31,18 +31,6 @@ import com.kheprix.models.VariavelResponse
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-// ════════════════════════════════════════════════════════════════════════════
-// LISTA DE EVENTOS
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Lista de Eventos de Amostragem de uma Unidade Amostral.
- *
- * "Visualizar Detalhes" → card inline com dados da unidade + botão editar.
- * Clique no evento → RegistrosActivity.
- *
- * Extras: estudo_remote_id, campanha_id, unidade_id, unidade_nome
- */
 class EventosActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEventosBinding
@@ -123,7 +111,6 @@ class EventosActivity : BaseDrawerActivity() {
 
     private fun carregarDetalhes() {
         lifecycleScope.launch {
-            // Tenta API quando temos remote id da unidade.
             if (unidadeId > 0 && estudoRemoteId > 0 && campanhaId > 0) {
                 try {
                     val resp = RetrofitClient.apiService.getUnidade(
@@ -138,7 +125,6 @@ class EventosActivity : BaseDrawerActivity() {
                     }
                 } catch (_: Exception) { }
             }
-            // Fallback offline: SQLite.
             preencherDetalhesOffline()
         }
     }
@@ -239,7 +225,6 @@ class EventosActivity : BaseDrawerActivity() {
     }
 
     private fun carregarEventos() {
-        // Unidade offline-only: lista do SQLite.
         if (unidadeId <= 0) {
             val localId = if (unidadeLocalId > 0) unidadeLocalId
                 else {
@@ -259,7 +244,6 @@ class EventosActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             val eventosOnline = mutableListOf<EventoResponse>()
 
-            // Tenta carregar da API (se online)
             try {
                 val resp = RetrofitClient.apiService.getEventos(
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, unidadeId
@@ -272,8 +256,6 @@ class EventosActivity : BaseDrawerActivity() {
             eventos.clear()
             eventos.addAll(eventosOnline)
 
-            // Tenta mesclar eventos offline-only. Se qualquer pai não estiver
-            // no SQLite, pula o merge mas mantém os eventos online visíveis.
             val estudoLocalId = EstudoDao(this@EventosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             val campanhaLocalId = estudoLocalId?.let {
                 CampanhaDao(this@EventosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
@@ -289,8 +271,6 @@ class EventosActivity : BaseDrawerActivity() {
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
                         eventos.add(EventoResponse(
-                            // Eventos offline-only ficam com id = -localId para
-                            // serem rastreáveis pelo SQLite nas telas seguintes.
                             id = off.remoteId ?: -off.localId.toInt(),
                             unidadeAmostralId = off.unidadeLocalId.toInt(),
                             horarioInicio = off.horarioInicio,
@@ -425,20 +405,6 @@ class EventoAdapter(
     } catch (_: Exception) { iso }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// NOVO EVENTO
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Cadastro e edição de Evento de Amostragem.
- *
- * Campos:
- *  - Data de Início (DatePicker) + Hora de Início (TimePicker)
- *  - Esforço Real
- *  - Variáveis de nível "evento" do estudo (dinâmicas)
- *
- * Extras: estudo_remote_id, campanha_id, unidade_id, evento_id (-1 novo)
- */
 class NovoEventoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityNovoEventoBinding
@@ -455,7 +421,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
     private var horaInicio = ""
 
     private val variaveis = mutableListOf<VariavelResponse>()
-    /** Para tipo "boolean" é Spinner; demais tipos é EditText. */
     private val camposVariavel = mutableMapOf<Int, View>()
 
     private var eventoCarregado: EventoResponse? = null
@@ -601,7 +566,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
         }
     }
 
-    /** Cria a view de entrada adequada ao tipoDado da variável. */
     private fun criarCampoVariavel(tipoDado: String): View {
         val lp = LinearLayout.LayoutParams(0, (48 * resources.displayMetrics.density).toInt(), 1f)
         val bg = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_field_green)
@@ -689,7 +653,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
 
     private fun criarEvento() {
         val req = coletarFormulario() ?: return
-        // Pais offline-only: salva direto no SQLite.
         if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0) {
             salvarEventoOffline(req)
             return
@@ -712,10 +675,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
         }
     }
 
-    /**
-     * Persiste o evento no SQLite. Requer que estudo→campanha→unidade estejam
-     * salvos offline — se algum faltar, aborta e NÃO grava órfão.
-     */
     private fun salvarEventoOffline(req: EventoRequest) {
         val repo = OfflineRepository(this)
         val unidadeResolved = when {
@@ -846,7 +805,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
         return itens.ifEmpty { null }
     }
 
-    /** Combina data/hora em ISO "yyyy-MM-ddTHH:mm:ss"; retorna null se faltar algum. */
     private fun montarIso(dataIso: String, horaIso: String, dataExib: String, horaExib: String): String? {
         val dataFinal = dataIso.ifEmpty {
             val p = dataExib.split("/")
@@ -859,7 +817,6 @@ class NovoEventoActivity : BaseDrawerActivity() {
         return "${dataFinal}T${horaFinal}"
     }
 
-    /** Pré-preenche data/hora de início a partir de string ISO do backend. */
     private fun preencherDataHora(iso: String) {
         val partes = iso.split("T")
         if (partes.size < 2) return
