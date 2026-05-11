@@ -230,8 +230,6 @@
     <label class="form-label">Variáveis do Registro</label>
     <div>
       @for (v of variaveis; track v.id; let i = $index) {
-      <h1>TESTE</h1>
-      <p>{{ v.tipo_dado }}</p>
       <label class="form-label">{{ v.nome }}</label>
       <div class="form-inline-group">
         @if (v.tipo_dado === "texto") {

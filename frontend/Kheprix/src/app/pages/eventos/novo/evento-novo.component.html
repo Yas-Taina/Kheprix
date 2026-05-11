@@ -31,9 +31,10 @@
     />
   </div>
 
-  <ng-container *ngIf="variaveis.length > 0">
+ @if (variaveis.length > 0) {
     <label class="form-label">Variáveis do Evento</label>
-    <div *ngFor="let v of variaveis; let i = index" class="form-group">
+    <div>
+      @for (v of variaveis; track v.id; let i = $index) {
       <label class="form-label">{{ v.nome }}</label>
       <div class="form-inline-group">
         @if (v.tipo_dado === "texto") {
@@ -69,8 +70,9 @@
           >{{ v.metrica }}</span
         >
       </div>
+    }
     </div>
-  </ng-container>
+  }
 
   <div *ngIf="erro" class="alert alert-error">{{ erro }}</div>
 
