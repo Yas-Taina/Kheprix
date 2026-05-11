@@ -11,6 +11,7 @@ export interface UnidadeAmostral {
   esforco_amostral: string;
   created_at: string;
   updated_at: string;
+  valores_variaveis?: ValorVariavel[];
 }
 
 export interface UnidadeAmostralCreate {
