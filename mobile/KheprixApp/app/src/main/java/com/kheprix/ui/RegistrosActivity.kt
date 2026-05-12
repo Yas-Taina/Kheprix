@@ -191,6 +191,14 @@ class RegistrosActivity : BaseDrawerActivity() {
                         eventoId
                     )
                     resp.body()?.let { e ->
+                        val repo = OfflineRepository(this@RegistrosActivity)
+                        val uLocal = if (unidadeLocalId > 0) unidadeLocalId
+                                     else repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                                         repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                                             repo.unidadeLocalIdFromRemote(cL, unidadeId)
+                                         }
+                                     }
+                        if (uLocal != null) try { repo.cacheEvento(uLocal, e) } catch (_: Exception) { }
                         preencherCardEvento(e.horarioInicio, e.esforcoReal, e.updatedAt)
                         renderizarValoresCard(e.valoresVariaveis, fetchVarNomesApi())
                         return@launch
@@ -323,23 +331,27 @@ class RegistrosActivity : BaseDrawerActivity() {
             registros.clear()
             registros.addAll(registrosOnline)
 
-            val estudoLocalId =
+            val resolvedEstudoLocalId =
                 EstudoDao(this@RegistrosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
-            val campanhaLocalId = estudoLocalId?.let {
+            if (resolvedEstudoLocalId != null) this@RegistrosActivity.estudoLocalId = resolvedEstudoLocalId
+            val resolvedCampanhaLocalId = resolvedEstudoLocalId?.let {
                 com.kheprix.db.CampanhaDao(this@RegistrosActivity)
                     .buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
-            val unidadeLocalId = campanhaLocalId?.let {
+            if (resolvedCampanhaLocalId != null) this@RegistrosActivity.campanhaLocalId = resolvedCampanhaLocalId
+            val resolvedUnidadeLocalId = resolvedCampanhaLocalId?.let {
                 com.kheprix.db.UnidadeDao(this@RegistrosActivity)
                     .buscarPorRemoteIdEscopo(unidadeId, it)?.localId
             }
-            val eventoLocalId = unidadeLocalId?.let {
+            if (resolvedUnidadeLocalId != null) this@RegistrosActivity.unidadeLocalId = resolvedUnidadeLocalId
+            val resolvedEventoLocalId = resolvedUnidadeLocalId?.let {
                 EventoDao(this@RegistrosActivity).buscarPorRemoteIdEscopo(eventoId, it)?.localId
             }
+            if (resolvedEventoLocalId != null) this@RegistrosActivity.eventoLocalId = resolvedEventoLocalId
 
-            if (eventoLocalId != null) {
+            if (resolvedEventoLocalId != null) {
                 val registroDao = RegistroDao(this@RegistrosActivity)
-                val offline = registroDao.listarPorEventoLocal(eventoLocalId)
+                val offline = registroDao.listarPorEventoLocal(resolvedEventoLocalId)
                 val remoteIds = registrosOnline.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
@@ -752,6 +764,10 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                 )
                 if (resp.isSuccessful) {
                     variaveis.clear(); variaveis.addAll(resp.body() ?: emptyList())
+                    val repo = OfflineRepository(this@NovoRegistroActivity)
+                    val eLocal = if (estudoLocalId > 0) estudoLocalId
+                                 else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    if (eLocal != null) try { repo.cacheVariaveis(eLocal, variaveis) } catch (_: Exception) { }
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
             } catch (_: Exception) {
@@ -885,7 +901,24 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                         registroId
                     )
                     val r = resp.body()
-                    if (r != null) preencherForm(r) else preencherFormOffline()
+                    if (r != null) {
+                        val repo = OfflineRepository(this@NovoRegistroActivity)
+                        val evtLocal = if (eventoLocalId > 0) eventoLocalId
+                                       else repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                                           repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                                               repo.unidadeLocalIdFromRemote(cL, unidadeId)?.let { uL ->
+                                                   repo.eventoLocalIdFromRemote(uL, eventoId)
+                                               }
+                                           }
+                                       }
+                        val resolvedEstudo = if (estudoLocalId > 0) estudoLocalId
+                                             else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                        val especieLocal = resolvedEstudo?.let { repo.resolveEspecieLocalId(it, r.especieId) }
+                        if (evtLocal != null && especieLocal != null) {
+                            try { repo.cacheRegistro(evtLocal, especieLocal, r) } catch (_: Exception) { }
+                        }
+                        preencherForm(r)
+                    } else preencherFormOffline()
                 } catch (_: Exception) {
                     preencherFormOffline()
                 }
@@ -1261,7 +1294,24 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                     registroId
                 )
                 val r = resp.body()
-                if (r != null) preencherRegistro(r) else carregarRegistroOffline()
+                if (r != null) {
+                    val repo = OfflineRepository(this@RegistroDetalheActivity)
+                    val evtLocal = if (eventoLocalId > 0) eventoLocalId
+                                   else repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                                       repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                                           repo.unidadeLocalIdFromRemote(cL, unidadeId)?.let { uL ->
+                                               repo.eventoLocalIdFromRemote(uL, eventoId)
+                                           }
+                                       }
+                                   }
+                    val resolvedEstudo = if (estudoLocalId > 0) estudoLocalId
+                                         else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    val especieLocal = resolvedEstudo?.let { repo.resolveEspecieLocalId(it, r.especieId) }
+                    if (evtLocal != null && especieLocal != null) {
+                        try { repo.cacheRegistro(evtLocal, especieLocal, r) } catch (_: Exception) { }
+                    }
+                    preencherRegistro(r)
+                } else carregarRegistroOffline()
             } catch (_: Exception) {
                 carregarRegistroOffline()
             }
@@ -1374,6 +1424,10 @@ class RegistroDetalheActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
+                    val repo = OfflineRepository(this@RegistroDetalheActivity)
+                    val eLocal = if (estudoLocalId > 0) estudoLocalId
+                                 else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    if (eLocal != null) try { repo.cacheVariaveis(eLocal, variaveis) } catch (_: Exception) { }
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
             } catch (_: Exception) {

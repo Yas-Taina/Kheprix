@@ -258,9 +258,9 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         val modoEdicao = especieId != -1
         binding.tvTitulo.text = if (modoEdicao) "Editar Espécie" else "Cadastro de Espécies"
 
-        if (modoEdicao) carregarEspecieParaEdicao()
-
         setupSpinnerStatus()
+
+        if (modoEdicao) carregarEspecieParaEdicao()
         setupFotoListeners()
 
         binding.btnConfirmar.setOnClickListener {

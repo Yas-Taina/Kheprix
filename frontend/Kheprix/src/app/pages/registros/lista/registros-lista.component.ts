@@ -67,12 +67,18 @@ export class RegistrosListaComponent implements OnInit {
         },
         error: () => (this.loading = false),
       });
+
     this.eventoService
       .buscar(this.estudoId, this.campanhaId, this.unidadeId, this.eventoId)
-      .subscribe((ev) => (this.eventoDetalhe = ev));
+      .subscribe((ev) => {
+        this.eventoDetalhe = ev;
+        this.valoresVars = ev.valores_variaveis || [];
+      });
+
     this.especieService
       .listar(this.estudoId)
       .subscribe((e) => (this.especies = e));
+
     this.variavelService.listar(this.estudoId, "evento").subscribe((vars) => {
       this.variaveis = vars;
     });
@@ -83,7 +89,9 @@ export class RegistrosListaComponent implements OnInit {
       this.registrosFiltrados = this.registros;
       return;
     }
+
     const termo = this.busca.toLowerCase();
+
     this.registrosFiltrados = this.registros.filter((r) =>
       this.getNomeEspecie(r.especie_id).toLowerCase().includes(termo),
     );

@@ -475,7 +475,7 @@ export interface ExecutarAnaliseRequest {
 export interface ExecutarAnaliseResponse {
   analise: string;
   nome: string;
-  valor: Record<string, unknown> | null;
+  valor: Record<string, unknown> | string | null;
   grafico: string | null;
   urlArquivo: string | null;
 }

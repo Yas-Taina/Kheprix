@@ -521,7 +521,7 @@
           <iframe
             class="grafico-iframe"
             sandbox="allow-scripts"
-            [srcdoc]="resultado.grafico"
+            [srcdoc]="graficoSafe"
             title="Gráfico da análise"
           >
           </iframe>
@@ -532,9 +532,20 @@
       @if (
         analiseAtual?.tem_valor && !analiseAtual?.tem_grafico && resultado.valor
       ) {
-        <div class="valor-block">
-          <pre class="valor-pre">{{ resultado.valor | json }}</pre>
-        </div>
+        @if (valorEHtml) {
+          <div class="grafico-wrapper">
+            <iframe
+              class="grafico-iframe"
+              sandbox="allow-scripts"
+              [srcdoc]="valorComoHtml"
+              title="Gráfico da análise"
+            ></iframe>
+          </div>
+        } @else {
+          <div class="valor-block">
+            <pre class="valor-pre">{{ formatarValor(resultado.valor) }}</pre>
+          </div>
+        }
       }
 
       <!-- Gráfico + valor -->
@@ -544,17 +555,28 @@
             <iframe
               class="grafico-iframe"
               sandbox="allow-scripts"
-              [srcdoc]="resultado.grafico"
+              [srcdoc]="graficoSafe"
               title="Gráfico da análise"
             >
             </iframe>
           </div>
         }
         @if (resultado.valor) {
-          <div class="valor-block">
-            <h3 class="valor-subtitulo">Valores numéricos</h3>
-            <pre class="valor-pre">{{ resultado.valor | json }}</pre>
-          </div>
+          @if (valorEHtml) {
+            <div class="grafico-wrapper">
+              <iframe
+                class="grafico-iframe"
+                sandbox="allow-scripts"
+                [srcdoc]="valorComoHtml"
+                title="Gráfico da análise"
+              ></iframe>
+            </div>
+          } @else {
+            <div class="valor-block">
+              <h3 class="valor-subtitulo">Valores numéricos</h3>
+              <pre class="valor-pre">{{ formatarValor(resultado.valor) }}</pre>
+            </div>
+          }
         }
       }
 

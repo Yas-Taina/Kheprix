@@ -119,6 +119,12 @@ class EventosActivity : BaseDrawerActivity() {
                     resp.body()?.let { u ->
                         unidadeNome = u.nome
                         binding.tvUnidadeNome.text = u.nome
+                        val repo = OfflineRepository(this@EventosActivity)
+                        val cLocal = if (campanhaLocalId > 0) campanhaLocalId
+                                     else repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                                         repo.campanhaLocalIdFromRemote(eL, campanhaId)
+                                     }
+                        if (cLocal != null) try { repo.cacheUnidade(cLocal, u) } catch (_: Exception) { }
                         preencherCardUnidade(u.nome, u.latitude, u.longitude, u.raio, u.metodoColeta, u.esforcoAmostral, u.updatedAt)
                         renderizarValoresCard(u.valoresVariaveis, fetchVarNomesApi())
                         return@launch
@@ -256,17 +262,20 @@ class EventosActivity : BaseDrawerActivity() {
             eventos.clear()
             eventos.addAll(eventosOnline)
 
-            val estudoLocalId = EstudoDao(this@EventosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
-            val campanhaLocalId = estudoLocalId?.let {
+            val resolvedEstudoLocalId = EstudoDao(this@EventosActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            if (resolvedEstudoLocalId != null) this@EventosActivity.estudoLocalId = resolvedEstudoLocalId
+            val resolvedCampanhaLocalId = resolvedEstudoLocalId?.let {
                 CampanhaDao(this@EventosActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
             }
-            val unidadeLocalId = campanhaLocalId?.let {
+            if (resolvedCampanhaLocalId != null) this@EventosActivity.campanhaLocalId = resolvedCampanhaLocalId
+            val resolvedUnidadeLocalId = resolvedCampanhaLocalId?.let {
                 UnidadeDao(this@EventosActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
             }
+            if (resolvedUnidadeLocalId != null) this@EventosActivity.unidadeLocalId = resolvedUnidadeLocalId
 
-            if (unidadeLocalId != null) {
+            if (resolvedUnidadeLocalId != null) {
                 val eventoDao = EventoDao(this@EventosActivity)
-                val offline = eventoDao.listarPorUnidadeLocal(unidadeLocalId)
+                val offline = eventoDao.listarPorUnidadeLocal(resolvedUnidadeLocalId)
                 val remoteIds = eventosOnline.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
@@ -485,6 +494,10 @@ class NovoEventoActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
+                    val repo = OfflineRepository(this@NovoEventoActivity)
+                    val eLocal = if (estudoLocalId > 0) estudoLocalId
+                                 else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    if (eLocal != null) try { repo.cacheVariaveis(eLocal, variaveis) } catch (_: Exception) { }
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
             } catch (_: Exception) { carregarVariaveisOffline() }
@@ -606,6 +619,14 @@ class NovoEventoActivity : BaseDrawerActivity() {
                         preencherDataHora(e.horarioInicio)
                         binding.etEsforcoReal.setText(e.esforcoReal ?: "")
                         aplicarValoresVariaveis()
+                        val repo = OfflineRepository(this@NovoEventoActivity)
+                        val uLocal = if (unidadeLocalId > 0) unidadeLocalId
+                                     else repo.estudoLocalIdFromRemote(estudoRemoteId)?.let { eL ->
+                                         repo.campanhaLocalIdFromRemote(eL, campanhaId)?.let { cL ->
+                                             repo.unidadeLocalIdFromRemote(cL, unidadeId)
+                                         }
+                                     }
+                        if (uLocal != null) try { repo.cacheEvento(uLocal, e) } catch (_: Exception) { }
                         return@launch
                     }
                 } catch (_: Exception) { }

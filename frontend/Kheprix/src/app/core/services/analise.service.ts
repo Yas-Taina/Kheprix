@@ -30,4 +30,11 @@ export class AnaliseService extends BaseService {
   ): Observable<Blob> {
     return this.getBlob(`/analises/estudos/${estudoId}/${chave}/${arquivo}`);
   }
+
+  downloadPorUrl(urlArquivo: string): Observable<Blob> {
+    const path = urlArquivo.startsWith(this.apiUrl)
+      ? urlArquivo.slice(this.apiUrl.length)
+      : urlArquivo;
+    return this.getBlob(path);
+  }
 }

@@ -116,21 +116,22 @@ class CampanhasActivity : BaseDrawerActivity() {
 
             val campanhaDao = CampanhaDao(this@CampanhasActivity)
             val repo = OfflineRepository(this@CampanhasActivity)
-            var estudoLocalId = EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
-            if (estudoLocalId == null && campanhasOnline.isNotEmpty()) {
+            var resolvedEstudoLocalId = EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            if (resolvedEstudoLocalId == null && campanhasOnline.isNotEmpty()) {
                 try {
                     val estudoResp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader()).body()
                     val estudo = estudoResp?.firstOrNull { it.id == estudoRemoteId }
-                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                    if (estudo != null) resolvedEstudoLocalId = repo.cacheEstudo(estudo)
                 } catch (_: Exception) { }
             }
-            if (estudoLocalId == null) return@launch
+            if (resolvedEstudoLocalId == null) return@launch
+            this@CampanhasActivity.estudoLocalId = resolvedEstudoLocalId
 
             campanhasOnline.forEach { c ->
-                try { repo.cacheCampanha(estudoLocalId!!, c) } catch (_: Exception) { }
+                try { repo.cacheCampanha(resolvedEstudoLocalId, c) } catch (_: Exception) { }
             }
 
-            val offline = campanhaDao.listarPorEstudoLocal(estudoLocalId!!)
+            val offline = campanhaDao.listarPorEstudoLocal(resolvedEstudoLocalId)
             val remoteIds = campanhasOnline.mapNotNull { it.id }.toSet()
 
             campanhas.clear()

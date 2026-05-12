@@ -222,33 +222,35 @@ class UnidadesActivity : BaseDrawerActivity() {
 
             val unidadeDao = UnidadeDao(this@UnidadesActivity)
             val repo = OfflineRepository(this@UnidadesActivity)
-            var estudoLocalId = EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
-            if (estudoLocalId == null && unidadesOnline.isNotEmpty()) {
+            var resolvedEstudoLocalId = EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            if (resolvedEstudoLocalId == null && unidadesOnline.isNotEmpty()) {
                 try {
                     val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
                         .body()?.firstOrNull { it.id == estudoRemoteId }
-                    if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
+                    if (estudo != null) resolvedEstudoLocalId = repo.cacheEstudo(estudo)
                 } catch (_: Exception) { }
             }
-            if (estudoLocalId == null) return@launch
+            if (resolvedEstudoLocalId == null) return@launch
+            this@UnidadesActivity.estudoLocalId = resolvedEstudoLocalId
 
-            var campanhaLocalId = CampanhaDao(this@UnidadesActivity)
-                .buscarPorRemoteIdEscopo(campanhaId, estudoLocalId!!)?.localId
-            if (campanhaLocalId == null && unidadesOnline.isNotEmpty()) {
+            var resolvedCampanhaLocalId = CampanhaDao(this@UnidadesActivity)
+                .buscarPorRemoteIdEscopo(campanhaId, resolvedEstudoLocalId)?.localId
+            if (resolvedCampanhaLocalId == null && unidadesOnline.isNotEmpty()) {
                 try {
                     val camp = RetrofitClient.apiService.getCampanha(
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                     ).body()
-                    if (camp != null) campanhaLocalId = repo.cacheCampanha(estudoLocalId!!, camp)
+                    if (camp != null) resolvedCampanhaLocalId = repo.cacheCampanha(resolvedEstudoLocalId, camp)
                 } catch (_: Exception) { }
             }
-            if (campanhaLocalId == null) return@launch
+            if (resolvedCampanhaLocalId == null) return@launch
+            this@UnidadesActivity.campanhaLocalId = resolvedCampanhaLocalId
 
             unidadesOnline.forEach { u ->
-                try { repo.cacheUnidade(campanhaLocalId!!, u) } catch (_: Exception) { }
+                try { repo.cacheUnidade(resolvedCampanhaLocalId, u) } catch (_: Exception) { }
             }
 
-            val offline = unidadeDao.listarPorCampanhaLocal(campanhaLocalId!!)
+            val offline = unidadeDao.listarPorCampanhaLocal(resolvedCampanhaLocalId)
             val remoteIds = unidadesOnline.mapNotNull { it.id }.toSet()
 
             unidades.clear()

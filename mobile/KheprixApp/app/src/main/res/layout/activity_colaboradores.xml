@@ -52,10 +52,18 @@
                 android:textSize="26sp" android:textColor="#4A5240"
                 android:fontFamily="serif" android:layout_marginTop="8dp"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="6dp" android:layout_marginBottom="16dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="E-mail do usuário:"
@@ -91,19 +99,11 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/kheprix_green" />
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A" android:layout_marginBottom="16dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="Convites Pendentes"
                 android:textSize="20sp" android:textColor="#4A5240"
                 android:fontFamily="serif"/>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A" android:layout_marginTop="6dp"
-                android:layout_marginBottom="8dp" android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"/>
 
             <TextView android:id="@+id/tvSemConvitesPendentes"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -121,10 +121,18 @@
                 android:textSize="26sp" android:textColor="#4A5240"
                 android:fontFamily="serif"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#9AAB8A"
-                android:layout_marginTop="6dp" android:layout_marginBottom="12dp"
-                android:layout_marginStart="24dp" android:layout_marginEnd="24dp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_divider_ornament"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/kheprix_green" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvColaboradores"

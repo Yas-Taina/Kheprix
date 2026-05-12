@@ -192,6 +192,10 @@ class NovaUnidadeActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     variaveis.clear()
                     variaveis.addAll(resp.body() ?: emptyList())
+                    val repo = OfflineRepository(this@NovaUnidadeActivity)
+                    val eLocal = if (estudoLocalId > 0) estudoLocalId
+                                 else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    if (eLocal != null) try { repo.cacheVariaveis(eLocal, variaveis) } catch (_: Exception) { }
                     renderizarVariaveis()
                 } else carregarVariaveisOffline()
             } catch (_: Exception) {

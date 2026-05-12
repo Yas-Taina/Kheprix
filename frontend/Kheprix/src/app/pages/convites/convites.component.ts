@@ -43,7 +43,10 @@ export class ConvitesComponent implements OnInit {
   ngOnInit() {
     this.conviteService.listar().subscribe({
       next: (c) => {
-        this.convites = c;
+        this.convites = c.filter(
+          (convite) =>
+            convite.status?.toLowerCase() === "pendente",
+        );
         this.loading = false;
       },
       error: () => (this.loading = false),

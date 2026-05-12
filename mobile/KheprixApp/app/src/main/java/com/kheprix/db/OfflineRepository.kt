@@ -31,6 +31,7 @@ import com.kheprix.models.RegistroResponse
 import com.kheprix.models.UnidadeRequest
 import com.kheprix.models.UnidadeResponse
 import com.kheprix.models.ValorVariavelResponse
+import com.kheprix.models.VariavelResponse
 
 
 class OfflineRepository(context: Context) {
@@ -128,16 +129,23 @@ class OfflineRepository(context: Context) {
                 put(COL_UPDATED_AT, now)
             })
             req.valoresVariaveis?.forEach { vv ->
-                val variavelLocalId = lookupLocalId(
-                    TABLE_VARIAVEIS, vv.variavelId,
-                    "estudo_local_id", estudoLocalId
-                )
+                val variavelLocalId: Long?
+                val variavelRemoteId: Int?
+                if (vv.variavelId < 0) {
+                    variavelLocalId = (-vv.variavelId).toLong()
+                    variavelRemoteId = null
+                } else {
+                    variavelLocalId = lookupLocalId(
+                        TABLE_VARIAVEIS, vv.variavelId, "estudo_local_id", estudoLocalId
+                    )
+                    variavelRemoteId = vv.variavelId
+                }
                 if (variavelLocalId != null) {
                     db.insertOrThrow(TABLE_VALORES_VARIAVEIS, null, ContentValues().apply {
                         put(COL_SINCRONIZADO, 0)
                         put("campanha_local_id", campanhaId)
                         put("variavel_local_id", variavelLocalId)
-                        put("variavel_remote_id", vv.variavelId)
+                        if (variavelRemoteId != null) put("variavel_remote_id", variavelRemoteId)
                         put("valor", vv.valor)
                     })
                 }
@@ -358,6 +366,34 @@ class OfflineRepository(context: Context) {
         }
     }
 
+    fun cacheVariaveis(estudoLocalId: Long, variaveis: List<VariavelResponse>) {
+        val db = dbHelper.writableDatabase
+        db.transactionTo {
+            variaveis.forEach { v ->
+                val existing = db.rawQuery(
+                    "SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE $COL_REMOTE_ID = ? AND estudo_local_id = ? LIMIT 1",
+                    arrayOf(v.id.toString(), estudoLocalId.toString())
+                ).use { if (it.moveToFirst()) it.getLong(0) else null }
+                val cv = ContentValues().apply {
+                    put(COL_REMOTE_ID, v.id)
+                    put(COL_SINCRONIZADO, 1)
+                    put("estudo_local_id", estudoLocalId)
+                    put("nome", v.nome)
+                    put("nivel_aplicacao", v.nivelAplicacao)
+                    put("tipo_dado", v.tipoDado)
+                    put("metrica", v.metrica)
+                    put(COL_CREATED_AT, v.createdAt)
+                    put(COL_UPDATED_AT, v.updatedAt)
+                }
+                if (existing != null) {
+                    db.update(TABLE_VARIAVEIS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                } else {
+                    db.insertOrThrow(TABLE_VARIAVEIS, null, cv)
+                }
+            }
+        }
+    }
+
     fun cacheCampanha(estudoLocalId: Long, c: CampanhaResponse): Long {
         val db = dbHelper.writableDatabase
         val existing = findLocalIdByRemote(db, TABLE_CAMPANHAS, c.id, "estudo_local_id", estudoLocalId)
@@ -372,11 +408,18 @@ class OfflineRepository(context: Context) {
             put(COL_CREATED_AT, c.createdAt)
             put(COL_UPDATED_AT, c.updatedAt)
         }
-        return if (existing != null) {
-            db.update(TABLE_CAMPANHAS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
-            existing
-        } else {
-            db.insertOrThrow(TABLE_CAMPANHAS, null, cv)
+        return db.transactionTo {
+            val localId = if (existing != null) {
+                db.update(TABLE_CAMPANHAS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                existing
+            } else {
+                db.insertOrThrow(TABLE_CAMPANHAS, null, cv)
+            }
+            if (!c.valoresVariaveis.isNullOrEmpty()) {
+                substituirValores(db, "campanha_local_id", localId,
+                    c.valoresVariaveis.map { it.variavelId to it.valor }, sincronizado = 1)
+            }
+            localId
         }
     }
 
@@ -601,17 +644,26 @@ class OfflineRepository(context: Context) {
         pares: List<Pair<Int, String>>?,
         sincronizado: Int = 0
     ) {
-        pares?.forEach { (variavelRemoteId, valor) ->
-            val variavelLocalId = db.rawQuery(
-                "SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE $COL_REMOTE_ID = ? LIMIT 1",
-                arrayOf(variavelRemoteId.toString())
-            ).use { if (it.moveToFirst()) it.getLong(0) else null }
+        pares?.forEach { (variavelId, valor) ->
+            // variavelId < 0 means it is an offline-only variable whose local_id is -variavelId
+            val variavelLocalId: Long?
+            val variavelRemoteId: Int?
+            if (variavelId < 0) {
+                variavelLocalId = (-variavelId).toLong()
+                variavelRemoteId = null
+            } else {
+                variavelLocalId = db.rawQuery(
+                    "SELECT $COL_LOCAL_ID FROM $TABLE_VARIAVEIS WHERE $COL_REMOTE_ID = ? LIMIT 1",
+                    arrayOf(variavelId.toString())
+                ).use { if (it.moveToFirst()) it.getLong(0) else null }
+                variavelRemoteId = variavelId
+            }
             if (variavelLocalId != null) {
                 db.insertOrThrow(TABLE_VALORES_VARIAVEIS, null, ContentValues().apply {
                     put(COL_SINCRONIZADO, sincronizado)
                     put(parentCol, parentLocalId)
                     put("variavel_local_id", variavelLocalId)
-                    put("variavel_remote_id", variavelRemoteId)
+                    if (variavelRemoteId != null) put("variavel_remote_id", variavelRemoteId)
                     put("valor", valor)
                 })
             }

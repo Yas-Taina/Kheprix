@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { trigger, transition, style, animate } from "@angular/animations";
 import { forkJoin, of } from "rxjs";
 import { catchError } from "rxjs/operators";
@@ -82,6 +83,7 @@ export class AnalisesComponent implements OnInit {
   private readonly unidadeService = inject(UnidadeAmostralService);
   private readonly util = inject(UtilService);
   private readonly route = inject(ActivatedRoute);
+  private readonly sanitizer = inject(DomSanitizer);
 
   estudoId!: number;
 
@@ -134,6 +136,29 @@ export class AnalisesComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   resultado: ExecutarAnaliseResponse | null = null;
+
+  get graficoSafe(): SafeHtml | null {
+    return this.resultado?.grafico
+      ? this.sanitizer.bypassSecurityTrustHtml(this.resultado.grafico)
+      : null;
+  }
+
+  get valorEHtml(): boolean {
+    return typeof this.resultado?.valor === "string";
+  }
+
+  get valorComoHtml(): SafeHtml | null {
+    const v = this.resultado?.valor;
+    if (typeof v !== "string") return null;
+    return this.sanitizer.bypassSecurityTrustHtml(v);
+  }
+
+  formatarValor(valor: Record<string, unknown> | string | null): string {
+    if (!valor || typeof valor !== "object") return String(valor ?? "");
+    return Object.entries(valor)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
+  }
 
   get tipoDado(): string {
     return this.analiseAtual?.tipo_dado ?? "";
@@ -444,9 +469,15 @@ export class AnalisesComponent implements OnInit {
 
   exportar(): void {
     if (!this.resultado?.urlArquivo) return;
-    const a = document.createElement("a");
-    a.href = this.resultado.urlArquivo;
-    a.download = "";
-    a.click();
+    this.analiseService.downloadPorUrl(this.resultado.urlArquivo).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "";
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+    });
   }
 }
