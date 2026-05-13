@@ -96,7 +96,8 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
         }
         drawer.addView(content, DrawerLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
 
-        val nav = NavigationView(this).apply {
+        val navCtx = android.view.ContextThemeWrapper(this, R.style.ThemeOverlay_Kheprix_NavigationView)
+        val nav = NavigationView(navCtx).apply {
             id = View.generateViewId()
             background = ColorDrawable(Color.parseColor("#EDE9DE"))
             fitsSystemWindows = true
@@ -104,12 +105,6 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
             inflateHeaderView(R.layout.nav_drawer_header)
             itemTextColor = ColorStateListSimples(Color.parseColor("#4A5240"))
             itemIconTintList = ColorStateListSimples(Color.parseColor("#6B7A5E"))
-            try {
-                NavigationView::class.java
-                    .getMethod("setSubheaderColor", android.content.res.ColorStateList::class.java)
-                    .invoke(this, ColorStateListSimples(Color.parseColor("#4A5240")))
-            } catch (_: Throwable) {
-            }
             setNavigationItemSelectedListener(this@BaseDrawerActivity)
         }
         val widthPx = (280 * resources.displayMetrics.density).toInt()

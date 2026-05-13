@@ -99,7 +99,7 @@ class HomeActivity : BaseDrawerActivity() {
                     else -> carregarUltimoEstudoLocal()
                 }
             } catch (_: Exception) {
-                carregarUltimoEstudoLocal()
+                binding.cardUltimoEstudo.visibility = View.GONE
             }
         }
     }

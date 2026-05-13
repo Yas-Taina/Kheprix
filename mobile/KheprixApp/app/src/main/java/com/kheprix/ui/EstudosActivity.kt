@@ -245,16 +245,25 @@ class EstudosActivity : BaseDrawerActivity() {
             .setPositiveButton("Sim") { _, _ ->
                 val localId = item.localId ?: return@setPositiveButton
                 lifecycleScope.launch {
+                    setLoading(true)
                     offlineManager.deletarDadosEstudo(localId)
                         .onSuccess { carregarEstudos() }
-                        .onFailure {
-                            Toast.makeText(
-                                this@EstudosActivity,
-                                "Erro: ${it.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+                        .onFailure { confirmarLimparSemSincronizar(item) }
+                    setLoading(false)
                 }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun confirmarLimparSemSincronizar(item: EstudoItem) {
+        AlertDialog.Builder(this)
+            .setTitle("Sem conexão")
+            .setMessage("Não foi possível sincronizar \"${item.nome}\" com o servidor. Deseja limpar os dados offline mesmo assim?\n\nAtenção: dados não sincronizados serão perdidos permanentemente.")
+            .setPositiveButton("Limpar mesmo assim") { _, _ ->
+                val localId = item.localId ?: return@setPositiveButton
+                offlineManager.deletarDadosEstudoLocal(localId)
+                carregarEstudos()
             }
             .setNegativeButton("Cancelar", null)
             .show()

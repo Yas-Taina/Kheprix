@@ -546,6 +546,19 @@ class NovoRegistroActivity : BaseDrawerActivity() {
             galeria.launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))
         }
         binding.ivCamera.setOnClickListener { verificarPermissaoCamera() }
+        binding.ivRotarFoto.setOnClickListener {
+            val atual = (binding.ivPreviewFoto.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                ?: return@setOnClickListener
+            lifecycleScope.launch {
+                val (bmpRotado, b64Rotado) = withContext(Dispatchers.IO) {
+                    val matrix = android.graphics.Matrix().apply { postRotate(90f) }
+                    val bmp = android.graphics.Bitmap.createBitmap(atual, 0, 0, atual.width, atual.height, matrix, true)
+                    bmp to "data:image/jpeg;base64,${com.kheprix.util.PhotoUtils.bitmapToBase64(bmp)}"
+                }
+                fotoBase64 = b64Rotado
+                binding.ivPreviewFoto.setImageBitmap(bmpRotado)
+            }
+        }
         binding.ivCalendario.setOnClickListener { abrirDatePicker() }
         binding.etHora.setOnClickListener { abrirTimePicker() }
         binding.ivGpsLat.setOnClickListener { verificarPermissaoGps() }
@@ -583,6 +596,7 @@ class NovoRegistroActivity : BaseDrawerActivity() {
                 if (bmp != null) {
                     binding.ivPreviewFoto.setImageBitmap(bmp)
                     binding.ivPreviewFoto.visibility = View.VISIBLE
+                    binding.ivRotarFoto.visibility = View.VISIBLE
                 }
             } else {
                 Toast.makeText(
@@ -977,8 +991,10 @@ class NovoRegistroActivity : BaseDrawerActivity() {
         binding.etLongitude.setText(decimalToDms(r.longitude))
         binding.etQtde.setText(r.qtdeIndividuos?.toString() ?: "")
         if (!r.foto.isNullOrBlank()) {
+            fotoBase64 = r.foto
             binding.tvNomeFoto.text = "foto_atual.jpg"
             binding.ivPreviewFoto.visibility = View.VISIBLE
+            binding.ivRotarFoto.visibility = View.VISIBLE
             ImagemLoader.load(
                 lifecycleScope,
                 binding.ivPreviewFoto,

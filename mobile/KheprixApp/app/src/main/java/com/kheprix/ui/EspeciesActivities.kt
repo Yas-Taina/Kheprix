@@ -267,7 +267,6 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
             if (modoEdicao) editarEspecie() else criarEspecie()
         }
 
-        binding.ivBack.setOnClickListener { finish() }
         binding.ivMenuLateral.setOnClickListener { openDrawer() }
         binding.ivPerfil.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
@@ -286,6 +285,20 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                 abrirCamera()
             } else {
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+
+        binding.ivRotarFoto.setOnClickListener {
+            val atual = (binding.ivPreviewFoto.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                ?: return@setOnClickListener
+            lifecycleScope.launch {
+                val (bmpRotado, b64Rotado) = withContext(Dispatchers.IO) {
+                    val matrix = android.graphics.Matrix().apply { postRotate(90f) }
+                    val bmp = android.graphics.Bitmap.createBitmap(atual, 0, 0, atual.width, atual.height, matrix, true)
+                    bmp to "data:image/jpeg;base64,${com.kheprix.util.PhotoUtils.bitmapToBase64(bmp)}"
+                }
+                fotoBase64 = b64Rotado
+                binding.ivPreviewFoto.setImageBitmap(bmpRotado)
             }
         }
     }
@@ -320,6 +333,7 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                     if (bmp != null) {
                         binding.ivPreviewFoto.setImageBitmap(bmp)
                         binding.ivPreviewFoto.visibility = View.VISIBLE
+                        binding.ivRotarFoto.visibility = View.VISIBLE
                     }
                 } else {
                     Toast.makeText(this@CadastroEspecieActivity, "Não foi possível carregar a foto", Toast.LENGTH_SHORT).show()
@@ -372,8 +386,10 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         binding.checkEndemismo.isChecked = e.endemismo
 
         if (!e.foto.isNullOrBlank()) {
+            fotoBase64 = e.foto
             binding.tvNomeFoto.text = "foto_atual.jpg"
             binding.ivPreviewFoto.visibility = View.VISIBLE
+            binding.ivRotarFoto.visibility = View.VISIBLE
             ImagemLoader.load(lifecycleScope, binding.ivPreviewFoto, e.foto, R.drawable.ic_placeholder_beetle)
         }
 

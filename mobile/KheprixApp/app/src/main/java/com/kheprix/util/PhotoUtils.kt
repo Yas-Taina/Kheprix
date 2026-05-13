@@ -44,6 +44,13 @@ object PhotoUtils {
         }
     }
 
+    fun rotarBase64(base64: String, graus: Float = 90f): String? {
+        val bmp = base64ToBitmap(base64) ?: return null
+        val matrix = android.graphics.Matrix().apply { postRotate(graus) }
+        val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+        return "data:image/jpeg;base64,${bitmapToBase64(rotated)}"
+    }
+
     private fun scaleBitmap(bitmap: Bitmap, maxWidth: Int): Bitmap {
         if (bitmap.width <= maxWidth) return bitmap
         val ratio = maxWidth.toFloat() / bitmap.width.toFloat()

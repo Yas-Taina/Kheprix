@@ -11,5 +11,5 @@
     app:menu="@menu/drawer_menu"
     app:itemTextColor="#4A5240"
     app:itemIconTint="#6B7A5E"
-    app:subheaderColor="#4A5240"
+    app:subheaderColor="@color/kheprix_green"
     app:headerLayout="@layout/nav_drawer_header"/>

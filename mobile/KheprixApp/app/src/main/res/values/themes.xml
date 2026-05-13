@@ -49,4 +49,8 @@
         <item name="android:textColor">@color/kheprix_green_dark</item>
     </style>
 
+    <style name="ThemeOverlay.Kheprix.NavigationView" parent="">
+        <item name="android:textColorSecondary">@color/kheprix_green</item>
+    </style>
+
 </resources>
