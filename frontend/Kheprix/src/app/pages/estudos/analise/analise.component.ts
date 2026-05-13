@@ -156,8 +156,26 @@ export class AnalisesComponent implements OnInit {
   formatarValor(valor: Record<string, unknown> | string | null): string {
     if (!valor || typeof valor !== "object") return String(valor ?? "");
     return Object.entries(valor)
-      .map(([k, v]) => `${k}: ${v}`)
+      .map(([k, v]) => `${k}: ${this.formatarCampo(v)}`)
       .join("\n");
+  }
+
+  // Formata um valor individual do hash de resposta. Antes era so `${v}`, que
+  // pra Array de Array (matriz de distancia em similaridade) caia no toString()
+  // padrao e gerava string flat tipo "0,0.33,0.33,0.8,..." perdendo as linhas.
+  // Pra correlacoes (valor=[0.197]) tambem ficava esquisito mostrando colchetes.
+  private formatarCampo(v: unknown): string {
+    if (v === null || v === undefined) return "—";
+    if (!Array.isArray(v)) return String(v);
+    if (v.length === 0) return "—";
+    if (Array.isArray(v[0])) {
+      const linhas = v.length;
+      const colunas = (v[0] as unknown[]).length;
+      return `matriz ${linhas}×${colunas} (já exibida no gráfico)`;
+    }
+    if (v.length === 1) return String(v[0]);
+    if (v.length <= 5) return v.join(", ");
+    return `${v.slice(0, 3).join(", ")}, … (${v.length} itens)`;
   }
 
   get tipoDado(): string {
@@ -227,6 +245,68 @@ export class AnalisesComponent implements OnInit {
         this.route.snapshot.queryParamMap.get("estudo_id"),
     );
     this.carregarDadosBase();
+    // Restaurar antes de carregar metadados: IDs stored continuam validos quando
+    // os dropdowns terminam de carregar (Angular ngModel re-resolve a opcao).
+    this.restaurarEstado();
+  }
+
+  private chaveDoStorage(): string {
+    return `kheprix_analise_${this.estudoId}`;
+  }
+
+  // Persiste formulario + resultado da analise em localStorage, scopeado por
+  // estudo. Sem isso, sair de /estudos/:id/analises e voltar perdia tudo
+  // (Angular destrói/recria o component) — usuário precisava re-rodar pra ver
+  // o que ja tinha calculado.
+  private salvarEstadoEResultado(): void {
+    if (typeof localStorage === "undefined") return;
+    try {
+      const estado = {
+        chaveEscolhida: this.chaveEscolhida,
+        fonteX: this.fonteX,
+        fonteY: this.fonteY,
+        variavelXId: this.variavelXId,
+        variavelYId: this.variavelYId,
+        nivelAgregacao: this.nivelAgregacao,
+        fonte: this.fonte,
+        variavelId: this.variavelId,
+        agruparPor: this.agruparPor,
+        grupo1Ids: this.grupo1Ids,
+        grupo2Ids: this.grupo2Ids,
+        nomeGrupo1: this.nomeGrupo1,
+        nomeGrupo2: this.nomeGrupo2,
+        variavelIdsAmbientais: this.variavelIdsAmbientais,
+        filtroCampanhaIds: this.filtroCampanhaIds,
+        filtroUnidadeIds: this.filtroUnidadeIds,
+        dataInicio: this.dataInicio,
+        dataFim: this.dataFim,
+        latMinMask: this.latMinMask,
+        latMaxMask: this.latMaxMask,
+        lngMinMask: this.lngMinMask,
+        lngMaxMask: this.lngMaxMask,
+        resultado: this.resultado,
+      };
+      localStorage.setItem(this.chaveDoStorage(), JSON.stringify(estado));
+    } catch {
+      // localStorage cheio ou bloqueado — falha silenciosa, é só cache de UX.
+    }
+  }
+
+  private restaurarEstado(): void {
+    if (typeof localStorage === "undefined") return;
+    const raw = localStorage.getItem(this.chaveDoStorage());
+    if (!raw) return;
+    try {
+      const estado = JSON.parse(raw);
+      Object.assign(this, estado);
+      if (this.chaveEscolhida) {
+        this.analiseAtual =
+          this.catalogo.find((a) => a.chave === this.chaveEscolhida) ?? null;
+      }
+    } catch {
+      // Estado corrompido (mudança de schema entre versões etc.) — ignora.
+      localStorage.removeItem(this.chaveDoStorage());
+    }
   }
 
   private carregarDadosBase(): void {
@@ -456,6 +536,7 @@ export class AnalisesComponent implements OnInit {
       next: (res) => {
         this.resultado = res;
         this.loading = false;
+        this.salvarEstadoEResultado();
       },
       error: (err) => {
         this.erro =
