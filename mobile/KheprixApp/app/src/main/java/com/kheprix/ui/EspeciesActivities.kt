@@ -460,10 +460,13 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private fun editarEspecie() {
         val req = coletarFormulario() ?: return
+        val fotoParaEnviar = req.foto?.takeIf {
+            it.startsWith("data:") || (!it.startsWith("http") && it.length > 500)
+        }
         val patchReq = EspeciePatchRequest(
             classe = req.classe, ordem = req.ordem, familia = req.familia,
             genero = req.genero, especie = req.especie, endemismo = req.endemismo,
-            foto = req.foto, nomePopular = req.nomePopular,
+            foto = fotoParaEnviar, nomePopular = req.nomePopular,
             statusConservacao = req.statusConservacao
         )
         if (estudoRemoteId <= 0 || especieId <= 0) {

@@ -1048,10 +1048,13 @@ class NovoRegistroActivity : BaseDrawerActivity() {
 
     private fun editarRegistro() {
         val form = coletarFormulario() ?: return
+        val fotoParaEnviar = form.foto?.takeIf {
+            it.startsWith("data:") || (!it.startsWith("http") && it.length > 500)
+        }
         val patchReq = RegistroPatchRequest(
             especieId = form.especieId, data = form.data, hora = form.hora,
             latitude = form.latitude, longitude = form.longitude,
-            qtdeIndividuos = form.qtdeIndividuos, foto = form.foto,
+            qtdeIndividuos = form.qtdeIndividuos, foto = fotoParaEnviar,
             valoresVariaveis = form.valoresVariaveis
         )
         if (estudoRemoteId <= 0 || campanhaId <= 0 || unidadeId <= 0 || eventoId <= 0 || registroId <= 0) {
