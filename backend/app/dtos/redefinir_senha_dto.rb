@@ -6,7 +6,7 @@ class RedefinirSenhaDto
   attr_accessor :token, :nova_senha
 
   validates :token, presence: true
-  validates :nova_senha, presence: true
+  validates :nova_senha, presence: true, length: { minimum: 8, message: "deve ter pelo menos 8 caracteres" }
 
   def initialize(params = {})
     @token = params[:token]
