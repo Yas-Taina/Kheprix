@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 class ServicoAnalise
+  # Requisitos estatisticos da variavel resposta (y) por familia GLM. A API R
+  # faz as.integer(y) silencioso pra Poisson/Binomial Negativa — sem este
+  # pre-check, o usuario poderia mandar uma variavel continua (pH, temperatura)
+  # como y e receber um modelo ajustado em valores truncados, estatisticamente
+  # incorreto, sem nenhum aviso. Pra Gamma a R fala "non-positive values not
+  # allowed" mas em ingles e abaixo da camada de servico — pre-check aqui devolve
+  # mensagem em PT antes de chegar nela.
+  GLM_REQUISITOS_Y = {
+    "modelo_poisson"           => :contagens,
+    "modelo_binomial_negativa" => :contagens,
+    "modelo_gamma"             => :positivos,
+  }.freeze
+
   def executar(estudo_id:, chave:, params:)
     analise = CatalogoAnalise.buscar(chave)
     return { erro: "Análise '#{chave}' não encontrada no catálogo" } unless analise
@@ -11,6 +24,7 @@ class ServicoAnalise
         tipo_dado: analise[:tipo_dado],
         params: params,
       )
+      validar_compatibilidade_glm!(analise, dados)
     rescue ServicoDadosAnalise::NivelIncompativel => e
       return { erro: e.message }
     rescue ServicoDadosAnalise::DadosDegenerados => e
@@ -56,6 +70,33 @@ class ServicoAnalise
   end
 
   private
+
+  def validar_compatibilidade_glm!(analise, dados)
+    requisito = GLM_REQUISITOS_Y[analise[:chave]]
+    return unless requisito
+    return unless dados.is_a?(Hash) && dados[:y].is_a?(Array)
+
+    y = dados[:y]
+    nome_y = dados[:nome_y].presence || "Y"
+
+    case requisito
+    when :contagens
+      invalido = y.find { |v| !(v.is_a?(Numeric) && v >= 0 && v == v.to_i) }
+      if invalido
+        raise ServicoDadosAnalise::DadosDegenerados,
+              "#{analise[:nome]} exige contagens (inteiros não negativos) em '#{nome_y}'; " \
+              "encontrou valor incompatível #{invalido}. Use uma variável de contagem " \
+              "(número de indivíduos) ou fonte_y=abundancia."
+      end
+    when :positivos
+      invalido = y.find { |v| !(v.is_a?(Numeric) && v > 0) }
+      if invalido
+        raise ServicoDadosAnalise::DadosDegenerados,
+              "#{analise[:nome]} exige valores estritamente positivos em '#{nome_y}'; " \
+              "encontrou valor incompatível #{invalido}. Use uma variável sem zeros nem negativos."
+      end
+    end
+  end
 
   def chamar_endpoint(cliente, endpoint, dados, chave)
     return nil if endpoint.blank?
