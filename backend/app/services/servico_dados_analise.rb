@@ -10,6 +10,19 @@ class ServicoDadosAnalise
 
   class DadosDegenerados < StandardError; end
 
+  # Minimos por tipo_dado. Sao definidos pelos pressupostos estatisticos das
+  # analises que consomem cada tipo (Pearson/Spearman precisam de pelo menos
+  # 3 pares; Shapiro precisa de N>=3; similaridade compara >=2 amostras; etc.).
+  # Quando os filtros do usuario colapsam o dataset abaixo dessas linhas,
+  # devolvemos uma mensagem em PT explicando "encontrei X, precisa de Y" em vez
+  # de mandar pra API R e deixar ela falhar com erro criptico.
+  MIN_PARES_DOIS_VETORES = 3
+  MIN_GRUPO = 2
+  MIN_VETOR_UNICO = 3
+  MIN_AMOSTRAS = 2
+  MIN_EVENTOS_ACUMULACAO = 2
+  MIN_ESPECIES = 2
+
   def montar_dados(estudo_id:, tipo_dado:, params:)
     @campanha_ids = params[:campanha_ids].presence
     @unidade_ids = params[:unidade_ids].presence
@@ -56,6 +69,13 @@ class ServicoDadosAnalise
     resultados.reject! { |_k, v| v <= 0 }
     return nil if resultados.empty?
 
+    if resultados.size < MIN_ESPECIES
+      raise DadosDegenerados,
+            "Índices de diversidade precisam de pelo menos #{MIN_ESPECIES} espécies; " \
+            "os filtros aplicados deixaram só #{resultados.size}. Amplie o intervalo " \
+            "de datas ou remova algum filtro de campanha/unidade/evento."
+    end
+
     abundancias = []
     nomes_especies = []
 
@@ -78,6 +98,13 @@ class ServicoDadosAnalise
 
     unidades_ids = registros.keys.map(&:first).uniq.sort
     especies_nomes = registros.keys.map(&:last).uniq.sort
+
+    if unidades_ids.size < MIN_AMOSTRAS
+      raise DadosDegenerados,
+            "Esta análise precisa de pelo menos #{MIN_AMOSTRAS} amostras (unidades amostrais); " \
+            "os filtros aplicados deixaram só #{unidades_ids.size}. Amplie o intervalo de datas " \
+            "ou inclua mais unidades amostrais nos filtros."
+    end
 
     unidades = Dw::DimUnidadeAmostral.where(id_unidade: unidades_ids).index_by(&:id_unidade)
     nomes_amostras = unidades_ids.map { |id| unidades[id]&.nome_unidade_amostral || "Unidade #{id}" }
@@ -182,6 +209,13 @@ class ServicoDadosAnalise
     ids_comuns = hash_x.keys & hash_y.keys
     return nil if ids_comuns.empty?
 
+    if ids_comuns.size < MIN_PARES_DOIS_VETORES
+      raise DadosDegenerados,
+            "Esta análise precisa de pelo menos #{MIN_PARES_DOIS_VETORES} pares de observações; " \
+            "os filtros aplicados deixaram só #{ids_comuns.size} #{ids_comuns.size == 1 ? "par" : "pares"}. " \
+            "Amplie os filtros ou escolha variáveis com mais cobertura no estudo."
+    end
+
     valores_x = ids_comuns.map { |id| hash_x[id] }
     valores_y = ids_comuns.map { |id| hash_y[id] }
 
@@ -258,6 +292,13 @@ class ServicoDadosAnalise
     end
 
     return nil if valores_g1.empty? || valores_g2.empty?
+
+    if valores_g1.size < MIN_GRUPO || valores_g2.size < MIN_GRUPO
+      raise DadosDegenerados,
+            "Cada grupo precisa de pelo menos #{MIN_GRUPO} observações; " \
+            "os filtros aplicados deixaram grupo1=#{valores_g1.size}, grupo2=#{valores_g2.size}. " \
+            "Verifique se grupo1_ids/grupo2_ids têm IDs com registros após os filtros aplicados."
+    end
 
     {
       grupo1: valores_g1,
@@ -343,6 +384,13 @@ class ServicoDadosAnalise
 
     return nil if dados.empty?
 
+    if dados.size < MIN_VETOR_UNICO
+      raise DadosDegenerados,
+            "Shapiro-Wilk precisa de pelo menos #{MIN_VETOR_UNICO} observações; " \
+            "os filtros aplicados deixaram só #{dados.size}. Amplie os filtros ou escolha " \
+            "uma variável com mais cobertura no estudo."
+    end
+
     { dados: dados, nome_variavel: nome_variavel || "Variável" }
   end
 
@@ -361,6 +409,13 @@ class ServicoDadosAnalise
       .order(:data_registro, :fk_evento)
       .pluck(:fk_evento)
       .uniq
+
+    if eventos_ordenados.size < MIN_EVENTOS_ACUMULACAO
+      raise DadosDegenerados,
+            "Curva de acumulação precisa de pelo menos #{MIN_EVENTOS_ACUMULACAO} eventos amostrais; " \
+            "os filtros aplicados deixaram só #{eventos_ordenados.size}. Cadastre mais eventos " \
+            "ou amplie o intervalo de datas/campanhas."
+    end
 
     todas_especies = registros.keys.map(&:last).uniq.sort
 
