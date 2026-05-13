@@ -20,6 +20,20 @@ class HomeActivity : BaseDrawerActivity() {
 
     private var ultimoEstudoRemoteId = -1
     private var ultimoEstudoLocalId = -1L
+    private var popupOfflineVisivel = false
+
+    override fun onEstadoOffline(offline: Boolean) {
+        if (offline && !popupOfflineVisivel && !isFinishing) {
+            popupOfflineVisivel = true
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Você está offline")
+                .setMessage("Sem conexão com a internet. Você pode continuar usando o app, mas algumas funcionalidades estarão indisponíveis.")
+                .setPositiveButton("Entendi") { _, _ -> popupOfflineVisivel = false }
+                .show()
+        } else if (!offline) {
+            popupOfflineVisivel = false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

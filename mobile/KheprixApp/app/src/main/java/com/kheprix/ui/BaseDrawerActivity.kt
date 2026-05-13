@@ -1,14 +1,23 @@
 package com.kheprix.ui
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -27,12 +36,53 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
     protected var drawerLayout: DrawerLayout? = null
     protected var navigationView: NavigationView? = null
 
+    private var offlineBanner: View? = null
     private var dialogTokenInvalidoVisivel = false
+
+    private val connectivityManager by lazy {
+        getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    }
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            runOnUiThread { atualizarBannerOffline(false) }
+        }
+        override fun onLost(network: Network) {
+            runOnUiThread { atualizarBannerOffline(true) }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        try { connectivityManager.registerNetworkCallback(request, networkCallback) } catch (_: Exception) {}
+        atualizarBannerOffline(!estaOnline())
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try { connectivityManager.unregisterNetworkCallback(networkCallback) } catch (_: Exception) {}
+    }
 
     override fun onResume() {
         super.onResume()
         verificarTokenOnline()
     }
+
+    private fun estaOnline(): Boolean {
+        val network = connectivityManager.activeNetwork ?: return false
+        val caps = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun atualizarBannerOffline(offline: Boolean) {
+        offlineBanner?.visibility = if (offline) View.VISIBLE else View.GONE
+        onEstadoOffline(offline)
+    }
+
+    protected open fun onEstadoOffline(offline: Boolean) {}
 
     private fun verificarTokenOnline() {
         val token = SessionManager.getToken() ?: return
@@ -81,12 +131,30 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
     }
 
     private fun installDrawer(content: View): View {
+        val banner = criarBannerOffline()
+        offlineBanner = banner
+
         if (content is DrawerLayout) {
-            drawerLayout = content
+            // DrawerLayout já é a raiz (ex: HomeActivity) — injeta o banner dentro do
+            // filho de conteúdo para preservar o fitsSystemWindows do DrawerLayout.
             content.findViewById<NavigationView>(R.id.navigationView)?.let {
                 navigationView = it
                 it.setNavigationItemSelectedListener(this)
             }
+            for (i in 0 until content.childCount) {
+                val filho = content.getChildAt(i)
+                if (filho is NavigationView) continue
+                content.removeViewAt(i)
+                val wrapper = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    layoutParams = DrawerLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                    addView(banner, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+                    addView(filho, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
+                }
+                content.addView(wrapper, i, DrawerLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                break
+            }
+            drawerLayout = content
             return content
         }
 
@@ -112,9 +180,46 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
             nav,
             DrawerLayout.LayoutParams(widthPx, MATCH_PARENT).apply { gravity = Gravity.START }
         )
-        drawerLayout = drawer
         navigationView = nav
-        return drawer
+        drawerLayout = drawer
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+            addView(banner, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(drawer, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
+        }
+    }
+
+    private fun criarBannerOffline(): LinearLayout {
+        val dp = resources.displayMetrics.density
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(Color.parseColor("#C62828"))
+            visibility = View.GONE
+            val pV = (6 * dp).toInt()
+            val pH = (16 * dp).toInt()
+            setPadding(pH, pV, pH, pV)
+
+            val icon = ImageView(this@BaseDrawerActivity).apply {
+                setImageResource(R.drawable.ic_wifi_off)
+                imageTintList = ColorStateListSimples(Color.WHITE)
+                val size = (18 * dp).toInt()
+                layoutParams = LinearLayout.LayoutParams(size, size)
+            }
+            addView(icon)
+
+            val texto = TextView(this@BaseDrawerActivity).apply {
+                text = "Você está offline"
+                setTextColor(Color.WHITE)
+                textSize = 13f
+                layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                    marginStart = (8 * dp).toInt()
+                }
+            }
+            addView(texto)
+        }
     }
 
     protected fun setupDrawer(drawer: DrawerLayout, navView: NavigationView) {
