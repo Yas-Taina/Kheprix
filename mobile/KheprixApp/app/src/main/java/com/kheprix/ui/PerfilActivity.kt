@@ -41,24 +41,34 @@ class PerfilActivity : BaseDrawerActivity() {
         try {
             val manager = EstudoOfflineManager(this)
             val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
-            val cursor = db.rawQuery(
-                "SELECT local_id FROM estudos", null
-            )
+
             var totalOffline = 0
-            var totalEstudos = 0
-            cursor.use { c ->
+            var estudosApenasLocal = 0
+            var estudosOnline = 0
+
+            db.rawQuery("SELECT local_id, remote_id FROM estudos", null).use { c ->
                 while (c.moveToNext()) {
-                    val localId = c.getLong(0)
+                    val localId  = c.getLong(0)
+                    val remoteId = if (c.isNull(1)) null else c.getInt(1)
                     totalOffline += manager.contarRegistrosOffline(localId)
-                    totalEstudos++
+                    if (remoteId == null) estudosApenasLocal++ else estudosOnline++
                 }
             }
-            binding.tvEstudosLocais.text = "$totalEstudos estudo(s) salvo(s) localmente"
+
+            binding.tvEstudosLocais.text = when {
+                estudosApenasLocal > 0 && estudosOnline > 0 ->
+                    "$estudosOnline estudo(s) online · $estudosApenasLocal salvo(s) localmente"
+                estudosApenasLocal > 0 ->
+                    "$estudosApenasLocal estudo(s) salvo(s) localmente"
+                else ->
+                    "$estudosOnline estudo(s) online"
+            }
+
             binding.tvRegistrosOffline.text = "$totalOffline registro(s) não sincronizado(s)"
             binding.tvRegistrosOffline.visibility =
                 if (totalOffline > 0) View.VISIBLE else View.GONE
         } catch (_: Exception) {
-            binding.tvEstudosLocais.text   = "—"
+            binding.tvEstudosLocais.text = "—"
             binding.tvRegistrosOffline.visibility = View.GONE
         }
     }
