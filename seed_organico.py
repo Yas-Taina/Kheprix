@@ -4,9 +4,11 @@ Popula a API Kheprix de forma organica via HTTP.
 
 Dados dimensionados para cobrir todas as 38 analises disponiveis na API R:
   - 12 especies (incl. singletons e doubletons para Chao1/Chao2)
-  - 3 campanhas sazonais (verao/outono/inverno) — 3 grupos para ANOVA
-  - 5 unidades por campanha = 15 totais (matrizes, nMDS, RDA/CCA)
-  - 3 eventos por unidade = 45 eventos (distribuidos em meses distintos)
+  - 9 campanhas: 3 anos (2024/2025/2026) x 3 estacoes (verao/outono/inverno)
+  - 3 grupos sazonais para ANOVA; series temporais para analises interanuais
+  - 8 unidades por campanha = 72 totais (matrizes, nMDS, RDA/CCA)
+  - 3 eventos por unidade = 216 eventos (distribuidos em varios meses e anos)
+  - ~1300 registros de ocorrencia cobrindo 8 localizacoes ao longo de 3 anos
   - Variaveis em todos os niveis: campanha(1), unidade(3), evento(3), registro(1)
 
 Uso:
@@ -47,13 +49,14 @@ OUTROS_USUARIOS = [
 ]
 
 
-# ── PNG 1x1 px gerado apenas com stdlib ──────────────────────────────────────
+# ── Imagens ───────────────────────────────────────────────────────────────────
 
 def _chunk(tag: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
 
 
 def png_b64(r: int, g: int, b: int) -> str:
+    """PNG 1x1 colorido usado como fallback quando o download falha."""
     png = (
         b"\x89PNG\r\n\x1a\n"
         + _chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
@@ -63,22 +66,59 @@ def png_b64(r: int, g: int, b: int) -> str:
     return "data:image/png;base64," + base64.b64encode(png).decode()
 
 
-# 12 cores distintas, uma por especie
-FOTOS_ESPECIES = [
-    png_b64(80,  140, 60),   # verde musgo   — Sauva-cabeca-de-vidro
-    png_b64(60,  60,  140),  # azul escuro   — Besouro-rola-bosta
-    png_b64(220, 140, 40),   # laranja       — Borboleta-erato
-    png_b64(40,  140, 200),  # azul claro    — Libelula-parda
-    png_b64(220, 200, 60),   # amarelo       — Abelha-urucu
-    png_b64(180, 60,  60),   # vermelho      — Cupim-soldado
-    png_b64(60,  180, 180),  # ciano         — Grilo-do-campo
-    png_b64(180, 60,  180),  # magenta       — Mariposa-atlas
-    png_b64(100, 180, 100),  # verde claro   — Pulgao-verde
-    png_b64(210, 210, 210),  # cinza         — Mosquito-bromelicula (singleton A)
-    png_b64(255, 180, 200),  # rosa          — Tripes-das-flores    (singleton B)
-    png_b64(140, 110, 70),   # marrom claro  — Cigarrinha-verde     (Chao2 Q2)
+_img_cache: dict[str, str] = {}
+
+
+def imagem_b64(url: str, fallback: tuple[int, int, int] = (128, 128, 128)) -> str:
+    """Baixa imagem de URL e retorna como data URI base64; cache em memoria."""
+    if url in _img_cache:
+        return _img_cache[url]
+    try:
+        req = urlreq.Request(url, headers={"User-Agent": "KheprixSeed/1.0"})
+        with urlreq.urlopen(req, timeout=15) as resp:
+            data = resp.read()
+            ct = resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
+            if not ct.startswith("image/"):
+                ct = "image/jpeg"
+            result = f"data:{ct};base64," + base64.b64encode(data).decode()
+    except Exception as exc:
+        print(f"    [WARN] download falhou ({url[:70]}): {exc}")
+        result = png_b64(*fallback)
+    _img_cache[url] = result
+    return result
+
+
+# (url, cor_fallback_rgb) — fotos reais das 12 especies via Wikipedia Commons
+_ESPECIES_IMG: list[tuple[str, tuple[int, int, int]]] = [
+    # Atta laevigata — Sauva-cabeca-de-vidro
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Atta_laevigata.jpg?width=400",            ( 80, 140,  60)),
+    # Dichotomius geminatus — Besouro-rola-bosta
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Dichotomius_geminatus.jpg?width=400",     ( 60,  60, 140)),
+    # Heliconius erato — Borboleta-erato
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Heliconius_erato_cyrbia_-_Chicaque.jpg?width=400", (220, 140, 40)),
+    # Erythrodiplax fusca — Libelula-parda
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Erythrodiplax_fusca.jpg?width=400",       ( 40, 140, 200)),
+    # Melipona scutellaris — Abelha-urucu
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Melipona_scutellaris.jpg?width=400",      (220, 200,  60)),
+    # Nasutitermes corniger — Cupim-soldado
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Nasutitermes_corniger.jpg?width=400",     (180,  60,  60)),
+    # Gryllus assimilis — Grilo-do-campo
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Gryllus_assimilis.jpg?width=400",         ( 60, 180, 180)),
+    # Attacus atlas — Mariposa-atlas
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Attacus_atlas_qtl1.jpg?width=400",        (180,  60, 180)),
+    # Aphis gossypii — Pulgao-verde
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Aphis_gossypii.jpg?width=400",            (100, 180, 100)),
+    # Wyeomyia mitchellii — Mosquito-bromelicula (singleton A)
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Wyeomyia_mitchellii.jpg?width=400",       (210, 210, 210)),
+    # Frankliniella schultzei — Tripes-das-flores (singleton B)
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Frankliniella_schultzei.jpg?width=400",   (255, 180, 200)),
+    # Empoasca kraemeri — Cigarrinha-verde (Chao2 Q2)
+    ("https://commons.wikimedia.org/wiki/Special:FilePath/Empoasca_kraemeri.jpg?width=400",         (140, 110,  70)),
 ]
-FOTO_REGISTRO = png_b64(160, 100, 50)
+
+# 20 fotos variadas de campo para registros de ocorrencia (picsum.photos — deterministico)
+_N_FOTOS_CAMPO = 20
+_URLS_CAMPO = [f"https://picsum.photos/seed/{300 + i}/480/360" for i in range(_N_FOTOS_CAMPO)]
 
 
 # ── Definicoes de campanhas e locais ─────────────────────────────────────────
@@ -86,11 +126,26 @@ FOTO_REGISTRO = png_b64(160, 100, 50)
 #                 datas_eventos[(yr,mo,dy)x3],
 #                 base_temp, base_precip, base_humid)
 CAMPANHAS_DEF = [
-    ("Campanha Verao 2026",   "2026-01-15", "2026-03-31", "Joao",
+    # ── 2024 ──────────────────────────────────────────────────────────────────
+    ("Campanha Verao 2024",    "2024-01-10", "2024-03-31", "Joao",
+     [(2024, 1, 10), (2024, 2,  8), (2024, 3,  4)], 29.0, 148.0, 80.0),
+    ("Campanha Outono 2024",   "2024-04-02", "2024-06-28", "Maria",
+     [(2024, 4,  3), (2024, 5,  8), (2024, 6,  6)], 23.5, 100.0, 70.0),
+    ("Campanha Inverno 2024",  "2024-07-03", "2024-09-27", "Beatriz",
+     [(2024, 7, 10), (2024, 8, 14), (2024, 9,  5)], 16.5,  58.0, 59.0),
+    # ── 2025 ──────────────────────────────────────────────────────────────────
+    ("Campanha Verao 2025",    "2025-01-12", "2025-03-31", "Joao",
+     [(2025, 1, 12), (2025, 2,  9), (2025, 3,  6)], 29.5, 152.0, 81.0),
+    ("Campanha Outono 2025",   "2025-04-04", "2025-06-30", "Maria",
+     [(2025, 4,  6), (2025, 5, 12), (2025, 6, 10)], 23.8, 102.0, 70.5),
+    ("Campanha Inverno 2025",  "2025-07-05", "2025-09-29", "Beatriz",
+     [(2025, 7,  7), (2025, 8, 11), (2025, 9,  2)], 16.8,  60.0, 60.0),
+    # ── 2026 ──────────────────────────────────────────────────────────────────
+    ("Campanha Verao 2026",    "2026-01-15", "2026-03-31", "Joao",
      [(2026, 1, 15), (2026, 2, 10), (2026, 3,  5)], 30.0, 155.0, 82.0),
-    ("Campanha Outono 2026",  "2026-04-01", "2026-06-30", "Maria",
+    ("Campanha Outono 2026",   "2026-04-01", "2026-06-30", "Maria",
      [(2026, 4,  5), (2026, 5, 10), (2026, 6,  8)], 24.0, 105.0, 71.0),
-    ("Campanha Inverno 2026", "2026-07-01", "2026-09-30", "Beatriz",
+    ("Campanha Inverno 2026",  "2026-07-01", "2026-09-30", "Beatriz",
      [(2026, 7,  8), (2026, 8, 12), (2026, 9,  3)], 17.0,  62.0, 61.0),
 ]
 
@@ -101,6 +156,9 @@ LOCAIS = [
     ("UA-03-Mangue",     -23.370, -44.820, 40.0, "Pitfall",               "10 armadilhas/30 dias", "Hidromorfico",    30.0, 90.0),
     ("UA-04-Clareira",   -23.355, -44.835, 60.0, "Malaise",               "15 dias continuo",      "Podzolico",      180.0, 45.0),
     ("UA-05-Ribeirinha", -23.358, -44.840, 50.0, "Winkler",               "5 amostras de solo",    "Aluvial",         60.0, 85.0),
+    ("UA-06-Gruta",      -23.375, -44.815, 35.0, "Armadilha fotografica", "20 dias de exposicao",  "Calcario",       250.0, 30.0),
+    ("UA-07-Cerrado",    -23.348, -44.845, 90.0, "Busca ativa",           "8h/dia por 7 dias",     "Latossolo",      310.0, 40.0),
+    ("UA-08-Brejo",      -23.380, -44.810, 55.0, "Pitfall",               "15 armadilhas/30 dias", "Gleissolo",       20.0, 95.0),
 ]
 
 
@@ -168,6 +226,12 @@ def main(base_url: str) -> int:
     BASE_URL = base_url.rstrip("/")
     print(f"== Kheprix seed organico em {BASE_URL} ==\n")
 
+    # ── [0] Download de imagens reais ────────────────────────────────────────
+    print("[0] Baixando imagens reais ...")
+    fotos_especies = [imagem_b64(url, fb) for url, fb in _ESPECIES_IMG]
+    fotos_campo    = [imagem_b64(url) for url in _URLS_CAMPO]
+    print(f"  {len(fotos_especies)} fotos de especies | {len(fotos_campo)} fotos de campo prontas\n")
+
     # ── [1] Usuarios ──────────────────────────────────────────────────────────
     print("[1] Criando usuarios e fazendo login")
     tokens: dict[str, str] = {}
@@ -233,7 +297,7 @@ def main(base_url: str) -> int:
     especies_ids: list[int] = []
     for sp_idx, sp in enumerate(especies_payload):
         code, resp = http("POST", f"/estudos/{estudo_id}/especies", joao,
-                          {**sp, "foto": FOTOS_ESPECIES[sp_idx]})
+                          {**sp, "foto": fotos_especies[sp_idx]})
         step(f"POST especie {sp['nome_popular']}", code, resp)
         especies_ids.append(resp["id"])
 
@@ -399,7 +463,7 @@ def main(base_url: str) -> int:
                 yr, mo, dy = datas_ev[e_idx]
                 data_str = f"{yr}-{mo:02d}-{dy:02d}"
 
-                def post_reg(sp_id: int, qtde: int, comp: str, ausencia: bool = False) -> dict:
+                def post_reg(sp_id: int, qtde: int, comp: str, ausencia: bool = False, foto_idx: int = 0) -> dict:
                     body = {
                         "especie_id":       sp_id,
                         "data":             data_str,
@@ -408,7 +472,7 @@ def main(base_url: str) -> int:
                         "longitude":        lon + 0.0001,
                         "qtde_individuos":  qtde,
                         "ausencia_especie": ausencia,
-                        "foto":             FOTO_REGISTRO,
+                        "foto":             fotos_campo[foto_idx % _N_FOTOS_CAMPO],
                         "valores_variaveis": [
                             {"variavel_id": var_comportamento, "valor": comp},
                         ],
@@ -426,18 +490,19 @@ def main(base_url: str) -> int:
                 # Especies comuns (0-8)
                 for sp_idx in range(9):
                     if (u_idx * 7 + e_idx * 3 + c_idx * 11 + sp_idx * 13) % 3 != 0:
-                        qtde = ((c_idx + u_idx * 2 + e_idx + sp_idx * 3) % 5) + 2
-                        comp = "true" if (sp_idx + e_idx) % 2 == 0 else "false"
-                        post_reg(especies_ids[sp_idx], qtde, comp)
+                        qtde     = ((c_idx + u_idx * 2 + e_idx + sp_idx * 3) % 5) + 2
+                        comp     = "true" if (sp_idx + e_idx) % 2 == 0 else "false"
+                        foto_idx = c_idx * 100 + u_idx * 10 + e_idx * 3 + sp_idx
+                        post_reg(especies_ids[sp_idx], qtde, comp, foto_idx=foto_idx)
 
                 # Especies raras
                 if c_idx == 0 and u_idx == 0 and e_idx == 0:
-                    post_reg(especies_ids[9],  1, "true")   # singleton A — Chao1 f1
+                    post_reg(especies_ids[9],  1, "true",  foto_idx=0)   # singleton A — Chao1 f1
                 if c_idx == 0 and u_idx == 1 and e_idx == 0:
-                    post_reg(especies_ids[10], 1, "false")  # singleton B — Chao1 f1
+                    post_reg(especies_ids[10], 1, "false", foto_idx=1)   # singleton B — Chao1 f1
                 if (c_idx == 0 and u_idx == 0 and e_idx == 2) or \
                    (c_idx == 0 and u_idx == 2 and e_idx == 0):
-                    post_reg(especies_ids[11], 1, "true")   # Chao2 Q2 (2 unidades)
+                    post_reg(especies_ids[11], 1, "true",  foto_idx=2)   # Chao2 Q2 (2 unidades)
 
     # PATCH registro[0]
     if registros:
@@ -592,18 +657,20 @@ def main(base_url: str) -> int:
     # Deleta especie[4] (Abelha-urucu) — nao afeta singletons/doubletons
     code, _ = http("DELETE", f"/estudos/{estudo_id}/especies/{especies_ids[4]}", joao)
     step("DELETE especie[4] Abelha-urucu", code, _)
-    # Deleta ultimo evento (c=2, u=4, e=2)
-    ev_last = evento_map[(2, 4, 2)]
+    # Deleta ultimo evento (ultima campanha, ultima unidade, ultimo evento)
+    last_c = len(campanhas) - 1
+    last_u = len(LOCAIS) - 1
+    ev_last = evento_map[(last_c, last_u, 2)]
     code, _ = http("DELETE",
         f"/estudos/{estudo_id}/campanhas/{ev_last['_campanha_id']}/unidades_amostrais/{ev_last['_unidade_id']}/eventos_amostragem/{ev_last['id']}",
         joao)
-    step("DELETE evento[2][4][2]", code, _)
-    # Deleta ultima unidade (c=2, u=4)
-    ua_last = unidade_map[(2, 4)]
+    step(f"DELETE evento[{last_c}][{last_u}][2]", code, _)
+    # Deleta ultima unidade (ultima campanha, ultima localizacao)
+    ua_last = unidade_map[(last_c, last_u)]
     code, _ = http("DELETE",
         f"/estudos/{estudo_id}/campanhas/{ua_last['_campanha_id']}/unidades_amostrais/{ua_last['id']}",
         joao)
-    step("DELETE unidade[2][4]", code, _)
+    step(f"DELETE unidade[{last_c}][{last_u}]", code, _)
 
     # ── [13] Resumo ───────────────────────────────────────────────────────────
     print("\n[13] Resumo")
@@ -613,12 +680,14 @@ def main(base_url: str) -> int:
     step("GET /estudos final", code, lista_final)
 
     n_eventos  = len(LOCAIS) * len(campanhas) * 3
+    n_anos     = len({cd[1][:4] for cd in CAMPANHAS_DEF})
     print("\n== Concluido ==")
     print(f"Login: email={DONO_PRINCIPAL['email']}  senha={DONO_PRINCIPAL['senha']}")
     print(f"Estudo principal id={estudo_id}  '{est1['nome']}'")
     print(f"Estudo secundario id={estudo2_id} '{est2['nome']}'")
-    print(f"Especies: {len(especies_ids)} | Campanhas: {len(campanhas)} | "
-          f"Unidades: {len(unidade_map)} | Eventos: {n_eventos} | Registros: {len(registros)}")
+    print(f"Anos cobertos: {n_anos} | Campanhas: {len(campanhas)} | Localizacoes: {len(LOCAIS)}")
+    print(f"Especies: {len(especies_ids)} | Unidades: {len(unidade_map)} | "
+          f"Eventos: {n_eventos} | Registros: {len(registros)}")
     print("Singletons Chao1: sp[9] e sp[10] (1 ocorrencia cada)")
     print("Doubleton  Chao2: sp[11] (2 unidades distintas, qtde=1 cada)")
     print(f"Convites pendentes para {DONO_PRINCIPAL['email']}: 4")

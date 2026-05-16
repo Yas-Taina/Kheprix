@@ -69,6 +69,13 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         verificarTokenOnline()
+        atualizarEmailDrawer()
+    }
+
+    private fun atualizarEmailDrawer() {
+        val header = navigationView?.getHeaderView(0) ?: return
+        header.findViewById<TextView>(R.id.tvDrawerEmail)?.text =
+            SessionManager.getUserEmail() ?: ""
     }
 
     private fun estaOnline(): Boolean {
