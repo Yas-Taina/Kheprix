@@ -1,4 +1,3 @@
--- Fato: Variáveis Unificadas (EAV Gold)
 -- Resolve a hierarquia polimórfica (id_nivel_aplicacao → id_registro) em 4 níveis (registro, evento, unidade, campanha)
 
 WITH all_variables AS (

@@ -1,4 +1,3 @@
--- Gold: Dimensão Variável
 SELECT
   id,
   nome,

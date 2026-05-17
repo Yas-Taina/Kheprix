@@ -1,18 +1,3 @@
-"""
-Pipeline Text-to-SQL
-====================
-Orquestra as 3 etapas de uma consulta:
-  1. Geração de SQL (Groq/Llama)      ← guard rail de entrada + output guard no SQL
-  2. Execução no DW                   ← sql_validator + filtro multi-tenant paramétrico
-  3. Interpretação do resultado       ← output guard de alucinação + vazamento
-
-Multi-turn: recebe histórico de sessão e passa ao LLM para resolver referências
-pronominais ("e dessas?", "nessas espécies") entre perguntas.
-
-Nenhum dado do usuário é interpolado diretamente em strings SQL.
-Os estudo_ids são sempre passados como parâmetro psycopg2.
-A conexão com o DW é read-only (configurado no pool em db.py).
-"""
 import json
 import logging
 import re
@@ -47,15 +32,7 @@ _MAX_RETRIES = 2
 _RETRY_DELAY_S = 4
 
 
-# ---------------------------------------------------------------------------
-# Helper de retry para chamadas ao LLM
-# ---------------------------------------------------------------------------
-
 def _chamar_llm_com_retry(**kwargs) -> object:
-    """
-    Chama _client.chat.completions.create com retry automático para erros
-    transientes (429/503). Lança exceção após _MAX_RETRIES tentativas.
-    """
     for tentativa in range(_MAX_RETRIES + 1):
         try:
             return _client.chat.completions.create(**kwargs)
@@ -70,17 +47,7 @@ def _chamar_llm_com_retry(**kwargs) -> object:
             raise
 
 
-# ---------------------------------------------------------------------------
-# Etapa 1 — Geração de SQL
-# ---------------------------------------------------------------------------
-
 def _gerar_sql(pergunta: str, historico: list[dict]) -> dict:
-    """
-    Chama o Groq (Llama 3.3 70B) para converter a pergunta em SQL estruturado.
-
-    O histórico da sessão é passado como mensagens anteriores para que o modelo
-    resolva referências pronominais multi-turn ("e dessas?", "nessas espécies").
-    """
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(historico)
     messages.append({"role": "user", "content": pergunta})
@@ -101,30 +68,14 @@ def _gerar_sql(pergunta: str, historico: list[dict]) -> dict:
         )
 
 
-# ---------------------------------------------------------------------------
-# Etapa 2 — Execução no DW
-# ---------------------------------------------------------------------------
-
 def _executar_sql(sql: str, estudo_ids: list[int]) -> tuple[list[str], list[dict]]:
-    """
-    Valida e executa o SQL no DW via connection pool.
-
-    Os estudo_ids NUNCA são interpolados na string SQL — sempre passados como
-    parâmetro psycopg2 (proteção contra SQL injection).
-
-    A conexão já é read-only por configuração do pool (db.py), tornando
-    fisicamente impossível qualquer escrita mesmo que um SQL inválido
-    escape dos guards.
-    """
-    # Guard rail primário: estrutura, multi-tenant, tabelas permitidas
+    # estudo_ids passados como parâmetro psycopg2 — nunca interpolados na string SQL
     validar_sql(sql)
 
-    # Guard rail secundário: tabelas de sistema, funções proibidas, stacked queries
     resultado_guard = verificar_sql_output(sql)
     if not resultado_guard.passou:
         raise ValueError(f"Guard rail SQL: {resultado_guard.motivo}")
 
-    # Injeta LIMIT automaticamente se ausente
     sql = injetar_limit_se_ausente(sql)
 
     with obter_conexao() as conn:
@@ -136,14 +87,7 @@ def _executar_sql(sql: str, estudo_ids: list[int]) -> tuple[list[str], list[dict
     return colunas, linhas
 
 
-# ---------------------------------------------------------------------------
-# Auxiliares de interpretação e pós-processamento de SQL
-# ---------------------------------------------------------------------------
-
 def _resposta_contradiz_dados(resposta: str, dados: list[dict]) -> bool:
-    """
-    Detecta quando o modelo afirma que não há dados, mas os dados têm valores.
-    """
     frases_sem_dados = ["não foram encontrados", "nenhum registro", "sem registros", "nenhuma espécie"]
     if not any(f in resposta.lower() for f in frases_sem_dados):
         return False
@@ -162,7 +106,6 @@ def _gerar_resposta_direta(dados: list[dict]) -> str:
 
 
 def _corrigir_aspas_sql(sql: str) -> str:
-    """Converte aspas duplas em aspas simples para literais string em PostgreSQL."""
     return re.sub(
         r'((?:=|ILIKE|LIKE|IN|<>|!=)\s*)"([^"]*)"',
         r"\1'\2'",
@@ -172,10 +115,7 @@ def _corrigir_aspas_sql(sql: str) -> str:
 
 
 def _escapar_percent_sql(sql: str) -> str:
-    """
-    Dobra % em padrões ILIKE/LIKE para evitar conflito com parâmetros psycopg2.
-    ILIKE '%B0%' → ILIKE '%%B0%%' (psycopg2 interpreta % como início de placeholder).
-    """
+    """Dobra % em ILIKE/LIKE — psycopg2 interpreta % como início de placeholder."""
     def _dobrar(match: re.Match) -> str:
         return f"{match.group(1)} '{match.group(2).replace('%', '%%')}'"
 
@@ -183,17 +123,9 @@ def _escapar_percent_sql(sql: str) -> str:
 
 
 def _enriquecer_sql_especies(sql: str) -> str:
-    """
-    Pós-processamento determinístico do SQL gerado pelo modelo.
-
-    Com o Groq (70B) isso raramente é necessário, mas mantido como fallback:
-      1. COUNT(DISTINCT nome_cientifico) sem STRING_AGG → injeta STRING_AGG
-      2. SELECT nome_cientifico sem DISTINCT → adiciona DISTINCT + ORDER BY
-    Exceção: queries com is_ameacada preservam SELECT DISTINCT completo.
-    """
+    # fallback para quando o modelo gera COUNT sem STRING_AGG ou SELECT sem DISTINCT
     tem_filtro_ameaca = bool(re.search(r"is_ameacada", sql, re.IGNORECASE))
 
-    # Caso 1: COUNT sem STRING_AGG (e sem filtro de ameaça)
     if (
         re.search(r"COUNT\s*\(\s*DISTINCT\s+nome_cientifico\s*\)", sql, re.IGNORECASE)
         and not re.search(r"STRING_AGG", sql, re.IGNORECASE)
@@ -207,7 +139,6 @@ def _enriquecer_sql_especies(sql: str) -> str:
             flags=re.IGNORECASE,
         )
 
-    # Caso 2: SELECT nome_cientifico sem DISTINCT
     if re.search(r"SELECT\s+nome_cientifico\b", sql, re.IGNORECASE):
         if not re.search(r"SELECT\s+DISTINCT", sql, re.IGNORECASE):
             sql = re.sub(
@@ -222,10 +153,6 @@ def _enriquecer_sql_especies(sql: str) -> str:
     return sql
 
 
-# ---------------------------------------------------------------------------
-# Etapa 3 — Interpretação em linguagem natural
-# ---------------------------------------------------------------------------
-
 def _interpretar_resultado(
     pergunta: str,
     colunas: list[str],
@@ -233,12 +160,6 @@ def _interpretar_resultado(
     sql: str,
     historico: list[dict],
 ) -> str:
-    """
-    Chama o Groq (Llama 3.3 70B) para traduzir os dados em resposta em português.
-
-    O histórico é passado para que respostas de follow-up sejam coerentes
-    com o que foi respondido anteriormente ("e dessas, quais são ameaçadas?").
-    """
     amostra = dados[:20]
 
     conteudo_usuario = (
@@ -263,38 +184,15 @@ def _interpretar_resultado(
     return resposta.choices[0].message.content
 
 
-# ---------------------------------------------------------------------------
-# Pipeline principal
-# ---------------------------------------------------------------------------
-
 def processar_pergunta(
     pergunta: str,
     estudo_ids: list[int],
     usuario_id: int,
     historico: list[dict] | None = None,
 ) -> dict:
-    """
-    Pipeline completo com guard rails em cada etapa.
-
-    Args:
-        pergunta:    Pergunta em linguagem natural do pesquisador.
-        estudo_ids:  IDs dos estudos autorizados para o usuário (multi-tenant).
-        usuario_id:  ID do usuário autenticado (para logging e rate limiting).
-        historico:   Mensagens anteriores da sessão (multi-turn context).
-
-    Retorna dict com:
-      resposta  str        resposta em linguagem natural para o usuário
-      dados     list[dict] registros brutos do DW (para o frontend)
-      sql       str|None   query executada (transparência / modo debug)
-      total     int        número de registros retornados
-      erro      str|None   mensagem de erro interna (não exposta ao usuário)
-    """
     inicio = time.monotonic()
     historico = historico or []
 
-    # ------------------------------------------------------------------
-    # Guard Rail de Entrada — antes de qualquer chamada ao modelo
-    # ------------------------------------------------------------------
     guard_entrada = validar_entrada(pergunta)
     if not guard_entrada.passou:
         logger.warning(
@@ -309,9 +207,6 @@ def processar_pergunta(
             "erro": None,
         }
 
-    # ------------------------------------------------------------------
-    # Etapa 1: Geração de SQL (com histórico para multi-turn)
-    # ------------------------------------------------------------------
     try:
         resultado_modelo = _gerar_sql(pergunta, historico)
     except APIStatusError as exc:
@@ -344,23 +239,25 @@ def processar_pergunta(
 
     sql = resultado_modelo.get("sql")
     explicacao = resultado_modelo.get("explicacao", "")
-    print(f"[DEBUG] sql_gerado: {sql}", flush=True)
 
     if not sql:
         logger.info(
             "modelo_nao_pode_responder",
             extra={"usuario_id": usuario_id, "explicacao": explicacao},
         )
-        return {"resposta": explicacao, "dados": [], "sql": None, "total": 0, "erro": None}
+        resposta_sem_sql = explicacao or (
+            "Não foi possível responder a essa pergunta com os dados disponíveis. "
+            "As informações de data disponíveis são: data de início de campanha (data_inicio_campanha) "
+            "e data de cada registro de coleta (data_registro). "
+            "Tente perguntar, por exemplo: 'Qual o período do meu estudo mais antigo?' ou "
+            "'Quando foram feitos os primeiros registros?'"
+        )
+        return {"resposta": resposta_sem_sql, "dados": [], "sql": None, "total": 0, "erro": None}
 
-    # Pós-processamento: corrige padrões comuns de geração de SQL
     sql = _corrigir_aspas_sql(sql)
     sql = _escapar_percent_sql(sql)
     sql = _enriquecer_sql_especies(sql)
 
-    # ------------------------------------------------------------------
-    # Etapa 2: Validação + Execução no DW
-    # ------------------------------------------------------------------
     try:
         colunas, dados = _executar_sql(sql, estudo_ids)
         # SUM/AVG de conjunto vazio retorna NULL no PostgreSQL → converte para 0
@@ -391,18 +288,12 @@ def processar_pergunta(
             "erro": f"Erro no banco: {exc}",
         }
 
-    # ------------------------------------------------------------------
-    # Etapa 3: Interpretação (com histórico para multi-turn)
-    # ------------------------------------------------------------------
     try:
         resposta_final = _interpretar_resultado(pergunta, colunas, dados, sql, historico)
     except Exception as exc:
         logger.error("falha_interpretar", extra={"usuario_id": usuario_id, "erro": str(exc)})
         resposta_final = f"A consulta retornou {len(dados)} registro(s). ({explicacao})"
 
-    # ------------------------------------------------------------------
-    # Guard Rail de Saída 0 — modelo contradiz os dados
-    # ------------------------------------------------------------------
     if _resposta_contradiz_dados(resposta_final, dados):
         logger.warning(
             "guard_contradicao_dados",
@@ -410,9 +301,6 @@ def processar_pergunta(
         )
         resposta_final = _gerar_resposta_direta(dados)
 
-    # ------------------------------------------------------------------
-    # Guard Rail de Saída 1 — vazamento de informação interna
-    # ------------------------------------------------------------------
     guard_vazamento = verificar_resposta_final(resposta_final)
     if not guard_vazamento.passou:
         logger.warning(
@@ -421,9 +309,6 @@ def processar_pergunta(
         )
         resposta_final = f"A consulta retornou {len(dados)} registro(s)."
 
-    # ------------------------------------------------------------------
-    # Guard Rail de Saída 2 — anti-alucinação numérica
-    # ------------------------------------------------------------------
     guard_alucinacao = verificar_alucinacao(resposta_final, dados, historico)
     if not guard_alucinacao.passou:
         logger.warning(

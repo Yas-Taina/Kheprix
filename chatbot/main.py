@@ -1,12 +1,3 @@
-"""
-Kheprix Chatbot — FastAPI App
-==============================
-Expõe o endpoint POST /query protegido por:
-  - Autenticação serviço-a-serviço (X-Internal-Key)
-  - Rate limiting por usuário (10 req/min)
-  - Guard rails de entrada e saída (via query_engine)
-  - Multi-tenant enforcement (estudo_ids paramétricos no SQL)
-"""
 import logging
 import logging.config
 from contextlib import asynccontextmanager
@@ -22,9 +13,6 @@ from query_engine import processar_pergunta
 from insights_engine import gerar_insights
 from session_store import session_store
 
-# ---------------------------------------------------------------------------
-# Logging estruturado
-# ---------------------------------------------------------------------------
 logging.config.dictConfig({
     "version": 1,
     "disable_existing_loggers": False,
@@ -45,9 +33,7 @@ logging.config.dictConfig({
 
 logger = logging.getLogger("kheprix.chatbot")
 
-# ---------------------------------------------------------------------------
-# Lifespan — inicializa e encerra o connection pool junto com a aplicação
-# ---------------------------------------------------------------------------
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     logger.info("chatbot_iniciando — abrindo connection pool com o DW")
@@ -57,23 +43,17 @@ async def lifespan(_app: FastAPI):
     encerrar_pool()
 
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
 app = FastAPI(
     title="Kheprix Chatbot IA",
     description="Consultas em linguagem natural ao Data Warehouse de entomologia. Uso interno.",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url=None,       # desabilita Swagger público
+    docs_url=None,
     redoc_url=None,
     openapi_url=None,
 )
 
 
-# ---------------------------------------------------------------------------
-# Modelos de request / response
-# ---------------------------------------------------------------------------
 class QueryRequest(BaseModel):
     pergunta: str = Field(..., min_length=5, max_length=500)
     estudo_ids: list[int] = Field(..., min_length=1)
@@ -99,9 +79,6 @@ class InsightsResponse(BaseModel):
     erro: str | None
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 @app.get("/health")
 def health():
     return {"status": "ok", "servico": "kheprix-chatbot"}
@@ -113,7 +90,6 @@ def health():
     dependencies=[Depends(verificar_chave_interna)],
 )
 def query(body: QueryRequest):
-    # Rate limiting por usuário
     try:
         verificar_rate_limit(body.usuario_id)
     except RateLimitExcedido as exc:
@@ -136,7 +112,6 @@ def query(body: QueryRequest):
         },
     )
 
-    # Recupera histórico da sessão para multi-turn context
     historico = session_store.obter_historico(body.usuario_id)
 
     resultado = processar_pergunta(
@@ -146,7 +121,6 @@ def query(body: QueryRequest):
         historico=historico,
     )
 
-    # Salva o turno na sessão apenas se a resposta foi bem-sucedida
     if resultado.get("erro") is None and resultado.get("resposta"):
         session_store.adicionar_turno(
             usuario_id=body.usuario_id,
@@ -155,12 +129,10 @@ def query(body: QueryRequest):
         )
 
     restantes = requisicoes_restantes(body.usuario_id)
-
-    response = JSONResponse(
+    return JSONResponse(
         content=resultado,
         headers={"X-RateLimit-Remaining": str(restantes)},
     )
-    return response
 
 
 @app.post(
@@ -169,13 +141,6 @@ def query(body: QueryRequest):
     dependencies=[Depends(verificar_chave_interna)],
 )
 def insights(body: InsightsRequest):
-    """
-    Gera um relatório analítico sobre os estudos do usuário.
-
-    Diferente de /query, não aceita perguntas livres — executa um conjunto
-    fixo de queries predefinidas e usa o LLM apenas para narrar os resultados.
-    Isso garante SQL auditável e respostas consistentes.
-    """
     try:
         verificar_rate_limit(body.usuario_id)
     except RateLimitExcedido as exc:

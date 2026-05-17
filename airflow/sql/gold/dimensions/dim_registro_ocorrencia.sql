@@ -1,4 +1,3 @@
--- Gold: Dimensão Registro de Ocorrência
 -- ausencia_especie=true → quantidade_apurada=0 (registro válido para análise de distribuição)
 SELECT
   r.id_registro,

@@ -1,22 +1,3 @@
-"""
-Testes de integridade da ingestão — Kheprix DW Pipeline
-========================================================
-Executa dentro do container Airflow com acesso aos dois bancos.
-
-Como rodar:
-    docker compose exec airflow-worker python /opt/airflow/dags/utils/test_ingestion.py
-
-Cenários cobertos:
-    1. Dado inserido ANTES da extração                → deve chegar ao staging
-    2. Dado inserido DURANTE a extração (simulado)    → deve chegar no próximo ciclo (HWM overlap)
-    3. Dado inserido DEPOIS da extração               → short-circuit deve detectar e processar
-    4. Nenhum dado novo                               → short-circuit deve retornar False (skip)
-    5. Atualização em tabela full-load (espécie)      → deve ser detectada pelo short-circuit
-    6. Registro de ausência de espécie                → quantidade_apurada deve ser 0 na Gold
-    7. Valor EAV com tipo inválido ('abc' em number)  → Silver não deve explodir, valor_numerico = NULL
-    8. Contagem fim-a-fim: N inseridos = N no DW      → integridade total
-"""
-
 import sys
 import logging
 from datetime import datetime, timedelta, timezone
@@ -32,7 +13,6 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# ─── Conexões ────────────────────────────────────────────────────────────────
 # Lê as credenciais das variáveis de ambiente injetadas pelo docker-compose
 # (mesmas usadas pelo airflow-scheduler em produção)
 
@@ -81,7 +61,6 @@ def exec_dw(sql, params=None, fetch=False):
                 return cur.fetchall()
 
 
-# ─── Fixtures ────────────────────────────────────────────────────────────────
 
 def _seed_estudo_base():
     """Garante um estudo, usuário, campanha, unidade e evento de teste no OLTP."""
@@ -179,7 +158,6 @@ def _limpar_registros_teste(ids_inseridos: list):
     log.info(f"  [cleanup] {len(ids_inseridos)} registro(s) removidos do OLTP.")
 
 
-# ─── Utilitários ─────────────────────────────────────────────────────────────
 
 def _inserir_registro(evento_id, especie_id, qtde=3, ausencia=False,
                       updated_at: Optional[datetime] = None) -> int:
@@ -223,7 +201,6 @@ def _contar_na_fato(where: str = "", params=None) -> int:
     return rows[0]['n']
 
 
-# ─── Runner ──────────────────────────────────────────────────────────────────
 
 PASS = "✅ PASS"
 FAIL = "❌ FAIL"
@@ -245,7 +222,6 @@ def run_test(name: str, fn):
         log.error(f"{FAIL} — {name}: {e}", exc_info=True)
 
 
-# ─── Testes ──────────────────────────────────────────────────────────────────
 
 def test_dado_antes_da_extracao(fixture):
     """Cenário 1: dado inserido antes da extração deve chegar ao staging."""
@@ -475,7 +451,6 @@ def test_tabela_full_detectada_pelo_short_circuit(fixture):
     log.info(f"  Espécie atualizada em {updated} — short-circuit detectaria esta mudança ✓")
 
 
-# ─── Testes adicionais ───────────────────────────────────────────────────────
 
 def test_idempotencia_staging(fixture):
     """Extração executada duas vezes não duplica registros no staging."""
@@ -671,7 +646,6 @@ def test_integridade_referencial_gold(fixture):
         exec_dw("DELETE FROM staging.registro_ocorrencias WHERE id = 888888;")
 
 
-# ─── Main ────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     log.info("=" * 60)

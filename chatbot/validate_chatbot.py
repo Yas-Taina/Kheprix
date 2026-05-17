@@ -1,10 +1,3 @@
-"""
-Script de validacao do chatbot Kheprix.
-Testa multiplas perguntas e valida qualidade das respostas.
-
-Uso: python validate_chatbot.py
-Rate limit: 1 requisicao a cada 7s (chatbot: 10 req/min por usuario_id).
-"""
 import json
 import time
 import urllib.request
@@ -31,10 +24,8 @@ def _nao_contem(resposta: str, *termos: str) -> bool:
 def _tem_numero(resposta: str, n: int) -> bool:
     return str(n) in resposta
 
-# ---------------------------------------------------------------------------
 # Casos de teste: (descricao, pergunta, estudo_ids, validacao_fn)
 # validacao_fn(resposta_dict) -> (ok: bool, detalhe: str)
-# ---------------------------------------------------------------------------
 CASOS = [
     # 1. Contagem com nomes
     (
@@ -170,10 +161,7 @@ CASOS = [
     ),
 ]
 
-# ---------------------------------------------------------------------------
-# Casos de teste — /insights
 # validacao_fn(resposta_dict) -> (ok: bool, detalhe: str)
-# ---------------------------------------------------------------------------
 CASOS_INSIGHTS = [
     # I-1. Retorno basico — narrativa nao vazia, sem erro, metricas presentes
     (
@@ -234,9 +222,6 @@ CASOS_INSIGHTS = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# Runner
-# ---------------------------------------------------------------------------
 
 def chamar_insights(estudo_ids: list, usuario_id: int = USUARIO_ID_INSIGHTS) -> dict:
     payload = json.dumps({
@@ -302,10 +287,6 @@ def main():
     print(f"\n  >> Aguardando {DELAY_PRE_MT}s para resetar janela de TPM antes dos testes de insights...")
     time.sleep(DELAY_PRE_MT)
 
-    # ------------------------------------------------------------------
-    # Testes do endpoint /insights (usuario_id isolado = USUARIO_ID_INSIGHTS)
-    # Valida retorno de metricas predefinidas + narrativa do LLM.
-    # ------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("TESTES DE INSIGHTS (/insights)")
     print("=" * 70)
@@ -335,10 +316,6 @@ def main():
     print(f"\n  >> Aguardando {DELAY_PRE_MT_POS_INSIGHTS}s para resetar janela de TPM antes dos testes multi-turn...")
     time.sleep(DELAY_PRE_MT_POS_INSIGHTS)
 
-    # ------------------------------------------------------------------
-    # Testes multi-turn (usuario_id isolado = USUARIO_ID_MT)
-    # Valida que o modelo resolve referencias pronominais entre turnos.
-    # ------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("TESTES MULTI-TURN (contexto de sessao)")
     print("=" * 70)
@@ -398,9 +375,6 @@ def main():
             print(f"  >> Aguardando {DELAY_S}s...")
             time.sleep(DELAY_S)
 
-    # ------------------------------------------------------------------
-    # Resumo geral
-    # ------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("RESUMO")
     print("=" * 70)

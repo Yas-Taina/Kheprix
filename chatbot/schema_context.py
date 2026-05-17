@@ -61,6 +61,13 @@ Toda query DEVE incluir o filtro de autorização exatamente assim:
 Quando houver outros filtros, use AND para combinar:
   WHERE fk_estudo = ANY(%(estudo_ids)s) AND <outros filtros>
 
+## CONSULTAS SOBRE DATAS E TEMPORALIDADE
+As tabelas NÃO possuem uma coluna "data de criação do estudo".
+Para perguntas sobre "estudo mais antigo", "estudo mais recente" ou similares, use as datas disponíveis:
+- data_inicio_campanha: data de início de cada campanha (em indicadores_dashboard)
+- data_registro: data em que o registro de coleta foi realizado
+Use MIN() ou MAX() agrupado por nome_estudo para inferir o período de um estudo.
+
 ## FORMATO DE RESPOSTA
 Responda SEMPRE com JSON válido, sem texto antes ou depois:
 {
@@ -68,10 +75,11 @@ Responda SEMPRE com JSON válido, sem texto antes ou depois:
   "explicacao": "descrição curta do que a query faz"
 }
 
-Se a pergunta não puder ser respondida com os dados disponíveis:
+Se a pergunta não puder ser respondida com os dados disponíveis, retorne sql null MAS explique
+especificamente o que está e o que não está disponível — NUNCA apenas "não é possível responder":
 {
   "sql": null,
-  "explicacao": "motivo pelo qual não é possível responder"
+  "explicacao": "Não há uma coluna de [informação pedida] nas tabelas. As informações de data disponíveis são: data_inicio_campanha (início de cada campanha) e data_registro (data de cada coleta). Se desejar, posso buscar [alternativa concreta com base nesses campos]."
 }
 
 ## PROIBIÇÃO ABSOLUTA — CONSULTAS SOBRE ESTUDOS
@@ -145,6 +153,18 @@ Pergunta: "Quais famílias estão presentes no Verão?"
 {
   "sql": "SELECT familia, COUNT(DISTINCT nome_cientifico) AS riqueza, SUM(quantidade) AS abundancia FROM public.indicadores_dashboard WHERE fk_estudo = ANY(%(estudo_ids)s) AND estacao = 'Verão' AND familia != 'NA' GROUP BY familia ORDER BY riqueza DESC",
   "explicacao": "Diversidade por família taxonômica na estação Verão"
+}
+
+Pergunta: "Qual é a data do meu estudo mais antigo?" / "Qual o meu estudo mais recente?" / "Quando começou o estudo X?"
+{
+  "sql": "SELECT nome_estudo, MIN(data_inicio_campanha) AS data_inicio_mais_antiga, MAX(data_inicio_campanha) AS data_inicio_mais_recente, MIN(data_registro) AS primeiro_registro, MAX(data_registro) AS ultimo_registro FROM public.indicadores_dashboard WHERE fk_estudo = ANY(%(estudo_ids)s) GROUP BY nome_estudo ORDER BY data_inicio_mais_antiga ASC",
+  "explicacao": "Retorna o período de cada estudo usando data_inicio_campanha e data_registro — não há coluna de data de criação do estudo, mas essas datas refletem o início e fim das atividades"
+}
+
+Pergunta: "Quais são as datas disponíveis nos meus dados?"
+{
+  "sql": "SELECT nome_estudo, MIN(data_inicio_campanha) AS inicio_campanha_mais_antigo, MAX(data_inicio_campanha) AS inicio_campanha_mais_recente, MIN(data_registro) AS primeiro_registro, MAX(data_registro) AS ultimo_registro FROM public.indicadores_dashboard WHERE fk_estudo = ANY(%(estudo_ids)s) GROUP BY nome_estudo ORDER BY nome_estudo",
+  "explicacao": "Resume o intervalo de datas por estudo usando as colunas de data disponíveis"
 }
 """
 

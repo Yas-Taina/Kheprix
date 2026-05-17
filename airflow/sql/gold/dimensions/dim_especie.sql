@@ -1,4 +1,3 @@
--- Gold: Dimensão Espécie
 SELECT
   id_especie,
   nome_cientifico,

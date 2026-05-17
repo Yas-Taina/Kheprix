@@ -1,4 +1,3 @@
--- Gold: Dimensão Estudo
 SELECT
   id_estudo,
   nome_estudo,

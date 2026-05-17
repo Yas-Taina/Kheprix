@@ -1,20 +1,4 @@
-"""
-Geração de Insights Analíticos
-================================
-Gera um relatório narrativo sobre os estudos do pesquisador combinando:
-  - Queries predefinidas e seguras contra o DW
-  - LLM (Groq/Llama) para narrativa analítica em português
-
-Diferente do endpoint /query (Text-to-SQL livre), o /insights usa SQL
-fixo e auditável — sem geração dinâmica de código pelo modelo.
-
-As métricas coletadas cobrem:
-  1. Resumo geral          — riqueza, abundância, período, campanhas
-  2. Top espécies          — as 5 mais abundantes
-  3. Conservação           — distribuição de status IUCN, ameaçadas, endêmicas
-  4. Distribuição temporal — registros por estação do ano
-  5. Composição taxonômica — riqueza por ordem
-"""
+# gera relatório analítico com SQL fixo (não aceita entrada livre) — auditável e sem risco de injeção
 import json
 import logging
 import time
@@ -37,10 +21,6 @@ _ERROS_TRANSIENTES = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 2
 _RETRY_DELAY_S = 4
 
-# ---------------------------------------------------------------------------
-# Queries predefinidas (SQL fixo, sem entrada do usuário interpolada)
-# Os estudo_ids são sempre passados como parâmetro psycopg2.
-# ---------------------------------------------------------------------------
 
 _SQL_RESUMO_GERAL = """
 SELECT
@@ -129,9 +109,6 @@ Estruture o relatório em exatamente 5 parágrafos curtos, nesta ordem:
 """
 
 
-# ---------------------------------------------------------------------------
-# Coleta de métricas
-# ---------------------------------------------------------------------------
 
 def _executar_query(sql: str, estudo_ids: list[int]) -> list[dict]:
     with obter_conexao() as conn:
@@ -141,10 +118,6 @@ def _executar_query(sql: str, estudo_ids: list[int]) -> list[dict]:
 
 
 def _coletar_metricas(estudo_ids: list[int]) -> dict:
-    """
-    Executa todas as queries predefinidas e retorna as métricas consolidadas.
-    Em caso de erro em uma query individual, registra e continua com as demais.
-    """
     metricas = {}
     queries = {
         "resumo":      _SQL_RESUMO_GERAL,
@@ -168,9 +141,6 @@ def _coletar_metricas(estudo_ids: list[int]) -> dict:
     return metricas
 
 
-# ---------------------------------------------------------------------------
-# Geração da narrativa via LLM
-# ---------------------------------------------------------------------------
 
 def _gerar_narrativa(metricas: dict, estudo_ids: list[int]) -> str:
     contexto = (
@@ -210,19 +180,8 @@ def _gerar_narrativa(metricas: dict, estudo_ids: list[int]) -> str:
             raise
 
 
-# ---------------------------------------------------------------------------
-# Pipeline principal
-# ---------------------------------------------------------------------------
 
 def gerar_insights(estudo_ids: list[int], usuario_id: int) -> dict:
-    """
-    Coleta métricas predefinidas do DW e gera narrativa analítica via LLM.
-
-    Retorna:
-        narrativa   str         relatório em linguagem natural
-        metricas    dict        dados brutos de cada dimensão analítica
-        erro        str | None  mensagem de erro, ou None em caso de sucesso
-    """
     inicio = time.monotonic()
 
     try:
@@ -235,7 +194,6 @@ def gerar_insights(estudo_ids: list[int], usuario_id: int) -> dict:
             "erro": f"Falha na coleta de métricas: {exc}",
         }
 
-    # Se o resumo geral não retornou dados, os estudos estão vazios
     resumo = metricas.get("resumo", [{}])
     if not resumo or resumo[0].get("total_registros") in (None, 0):
         return {

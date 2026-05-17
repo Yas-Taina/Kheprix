@@ -1,19 +1,10 @@
-"""
-Rate Limiter por Usuário
-========================
-Limita o número de perguntas que um usuário pode fazer ao chatbot
-dentro de uma janela de tempo deslizante.
-
-Implementação em memória — suficiente para um único processo (TCC/dev).
-Em produção, substituir por Redis para persistir entre instâncias.
-"""
+# rate limiter em memória — suficiente para processo único; em produção substituir por Redis
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from threading import Lock
 
-# Configuração
-_LIMITE_POR_JANELA = 10          # máximo de requisições por usuário
-_JANELA = timedelta(minutes=1)   # janela deslizante de 1 minuto
+_LIMITE_POR_JANELA = 10
+_JANELA = timedelta(minutes=1)
 
 _historico: dict[int, list[datetime]] = defaultdict(list)
 _lock = Lock()
@@ -31,16 +22,10 @@ class RateLimitExcedido(Exception):
 
 
 def verificar_rate_limit(usuario_id: int) -> None:
-    """
-    Verifica e registra uma requisição do usuário.
-    Levanta RateLimitExcedido se o limite foi atingido.
-    """
     agora = datetime.now(tz=timezone.utc)
 
     with _lock:
         historico = _historico[usuario_id]
-
-        # Remove timestamps fora da janela deslizante
         historico[:] = [t for t in historico if agora - t < _JANELA]
 
         if len(historico) >= _LIMITE_POR_JANELA:
@@ -54,7 +39,6 @@ def verificar_rate_limit(usuario_id: int) -> None:
 
 
 def requisicoes_restantes(usuario_id: int) -> int:
-    """Retorna quantas requisições o usuário ainda pode fazer na janela atual."""
     agora = datetime.now(tz=timezone.utc)
     with _lock:
         historico = _historico[usuario_id]

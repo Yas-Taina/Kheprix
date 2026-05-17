@@ -1,4 +1,3 @@
--- Silver: Espécies
 SELECT
   id AS id_especie,
   -- TRIM evita espaços espúrios quando genero ou especie é NULL ('Apis ' ou ' mellifera')

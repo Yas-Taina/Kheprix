@@ -1,4 +1,3 @@
--- Fato: Medição Entomológica
 SELECT
   r.id_registro,
   dt.id_data AS fk_data,

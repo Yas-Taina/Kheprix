@@ -1,4 +1,3 @@
--- Gold: Dimensão Evento de Amostragem
 SELECT
   ev.id_evento,
   u.id_unidade AS fk_unidade_amostral,

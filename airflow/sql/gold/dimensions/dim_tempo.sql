@@ -1,4 +1,3 @@
--- Gold: Dimensão Tempo
 -- Estações calculadas para hemisfério sul (verão=dez-fev, inverno=jun-ago)
 SELECT DISTINCT
   CAST(TO_CHAR(data, 'YYYYMMDD') AS INTEGER) AS id_data,

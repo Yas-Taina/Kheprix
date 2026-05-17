@@ -1,4 +1,3 @@
--- Gold: Dimensão Campanha
 SELECT
   c.id_campanha,
   e.id_estudo AS fk_estudo,

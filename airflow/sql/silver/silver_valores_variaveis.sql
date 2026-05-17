@@ -1,5 +1,3 @@
--- Silver: Valores de Variáveis
--- Converte o valor bruto (text) para o tipo correto com base em silver_variaveis.tipo_dado.
 -- CAST protegido por regex: valor malformado retorna NULL em vez de derrubar a task.
 SELECT
   vv.id,

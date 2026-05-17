@@ -1,4 +1,3 @@
--- Gold: Dimensão Unidade Amostral
 SELECT
   u.id_unidade,
   c.id_campanha AS fk_campanha,
