@@ -1,3 +1,5 @@
+import datetime
+import decimal
 import json
 import logging
 import re
@@ -68,6 +70,14 @@ def _gerar_sql(pergunta: str, historico: list[dict]) -> dict:
         )
 
 
+def _serializar_valor(v: object) -> object:
+    if isinstance(v, (datetime.date, datetime.datetime)):
+        return v.isoformat()
+    if isinstance(v, decimal.Decimal):
+        return float(v)
+    return v
+
+
 def _executar_sql(sql: str, estudo_ids: list[int]) -> tuple[list[str], list[dict]]:
     # estudo_ids passados como parâmetro psycopg2 — nunca interpolados na string SQL
     validar_sql(sql)
@@ -82,7 +92,10 @@ def _executar_sql(sql: str, estudo_ids: list[int]) -> tuple[list[str], list[dict
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(sql, {"estudo_ids": estudo_ids})
             colunas = [desc.name for desc in cur.description] if cur.description else []
-            linhas = [dict(row) for row in cur.fetchall()]
+            linhas = [
+                {k: _serializar_valor(v) for k, v in row.items()}
+                for row in cur.fetchall()
+            ]
 
     return colunas, linhas
 

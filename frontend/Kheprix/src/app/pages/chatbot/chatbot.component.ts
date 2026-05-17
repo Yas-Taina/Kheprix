@@ -36,6 +36,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
   mensagemCarregando = "";
   private deveRolarChat = false;
   private intervaloCarregando: ReturnType<typeof setInterval> | null = null;
+  private readonly STORAGE_KEY = "kheprix_chat_historico";
 
   private readonly mensagensQuery = [
     "Analisando sua pergunta...",
@@ -73,7 +74,14 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
         }));
       },
     });
-    this.adicionarBoasVindas();
+
+    const historico = this.carregarHistorico();
+    if (historico.length > 0) {
+      this.mensagens = historico;
+      this.deveRolarChat = true;
+    } else {
+      this.adicionarBoasVindas();
+    }
   }
 
   ngAfterViewChecked(): void {
@@ -222,6 +230,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.mensagens = [];
     this.aguardandoSelecaoEstudos = false;
     this.carregando = false;
+    localStorage.removeItem(this.STORAGE_KEY);
     this.adicionarBoasVindas();
   }
 
@@ -273,6 +282,23 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
   private adicionarMensagem(msg: MensagemChat): void {
     this.mensagens.push(msg);
     this.deveRolarChat = true;
+    this.salvarHistorico();
+  }
+
+  private salvarHistorico(): void {
+    const persistiveis = this.mensagens.filter(
+      (m) => m.tipo !== "carregando" && m.tipo !== "sistema",
+    );
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(persistiveis));
+  }
+
+  private carregarHistorico(): MensagemChat[] {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as MensagemChat[]) : [];
+    } catch {
+      return [];
+    }
   }
 
   private iniciarCarregando(tipo: "query" | "insights"): void {
