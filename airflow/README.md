@@ -182,9 +182,9 @@ Cada dimensão hierárquica faz JOIN com a dimensão pai para validar integridad
 | `dim_especie` | `silver_especies` | — |
 | `dim_variavel` | `silver_variaveis` | — |
 | `dim_estudo` | `silver_estudos` | — |
-| `dim_campanha` | `silver_campanhas` + `dim_estudo` | Herda variáveis de nível campanha |
-| `dim_unidade_amostral` | `silver_unidades_amostrais` + `dim_campanha` | Herda variáveis de nível unidade |
-| `dim_evento_amostragem` | `silver_eventos_amostragem` + `dim_unidade_amostral` | Herda variáveis de nível evento |
+| `dim_campanha` | `silver_campanhas` + `dim_estudo` + `silver_variaveis_agregadas` | Herda variáveis de nível campanha |
+| `dim_unidade_amostral` | `silver_unidades_amostrais` + `dim_campanha` + `silver_variaveis_agregadas` | Herda variáveis de nível unidade |
+| `dim_evento_amostragem` | `silver_eventos_amostragem` + `dim_unidade_amostral` + `silver_variaveis_agregadas` | Herda variáveis de nível evento |
 | `dim_registro_ocorrencia` | `silver_registro_ocorrencias` | `ausencia_especie = true → quantidade_apurada = 0` |
 
 ### Camada Gold — Fatos
