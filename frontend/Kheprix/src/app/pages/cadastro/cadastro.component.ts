@@ -27,9 +27,23 @@ export class CadastroComponent {
     private router: Router,
   ) {}
 
+  // Espelha as validacoes do backend (AutocadastroDto) pra UX preventiva: usuario
+  // ve o problema antes de submeter, em vez de receber 422 do servidor.
+  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  private static readonly SENHA_MIN = 8;
+
   onCadastro() {
+    this.erro = "";
     if (!this.nome || !this.email || !this.senha) {
       this.erro = "Preencha todos os campos obrigatórios.";
+      return;
+    }
+    if (!CadastroComponent.EMAIL_REGEX.test(this.email)) {
+      this.erro = "E-mail inválido. Verifique o formato (ex.: nome@dominio.com).";
+      return;
+    }
+    if (this.senha.length < CadastroComponent.SENHA_MIN) {
+      this.erro = `A senha deve ter pelo menos ${CadastroComponent.SENHA_MIN} caracteres.`;
       return;
     }
     if (this.senha !== this.confirmarSenha) {
@@ -37,7 +51,6 @@ export class CadastroComponent {
       return;
     }
     this.loading = true;
-    this.erro = "";
     this.auth
       .autocadastro({ nome: this.nome, email: this.email, senha: this.senha })
       .subscribe({

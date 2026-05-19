@@ -108,6 +108,16 @@ class ExecutarAnaliseDto
     errors.add(:longitude_min, @erro_lng_min) if @erro_lng_min
     errors.add(:longitude_max, @erro_lng_max) if @erro_lng_max
 
+    # Faixa geografica: latitude em [-90, 90], longitude em [-180, 180]. Sem
+    # range check aqui, BigDecimal aceita qualquer numero, a query de bounding
+    # box devolve resultado pseudo-coerente (ex.: latitude_min=-200 nao filtra
+    # nada porque toda UA real tem lat >= -200) e o usuario nunca ve "voce
+    # digitou um numero impossivel".
+    errors.add(:latitude_min, "deve estar entre -90 e 90")     if @latitude_min  && !@latitude_min.between?(-90, 90)
+    errors.add(:latitude_max, "deve estar entre -90 e 90")     if @latitude_max  && !@latitude_max.between?(-90, 90)
+    errors.add(:longitude_min, "deve estar entre -180 e 180")  if @longitude_min && !@longitude_min.between?(-180, 180)
+    errors.add(:longitude_max, "deve estar entre -180 e 180")  if @longitude_max && !@longitude_max.between?(-180, 180)
+
     if @latitude_min && @latitude_max && @latitude_min > @latitude_max
       errors.add(:latitude_max, "deve ser maior ou igual a latitude_min")
     end

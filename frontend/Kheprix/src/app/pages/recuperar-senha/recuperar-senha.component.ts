@@ -33,13 +33,22 @@ export class RecuperarSenhaComponent {
     private router: Router,
   ) {}
 
+  // Espelha as validacoes do backend (RedefinirSenhaDto + format de email):
+  // usuario ve o problema antes de submeter.
+  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  private static readonly SENHA_MIN = 8;
+
   solicitarToken() {
+    this.erroStep1 = "";
     if (!this.email) {
       this.erroStep1 = "Informe o e-mail.";
       return;
     }
+    if (!RecuperarSenhaComponent.EMAIL_REGEX.test(this.email)) {
+      this.erroStep1 = "E-mail inválido. Verifique o formato (ex.: nome@dominio.com).";
+      return;
+    }
     this.loadingStep1 = true;
-    this.erroStep1 = "";
     this.auth.solicitarRedefinicao(this.email).subscribe({
       next: (res) => {
         this.msgStep1 = res.mensagem || "Token enviado para o e-mail.";
@@ -77,8 +86,13 @@ export class RecuperarSenhaComponent {
   }
 
   redefinirSenha() {
+    this.erroStep3 = "";
     if (!this.novaSenha) {
       this.erroStep3 = "Informe a nova senha.";
+      return;
+    }
+    if (this.novaSenha.length < RecuperarSenhaComponent.SENHA_MIN) {
+      this.erroStep3 = `A senha deve ter pelo menos ${RecuperarSenhaComponent.SENHA_MIN} caracteres.`;
       return;
     }
     if (this.novaSenha !== this.confirmarSenha) {
@@ -86,7 +100,6 @@ export class RecuperarSenhaComponent {
       return;
     }
     this.loadingStep3 = true;
-    this.erroStep3 = "";
     this.auth.redefinirSenha(this.token, this.novaSenha).subscribe({
       next: () => {
         this.msgStep3 = "Senha redefinida! Redirecionando...";
