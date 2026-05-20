@@ -5,10 +5,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.kheprix.api.RetrofitClient
 import com.kheprix.api.SessionManager
 import com.kheprix.databinding.ActivityPerfilBinding
+import com.kheprix.db.EstudoDao
 import com.kheprix.db.EstudoOfflineManager
+import kotlinx.coroutines.launch
 
 class PerfilActivity : BaseDrawerActivity() {
 
@@ -38,39 +41,77 @@ class PerfilActivity : BaseDrawerActivity() {
     }
 
     private fun exibirResumoOffline() {
-        try {
-            val manager = EstudoOfflineManager(this)
-            val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
+        lifecycleScope.launch {
+            val manager = EstudoOfflineManager(this@PerfilActivity)
+            val dao     = EstudoDao(this@PerfilActivity)
 
-            var totalOffline = 0
+            try {
+                val token    = SessionManager.getAuthHeader()
+                val response = RetrofitClient.apiService.getEstudos(token)
+
+                if (response.isSuccessful) {
+                    val apiEstudos  = response.body() ?: emptyList()
+                    val remoteIds   = apiEstudos.map { it.id }.toSet()
+                    val estudosOnline = apiEstudos.size
+
+                    val locais = dao.listarTodos()
+
+                    val estudosApenasLocal = locais.count { local ->
+                        (local.remoteId == null || local.remoteId !in remoteIds) &&
+                            manager.isExplicitamenteSalvoOffline(local.localId)
+                    }
+
+                    // Registros offline de estudos online
+                    var totalOffline = apiEstudos.sumOf { estudo ->
+                        dao.buscarPorRemoteId(estudo.id)?.let { local ->
+                            manager.contarRegistrosOffline(local.localId)
+                        } ?: 0
+                    }
+                    // Registros offline de estudos só locais
+                    locais.forEach { local ->
+                        if ((local.remoteId == null || local.remoteId !in remoteIds) &&
+                            manager.isExplicitamenteSalvoOffline(local.localId)
+                        ) {
+                            totalOffline += manager.contarRegistrosOffline(local.localId)
+                        }
+                    }
+
+                    mostrarResumo(online = true, estudosOnline, estudosApenasLocal, totalOffline)
+                    return@launch
+                }
+            } catch (_: Exception) {}
+
+            // Fallback: sem rede ou erro de API
+            // Não exibe contagem online — dados locais com remoteId são potencialmente stale.
+            // Mostra apenas estudos explicitamente salvos offline pelo usuário.
+            var totalOffline       = 0
             var estudosApenasLocal = 0
-            var estudosOnline = 0
-
-            db.rawQuery("SELECT local_id, remote_id FROM estudos", null).use { c ->
-                while (c.moveToNext()) {
-                    val localId  = c.getLong(0)
-                    val remoteId = if (c.isNull(1)) null else c.getInt(1)
-                    totalOffline += manager.contarRegistrosOffline(localId)
-                    if (remoteId == null) estudosApenasLocal++ else estudosOnline++
+            dao.listarTodos().forEach { local ->
+                if (manager.isExplicitamenteSalvoOffline(local.localId)) {
+                    estudosApenasLocal++
+                    totalOffline += manager.contarRegistrosOffline(local.localId)
                 }
             }
-
-            binding.tvEstudosLocais.text = when {
-                estudosApenasLocal > 0 && estudosOnline > 0 ->
-                    "$estudosOnline estudo(s) online · $estudosApenasLocal salvo(s) localmente"
-                estudosApenasLocal > 0 ->
-                    "$estudosApenasLocal estudo(s) salvo(s) localmente"
-                else ->
-                    "$estudosOnline estudo(s) online"
-            }
-
-            binding.tvRegistrosOffline.text = "$totalOffline registro(s) não sincronizado(s)"
-            binding.tvRegistrosOffline.visibility =
-                if (totalOffline > 0) View.VISIBLE else View.GONE
-        } catch (_: Exception) {
-            binding.tvEstudosLocais.text = "—"
-            binding.tvRegistrosOffline.visibility = View.GONE
+            mostrarResumo(online = false, estudosOnline = 0, estudosApenasLocal, totalOffline)
         }
+    }
+
+    private fun mostrarResumo(online: Boolean, estudosOnline: Int, estudosApenasLocal: Int, totalOffline: Int) {
+        binding.tvEstudosLocais.text = when {
+            !online && estudosApenasLocal > 0 ->
+                "$estudosApenasLocal estudo(s) salvo(s) localmente"
+            !online ->
+                "sem conexão"
+            estudosApenasLocal > 0 && estudosOnline > 0 ->
+                "$estudosOnline estudo(s) online · $estudosApenasLocal salvo(s) localmente"
+            estudosApenasLocal > 0 ->
+                "$estudosApenasLocal estudo(s) salvo(s) localmente"
+            else ->
+                "$estudosOnline estudo(s) online"
+        }
+        binding.tvRegistrosOffline.text = "$totalOffline registro(s) não sincronizado(s)"
+        binding.tvRegistrosOffline.visibility =
+            if (totalOffline > 0) View.VISIBLE else View.GONE
     }
 
     private fun confirmarLogout() {
