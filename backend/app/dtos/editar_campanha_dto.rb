@@ -8,7 +8,8 @@ class EditarCampanhaDto
 
   CAMPOS_OBRIGATORIOS = %i[nome data_inicio descricao].freeze
 
-  validates :nome, presence: true
+  validates :nome, presence: true, length: { maximum: 120 }
+  validates :descricao, length: { maximum: 1000 }, allow_blank: true
   validates :data_inicio, presence: true
   validate :campos_informados
   validate :valida_valores_variaveis_edicao

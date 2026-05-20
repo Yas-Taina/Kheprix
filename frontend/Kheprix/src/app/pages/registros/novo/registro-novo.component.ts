@@ -13,6 +13,7 @@ import {
 } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
 
 @Component({
@@ -160,10 +161,25 @@ export class RegistroNovoComponent implements OnInit {
       this.erro = "Preencha data, hora, coordenadas e espécie.";
       return;
     }
-    this.loading = true;
-    this.erro = "";
     const lat = this.util.dmsTodecimal(this.latDMS);
     const lng = this.util.dmsTodecimal(this.lngDMS);
+    if (lat < -90 || lat > 90) {
+      this.erro = "Latitude deve estar entre -90° e 90°.";
+      return;
+    }
+    if (lng < -180 || lng > 180) {
+      this.erro = "Longitude deve estar entre -180° e 180°.";
+      return;
+    }
+    if (
+      this.qtdeIndividuos != null &&
+      (this.qtdeIndividuos < 0 || this.qtdeIndividuos > 1_000_000)
+    ) {
+      this.erro = "Quantidade de indivíduos deve estar entre 0 e 1.000.000.";
+      return;
+    }
+    this.loading = true;
+    this.erro = "";
     const payload = {
       especie_id: this.especieId!,
       data: this.data,
@@ -196,8 +212,8 @@ export class RegistroNovoComponent implements OnInit {
           );
     obs.subscribe({
       next: () => this.voltar(),
-      error: () => {
-        this.erro = "Erro ao salvar.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao salvar.");
         this.loading = false;
       },
     });

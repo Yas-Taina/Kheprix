@@ -6,6 +6,7 @@ import { ConviteRecebidoService } from "../../core/services/convite.service";
 import { CodigoAcessoService } from "../../core/services/codigo-acesso.service";
 import { ConviteRecebido } from "../../models";
 import { UtilService } from "../../core/services/util.service";
+import { extrairMensagemErro } from "../../core/utils/erro.util";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 
 @Component({
@@ -59,7 +60,8 @@ export class ConvitesComponent implements OnInit {
         this.msgConvite = r.mensagem;
         this.convites = this.convites.filter((x) => x.id !== c.id);
       },
-      error: () => (this.erroConvite = "Erro ao aceitar convite."),
+      error: (err) =>
+        (this.erroConvite = extrairMensagemErro(err, "Erro ao aceitar convite.")),
     });
   }
 
@@ -69,7 +71,8 @@ export class ConvitesComponent implements OnInit {
         this.msgConvite = r.mensagem;
         this.convites = this.convites.filter((x) => x.id !== c.id);
       },
-      error: () => (this.erroConvite = "Erro ao recusar convite."),
+      error: (err) =>
+        (this.erroConvite = extrairMensagemErro(err, "Erro ao recusar convite.")),
     });
   }
 
@@ -94,8 +97,8 @@ export class ConvitesComponent implements OnInit {
           this.codigoAcesso = "";
           this.senhaAcesso = "";
         },
-        error: () => {
-          this.erroAcesso = "Código ou senha inválidos.";
+        error: (err) => {
+          this.erroAcesso = extrairMensagemErro(err, "Código ou senha inválidos.");
           this.loadingAcesso = false;
         },
       });

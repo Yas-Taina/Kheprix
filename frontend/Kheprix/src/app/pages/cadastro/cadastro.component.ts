@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
 import { AuthService } from "../../core/services/auth.service";
+import { extrairMensagemErro } from "../../core/utils/erro.util";
 
 @Component({
   selector: "app-cadastro",
@@ -58,8 +59,8 @@ export class CadastroComponent {
           this.sucesso = "Cadastro realizado! Redirecionando...";
           setTimeout(() => this.router.navigate(["/login"]), 1500);
         },
-        error: () => {
-          this.erro = "Erro ao cadastrar. Verifique os dados.";
+        error: (err) => {
+          this.erro = extrairMensagemErro(err, "Erro ao cadastrar. Verifique os dados.");
           this.loading = false;
         },
       });

@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { CampanhaService } from "../../../core/services/campanha.service";
 import { VariavelService } from "../../../core/services/variavel.service";
 import { Variavel, ValorVariavel, Campanha } from "../../../models";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 @Component({
   selector: "app-campanha-novo",
@@ -94,8 +95,8 @@ export class CampanhaNovoComponent implements OnInit {
         : this.campanhaService.criar(this.estudoId, payload);
     obs.subscribe({
       next: () => this.voltar(),
-      error: () => {
-        this.erro = "Erro ao salvar.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao salvar.");
         this.loading = false;
       },
     });

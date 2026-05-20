@@ -195,13 +195,13 @@ class ServicoDadosAnalise
 
     if vazio_por_null_x
       raise DadosDegenerados,
-            "Variável '#{nome_x || "X"}' não tem valor numérico no DW para os filtros aplicados " \
-            "(todas as linhas dela têm valor_numerico=NULL — provável problema de qualidade do dado)."
+            "A variável '#{nome_x || "X"}' não tem nenhum valor numérico registrado " \
+            "para os filtros aplicados. Verifique se os valores foram preenchidos corretamente."
     end
     if vazio_por_null_y
       raise DadosDegenerados,
-            "Variável '#{nome_y || "Y"}' não tem valor numérico no DW para os filtros aplicados " \
-            "(todas as linhas dela têm valor_numerico=NULL — provável problema de qualidade do dado)."
+            "A variável '#{nome_y || "Y"}' não tem nenhum valor numérico registrado " \
+            "para os filtros aplicados. Verifique se os valores foram preenchidos corretamente."
     end
 
     return nil if hash_x.empty? || hash_y.empty?
@@ -221,13 +221,15 @@ class ServicoDadosAnalise
 
     if vetor_constante?(valores_x)
       raise DadosDegenerados,
-            "Vetor X ('#{nome_x || "X"}') é constante (variância zero); " \
-            "correlação ou regressão não são definidas. Tente outra variável ou outro filtro."
+            "Todos os valores da variável '#{nome_x || "X"}' no eixo X são iguais. " \
+            "Não dá pra calcular correlação ou regressão sem variação nos dados. " \
+            "Escolha outra variável ou amplie os filtros."
     end
     if vetor_constante?(valores_y)
       raise DadosDegenerados,
-            "Vetor Y ('#{nome_y || "Y"}') é constante (variância zero); " \
-            "correlação ou regressão não são definidas. Tente outra variável ou outro filtro."
+            "Todos os valores da variável '#{nome_y || "Y"}' no eixo Y são iguais. " \
+            "Não dá pra calcular correlação ou regressão sem variação nos dados. " \
+            "Escolha outra variável ou amplie os filtros."
     end
 
     {
@@ -349,10 +351,9 @@ class ServicoDadosAnalise
     contagem_por_grupo = grupos.tally
     if contagem_por_grupo.size < 2
       raise DadosDegenerados,
-            "ANOVA/Kruskal precisam de pelo menos 2 grupos distintos; " \
-            "obteve #{contagem_por_grupo.size} (label='#{contagem_por_grupo.keys.first}'). " \
-            "Verifique se agrupar_por='#{params[:agrupar_por] || "unidade_amostral"}' " \
-            "faz sentido pros filtros aplicados."
+            "ANOVA e Kruskal-Wallis precisam de pelo menos 2 grupos de dados para comparar. " \
+            "Os filtros aplicados resultaram em apenas 1 grupo ('#{contagem_por_grupo.keys.first}'). " \
+            "Escolha outro agrupamento ou amplie os filtros."
     end
 
     { valores: valores, grupos: grupos, nome_variavel: nome_variavel }

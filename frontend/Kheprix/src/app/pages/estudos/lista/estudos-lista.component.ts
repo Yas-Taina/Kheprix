@@ -5,6 +5,7 @@ import { Router } from "@angular/router";
 import { EstudoService } from "../../../core/services/estudo.service";
 import { Estudo } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 @Component({
   selector: "app-estudos-lista",
@@ -73,7 +74,8 @@ export class EstudosListaComponent implements OnInit {
     if (!confirm(`Excluir o estudo "${e.nome}"?`)) return;
     this.estudoService.deletar(e.id).subscribe({
       next: () => (this.estudos = this.estudos.filter((x) => x.id !== e.id)),
-      error: () => alert("Erro ao excluir."),
+      error: (err) =>
+        alert(extrairMensagemErro(err, "Não foi possível excluir o estudo.")),
     });
   }
 }

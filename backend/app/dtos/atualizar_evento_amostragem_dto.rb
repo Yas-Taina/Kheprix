@@ -6,7 +6,15 @@ class AtualizarEventoAmostragemDto
 
   attr_accessor :horario_inicio, :esforco_real, :valores_variaveis
 
+  def self.human_attribute_name(attr, options = {})
+    {
+      "horario_inicio" => "Horário de início",
+      "esforco_real" => "Esforço real"
+    }[attr.to_s] || super
+  end
+
   validates :horario_inicio, :esforco_real, presence: true
+  validates :esforco_real, length: { maximum: 50 }, allow_blank: true
   validate :valida_valores_variaveis_edicao
 
   def initialize(params = {})

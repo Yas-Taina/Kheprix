@@ -125,11 +125,11 @@ class ServicoAnalise
     indisponivel = falhas.any? { |r| r[:status] == ClienteApiR::STATUS_INDISPONIVEL }
 
     if indisponivel
-      "A API R está indisponível no momento. Tente novamente em alguns instantes."
+      "O serviço de análises está temporariamente indisponível. Tente novamente em alguns instantes."
     else
       mensagens = falhas.filter_map { |r| r[:mensagem_erro] }.uniq.join(" | ")
-      "A API R não conseguiu processar a análise '#{analise[:nome]}': #{mensagens}. " \
-      "Os dados podem ser inadequados pra esse método (variância zero, matriz singular, etc.)."
+      "Não foi possível executar a análise '#{analise[:nome]}': #{mensagens}. " \
+      "Os dados podem não ser adequados para esse método estatístico (sem variação, valores extremos, etc.)."
     end
   end
 
@@ -146,11 +146,11 @@ class ServicoAnalise
   def descricao_falha(resultado)
     case resultado&.dig(:status)
     when ClienteApiR::STATUS_INDISPONIVEL
-      "API R indisponível"
+      "serviço de análises indisponível"
     when ClienteApiR::STATUS_ERRO_R
-      resultado[:mensagem_erro].presence || "API R retornou erro"
+      resultado[:mensagem_erro].presence || "erro ao processar"
     else
-      "endpoint não retornou conteúdo"
+      "sem resposta do serviço de análises"
     end
   end
 

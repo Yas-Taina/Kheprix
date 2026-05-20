@@ -13,6 +13,7 @@ import { ConviteService } from "../../../core/services/convite.service";
 import { CodigoAcessoService } from "../../../core/services/codigo-acesso.service";
 import { Colaborador, CodigoAcesso, PerfilColaborador } from "../../../models";
 import { Convite } from "../../../models";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 import QRCode from "qrcode";
 
 @Component({
@@ -39,6 +40,7 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
   erroConvite = "";
   msgConvite = "";
   erroConvites = "";
+  erroColaboradores = "";
 
   constructor(
     private colabService: ColaboradorService,
@@ -125,26 +127,46 @@ export class ColaboradoresComponent implements OnInit, AfterViewInit {
         this.loadingConvite = false;
         this.convites = [...this.convites, novoConvite];
       },
-      error: () => {
-        this.erroConvite = "Erro ao enviar convite.";
+      error: (err) => {
+        this.erroConvite = extrairMensagemErro(err, "Erro ao enviar convite.");
         this.loadingConvite = false;
       },
     });
   }
 
   alterarAcesso(c: Colaborador) {
+    this.erroColaboradores = "";
     this.colabService
       .atualizar(this.estudoId, c.id_usuario, { perfil: c.perfil })
-      .subscribe();
+      .subscribe({
+        next: () => {},
+        error: (err) => {
+          this.erroColaboradores = extrairMensagemErro(
+            err,
+            "Não foi possível alterar o perfil do colaborador.",
+          );
+          this.colabService
+            .listar(this.estudoId)
+            .subscribe((cs) => (this.colaboradores = cs));
+        },
+      });
   }
 
   remover(c: Colaborador) {
     if (!confirm(`Remover "${c.nome}"?`)) return;
+    this.erroColaboradores = "";
     this.colabService.deletar(this.estudoId, c.id_usuario).subscribe({
-      next: () =>
-        (this.colaboradores = this.colaboradores.filter(
+      next: () => {
+        this.colaboradores = this.colaboradores.filter(
           (x) => x.id_usuario !== c.id_usuario,
-        )),
+        );
+      },
+      error: (err) => {
+        this.erroColaboradores = extrairMensagemErro(
+          err,
+          "Não foi possível remover o colaborador.",
+        );
+      },
     });
   }
 

@@ -13,12 +13,32 @@ class ExecutarAnaliseDto
                 :latitude_min, :latitude_max, :longitude_min, :longitude_max,
                 :fonte, :fonte_x, :fonte_y, :nivel_agregacao
 
+  HUMAN_ATTR = {
+    "chave" => "Análise",
+    "data_inicio" => "Data inicial",
+    "data_fim" => "Data final",
+    "latitude_min" => "Latitude mínima",
+    "latitude_max" => "Latitude máxima",
+    "longitude_min" => "Longitude mínima",
+    "longitude_max" => "Longitude máxima",
+    "fonte" => "Fonte dos dados",
+    "fonte_x" => "Fonte do eixo X",
+    "fonte_y" => "Fonte do eixo Y",
+    "nivel_agregacao" => "Nível de agregação",
+    "agrupar_por" => "Agrupamento"
+  }.freeze
+
+  def self.human_attribute_name(attr, options = {})
+    HUMAN_ATTR[attr.to_s] || super
+  end
+
   validates :chave, presence: true
   validate :validar_datas
   validate :validar_bounding_box
   validate :validar_fontes
   validate :validar_nivel_agregacao
   validate :validar_agrupar_por
+  validate :validar_parametros_por_chave
 
   def initialize(params = {})
     @chave = params[:chave]
@@ -147,6 +167,50 @@ class ExecutarAnaliseDto
     return if @agrupar_por.nil? || @agrupar_por == ""
     unless AGRUPAMENTOS.include?(@agrupar_por.to_s)
       errors.add(:agrupar_por, "deve ser um de: #{AGRUPAMENTOS.join(", ")}")
+    end
+  end
+
+  def validar_parametros_por_chave
+    return if @chave.blank?
+
+    analise = CatalogoAnalise.buscar(@chave.to_s)
+    return unless analise
+
+    case analise[:tipo_dado]
+    when "abundancias_com_variaveis"
+      if @variavel_ids.blank? || !@variavel_ids.is_a?(Array) || @variavel_ids.empty?
+        errors.add(:base, "Selecione pelo menos uma variável ambiental para #{analise[:nome]}.")
+      end
+    when "dois_vetores"
+      fonte_x = (@fonte_x || "variavel").to_s
+      fonte_y = (@fonte_y || "variavel").to_s
+      if fonte_x == "variavel" && @variavel_x_id.blank?
+        errors.add(:base, "Selecione a variável do eixo X para #{analise[:nome]}.")
+      end
+      if fonte_y == "variavel" && @variavel_y_id.blank?
+        errors.add(:base, "Selecione a variável do eixo Y para #{analise[:nome]}.")
+      end
+    when "dois_grupos"
+      if @grupo1_ids.blank? || !@grupo1_ids.is_a?(Array) || @grupo1_ids.empty?
+        errors.add(:base, "Selecione pelo menos uma unidade amostral no Grupo 1 para #{analise[:nome]}.")
+      end
+      if @grupo2_ids.blank? || !@grupo2_ids.is_a?(Array) || @grupo2_ids.empty?
+        errors.add(:base, "Selecione pelo menos uma unidade amostral no Grupo 2 para #{analise[:nome]}.")
+      end
+      if (@fonte || "variavel").to_s == "variavel" && @variavel_id.blank?
+        errors.add(:base, "Selecione a variável a ser comparada para #{analise[:nome]}.")
+      end
+    when "multiplos_grupos"
+      if @agrupar_por.blank?
+        errors.add(:base, "Escolha como agrupar os dados (por campanha, mês, etc.) para #{analise[:nome]}.")
+      end
+      if (@fonte || "variavel").to_s == "variavel" && @variavel_id.blank?
+        errors.add(:base, "Selecione a variável a ser comparada para #{analise[:nome]}.")
+      end
+    when "vetor_unico"
+      if (@fonte || "variavel").to_s == "variavel" && @variavel_id.blank?
+        errors.add(:base, "Selecione a variável a ser analisada para #{analise[:nome]}.")
+      end
     end
   end
 end

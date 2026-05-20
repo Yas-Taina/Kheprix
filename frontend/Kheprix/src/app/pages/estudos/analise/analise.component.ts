@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 import { trigger, transition, style, animate } from "@angular/animations";
 import { forkJoin, of } from "rxjs";
 import { catchError } from "rxjs/operators";
@@ -446,6 +447,76 @@ export class AnalisesComponent implements OnInit {
     return this[lista].includes(id);
   }
 
+  private validarPayloadLocal(): string | null {
+    const a = this.analiseAtual;
+    if (!a) return null;
+
+    switch (a.tipo_dado) {
+      case "abundancias_com_variaveis":
+        if (!this.variavelIdsAmbientais.length) {
+          return `Selecione pelo menos uma variável ambiental para ${a.nome}.`;
+        }
+        break;
+      case "dois_vetores":
+        if (this.fonteX === "variavel" && !this.variavelXId) {
+          return `Selecione a variável do eixo X para ${a.nome}.`;
+        }
+        if (this.fonteY === "variavel" && !this.variavelYId) {
+          return `Selecione a variável do eixo Y para ${a.nome}.`;
+        }
+        break;
+      case "dois_grupos":
+        if (!this.grupo1Ids.length || !this.grupo2Ids.length) {
+          return `Selecione pelo menos uma unidade em cada grupo para ${a.nome}.`;
+        }
+        if (this.fonte === "variavel" && !this.variavelId) {
+          return `Selecione a variável a ser analisada para ${a.nome}.`;
+        }
+        break;
+      case "multiplos_grupos":
+        if (!this.agruparPor) {
+          return `Selecione como agrupar os dados para ${a.nome}.`;
+        }
+        if (this.fonte === "variavel" && !this.variavelId) {
+          return `Selecione a variável a ser analisada para ${a.nome}.`;
+        }
+        break;
+      case "vetor_unico":
+        if (this.fonte === "variavel" && !this.variavelId) {
+          return `Selecione a variável a ser analisada para ${a.nome}.`;
+        }
+        break;
+    }
+
+    const ranges: Array<[number | undefined, number, number, string]> = [
+      [this.latMin, -90, 90, "Latitude mínima"],
+      [this.latMax, -90, 90, "Latitude máxima"],
+      [this.lngMin, -180, 180, "Longitude mínima"],
+      [this.lngMax, -180, 180, "Longitude máxima"],
+    ];
+    for (const [valor, min, max, nome] of ranges) {
+      if (valor !== undefined && (valor < min || valor > max)) {
+        return `${nome} deve estar entre ${min} e ${max}.`;
+      }
+    }
+    if (
+      this.latMin !== undefined &&
+      this.latMax !== undefined &&
+      this.latMin > this.latMax
+    ) {
+      return "Latitude máxima deve ser maior ou igual à latitude mínima.";
+    }
+    if (
+      this.lngMin !== undefined &&
+      this.lngMax !== undefined &&
+      this.lngMin > this.lngMax
+    ) {
+      return "Longitude máxima deve ser maior ou igual à longitude mínima.";
+    }
+
+    return null;
+  }
+
   executar(): void {
     if (!this.analiseAtual) return;
 
@@ -462,6 +533,13 @@ export class AnalisesComponent implements OnInit {
     this.lngMax = dmsRegex.test(this.lngMaxMask)
       ? this.util.dmsTodecimal(this.lngMaxMask)
       : undefined;
+
+    const erroPre = this.validarPayloadLocal();
+    if (erroPre) {
+      this.erro = erroPre;
+      this.resultado = null;
+      return;
+    }
 
     const payload: ExecutarAnaliseRequest = {
       chave: this.chaveEscolhida as ChaveAnalise,
@@ -539,10 +617,10 @@ export class AnalisesComponent implements OnInit {
         this.salvarEstadoEResultado();
       },
       error: (err) => {
-        this.erro =
-          err?.error?.erro ??
-          err?.error?.message ??
-          "Erro ao executar a análise. Verifique os parâmetros.";
+        this.erro = extrairMensagemErro(
+          err,
+          "Erro ao executar a análise. Verifique os parâmetros.",
+        );
         this.loading = false;
       },
     });
