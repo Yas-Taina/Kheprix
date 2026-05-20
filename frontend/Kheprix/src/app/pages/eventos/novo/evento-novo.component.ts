@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from "@angular/router";
 import { EventoAmostragemService } from "../../../core/services/evento-amostragem.service";
 import { VariavelService } from "../../../core/services/variavel.service";
 import { Variavel, ValorVariavel, EventoAmostragem } from "../../../models";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 @Component({
   selector: "app-evento-novo",
@@ -108,8 +109,8 @@ export class EventoNovoComponent implements OnInit {
           );
     obs.subscribe({
       next: () => this.voltar(),
-      error: () => {
-        this.erro = "Erro ao salvar.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao salvar.");
         this.loading = false;
       },
     });

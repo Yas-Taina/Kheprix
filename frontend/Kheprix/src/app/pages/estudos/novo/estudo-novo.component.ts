@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import { EstudoService } from "../../../core/services/estudo.service";
 import { VariavelCreate } from "../../../models";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 interface VariavelForm extends VariavelCreate {
   _id: number;
@@ -59,8 +60,8 @@ export class EstudoNovoComponent {
     };
     this.estudoService.criar(payload).subscribe({
       next: (e) => this.router.navigate(["/estudos", e.id]),
-      error: () => {
-        this.erro = "Erro ao criar estudo.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao criar estudo.");
         this.loading = false;
       },
     });

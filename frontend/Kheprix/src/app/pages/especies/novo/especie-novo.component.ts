@@ -6,6 +6,7 @@ import { EspecieService } from "../../../core/services/especie.service";
 import { StatusConservacao, StatusConservacaoLabels } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { environment } from "../../../../environments/environment";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 @Component({
   selector: "app-especie-novo",
@@ -108,8 +109,8 @@ export class EspecieNovoComponent implements OnInit {
     obs.subscribe({
       next: (e) =>
         this.router.navigate(["/estudos", this.estudoId, "especies", e.id]),
-      error: () => {
-        this.erro = "Erro ao salvar.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao salvar.");
         this.loading = false;
       },
     });

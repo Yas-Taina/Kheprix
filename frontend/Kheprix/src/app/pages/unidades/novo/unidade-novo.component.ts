@@ -7,6 +7,7 @@ import { VariavelService } from "../../../core/services/variavel.service";
 import { Variavel, ValorVariavel, UnidadeAmostral } from "../../../models";
 import { UtilService } from "../../../core/services/util.service";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
+import { extrairMensagemErro } from "../../../core/utils/erro.util";
 
 @Component({
   selector: "app-unidade-novo",
@@ -104,10 +105,18 @@ export class UnidadeNovoComponent implements OnInit {
       this.erro = "Nome e coordenadas são obrigatórios.";
       return;
     }
-    this.loading = true;
-    this.erro = "";
     const lat = this.util.dmsTodecimal(this.latDMS);
     const lng = this.util.dmsTodecimal(this.lngDMS);
+    if (lat < -90 || lat > 90) {
+      this.erro = "Latitude deve estar entre -90° e 90°.";
+      return;
+    }
+    if (lng < -180 || lng > 180) {
+      this.erro = "Longitude deve estar entre -180° e 180°.";
+      return;
+    }
+    this.loading = true;
+    this.erro = "";
     const payload = {
       nome: this.nome,
       latitude: lat,
@@ -130,8 +139,8 @@ export class UnidadeNovoComponent implements OnInit {
         : this.unidadeService.criar(this.estudoId, this.campanhaId, payload);
     obs.subscribe({
       next: () => this.voltar(),
-      error: () => {
-        this.erro = "Erro ao salvar.";
+      error: (err) => {
+        this.erro = extrairMensagemErro(err, "Erro ao salvar.");
         this.loading = false;
       },
     });
