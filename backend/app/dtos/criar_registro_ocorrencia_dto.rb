@@ -7,11 +7,20 @@ class CriarRegistroOcorrenciaDto
   attr_accessor :especie_id, :data, :hora, :latitude, :longitude, :qtde_individuos, :foto, :ausencia_especie,
                 :valores_variaveis
 
+  def self.human_attribute_name(attr, options = {})
+    {
+      "especie_id" => "Espécie",
+      "qtde_individuos" => "Quantidade de indivíduos",
+      "ausencia_especie" => "Ausência da espécie"
+    }[attr.to_s] || super
+  end
+
   validates :especie_id, presence: true
   validates :data, presence: true
   validates :hora, presence: true
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
+  validates :qtde_individuos, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 1_000_000 }, allow_nil: true
   validate :valida_valores_variaveis_criacao
 
   def initialize(params = {})

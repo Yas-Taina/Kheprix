@@ -6,7 +6,8 @@ class CadastrarCampanhaDto
 
   attr_accessor :nome, :data_inicio, :descricao, :valores_variaveis
 
-  validates :nome, presence: true
+  validates :nome, presence: true, length: { maximum: 120 }
+  validates :descricao, length: { maximum: 1000 }, allow_blank: true
   validates :data_inicio, presence: true
   validate :valida_valores_variaveis_criacao
 

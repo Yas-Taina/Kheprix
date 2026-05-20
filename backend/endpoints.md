@@ -7,7 +7,7 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 | Rota | Dados enviados | Dados recebidos |
 |------|----------------|-----------------|
 | POST /autenticacao/login | email(string), senha(string) | token(string) |
-| POST /autenticacao/solicitar_redefinicao | email(string) | mensagem(string) |
+| POST /autenticacao/solicitar_redefinicao | email(string, formato válido) | mensagem(string). 422 quando email vazio ou mal formado. |
 | POST /autenticacao/validar_token_redefinicao | token(string) | valido(boolean) |
 | POST /autenticacao/redefinir_senha | token(string), nova_senha(string) | mensagem(string) |
 | POST /autenticacao/validar_token | token(string) | valido(boolean) |
@@ -130,7 +130,7 @@ Todas as rotas estão na raiz (sem prefixo de namespace).
 | GET /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | — | id(int), evento_amostragem_id(int), especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int), foto(string), ausencia_especie(boolean), created_at(datetime), valores_variaveis(array[ { id(int), variavel_id(int), valor(string) } ]) |
 | POST /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias | especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int, opcional), foto(string, opcional), ausencia_especie(boolean, opcional), valores_variaveis(array[ { variavel_id(int), valor(string) } ], opcional) — id NÃO permitido | id(int), evento_amostragem_id(int), especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int), foto(string), ausencia_especie(boolean), created_at(datetime), valores_variaveis(array[ { id(int), variavel_id(int), valor(string) } ]) |
 | PATCH /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | especie_id(int, opcional), data(date, opcional), hora(time, opcional), latitude(decimal, opcional), longitude(decimal, opcional), qtde_individuos(int, opcional), foto(string, opcional), ausencia_especie(boolean, opcional), valores_variaveis(array[ { id(int, obrigatório), valor(string) } ], opcional) — itens omitidos viram soft-delete | id(int), evento_amostragem_id(int), especie_id(int), data(date), hora(time), latitude(decimal), longitude(decimal), qtde_individuos(int), foto(string), ausencia_especie(boolean), created_at(datetime), valores_variaveis(array[ { id(int), variavel_id(int), valor(string) } ]) |
-| DELETE /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | — | 204 No Content |
+| DELETE /estudos/:estudo_id/campanhas/:campanha_id/unidades_amostrais/:unidade_amostral_id/eventos_amostragem/:evento_amostragem_id/registro_ocorrencias/:id | — | 204 No Content. 403 quando colaborador não é proprietário do estudo (consistente com DELETE de campanha/unidade/evento). |
 
 ## Fotos (público)
 

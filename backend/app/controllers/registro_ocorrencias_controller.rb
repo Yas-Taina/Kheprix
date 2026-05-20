@@ -10,6 +10,7 @@ class RegistroOcorrenciasController < ApplicationController
   before_action :definir_unidade_amostral
   before_action :definir_evento_amostragem
   before_action :carregar_registro, only: %i[show update destroy]
+  before_action :autorizar_proprietario_estudo!, only: :destroy
 
   def index
     registros = servico.listar(evento_id: @evento_amostragem.id)
@@ -88,6 +89,13 @@ class RegistroOcorrenciasController < ApplicationController
 
     unless @registro
       render json: { erro: "Registro de ocorrência não encontrado" }, status: :not_found
+    end
+  end
+
+  def autorizar_proprietario_estudo!
+    colaborador = Colaborador.find_by(estudo_id: @estudo.id, usuario_id: usuario_atual.id)
+    unless colaborador&.proprietario?
+      render json: { erro: "Apenas proprietários podem excluir registros de ocorrência" }, status: :forbidden
     end
   end
 end
