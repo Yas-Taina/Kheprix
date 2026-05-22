@@ -521,7 +521,8 @@
           <iframe
             class="grafico-iframe"
             sandbox="allow-scripts"
-            [srcdoc]="graficoSafe"
+            loading="eager"
+            [appIframeSrcdoc]="graficoHtml"
             title="Gráfico da análise"
           >
           </iframe>
@@ -569,7 +570,8 @@
               <iframe
                 class="grafico-iframe"
                 sandbox="allow-scripts"
-                [srcdoc]="valorComoHtml"
+                loading="eager"
+                [appIframeSrcdoc]="valorHtml"
                 title="Gráfico da análise"
               ></iframe>
             </div>
