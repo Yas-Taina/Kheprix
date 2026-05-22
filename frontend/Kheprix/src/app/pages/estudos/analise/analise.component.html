@@ -15,7 +15,6 @@
 
   @if (!carregando) {
     <div class="form-wrap">
-      <!-- Passo 1: Seleção da análise -->
       <section class="step-card">
         <div class="step-label">
           <span class="step-num">1</span> Selecione a análise
@@ -41,14 +40,12 @@
         </div>
       </section>
 
-      <!-- Passo 2: Parâmetros da análise-->
       @if (analiseAtual) {
         <section class="step-card" [@fadeSlide]>
           <div class="step-label">
             <span class="step-num">2</span> Parâmetros da análise
           </div>
 
-          <!-- abundancias_com_variaveis: checkboxes de variáveis ambientais preditoras -->
           @if (tipoDado === "abundancias_com_variaveis") {
             <p class="field-hint">
               Selecione as variáveis que serão usadas como preditoras ambientais
@@ -73,7 +70,6 @@
             </div>
           }
 
-          <!-- dois_vetores: fonte e variável para cada eixo, + nível de agregação -->
           @if (tipoDado === "dois_vetores") {
             <p class="field-hint">
               Escolha o que representará cada eixo da análise.
@@ -149,7 +145,6 @@
             }
           }
 
-          <!-- vetor_unico: fonte, variável e nível de agregação -->
           @if (tipoDado === "vetor_unico") {
             <p class="field-hint">
               Escolha o dado que será testado para normalidade.
@@ -196,7 +191,6 @@
             }
           }
 
-          <!-- dois_grupos: fonte, variável, agrupar_por e checkboxes de grupos -->
           @if (tipoDado === "dois_grupos") {
             <p class="field-hint">
               Compare dois grupos de locais ou campanhas entre si.
@@ -315,7 +309,6 @@
             </div>
           }
 
-          <!-- multiplos_grupos: fonte, variável e agrupar_por -->
           @if (tipoDado === "multiplos_grupos") {
             <p class="field-hint">
               Compare múltiplos grupos — os grupos são formados automaticamente
@@ -359,7 +352,6 @@
             </div>
           }
 
-          <!-- abundancias / abundancias_por_amostra / matriz_acumulacao: sem parâmetros extras -->
           @if (
             [
               "abundancias",
@@ -375,7 +367,6 @@
         </section>
       }
 
-      <!-- Passo 3: Filtros globais -->
       <section class="step-card" [@fadeSlide]>
         <div class="step-label">
           <span class="step-num">3</span> Filtros
@@ -383,7 +374,6 @@
         </div>
 
         <div class="filtros-grid">
-          <!-- Campanhas: multi-seleção por checkboxes -->
           @if (campanhas.length) {
             <div class="filtro-item full">
               <label class="field-label">Campanhas</label>
@@ -402,7 +392,6 @@
             </div>
           }
 
-          <!-- Unidades amostrais: multi-seleção por checkboxes -->
           @if (unidades.length) {
             <div class="filtro-item full">
               <label class="field-label">Unidades amostrais</label>
@@ -482,7 +471,6 @@
         </div>
       </section>
 
-      <!-- Botão executar -->
       <div class="confirm-row">
         <button
           class="btn-confirmar"
@@ -503,7 +491,6 @@
     </div>
   }
 
-  <!-- Resultado -->
   @if (resultado) {
     <section class="resultado-section" [@fadeSlide]>
       <div class="resultado-header">
@@ -511,7 +498,6 @@
         <div class="title-rule"></div>
       </div>
 
-      <!-- Só gráfico -->
       @if (
         analiseAtual?.tem_grafico &&
         !analiseAtual?.tem_valor &&
@@ -529,7 +515,6 @@
         </div>
       }
 
-      <!-- Só valor -->
       @if (
         analiseAtual?.tem_valor && !analiseAtual?.tem_grafico && resultado.valor
       ) {
@@ -550,7 +535,6 @@
         }
       }
 
-      <!-- Gráfico + valor -->
       @if (analiseAtual?.tem_grafico && analiseAtual?.tem_valor) {
         @if (resultado.grafico) {
           <div class="grafico-wrapper">

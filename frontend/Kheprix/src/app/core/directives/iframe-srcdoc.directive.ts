@@ -8,13 +8,10 @@ import {
   SimpleChanges,
 } from "@angular/core";
 
-// Setter imperativo de `srcdoc` para iframes que renderizam HTML gerado por
-// backend (gráficos Plotly). O binding nativo `[srcdoc]` do Angular esbarra
-// num problema chato: quando o iframe acaba de ser inserido no DOM e o
-// atributo recebe o HTML inicial, o browser frequentemente não dispara o load
-// (script da tag <script src=cdn.plot.ly> não roda e o iframe fica em branco).
-// Manualmente "piscar" srcdoc com string vazia antes do valor real força o
-// reload e o ciclo de boot do iframe finaliza certinho.
+// Atribuição imperativa de srcdoc. Com [srcdoc] do Angular o browser
+// frequentemente pula o load inicial do iframe e o <script cdn.plot.ly>
+// do conteúdo não roda — iframe fica em branco. Setar srcdoc="" antes
+// do HTML real força o ciclo de load e o Plotly inicializa.
 @Directive({
   selector: "iframe[appIframeSrcdoc]",
   standalone: true,
@@ -40,11 +37,6 @@ export class IframeSrcdocDirective implements OnChanges, AfterViewInit, OnDestro
     if (this.timeoutId !== null) clearTimeout(this.timeoutId);
   }
 
-  // Aguarda o iframe processar srcdoc="" (firing seu load com about:srcdoc
-  // vazio) antes de injetar o HTML real. Sem isso o browser otimiza os dois
-  // sets como equivalentes e o iframe fica em branco — sintoma reproduzido
-  // com Plotly nas análises pareadas (pearson/jaccard/glm) tanto em fresh
-  // quanto ao revisitar.
   private aplicar(): void {
     const iframe = this.elRef.nativeElement;
     const novoHtml = this.html ?? "";
@@ -55,8 +47,6 @@ export class IframeSrcdocDirective implements OnChanges, AfterViewInit, OnDestro
       iframe.srcdoc = novoHtml;
     };
 
-    // Listener one-shot pro load do srcdoc="". Quando dispara, sabemos que o
-    // browser registrou o reset e está pronto pra carregar o conteúdo real.
     const onLoad = () => {
       iframe.removeEventListener("load", onLoad);
       aplicaConteudo();
@@ -64,8 +54,7 @@ export class IframeSrcdocDirective implements OnChanges, AfterViewInit, OnDestro
     iframe.addEventListener("load", onLoad);
     iframe.srcdoc = "";
 
-    // Fallback: se o load não disparar dentro de 200ms (browser otimizando
-    // demais, ou iframe já no estado vazio), tenta a atribuição direta.
+    // Fallback caso o load do srcdoc="" não dispare em 200ms.
     this.timeoutId = setTimeout(() => {
       iframe.removeEventListener("load", onLoad);
       aplicaConteudo();
