@@ -478,4 +478,5 @@ export interface ExecutarAnaliseResponse {
   valor: Record<string, unknown> | string | null;
   grafico: string | null;
   urlArquivo: string | null;
+  aviso?: string;
 }

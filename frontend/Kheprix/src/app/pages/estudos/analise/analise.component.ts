@@ -1,7 +1,6 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { extrairMensagemErro } from "../../../core/utils/erro.util";
 import { trigger, transition, style, animate } from "@angular/animations";
 import { forkJoin, of } from "rxjs";
@@ -14,6 +13,7 @@ import { UnidadeAmostralService } from "../../../core/services/unidade-amostral.
 import { UtilService } from "../../../core/services/util.service";
 import { ActivatedRoute } from "@angular/router";
 import { DmsMaskDirective } from "../../../core/directives/dms-mask.directive";
+import { IframeSrcdocDirective } from "../../../core/directives/iframe-srcdoc.directive";
 
 import {
   CATALOGO_ANALISES,
@@ -56,7 +56,7 @@ const TIPOS_COM_AMOSTRA = new Set([
 @Component({
   selector: "app-analises",
   standalone: true,
-  imports: [CommonModule, FormsModule, DmsMaskDirective],
+  imports: [CommonModule, FormsModule, DmsMaskDirective, IframeSrcdocDirective],
   templateUrl: "./analise.component.html",
   styleUrls: ["./analise.component.css"],
   animations: [
@@ -84,7 +84,6 @@ export class AnalisesComponent implements OnInit {
   private readonly unidadeService = inject(UnidadeAmostralService);
   private readonly util = inject(UtilService);
   private readonly route = inject(ActivatedRoute);
-  private readonly sanitizer = inject(DomSanitizer);
 
   estudoId!: number;
 
@@ -138,20 +137,16 @@ export class AnalisesComponent implements OnInit {
   erro: string | null = null;
   resultado: ExecutarAnaliseResponse | null = null;
 
-  get graficoSafe(): SafeHtml | null {
-    return this.resultado?.grafico
-      ? this.sanitizer.bypassSecurityTrustHtml(this.resultado.grafico)
-      : null;
-  }
-
   get valorEHtml(): boolean {
     return typeof this.resultado?.valor === "string";
   }
 
-  get valorComoHtml(): SafeHtml | null {
-    const v = this.resultado?.valor;
-    if (typeof v !== "string") return null;
-    return this.sanitizer.bypassSecurityTrustHtml(v);
+  get graficoHtml(): string | null {
+    return this.resultado?.grafico ?? null;
+  }
+
+  get valorHtml(): string | null {
+    return typeof this.resultado?.valor === "string" ? this.resultado.valor : null;
   }
 
   formatarValor(valor: Record<string, unknown> | string | null): string {

@@ -521,7 +521,8 @@
           <iframe
             class="grafico-iframe"
             sandbox="allow-scripts"
-            [srcdoc]="graficoSafe"
+            loading="eager"
+            [appIframeSrcdoc]="graficoHtml"
             title="Gráfico da análise"
           >
           </iframe>
@@ -537,7 +538,8 @@
             <iframe
               class="grafico-iframe"
               sandbox="allow-scripts"
-              [srcdoc]="valorComoHtml"
+              loading="eager"
+              [appIframeSrcdoc]="valorHtml"
               title="Gráfico da análise"
             ></iframe>
           </div>
@@ -555,7 +557,8 @@
             <iframe
               class="grafico-iframe"
               sandbox="allow-scripts"
-              [srcdoc]="graficoSafe"
+              loading="eager"
+              [appIframeSrcdoc]="graficoHtml"
               title="Gráfico da análise"
             >
             </iframe>
@@ -567,7 +570,8 @@
               <iframe
                 class="grafico-iframe"
                 sandbox="allow-scripts"
-                [srcdoc]="valorComoHtml"
+                loading="eager"
+                [appIframeSrcdoc]="valorHtml"
                 title="Gráfico da análise"
               ></iframe>
             </div>
@@ -578,6 +582,10 @@
             </div>
           }
         }
+      }
+
+      @if (resultado.aviso) {
+        <div class="aviso-box">{{ resultado.aviso }}</div>
       }
 
       @if (resultado.urlArquivo) {
