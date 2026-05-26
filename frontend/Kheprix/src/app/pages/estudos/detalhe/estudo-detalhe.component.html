@@ -121,86 +121,84 @@
         </div>
       </div>
     </div>
-    </div>
+  </div>
 
-    <ng-container *ngIf="dashboard() as d">
-      <div class="db-grid mt-md">
-        <div class="db-col-esquerda">
-          <div class="card db-chart-card">
-            <h3 class="section-title db-chart-title">
-              Ocorrências por Espécie
-            </h3>
-            <div class="db-chart-wrap db-chart-wrap--donut">
-              <canvas id="chart-ocorrencias"></canvas>
-            </div>
-          </div>
-
-          <div class="card db-chart-card">
-            <h3 class="section-title db-chart-title">
-              Registros por Espécie ao Longo do Tempo
-            </h3>
-            <select
-              class="form-control db-select"
-              [ngModel]="selectedEspecie()"
-              (ngModelChange)="selectedEspecie.set($event); onEspecieChange()"
-            >
-              <option value="">Selecione uma Espécie</option>
-              <option *ngFor="let esp of especiesDisponiveis()" [value]="esp">
-                {{ esp }}
-              </option>
-            </select>
-            <div class="db-chart-wrap db-chart-wrap--line">
-              <canvas id="chart-especie-tempo"></canvas>
-            </div>
-          </div>
-
-          <div class="card db-chart-card">
-            <div class="db-chart-wrap db-chart-wrap--barh">
-              <canvas id="chart-nativas-invasoras"></canvas>
-            </div>
-          </div>
-
-          <div class="card db-chart-card">
-            <h3 class="section-title db-chart-title">
-              Quantidade de Espécies Distintas
-            </h3>
-            <select
-              class="form-control db-select"
-              [ngModel]="selectedAgrupamento()"
-              (ngModelChange)="
-                selectedAgrupamento.set($event); onAgrupamentoChange()
-              "
-            >
-              <option value="mes">Por mês</option>
-              <option value="ano">Por ano</option>
-            </select>
-            <div
-              class="db-chart-wrap db-chart-wrap--barh db-chart-wrap--barh-tall"
-            >
-              <canvas id="chart-especies-distintas"></canvas>
-            </div>
+  <ng-container *ngIf="dashboard() as d">
+    <div class="db-grid mt-md">
+      <div class="db-col-esquerda">
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">Ocorrências por Espécie</h3>
+          <div class="db-chart-wrap db-chart-wrap--donut">
+            <canvas id="chart-ocorrencias"></canvas>
           </div>
         </div>
 
-        <div
-          class="db-col-direita"
-          style="display: flex; flex-direction: column; height: 100%"
-        >
-          <div class="card db-mapa-card">
-            <div id="mapa-registros" class="db-mapa"></div>
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">
+            Registros por Espécie ao Longo do Tempo
+          </h3>
+          <select
+            class="form-control db-select"
+            [ngModel]="selectedEspecie()"
+            (ngModelChange)="selectedEspecie.set($event); onEspecieChange()"
+          >
+            <option value="">Selecione uma Espécie</option>
+            <option *ngFor="let esp of especiesDisponiveis()" [value]="esp">
+              {{ esp }}
+            </option>
+          </select>
+          <div class="db-chart-wrap db-chart-wrap--line">
+            <canvas id="chart-especie-tempo"></canvas>
           </div>
+        </div>
 
-          <div class="card db-chart-card" style="margin-top: auto">
-            <h3 class="section-title db-chart-title">
-              Quantidade de Espécies Distintas ao Longo do Tempo
-            </h3>
-            <div class="db-chart-wrap db-chart-wrap--line">
-              <canvas id="chart-especies-distintas-tempo"></canvas>
-            </div>
+        <div class="card db-chart-card">
+          <div class="db-chart-wrap db-chart-wrap--barh">
+            <canvas id="chart-nativas-invasoras"></canvas>
+          </div>
+        </div>
+
+        <div class="card db-chart-card">
+          <h3 class="section-title db-chart-title">
+            Quantidade de Espécies Distintas
+          </h3>
+          <select
+            class="form-control db-select"
+            [ngModel]="selectedAgrupamento()"
+            (ngModelChange)="
+              selectedAgrupamento.set($event); onAgrupamentoChange()
+            "
+          >
+            <option value="mes">Por mês</option>
+            <option value="ano">Por ano</option>
+          </select>
+          <div
+            class="db-chart-wrap db-chart-wrap--barh db-chart-wrap--barh-tall"
+          >
+            <canvas id="chart-especies-distintas"></canvas>
           </div>
         </div>
       </div>
-    </ng-container>
+
+      <div
+        class="db-col-direita"
+        style="display: flex; flex-direction: column; height: 100%"
+      >
+        <div class="card db-mapa-card">
+          <div id="mapa-registros" class="db-mapa"></div>
+        </div>
+
+        <div class="card db-chart-card" style="margin-top: auto">
+          <h3 class="section-title db-chart-title">
+            Quantidade de Espécies Distintas ao Longo do Tempo
+          </h3>
+          <div class="db-chart-wrap db-chart-wrap--line">
+            <canvas id="chart-especies-distintas-tempo"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 
   <div
     class="modal-backdrop"

@@ -8,15 +8,13 @@ import {
   SimpleChanges,
 } from "@angular/core";
 
-// Atribuição imperativa de srcdoc. Com [srcdoc] do Angular o browser
-// frequentemente pula o load inicial do iframe e o <script cdn.plot.ly>
-// do conteúdo não roda — iframe fica em branco. Setar srcdoc="" antes
-// do HTML real força o ciclo de load e o Plotly inicializa.
 @Directive({
   selector: "iframe[appIframeSrcdoc]",
   standalone: true,
 })
-export class IframeSrcdocDirective implements OnChanges, AfterViewInit, OnDestroy {
+export class IframeSrcdocDirective
+  implements OnChanges, AfterViewInit, OnDestroy
+{
   @Input("appIframeSrcdoc") html: string | null | undefined = null;
 
   private viewReady = false;
@@ -54,7 +52,7 @@ export class IframeSrcdocDirective implements OnChanges, AfterViewInit, OnDestro
     iframe.addEventListener("load", onLoad);
     iframe.srcdoc = "";
 
-    // Fallback caso o load do srcdoc="" não dispare em 200ms.
+    // Fallback
     this.timeoutId = setTimeout(() => {
       iframe.removeEventListener("load", onLoad);
       aplicaConteudo();

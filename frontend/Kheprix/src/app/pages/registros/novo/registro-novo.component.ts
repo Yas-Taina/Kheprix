@@ -144,7 +144,7 @@ export class RegistroNovoComponent implements OnInit {
       this.lngDMS = loc.lngDMS;
     } catch {
       this.gpsErro =
-        "Não foi possível obter a localização. Preencha manualmente.";
+        "Não foi possível obter a localização. Tente preencher manualmente.";
     } finally {
       this.gpsLoading = false;
     }

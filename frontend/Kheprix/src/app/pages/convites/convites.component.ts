@@ -45,8 +45,7 @@ export class ConvitesComponent implements OnInit {
     this.conviteService.listar().subscribe({
       next: (c) => {
         this.convites = c.filter(
-          (convite) =>
-            convite.status?.toLowerCase() === "pendente",
+          (convite) => convite.status?.toLowerCase() === "pendente",
         );
         this.loading = false;
       },
@@ -61,7 +60,10 @@ export class ConvitesComponent implements OnInit {
         this.convites = this.convites.filter((x) => x.id !== c.id);
       },
       error: (err) =>
-        (this.erroConvite = extrairMensagemErro(err, "Erro ao aceitar convite.")),
+        (this.erroConvite = extrairMensagemErro(
+          err,
+          "Erro ao aceitar convite.",
+        )),
     });
   }
 
@@ -72,7 +74,10 @@ export class ConvitesComponent implements OnInit {
         this.convites = this.convites.filter((x) => x.id !== c.id);
       },
       error: (err) =>
-        (this.erroConvite = extrairMensagemErro(err, "Erro ao recusar convite.")),
+        (this.erroConvite = extrairMensagemErro(
+          err,
+          "Erro ao recusar convite.",
+        )),
     });
   }
 
@@ -98,7 +103,10 @@ export class ConvitesComponent implements OnInit {
           this.senhaAcesso = "";
         },
         error: (err) => {
-          this.erroAcesso = extrairMensagemErro(err, "Código ou senha inválidos.");
+          this.erroAcesso = extrairMensagemErro(
+            err,
+            "Código ou senha inválidos.",
+          );
           this.loadingAcesso = false;
         },
       });
