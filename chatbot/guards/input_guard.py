@@ -46,7 +46,6 @@ _KEYWORDS_DOMINIO = {
     "quantidade", "distribuição", "distribuicao", "comparar", "média", "media",
 }
 
-# não inclui variáveis ecológicas (temperatura, umidade, pH, altitude, precipitação) — podem ser métricas de campo
 _KEYWORDS_FORA_DOMINIO = {
     "receita", "culinária", "culinaria", "bolo", "pizza", "sopa", "cozinhar",
     "futebol", "filme", "série", "serie", "novela", "música", "musica",
@@ -80,7 +79,6 @@ _MENSAGEM_FORA_DOMINIO = (
 def _verificar_relevancia(pergunta: str) -> GuardResult:
     texto = pergunta.lower()
 
-    # substring matching captura plurais e variações (estudo→estudos, espécie→espécies)
     tem_keyword_dominio = any(kw in texto for kw in _KEYWORDS_DOMINIO)
     tem_keyword_fora = any(kw in texto for kw in _KEYWORDS_FORA_DOMINIO)
 

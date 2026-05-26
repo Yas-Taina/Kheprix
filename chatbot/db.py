@@ -28,8 +28,6 @@ def obter_conexao():
 
     conn = _pool.getconn()
     try:
-        # set_session só pode ser chamado fora de uma transação;
-        # verificamos conn.readonly para não chamar desnecessariamente em conexões já configuradas
         if not conn.readonly:
             conn.set_session(readonly=True, autocommit=True)
         yield conn

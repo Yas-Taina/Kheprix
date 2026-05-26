@@ -1,4 +1,3 @@
-# gera relatório analítico com SQL fixo (não aceita entrada livre) — auditável e sem risco de injeção
 import json
 import logging
 import time

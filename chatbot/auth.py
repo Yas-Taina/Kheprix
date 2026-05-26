@@ -6,7 +6,6 @@ from config import CHATBOT_INTERNAL_KEY
 async def verificar_chave_interna(
     x_internal_key: str = Header(..., description="Chave de autenticação serviço-a-serviço"),
 ) -> None:
-    # secrets.compare_digest evita timing attacks
     if not secrets.compare_digest(x_internal_key, CHATBOT_INTERNAL_KEY):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

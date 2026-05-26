@@ -22,13 +22,11 @@ from guards.output_guard import (
 
 logger = logging.getLogger("kheprix.chatbot")
 
-# Groq usa API OpenAI-compatible
 _client = OpenAI(
     api_key=GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1",
 )
 
-# Códigos HTTP que indicam erro transiente — vale fazer retry
 _ERROS_TRANSIENTES = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 2
 _RETRY_DELAY_S = 4
@@ -79,7 +77,6 @@ def _serializar_valor(v: object) -> object:
 
 
 def _executar_sql(sql: str, estudo_ids: list[int]) -> tuple[list[str], list[dict]]:
-    # estudo_ids passados como parâmetro psycopg2 — nunca interpolados na string SQL
     validar_sql(sql)
 
     resultado_guard = verificar_sql_output(sql)
@@ -273,7 +270,6 @@ def processar_pergunta(
 
     try:
         colunas, dados = _executar_sql(sql, estudo_ids)
-        # SUM/AVG de conjunto vazio retorna NULL no PostgreSQL → converte para 0
         if len(dados) == 1 and all(v is None for v in dados[0].values()):
             dados = [{k: 0 for k in dados[0]}]
     except ValueError as exc:
