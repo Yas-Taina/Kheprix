@@ -63,7 +63,6 @@ tryCatch({
   cat("Endpoint de saúde:\n")
   cat("   http://localhost:8000/health\n\n")
   
-  # Iniciar API
   api$run(port = 8000, host = "0.0.0.0", swagger = TRUE)
   
 }, error = function(e) {
