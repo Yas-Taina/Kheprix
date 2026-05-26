@@ -402,8 +402,6 @@ components:
 
 paths:
 
-  # ==================== AUTENTICAÇÃO ====================
-
   /autenticacao/login:
     post:
       tags: [Autenticação]
@@ -588,8 +586,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrosArray'
 
-  # ==================== USUÁRIOS ====================
-
   /usuarios/autocadastro:
     post:
       tags: [Usuários]
@@ -624,8 +620,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrosArray'
 
-  # ==================== DASHBOARD GLOBAL ====================
-
   /dashboard:
     get:
       tags: [Dashboard]
@@ -653,8 +647,6 @@ paths:
                 $ref: '#/components/schemas/ErroSimples'
               example:
                 erro: "Nenhum estudo encontrado"
-
-  # ==================== ESTUDOS ====================
 
   /estudos:
     get:
@@ -1047,8 +1039,6 @@ paths:
                   - $ref: '#/components/schemas/ErrosArray'
                   - $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== ANÁLISES ====================
-
   /estudos/{estudo_id}/analises/executar:
     post:
       tags: [Análises]
@@ -1172,8 +1162,6 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/ErroSimples'
                   - $ref: '#/components/schemas/ErrosArray'
-
-  # ==================== CAMPANHAS ====================
 
   /estudos/{estudo_id}/campanhas:
     get:
@@ -1380,8 +1368,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== VARIÁVEIS ====================
-
   /estudos/{estudo_id}/variaveis:
     get:
       tags: [Variáveis]
@@ -1415,8 +1401,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
-
-  # ==================== UNIDADES AMOSTRAIS ====================
 
   /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais:
     get:
@@ -1625,8 +1609,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== EVENTOS DE AMOSTRAGEM ====================
-
   /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem:
     get:
       tags: [Eventos de Amostragem]
@@ -1832,8 +1814,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
-
-  # ==================== REGISTROS DE OCORRÊNCIA ====================
 
   /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem/{evento_amostragem_id}/registro_ocorrencias:
     get:
@@ -2081,8 +2061,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== ESPÉCIES ====================
-
   /estudos/{estudo_id}/especies:
     get:
       tags: [Espécies]
@@ -2269,8 +2247,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== COLABORADORES ====================
-
   /estudos/{estudo_id}/colaboradores:
     get:
       tags: [Colaboradores]
@@ -2389,8 +2365,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== CONVITES (PROPRIETÁRIO) ====================
-
   /estudos/{estudo_id}/convites:
     get:
       tags: [Convites]
@@ -2503,8 +2477,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
-
-  # ==================== CONVITES (CONVIDADO) ====================
 
   /convites:
     get:
@@ -2630,8 +2602,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErroSimples'
 
-  # ==================== CÓDIGO DE ACESSO ====================
-
   /estudos/{estudo_id}/codigo_acesso:
     get:
       tags: [Código de Acesso]
@@ -2696,8 +2666,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrosArray'
 
-  # ==================== FOTOS ====================
-
   /fotos/estudos/{estudo_id}/{tipo}/{arquivo}:
     get:
       tags: [Fotos]
@@ -2728,8 +2696,6 @@ paths:
                 format: binary
         '404':
           description: Foto não encontrada
-
-  # ==================== RESULTADOS DE ANÁLISE ====================
 
   /analises/estudos/{estudo_id}/{chave}/{arquivo}:
     get:
@@ -2774,8 +2740,6 @@ paths:
                 $ref: '#/components/schemas/ErroSimples'
         '404':
           description: Arquivo não encontrado
-
-  # ==================== CHATBOT ====================
 
   /chatbot/query:
     post:
