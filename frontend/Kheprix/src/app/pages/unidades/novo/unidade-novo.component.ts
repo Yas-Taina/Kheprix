@@ -94,7 +94,7 @@ export class UnidadeNovoComponent implements OnInit {
       this.lngDMS = loc.lngDMS;
     } catch {
       this.gpsErro =
-        "Não foi possível obter a localização. Você pode preencher manualmente.";
+        "Não foi possível obter a localização. Tente preencher manualmente.";
     } finally {
       this.gpsLoading = false;
     }

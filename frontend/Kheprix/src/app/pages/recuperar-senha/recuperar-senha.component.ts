@@ -33,8 +33,6 @@ export class RecuperarSenhaComponent {
     private router: Router,
   ) {}
 
-  // Espelha as validacoes do backend (RedefinirSenhaDto + format de email):
-  // usuario ve o problema antes de submeter.
   private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   private static readonly SENHA_MIN = 8;
 
@@ -45,13 +43,14 @@ export class RecuperarSenhaComponent {
       return;
     }
     if (!RecuperarSenhaComponent.EMAIL_REGEX.test(this.email)) {
-      this.erroStep1 = "E-mail inválido. Verifique o formato (ex.: nome@dominio.com).";
+      this.erroStep1 = "E-mail inválido. Verifique o formato.";
       return;
     }
     this.loadingStep1 = true;
     this.auth.solicitarRedefinicao(this.email).subscribe({
       next: (res) => {
-        this.msgStep1 = res.mensagem || "Token enviado para o e-mail.";
+        this.msgStep1 =
+          res.mensagem || "Token de recuperação enviado para o e-mail.";
         this.tokenEnviado = true;
         this.loadingStep1 = false;
       },

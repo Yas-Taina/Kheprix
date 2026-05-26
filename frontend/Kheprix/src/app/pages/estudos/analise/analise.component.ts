@@ -146,7 +146,9 @@ export class AnalisesComponent implements OnInit {
   }
 
   get valorHtml(): string | null {
-    return typeof this.resultado?.valor === "string" ? this.resultado.valor : null;
+    return typeof this.resultado?.valor === "string"
+      ? this.resultado.valor
+      : null;
   }
 
   formatarValor(valor: Record<string, unknown> | string | null): string {
@@ -156,10 +158,6 @@ export class AnalisesComponent implements OnInit {
       .join("\n");
   }
 
-  // Formata um valor individual do hash de resposta. Antes era so `${v}`, que
-  // pra Array de Array (matriz de distancia em similaridade) caia no toString()
-  // padrao e gerava string flat tipo "0,0.33,0.33,0.8,..." perdendo as linhas.
-  // Pra correlacoes (valor=[0.197]) tambem ficava esquisito mostrando colchetes.
   private formatarCampo(v: unknown): string {
     if (v === null || v === undefined) return "—";
     if (!Array.isArray(v)) return String(v);
@@ -241,8 +239,6 @@ export class AnalisesComponent implements OnInit {
         this.route.snapshot.queryParamMap.get("estudo_id"),
     );
     this.carregarDadosBase();
-    // Restaurar antes de carregar metadados: IDs stored continuam validos quando
-    // os dropdowns terminam de carregar (Angular ngModel re-resolve a opcao).
     this.restaurarEstado();
   }
 
@@ -250,10 +246,6 @@ export class AnalisesComponent implements OnInit {
     return `kheprix_analise_${this.estudoId}`;
   }
 
-  // Persiste formulario + resultado da analise em localStorage, scopeado por
-  // estudo. Sem isso, sair de /estudos/:id/analises e voltar perdia tudo
-  // (Angular destrói/recria o component) — usuário precisava re-rodar pra ver
-  // o que ja tinha calculado.
   private salvarEstadoEResultado(): void {
     if (typeof localStorage === "undefined") return;
     try {
@@ -283,9 +275,7 @@ export class AnalisesComponent implements OnInit {
         resultado: this.resultado,
       };
       localStorage.setItem(this.chaveDoStorage(), JSON.stringify(estado));
-    } catch {
-      // localStorage cheio ou bloqueado — falha silenciosa, é só cache de UX.
-    }
+    } catch {}
   }
 
   private restaurarEstado(): void {
@@ -300,7 +290,6 @@ export class AnalisesComponent implements OnInit {
           this.catalogo.find((a) => a.chave === this.chaveEscolhida) ?? null;
       }
     } catch {
-      // Estado corrompido (mudança de schema entre versões etc.) — ignora.
       localStorage.removeItem(this.chaveDoStorage());
     }
   }
