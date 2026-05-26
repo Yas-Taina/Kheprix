@@ -147,7 +147,7 @@ Menu → entrar em **um estudo** → **Exportar Dados**:
 - Agrupamento: por campanha ou unidade amostral
 - Download direto
 
-### 7. Chatbot IA (opcional)
+### 7. Chatbot IA
 
 Botão flutuante no canto inferior direito — pergunte em linguagem natural:
 - "Quantas espécies foram registradas no estudo X em 2025?"
@@ -184,11 +184,11 @@ Angular 21 com componentes standalone. Roteamento lazy-loaded, interceptors para
 
 App Android nativo em Kotlin. Funciona offline (cache local) e sincroniza com o backend quando online.
 
+- **Apontar pro backend local**: edite `RetrofitClient.kt` para usar o IP da máquina onde o backend está rodando (device físico)
 - **Build**:
   1. Abra a pasta `mobile/KheprixApp` no Android Studio
   2. Aguarde sync do Gradle
   3. Conecte um device ou emulador → **Run**
-- **Apontar pro backend local**: edite `RetrofitClient.kt` para usar `http://10.0.2.2:3000` (emulador) ou IP da máquina (device físico)
 
 ### API R — Análises Estatísticas (`API/`)
 
