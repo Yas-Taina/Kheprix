@@ -173,13 +173,6 @@ Rails 8 API-only. Endpoints REST com autenticação JWT
 
 Angular 21 com componentes standalone. Roteamento lazy-loaded, interceptors para JWT e tipos de dados.
 
-- **Build local (sem Docker)**:
-  ```bash
-  cd frontend/Kheprix
-  npm install
-  npm start    # roda em http://localhost:4200
-  ```
-
 ### Mobile (`mobile/KheprixApp/`)
 
 App Android nativo em Kotlin. Funciona offline (cache local) e sincroniza com o backend quando online.
@@ -244,12 +237,6 @@ docker exec -it kheprix_web_container bash
 
 # Acessar shell do banco OLTP
 docker exec -it kheprix_oltp_database_container psql -U root -d kheprix_oltp_db
-
-# Reset do DW (reaplica ETL do zero)
-bash backend/.claude/testes/reset_dw.sh
-
-# Rodar suite de testes de análises
-bash backend/.claude/testes/analises.sh
 ```
 
 ---
