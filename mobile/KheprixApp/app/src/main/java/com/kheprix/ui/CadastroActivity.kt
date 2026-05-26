@@ -27,7 +27,7 @@ class CadastroActivity : AppCompatActivity() {
         }
 
         binding.btnConfirmar.setOnClickListener {
-            val nome  = binding.etNome.text.toString().trim()
+            val nome = binding.etNome.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
             val senha = binding.etSenha.text.toString()
             val confirmacao = binding.etConfirmarSenha.text.toString()
@@ -38,7 +38,12 @@ class CadastroActivity : AppCompatActivity() {
         }
     }
 
-    private fun validarCampos(nome: String, email: String, senha: String, confirmacao: String): Boolean {
+    private fun validarCampos(
+        nome: String,
+        email: String,
+        senha: String,
+        confirmacao: String
+    ): Boolean {
         if (nome.isEmpty()) {
             binding.etNome.error = "Informe o nome"
             return false

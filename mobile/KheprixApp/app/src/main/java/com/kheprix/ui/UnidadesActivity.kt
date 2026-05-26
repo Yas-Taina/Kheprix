@@ -30,11 +30,11 @@ class UnidadesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityUnidadesBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
     private var campanhaLocalId = -1L
-    private var campanhaNome   = ""
-    private var estudoNome     = ""
+    private var campanhaNome = ""
+    private var estudoNome = ""
     private val unidades = mutableListOf<UnidadeResponse>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,17 +43,18 @@ class UnidadesActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
         campanhaLocalId = intent.getLongExtra("campanha_local_id", -1L)
-        campanhaNome   = intent.getStringExtra("campanha_nome") ?: ""
-        estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
+        campanhaNome = intent.getStringExtra("campanha_nome") ?: ""
+        estudoNome = intent.getStringExtra("estudo_nome") ?: ""
 
         if (campanhaId < 0 && campanhaLocalId <= 0) campanhaLocalId = (-campanhaId).toLong()
 
         binding.tvCampanhaNome.text = campanhaNome
 
-        val adapter = UnidadeAdapter(unidades,
+        val adapter = UnidadeAdapter(
+            unidades,
             onItemClick = { u -> abrirEventos(u) },
             onDeleteClick = { u -> confirmarDelete(u) }
         )
@@ -110,13 +111,16 @@ class UnidadesActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                 )
                 resp.body()?.let { c ->
-                    binding.tvDetalheNome.text      = c.nome
-                    binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
+                    binding.tvDetalheNome.text = c.nome
+                    binding.tvDetalheInicio.text = formatarData(c.dataInicio)
                     binding.tvDetalheDescricao.text = c.descricao ?: "—"
-                    binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
+                    binding.tvDetalheUpdatedAt.text =
+                        c.updatedAt?.let { formatarDataHora(it) } ?: "—"
                     renderizarValoresCard(c.valoresVariaveis, fetchVarNomesApi())
                 } ?: preencherDetalhesOffline()
-            } catch (_: Exception) { preencherDetalhesOffline() }
+            } catch (_: Exception) {
+                preencherDetalhesOffline()
+            }
         }
     }
 
@@ -125,14 +129,17 @@ class UnidadesActivity : BaseDrawerActivity() {
         return try {
             RetrofitClient.apiService.getVariaveis(SessionManager.getAuthHeader(), estudoRemoteId)
                 .body()?.associate { v -> v.id to (v.nome to v.metrica) } ?: emptyMap()
-        } catch (_: Exception) { emptyMap() }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 
     private fun preencherDetalhesOffline() {
         if (campanhaLocalId <= 0) return
-        val c = CampanhaDao(this).listarTodos().firstOrNull { it.localId == campanhaLocalId } ?: return
-        binding.tvDetalheNome.text      = c.nome
-        binding.tvDetalheInicio.text    = formatarData(c.dataInicio)
+        val c =
+            CampanhaDao(this).listarTodos().firstOrNull { it.localId == campanhaLocalId } ?: return
+        binding.tvDetalheNome.text = c.nome
+        binding.tvDetalheInicio.text = formatarData(c.dataInicio)
         binding.tvDetalheDescricao.text = c.descricao ?: "—"
         binding.tvDetalheUpdatedAt.text = c.updatedAt?.let { formatarDataHora(it) } ?: "—"
         val valoresOffline = mutableListOf<ValorVariavelResponse>()
@@ -200,7 +207,7 @@ class UnidadesActivity : BaseDrawerActivity() {
     private fun carregarUnidades() {
         if (campanhaId <= 0) {
             val localId = if (campanhaLocalId > 0) campanhaLocalId
-                else CampanhaDao(this).listarTodos().firstOrNull { it.nome == campanhaNome }?.localId
+            else CampanhaDao(this).listarTodos().firstOrNull { it.nome == campanhaNome }?.localId
             if (localId != null) {
                 campanhaLocalId = localId
                 carregarUnidadesOffline(localId)
@@ -218,17 +225,21 @@ class UnidadesActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     unidadesOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
 
             val unidadeDao = UnidadeDao(this@UnidadesActivity)
             val repo = OfflineRepository(this@UnidadesActivity)
-            var resolvedEstudoLocalId = EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            var resolvedEstudoLocalId =
+                EstudoDao(this@UnidadesActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             if (resolvedEstudoLocalId == null && unidadesOnline.isNotEmpty()) {
                 try {
-                    val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
-                        .body()?.firstOrNull { it.id == estudoRemoteId }
+                    val estudo =
+                        RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
+                            .body()?.firstOrNull { it.id == estudoRemoteId }
                     if (estudo != null) resolvedEstudoLocalId = repo.cacheEstudo(estudo)
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             if (resolvedEstudoLocalId == null) return@launch
             this@UnidadesActivity.estudoLocalId = resolvedEstudoLocalId
@@ -240,14 +251,19 @@ class UnidadesActivity : BaseDrawerActivity() {
                     val camp = RetrofitClient.apiService.getCampanha(
                         SessionManager.getAuthHeader(), estudoRemoteId, campanhaId
                     ).body()
-                    if (camp != null) resolvedCampanhaLocalId = repo.cacheCampanha(resolvedEstudoLocalId, camp)
-                } catch (_: Exception) { }
+                    if (camp != null) resolvedCampanhaLocalId =
+                        repo.cacheCampanha(resolvedEstudoLocalId, camp)
+                } catch (_: Exception) {
+                }
             }
             if (resolvedCampanhaLocalId == null) return@launch
             this@UnidadesActivity.campanhaLocalId = resolvedCampanhaLocalId
 
             unidadesOnline.forEach { u ->
-                try { repo.cacheUnidade(resolvedCampanhaLocalId, u) } catch (_: Exception) { }
+                try {
+                    repo.cacheUnidade(resolvedCampanhaLocalId, u)
+                } catch (_: Exception) {
+                }
             }
 
             val offline = unidadeDao.listarPorCampanhaLocal(resolvedCampanhaLocalId)
@@ -258,18 +274,20 @@ class UnidadesActivity : BaseDrawerActivity() {
 
             offline.forEach { off ->
                 if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                    unidades.add(UnidadeResponse(
-                        id = off.remoteId ?: -off.localId.toInt(),
-                        campanhaId = off.campanhaLocalId.toInt(),
-                        nome = off.nome,
-                        latitude = off.latitude,
-                        longitude = off.longitude,
-                        raio = off.raio,
-                        metodoColeta = off.metodoColeta,
-                        esforcoAmostral = off.esforcoAmostral,
-                        createdAt = off.createdAt ?: "",
-                        updatedAt = off.updatedAt ?: ""
-                    ))
+                    unidades.add(
+                        UnidadeResponse(
+                            id = off.remoteId ?: -off.localId.toInt(),
+                            campanhaId = off.campanhaLocalId.toInt(),
+                            nome = off.nome,
+                            latitude = off.latitude,
+                            longitude = off.longitude,
+                            raio = off.raio,
+                            metodoColeta = off.metodoColeta,
+                            esforcoAmostral = off.esforcoAmostral,
+                            createdAt = off.createdAt ?: "",
+                            updatedAt = off.updatedAt ?: ""
+                        )
+                    )
                 }
             }
 
@@ -299,8 +317,11 @@ class UnidadesActivity : BaseDrawerActivity() {
 
     private fun abrirEventos(u: UnidadeResponse) {
         val unidadeLocalId = if (u.id < 0) (-u.id).toLong()
-            else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(u.id, campanhaLocalId)?.localId ?: -1L
-            else -1L
+        else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(
+            u.id,
+            campanhaLocalId
+        )?.localId ?: -1L
+        else -1L
         startActivity(Intent(this, EventosActivity::class.java).apply {
             putExtra("estudo_remote_id", estudoRemoteId)
             putExtra("estudo_local_id", estudoLocalId)
@@ -319,11 +340,18 @@ class UnidadesActivity : BaseDrawerActivity() {
             .setPositiveButton("Deletar") { _, _ ->
                 if (u.id < 0 || campanhaId <= 0 || estudoRemoteId <= 0) {
                     val localId = if (u.id < 0) (-u.id).toLong()
-                        else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(u.id, campanhaLocalId)?.localId
-                        else null
+                    else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(
+                        u.id,
+                        campanhaLocalId
+                    )?.localId
+                    else null
                     if (localId != null) {
                         com.kheprix.db.DatabaseHelper(this).writableDatabase
-                            .delete("unidades_amostrais", "local_id = ?", arrayOf(localId.toString()))
+                            .delete(
+                                "unidades_amostrais",
+                                "local_id = ?",
+                                arrayOf(localId.toString())
+                            )
                         carregarUnidades()
                     }
                     return@setPositiveButton
@@ -334,13 +362,21 @@ class UnidadesActivity : BaseDrawerActivity() {
                             SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, u.id
                         )
                         if (campanhaLocalId > 0) {
-                            UnidadeDao(this@UnidadesActivity).buscarPorRemoteIdEscopo(u.id, campanhaLocalId)?.localId?.let { lid ->
+                            UnidadeDao(this@UnidadesActivity).buscarPorRemoteIdEscopo(
+                                u.id,
+                                campanhaLocalId
+                            )?.localId?.let { lid ->
                                 com.kheprix.db.DatabaseHelper(this@UnidadesActivity).writableDatabase
-                                    .delete("unidades_amostrais", "local_id = ?", arrayOf(lid.toString()))
+                                    .delete(
+                                        "unidades_amostrais",
+                                        "local_id = ?",
+                                        arrayOf(lid.toString())
+                                    )
                             }
                         }
                         carregarUnidades()
-                    } catch (_: Exception) {}
+                    } catch (_: Exception) {
+                    }
                 }
             }
             .setNegativeButton("Cancelar", null).show()
@@ -348,7 +384,9 @@ class UnidadesActivity : BaseDrawerActivity() {
 
     private fun formatarData(iso: String) = try {
         val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 
     private fun formatarDataHora(iso: String): String = try {
         val s = iso.replace("T", " ")
@@ -357,7 +395,9 @@ class UnidadesActivity : BaseDrawerActivity() {
         val h = if (partes.size > 1) partes[1].take(5) else ""
         val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
         if (h.isNotEmpty()) "$data, ${h}h" else data
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 }
 
 class UnidadeAdapter(
@@ -367,8 +407,8 @@ class UnidadeAdapter(
 ) : RecyclerView.Adapter<UnidadeAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvNome: TextView    = view.findViewById(R.id.tvUnidadeNome)
-        val tvCoord: TextView   = view.findViewById(R.id.tvUnidadeCoord)
+        val tvNome: TextView = view.findViewById(R.id.tvUnidadeNome)
+        val tvCoord: TextView = view.findViewById(R.id.tvUnidadeCoord)
         val ivDelete: ImageView = view.findViewById(R.id.ivDeleteUnidade)
     }
 
@@ -377,7 +417,7 @@ class UnidadeAdapter(
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
-        holder.tvNome.text  = item.nome
+        holder.tvNome.text = item.nome
         holder.tvCoord.text = "${decimalToDms(item.latitude)}, ${decimalToDms(item.longitude)}"
         holder.itemView.setOnClickListener { onItemClick(item) }
         holder.ivDelete.setOnClickListener { onDeleteClick(item) }
@@ -385,12 +425,12 @@ class UnidadeAdapter(
 
     override fun getItemCount() = items.size
     private fun decimalToDms(dec: Double): String {
-        val neg  = dec < 0
-        val abs  = Math.abs(dec)
-        val deg  = abs.toInt()
+        val neg = dec < 0
+        val abs = Math.abs(dec)
+        val deg = abs.toInt()
         val minD = (abs - deg) * 60
-        val min  = minD.toInt()
-        val sec  = ((minD - min) * 60).toInt()
+        val min = minD.toInt()
+        val sec = ((minD - min) * 60).toInt()
         return "${if (neg) "-" else ""}${deg}°${min}'${sec}\""
     }
 }

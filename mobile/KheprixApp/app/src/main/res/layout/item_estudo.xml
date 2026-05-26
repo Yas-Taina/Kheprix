@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingTop="12dp"
     android:paddingBottom="12dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -24,7 +22,7 @@
             android:letterSpacing="0.05"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivColaboradores"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvEstudoData"
@@ -37,7 +35,7 @@
             android:layout_marginTop="2dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivColaboradores"
-            app:layout_constraintTop_toBottomOf="@id/tvEstudoNome"/>
+            app:layout_constraintTop_toBottomOf="@id/tvEstudoNome" />
 
 
         <ImageView
@@ -55,7 +53,7 @@
             app:layout_constraintEnd_toStartOf="@id/ivDeleteEstudo"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginEnd="8dp"/>
+            android:layout_marginEnd="8dp" />
 
         <ImageView
             android:id="@+id/ivDeleteEstudo"
@@ -70,7 +68,7 @@
             app:tint="@color/kheprix_red"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -85,7 +83,7 @@
         android:backgroundTint="#6B7A5E"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="8dp"
-        android:visibility="visible"/>
+        android:visibility="visible" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -104,7 +102,7 @@
             android:fontFamily="serif"
             android:backgroundTint="#6B7A5E"
             android:visibility="gone"
-            android:layout_marginEnd="8dp"/>
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btnAtualizarDados"
@@ -116,13 +114,13 @@
             android:textSize="12sp"
             android:fontFamily="serif"
             android:backgroundTint="#6B7A5E"
-            android:visibility="gone"/>
+            android:visibility="gone" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#C8D4BE"
-        android:layout_marginTop="12dp"/>
+        android:layout_marginTop="12dp" />
 
 </LinearLayout>

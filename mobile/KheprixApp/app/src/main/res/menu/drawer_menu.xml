@@ -6,41 +6,41 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_insect"
-            android:title="Início"/>
+            android:title="Início" />
 
         <item
             android:id="@+id/nav_registro_rapido"
             android:icon="@drawable/ic_insect"
-            android:title="Registro Rápido de Ocorrência"/>
+            android:title="Registro Rápido de Ocorrência" />
 
         <item
             android:id="@+id/nav_estudos"
             android:icon="@drawable/ic_insect"
-            android:title="Visualizar Estudos"/>
+            android:title="Visualizar Estudos" />
 
         <item
             android:id="@+id/nav_novo_estudo"
             android:icon="@drawable/ic_insect"
-            android:title="Cadastrar Novo Estudo"/>
+            android:title="Cadastrar Novo Estudo" />
 
         <item
             android:id="@+id/nav_convites"
             android:icon="@drawable/ic_insect"
-            android:title="Convites de Colaboração"/>
+            android:title="Convites de Colaboração" />
 
     </group>
 
     <item
         android:id="@+id/nav_perfil"
         android:icon="@drawable/ic_insect"
-        android:title="Meu Perfil"/>
+        android:title="Meu Perfil" />
 
     <item android:title="Conta">
         <menu>
             <item
                 android:id="@+id/nav_logout"
                 android:icon="@drawable/ic_insect"
-                android:title="Sair (Logout)"/>
+                android:title="Sair (Logout)" />
         </menu>
     </item>
 

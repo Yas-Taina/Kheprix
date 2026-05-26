@@ -28,8 +28,8 @@ class CampanhasActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityCampanhasBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var estudoNome     = ""
+    private var estudoLocalId = -1L
+    private var estudoNome = ""
     private val campanhas = mutableListOf<CampanhaResponse>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,8 +38,8 @@ class CampanhasActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        estudoNome = intent.getStringExtra("estudo_nome") ?: ""
 
         binding.tvEstudoNome.text = estudoNome
 
@@ -55,7 +55,8 @@ class CampanhasActivity : BaseDrawerActivity() {
 
     private fun setupRecyclerView() {
         binding.rvCampanhas.layoutManager = LinearLayoutManager(this)
-        binding.rvCampanhas.adapter = CampanhaAdapter(campanhas,
+        binding.rvCampanhas.adapter = CampanhaAdapter(
+            campanhas,
             onItemClick = { campanha ->
                 val intent = Intent(this, UnidadesActivity::class.java)
                 intent.putExtra("estudo_remote_id", estudoRemoteId)
@@ -94,7 +95,7 @@ class CampanhasActivity : BaseDrawerActivity() {
     private fun carregarCampanhas() {
         if (estudoRemoteId <= 0) {
             val estudoLocal = if (estudoLocalId > 0) estudoLocalId
-                else EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }?.localId
+            else EstudoDao(this).listarTodos().firstOrNull { it.nome == estudoNome }?.localId
             if (estudoLocal != null) {
                 estudoLocalId = estudoLocal
                 carregarCampanhasOffline(estudoLocal)
@@ -112,23 +113,30 @@ class CampanhasActivity : BaseDrawerActivity() {
                 if (resp.isSuccessful) {
                     campanhasOnline.addAll(resp.body() ?: emptyList())
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
 
             val campanhaDao = CampanhaDao(this@CampanhasActivity)
             val repo = OfflineRepository(this@CampanhasActivity)
-            var resolvedEstudoLocalId = EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
+            var resolvedEstudoLocalId =
+                EstudoDao(this@CampanhasActivity).buscarPorRemoteId(estudoRemoteId)?.localId
             if (resolvedEstudoLocalId == null && campanhasOnline.isNotEmpty()) {
                 try {
-                    val estudoResp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader()).body()
+                    val estudoResp =
+                        RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader()).body()
                     val estudo = estudoResp?.firstOrNull { it.id == estudoRemoteId }
                     if (estudo != null) resolvedEstudoLocalId = repo.cacheEstudo(estudo)
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             if (resolvedEstudoLocalId == null) return@launch
             this@CampanhasActivity.estudoLocalId = resolvedEstudoLocalId
 
             campanhasOnline.forEach { c ->
-                try { repo.cacheCampanha(resolvedEstudoLocalId, c) } catch (_: Exception) { }
+                try {
+                    repo.cacheCampanha(resolvedEstudoLocalId, c)
+                } catch (_: Exception) {
+                }
             }
 
             val offline = campanhaDao.listarPorEstudoLocal(resolvedEstudoLocalId)
@@ -139,16 +147,18 @@ class CampanhasActivity : BaseDrawerActivity() {
 
             offline.forEach { off ->
                 if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                    campanhas.add(CampanhaResponse(
-                        id = off.remoteId ?: -off.localId.toInt(),
-                        nome = off.nome,
-                        dataInicio = off.dataInicio,
-                        dataFim = off.dataFim,
-                        descricao = off.descricao,
-                        createdAt = off.createdAt ?: "",
-                        updatedAt = off.updatedAt ?: "",
-                        valoresVariaveis = null
-                    ))
+                    campanhas.add(
+                        CampanhaResponse(
+                            id = off.remoteId ?: -off.localId.toInt(),
+                            nome = off.nome,
+                            dataInicio = off.dataInicio,
+                            dataFim = off.dataFim,
+                            descricao = off.descricao,
+                            createdAt = off.createdAt ?: "",
+                            updatedAt = off.updatedAt ?: "",
+                            valoresVariaveis = null
+                        )
+                    )
                 }
             }
 
@@ -181,7 +191,8 @@ class CampanhasActivity : BaseDrawerActivity() {
             .setPositiveButton("Deletar") { _, _ ->
                 if (campanha.id < 0 || estudoRemoteId <= 0) {
                     val localId = if (campanha.id < 0) (-campanha.id).toLong()
-                        else CampanhaDao(this).listarTodos().firstOrNull { it.remoteId == campanha.id }?.localId
+                    else CampanhaDao(this).listarTodos()
+                        .firstOrNull { it.remoteId == campanha.id }?.localId
                     if (localId != null) {
                         com.kheprix.db.DatabaseHelper(this).writableDatabase
                             .delete("campanhas", "local_id = ?", arrayOf(localId.toString()))
@@ -200,7 +211,8 @@ class CampanhasActivity : BaseDrawerActivity() {
                                     .delete("campanhas", "local_id = ?", arrayOf(lid.toString()))
                             }
                         carregarCampanhas()
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
             }
             .setNegativeButton("Cancelar", null).show()
@@ -214,8 +226,8 @@ class CampanhaAdapter(
 ) : RecyclerView.Adapter<CampanhaAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvNome: TextView    = view.findViewById(R.id.tvCampanhaNome)
-        val tvData: TextView    = view.findViewById(R.id.tvCampanhaData)
+        val tvNome: TextView = view.findViewById(R.id.tvCampanhaNome)
+        val tvData: TextView = view.findViewById(R.id.tvCampanhaData)
         val ivDelete: ImageView = view.findViewById(R.id.ivDeleteCampanha)
     }
 
@@ -234,5 +246,7 @@ class CampanhaAdapter(
 
     private fun formatarData(iso: String) = try {
         val p = iso.substring(0, 10).split("-"); "${p[2]}/${p[1]}/${p[0]}"
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 }

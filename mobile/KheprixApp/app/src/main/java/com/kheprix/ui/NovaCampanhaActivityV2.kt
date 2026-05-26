@@ -24,9 +24,9 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     private lateinit var binding: ActivityNovaCampanhaV2Binding
 
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var campanhaId     = -1
-    private var modoEdicao     = false
+    private var estudoLocalId = -1L
+    private var campanhaId = -1
+    private var modoEdicao = false
 
     private val variaveis = mutableListOf<VariavelResponse>()
     private val camposVariavel = mutableMapOf<Int, View>()
@@ -37,9 +37,9 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        campanhaId     = intent.getIntExtra("campanha_id", -1)
-        modoEdicao     = campanhaId != -1
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        campanhaId = intent.getIntExtra("campanha_id", -1)
+        modoEdicao = campanhaId != -1
 
         binding.tvTitulo.text = if (modoEdicao) "Editar Campanha" else "Nova Campanha"
 
@@ -78,8 +78,11 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     variaveis.addAll(resp.body() ?: emptyList())
                     val repo = OfflineRepository(this@NovaCampanhaActivityV2)
                     val eLocal = if (estudoLocalId > 0) estudoLocalId
-                                 else repo.estudoLocalIdFromRemote(estudoRemoteId)
-                    if (eLocal != null) try { repo.cacheVariaveis(eLocal, variaveis) } catch (_: Exception) { }
+                    else repo.estudoLocalIdFromRemote(estudoRemoteId)
+                    if (eLocal != null) try {
+                        repo.cacheVariaveis(eLocal, variaveis)
+                    } catch (_: Exception) {
+                    }
                     renderizarCamposVariaveis()
                     if (modoEdicao) preencherValoresVariaveis()
                 } else {
@@ -97,7 +100,9 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     }
 
     private fun carregarVariaveisOffline() {
-        if (estudoLocalId <= 0) { renderizarCamposVariaveis(); return }
+        if (estudoLocalId <= 0) {
+            renderizarCamposVariaveis(); return
+        }
         val db = com.kheprix.db.DatabaseHelper(this).readableDatabase
         variaveis.clear()
         db.rawQuery(
@@ -106,15 +111,17 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         ).use { c ->
             while (c.moveToNext()) {
                 val rid = if (c.isNull(0)) -c.getLong(7).toInt() else c.getInt(0)
-                variaveis.add(VariavelResponse(
-                    id = rid,
-                    nome = c.getString(1),
-                    nivelAplicacao = c.getString(2),
-                    tipoDado = c.getString(3),
-                    metrica = c.getString(4),
-                    createdAt = c.getString(5) ?: "",
-                    updatedAt = c.getString(6) ?: ""
-                ))
+                variaveis.add(
+                    VariavelResponse(
+                        id = rid,
+                        nome = c.getString(1),
+                        nivelAplicacao = c.getString(2),
+                        tipoDado = c.getString(3),
+                        metrica = c.getString(4),
+                        createdAt = c.getString(5) ?: "",
+                        updatedAt = c.getString(6) ?: ""
+                    )
+                )
             }
         }
         renderizarCamposVariaveis()
@@ -132,10 +139,16 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                         binding.etNome.setText(c.nome)
                         binding.etDataInicio.setText(isoParaBr(c.dataInicio))
                         binding.etDescricao.setText(c.descricao ?: "")
-                        c.valoresVariaveis?.forEach { vv -> aplicarValorNoCampo(vv.variavelId, vv.valor) }
+                        c.valoresVariaveis?.forEach { vv ->
+                            aplicarValorNoCampo(
+                                vv.variavelId,
+                                vv.valor
+                            )
+                        }
                         return@launch
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             preencherValoresVariaveisOffline()
         }
@@ -147,10 +160,12 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             campanhaId > 0 -> {
                 val repo = OfflineRepository(this)
                 val eL = if (estudoLocalId > 0) estudoLocalId
-                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                         else null
-                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId } ?: return
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId }
+                    ?: return
             }
+
             else -> return
         }
         val c = CampanhaDao(this).buscarPorLocalId(campanhaLocalId) ?: return
@@ -164,10 +179,10 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
         ).use { cur ->
             while (cur.moveToNext()) {
                 val varRemoteId = if (cur.isNull(0)) null else cur.getInt(0)
-                val varLocalId  = cur.getLong(1)
-                val valor       = cur.getString(2) ?: continue
+                val varLocalId = cur.getLong(1)
+                val valor = cur.getString(2) ?: continue
                 val varId = if (varRemoteId != null && varRemoteId > 0) varRemoteId
-                            else -varLocalId.toInt()
+                else -varLocalId.toInt()
                 aplicarValorNoCampo(varId, valor)
             }
         }
@@ -178,11 +193,12 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             is Spinner -> {
                 val idx = when (valor.trim().lowercase()) {
                     "true", "verdadeiro" -> 1
-                    "false", "falso"     -> 2
-                    else                 -> 0
+                    "false", "falso" -> 2
+                    else -> 0
                 }
                 view.setSelection(idx)
             }
+
             is EditText -> view.setText(valor)
             else -> {}
         }
@@ -261,6 +277,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     listOf("—", "Verdadeiro", "Falso")
                 ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
             }
+
             else -> EditText(this).apply {
                 layoutParams = lp
                 background = bg
@@ -271,6 +288,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     "number" -> android.text.InputType.TYPE_CLASS_NUMBER or
                             android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
                             android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+
                     else -> android.text.InputType.TYPE_CLASS_TEXT
                 }
             }
@@ -321,9 +339,10 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             val valor = when (view) {
                 is Spinner -> when (view.selectedItem?.toString()) {
                     "Verdadeiro" -> "true"
-                    "Falso"      -> "false"
-                    else         -> null
+                    "Falso" -> "false"
+                    else -> null
                 }
+
                 is EditText -> view.text.toString().trim().ifEmpty { null }
                 else -> null
             } ?: return@mapNotNull null
@@ -332,7 +351,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     }
 
     private fun criarCampanha() {
-        val nome   = binding.etNome.text.toString().trim()
+        val nome = binding.etNome.text.toString().trim()
         val inicio = binding.etDataInicio.text.toString().trim()
         val descricao = binding.etDescricao.text.toString().trim().ifEmpty { null }
 
@@ -365,14 +384,24 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, req
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovaCampanhaActivityV2, "Campanha criada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaCampanhaActivityV2,
+                        "Campanha criada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovaCampanhaActivityV2, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaCampanhaActivityV2,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarCampanhaOffline(req)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -406,7 +435,7 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
     }
 
     private fun editarCampanha() {
-        val nome   = binding.etNome.text.toString().trim()
+        val nome = binding.etNome.text.toString().trim()
         val inicio = binding.etDataInicio.text.toString().trim()
         val descricao = binding.etDescricao.text.toString().trim().ifEmpty { null }
 
@@ -439,14 +468,24 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, campanhaId, req
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@NovaCampanhaActivityV2, "Campanha atualizada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaCampanhaActivityV2,
+                        "Campanha atualizada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@NovaCampanhaActivityV2, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@NovaCampanhaActivityV2,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 editarCampanhaOffline(req)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -456,13 +495,16 @@ class NovaCampanhaActivityV2 : BaseDrawerActivity() {
             campanhaId < 0 -> (-campanhaId).toLong()
             campanhaId > 0 -> {
                 val eL = if (estudoLocalId > 0) estudoLocalId
-                         else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                         else null
-                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId } ?: run {
-                    Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT).show()
-                    return
-                }
+                else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+                else null
+                eL?.let { CampanhaDao(this).buscarPorRemoteIdEscopo(campanhaId, it)?.localId }
+                    ?: run {
+                        Toast.makeText(this, "Campanha não encontrada offline", Toast.LENGTH_SHORT)
+                            .show()
+                        return
+                    }
             }
+
             else -> return
         }
         try {

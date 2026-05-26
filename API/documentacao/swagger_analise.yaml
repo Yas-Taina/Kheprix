@@ -1,0 +1,2261 @@
+openapi: 3.0.3
+info:
+  title: API de Análises Kheprix
+  description: |
+    API REST para análises ecológicas de biodiversidade, construída em R com Plumber.
+    
+    ## Tipos de Retorno
+    - **JSON**: Resultados numéricos e descritivos
+    - **HTML**: Gráficos interativos gerados com Plotly 
+    
+    ## Erros
+    Todos os endpoints retornam `{ "error": "mensagem" }` com status 500 em caso de falha.
+  version: 1.0.0
+  contact:
+    name: Sistema Kheprix
+
+servers:
+  - url: http://localhost:8000
+    description: Servidor local de desenvolvimento
+
+tags:
+  - name: health
+    description: Verificação de status da API
+  - name: modelos-abundancia
+    description: Modelos de distribuição de abundância (RAD - Rank Abundance Distribution)
+  - name: acumulacao-rarefacao
+    description: Curvas de acumulação de espécies e rarefação
+  - name: estimadores-riqueza
+    description: Estimadores de riqueza de espécies não detectadas
+  - name: indices-diversidade
+    description: Índices de diversidade alfa
+  - name: similaridade
+    description: Índices de similaridade e dissimilaridade entre amostras
+  - name: multivariada
+    description: Análises multivariadas de ordenação
+  - name: correlacao
+    description: Correlações e regressão linear
+  - name: testes-estatisticos
+    description: Testes de hipótese e normalidade
+  - name: glm
+    description: Modelos Lineares Generalizados (GLM)
+
+components:
+  schemas:
+
+    VetorAbundancia:
+      type: object
+      required:
+        - abundancias
+      properties:
+        abundancias:
+          type: array
+          items:
+            type: number
+          description: Vetor com a quantidade total de indivíduos por espécie (sem zeros).
+          example: [45, 23, 12, 8, 5, 3, 2, 2, 1, 1, 1]
+        nomes_especies:
+          type: array
+          items:
+            type: string
+          description: Nomes científicos das espécies (mesma ordem do vetor de abundâncias).
+          example: ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea"]
+
+    AbundanciasPorAmostra:
+      type: object
+      required:
+        - abundancias_por_amostra
+      properties:
+        abundancias_por_amostra:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: |
+            Matriz de abundâncias. Cada linha representa uma amostra/local;
+            cada coluna representa uma espécie. Inclua zeros para espécies ausentes.
+          example:
+            - [5, 2, 3, 1]
+            - [1, 4, 2, 0]
+            - [3, 1, 5, 2]
+            - [2, 3, 1, 4]
+        nomes_especies:
+          type: array
+          items:
+            type: string
+          example: ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata"]
+        nomes_amostras:
+          type: array
+          items:
+            type: string
+          example: ["Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste"]
+
+    AbundanciasPorAmostraPA:
+      type: object
+      required:
+        - abundancias_por_amostra
+      description: |
+        Mesmo formato que AbundanciasPorAmostra. Internamente convertido para
+        presença/ausência (0/1). Valores > 0 são tratados como presença.
+      properties:
+        abundancias_por_amostra:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              minimum: 0
+              maximum: 1
+          example:
+            - [1, 0, 1, 0, 1]
+            - [1, 1, 0, 0, 1]
+            - [0, 1, 1, 1, 0]
+            - [1, 0, 1, 1, 1]
+        nomes_especies:
+          type: array
+          items:
+            type: string
+          example: ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea", "Megachile rotundata", "Osmia bicornis"]
+        nomes_amostras:
+          type: array
+          items:
+            type: string
+          example: ["Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2"]
+
+    AbundanciasComVariaveisAmbientais:
+      type: object
+      required:
+        - abundancias_por_amostra
+        - variaveis_por_amostra
+      properties:
+        abundancias_por_amostra:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: Abundâncias por amostra (linhas = amostras, colunas = espécies).
+          example:
+            - [5, 2, 3]
+            - [1, 4, 2]
+            - [3, 1, 5]
+            - [2, 3, 1]
+            - [4, 2, 4]
+            - [1, 5, 2]
+        variaveis_por_amostra:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: |
+            Variáveis ambientais por amostra (linhas = amostras, colunas = variáveis).
+            Número de linhas deve ser igual ao de abundancias_por_amostra.
+            Número de variáveis deve ser menor que o número de amostras.
+          example:
+            - [12.5, 3.2, 65.5]
+            - [15.1, 2.8, 72.3]
+            - [10.3, 4.5, 58.1]
+            - [18.2, 2.1, 80.5]
+            - [13.7, 3.8, 70.0]
+            - [16.5, 2.5, 75.2]
+        nomes_especies:
+          type: array
+          items:
+            type: string
+          example: ["Apis mellifera", "Bombus terrestris", "Xylocopa violacea"]
+        nomes_amostras:
+          type: array
+          items:
+            type: string
+          example: ["Area_1", "Area_2", "Area_3", "Area_4", "Area_5", "Area_6"]
+        nomes_variaveis_ambientais:
+          type: array
+          items:
+            type: string
+          example: ["Temperatura_C", "pH_Solo", "Umidade_pct"]
+
+    DoisVetores:
+      type: object
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: array
+          items:
+            type: number
+          description: Variável preditora / eixo X.
+          example: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        y:
+          type: array
+          items:
+            type: number
+          description: Variável resposta / eixo Y.
+          example: [2.1, 4.3, 5.8, 7.9, 10.2, 12.1, 14.5, 16.3, 18.8, 20.5]
+        nome_x:
+          type: string
+          example: "Temperatura_C"
+        nome_y:
+          type: string
+          example: "Riqueza_Especies"
+
+    DoisGrupos:
+      type: object
+      required:
+        - grupo1
+        - grupo2
+      properties:
+        grupo1:
+          type: array
+          items:
+            type: number
+          example: [12, 15, 14, 10, 13, 16]
+        grupo2:
+          type: array
+          items:
+            type: number
+          example: [18, 20, 19, 22, 21, 17]
+        nome_grupo1:
+          type: string
+          example: "Area_Controle"
+        nome_grupo2:
+          type: string
+          example: "Area_Tratamento"
+
+    MultiplosGrupos:
+      type: object
+      required:
+        - valores
+        - grupos
+      properties:
+        valores:
+          type: array
+          items:
+            type: number
+          description: Todos os valores concatenados de todos os grupos.
+          example: [12, 15, 14, 18, 20, 19, 22, 21, 10, 11, 13, 12]
+        grupos:
+          type: array
+          items:
+            type: string
+          description: Rótulo do grupo correspondente a cada valor.
+          example: ["Floresta", "Floresta", "Floresta", "Floresta", "Cerrado", "Cerrado", "Cerrado", "Cerrado", "Pastagem", "Pastagem", "Pastagem", "Pastagem"]
+        nome_variavel:
+          type: string
+          example: "Riqueza_de_Especies"
+
+    VetorSimples:
+      type: object
+      required:
+        - dados
+      properties:
+        dados:
+          type: array
+          items:
+            type: number
+          description: Vetor de valores numéricos para análise de distribuição.
+          example: [95, 102, 98, 105, 93, 110, 88, 115, 92, 108]
+        nome_variavel:
+          type: string
+          example: "Abundancia_Total"
+
+    MatrizAcumulacao:
+      type: object
+      required:
+        - matriz
+      properties:
+        matriz:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: |
+            Matriz de acumulação onde cada linha representa uma visita/evento
+            de amostragem e cada coluna representa uma espécie.
+            As linhas devem estar em ordem cronológica/sequencial de coleta.
+          example:
+            - [5, 2, 3, 1, 0, 0]
+            - [5, 3, 3, 1, 1, 0]
+            - [5, 3, 4, 2, 1, 0]
+            - [5, 3, 4, 2, 1, 1]
+
+    KSTeste:
+      type: object
+      description: Aceita dois modos — comparação entre duas amostras, ou uma amostra vs distribuição teórica.
+      properties:
+        amostra1:
+          type: array
+          items:
+            type: number
+          example: [12, 15, 14, 10, 13, 16, 11, 14, 15, 12]
+        amostra2:
+          type: array
+          items:
+            type: number
+          description: Se omitido, compara amostra1 contra a distribuição teórica em `distribuicao`.
+          example: [18, 20, 19, 22, 21, 17, 19, 20, 18, 21]
+        amostra:
+          type: array
+          items:
+            type: number
+          description: Usado no modo uma amostra vs distribuição teórica.
+        distribuicao:
+          type: string
+          description: Função de distribuição teórica (modo uma amostra). Padrão "pnorm".
+          example: "pnorm"
+        nome_amostra1:
+          type: string
+          example: "Local_A"
+        nome_amostra2:
+          type: string
+          example: "Local_B"
+
+    ErroResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Erro: objeto de comprimento zero"
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "API de Análise funcionando"
+        timestamp:
+          type: string
+          format: date-time
+
+    RiquezaEstimadaSimples:
+      type: object
+      properties:
+        riqueza_observada:
+          type: integer
+        especies_nao_detectadas_estimadas:
+          type: number
+
+    MatrizDistancia:
+      type: object
+      properties:
+        matriz_distancia:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: number
+          description: Matriz quadrada de distâncias/dissimilaridades entre amostras.
+        nomes_amostras:
+          type: array
+          items:
+            type: string
+        numero_amostras:
+          type: integer
+        numero_especies:
+          type: integer
+        metodo:
+          type: string
+        interpretacao:
+          type: string
+
+    HTMLResponse:
+      type: string
+      description: Documento HTML completo com gráfico Plotly interativo embutido.
+
+paths:
+
+  /health:
+    get:
+      tags: [health]
+      summary: Verificação de status
+      description: Retorna o status da API e o timestamp atual do servidor.
+      responses:
+        '200':
+          description: API operacional
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /analise/lognormal:
+    post:
+      tags: [modelos-abundancia]
+      summary: Modelo Log-Normal (gráfico)
+      description: |
+        Ajusta o modelo log-normal de distribuição de abundância de espécies (RAD).
+        Retorna gráfico HTML interativo com ranks no eixo X e abundância (escala log) no Y,
+        com a curva do modelo ajustado sobreposta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Gráfico HTML Plotly do modelo Log-Normal
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/logserie:
+    post:
+      tags: [modelos-abundancia]
+      summary: Modelo Log-Série (gráfico)
+      description: |
+        Ajusta o modelo Log-Série de Fisher para a distribuição de abundância de espécies.
+        Usa `fisherfit` para estimar o parâmetro alpha. Retorna gráfico HTML interativo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Gráfico HTML Plotly do modelo Log-Série
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/geometrica:
+    post:
+      tags: [modelos-abundancia]
+      summary: Modelo Série Geométrica (gráfico)
+      description: |
+        Ajusta o modelo de série geométrica de abundância de espécies.
+        Adequado para comunidades dominadas por competição interespecífica intensa.
+        Retorna gráfico HTML interativo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Gráfico HTML Plotly do modelo Série Geométrica
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/vara_quebrada:
+    post:
+      tags: [modelos-abundancia]
+      summary: Modelo Vara Quebrada (gráfico)
+      description: |
+        Ajusta o modelo broken-stick (MacArthur) de distribuição de abundância de espécies.
+        Assume que os nichos ecológicos são divididos aleatoriamente. Retorna gráfico HTML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Gráfico HTML Plotly do modelo Vara Quebrada
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/rarefacao:
+    post:
+      tags: [acumulacao-rarefacao]
+      summary: Curva de Rarefação (gráfico)
+      description: |
+        Gera a curva de rarefação mostrando a riqueza esperada de espécies em função
+        do tamanho amostral (número de indivíduos). Usa até 50 pontos igualmente espaçados.
+        Retorna gráfico HTML interativo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+            example:
+              abundancias: [45, 23, 12, 8, 5, 3, 2, 2, 1, 1, 1]
+      responses:
+        '200':
+          description: Gráfico HTML Plotly da curva de rarefação
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/michaelis_menten:
+    post:
+      tags: [acumulacao-rarefacao]
+      summary: Curva de Acumulação Michaelis-Menten (gráfico)
+      description: |
+        Ajusta o modelo de Michaelis-Menten à curva de acumulação de espécies,
+        estimando a riqueza máxima (Smax) e a meia-saturação (k).
+        A entrada é uma **matriz de acumulação** onde cada linha representa um evento
+        de amostragem sequencial (visita) e cada coluna uma espécie.
+        Retorna gráfico HTML interativo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrizAcumulacao'
+      responses:
+        '200':
+          description: Gráfico HTML Plotly da curva de Michaelis-Menten
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro no processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/jackknife1:
+    post:
+      tags: [estimadores-riqueza]
+      summary: Jackknife de 1ª Ordem
+      description: |
+        Estimador de riqueza Jackknife de primeira ordem baseado no número de singletons
+        (espécies com apenas um indivíduo) e no número de amostras.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+            example:
+              abundancias: [45, 23, 12, 8, 5, 3, 2, 2, 1, 1, 1]
+      responses:
+        '200':
+          description: Estimativa de riqueza Jackknife 1
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_jack1:
+                        type: number
+                      especies_unicas:
+                        type: integer
+                        description: Número de singletons (espécies com n=1).
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/jackknife2:
+    post:
+      tags: [estimadores-riqueza]
+      summary: Jackknife de 2ª Ordem
+      description: |
+        Estimador de riqueza Jackknife de segunda ordem. Utiliza singletons e doubletons
+        para uma estimativa mais robusta que o Jackknife 1.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Estimativa de riqueza Jackknife 2
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_jack2:
+                        type: number
+                      especies_unicas:
+                        type: integer
+                      especies_duplicadas:
+                        type: integer
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/chao1:
+    post:
+      tags: [estimadores-riqueza]
+      summary: Estimador Chao1
+      description: |
+        Estimador não paramétrico de riqueza baseado na abundância.
+        Usa singletons (f1) e doubletons (f2) do vetor de abundância.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Estimativa Chao1
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_chao1:
+                        type: number
+                      singletons:
+                        type: integer
+                        description: Espécies com exatamente 1 indivíduo (f1).
+                      doubletons:
+                        type: integer
+                        description: Espécies com exatamente 2 indivíduos (f2).
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/chao2:
+    post:
+      tags: [estimadores-riqueza]
+      summary: Estimador Chao2
+      description: |
+        Estimador não paramétrico de riqueza baseado em **incidência** (presença/ausência por amostra).
+        Usa espécies que ocorrem em apenas 1 amostra (Q1) e em exatamente 2 amostras (Q2).
+        Requer a lista de abundâncias por amostra (convertida internamente para presença/ausência).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Estimativa Chao2
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_chao2:
+                        type: number
+                      especies_unicas:
+                        type: integer
+                        description: Q1 — espécies presentes em apenas 1 amostra.
+                      especies_duplicadas:
+                        type: integer
+                        description: Q2 — espécies presentes em exatamente 2 amostras.
+                      numero_amostras:
+                        type: integer
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/bootstrap:
+    post:
+      tags: [estimadores-riqueza]
+      summary: Estimador Bootstrap
+      description: |
+        Estimador de riqueza baseado em bootstrap. Cada espécie contribui com
+        (1 - proporção relativa)^N para estimar espécies não detectadas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Estimativa Bootstrap
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_bootstrap:
+                        type: number
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/ace:
+    post:
+      tags: [estimadores-riqueza]
+      summary: ACE (Abundance-based Coverage Estimator)
+      description: |
+        Estimador de riqueza baseado na cobertura de abundância.
+        Diferencia espécies "raras" (≤10 indivíduos) das "abundantes" para a estimativa.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Estimativa ACE
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_ace:
+                        type: number
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/ice:
+    post:
+      tags: [estimadores-riqueza]
+      summary: ICE (Incidence Coverage Estimator)
+      description: |
+        Estimador de riqueza baseado na cobertura de incidência.
+        Usa dados de presença/ausência por amostra. Diferencia espécies
+        "infrequentes" (presentes em ≤10 amostras) das frequentes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Estimativa ICE
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RiquezaEstimadaSimples'
+                  - type: object
+                    properties:
+                      riqueza_estimada_ice:
+                        type: number
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/shannon:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Shannon-Wiener
+      description: |
+        Calcula o índice de diversidade de Shannon-Wiener (H'), o valor máximo teórico
+        e a equitabilidade relativa (H'/H'max).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Shannon-Wiener
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_shannon:
+                    type: number
+                    description: H' em nats (base e).
+                  shannon_maximo:
+                    type: number
+                    description: Valor máximo teórico ln(S).
+                  equitabilidade_relativa:
+                    type: number
+                    description: H' / H'max — varia de 0 a 1.
+                  riqueza:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/simpson:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Simpson
+      description: |
+        Calcula o índice de dominância de Simpson (D), a diversidade de Simpson (1-D)
+        e o inverso de Simpson (1/D).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Simpson
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_simpson:
+                    type: number
+                    description: D (dominância) — valores altos indicam baixa diversidade.
+                  diversidade_simpson:
+                    type: number
+                    description: 1 - D — valores altos indicam alta diversidade.
+                  inverso_simpson:
+                    type: number
+                    description: 1/D — número efetivo de espécies.
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/margalef:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Margalef
+      description: Índice de riqueza que considera o número de espécies e o total de indivíduos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Margalef
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_margalef:
+                    type: number
+                  riqueza:
+                    type: integer
+                  total_individuos:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/pielou:
+    post:
+      tags: [indices-diversidade]
+      summary: Equitabilidade de Pielou (J')
+      description: |
+        Mede a uniformidade da distribuição das abundâncias entre espécies.
+        J' = H' / ln(S), variando de 0 (máxima dominância) a 1 (equidade perfeita).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Pielou
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_pielou:
+                    type: number
+                  shannon:
+                    type: number
+                  riqueza:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/berger_parker:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Berger-Parker
+      description: |
+        Medida de dominância proporcional: razão entre a abundância da espécie mais
+        abundante e o total de indivíduos. Valores altos indicam forte dominância.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Berger-Parker
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_berger_parker:
+                    type: number
+                  abundancia_maxima:
+                    type: number
+                  total_individuos:
+                    type: integer
+                  proporcao_especie_dominante:
+                    type: string
+                    example: "44.55%"
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/brillouin:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Brillouin
+      description: |
+        Índice de diversidade determinístico, mais conservador que Shannon.
+        Apropriado para comunidades completamente amostradas (sem inferência probabilística).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de Brillouin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_brillouin:
+                    type: number
+                  total_individuos:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/macintosh:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de MacIntosh (D)
+      description: |
+        Índice de diversidade baseado na distância euclidiana entre a comunidade observada
+        e uma comunidade com distribuição uniforme. Varia de 0 a 1.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de MacIntosh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_macintosh:
+                    type: number
+                  distancia_U:
+                    type: number
+                    description: Distância euclidiana da comunidade.
+                  total_individuos:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/hurlbert:
+    post:
+      tags: [indices-diversidade]
+      summary: PIE de Hurlbert
+      description: |
+        Probabilidade de Interação Interespecífica (PIE).
+        Probabilidade de que dois indivíduos selecionados aleatoriamente sejam de espécies diferentes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do PIE de Hurlbert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hurlbert_pie:
+                    type: number
+                    description: Varia de 0 (dominância total) a 1 (diversidade máxima).
+                  total_individuos:
+                    type: integer
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/mcnaughton:
+    post:
+      tags: [indices-diversidade]
+      summary: Índice de Dominância de McNaughton
+      description: |
+        Calcula a proporção representada pelas duas espécies mais abundantes
+        em relação ao total de indivíduos. Valores altos indicam dominância forte.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorAbundancia'
+      responses:
+        '200':
+          description: Resultado do índice de McNaughton
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indice_mcnaughton:
+                    type: number
+                  proporcao_duas_especies_dominantes:
+                    type: string
+                    example: "65.82%"
+                  especie_mais_abundante:
+                    type: string
+                  abundancia_primeira:
+                    type: number
+                  segunda_mais_abundante:
+                    type: string
+                  abundancia_segunda:
+                    type: number
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/jaccard:
+    post:
+      tags: [similaridade]
+      summary: Distância de Jaccard (JSON)
+      description: |
+        Calcula a matriz de distância de Jaccard baseada em dados de presença/ausência.
+        Valores próximos de 0 indicam maior similaridade; próximos de 1, menor similaridade.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Matriz de distância de Jaccard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizDistancia'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/jaccard_grafico:
+    post:
+      tags: [similaridade]
+      summary: Distância de Jaccard (heatmap HTML)
+      description: Retorna heatmap interativo da matriz de distância de Jaccard.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Heatmap HTML da distância de Jaccard
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/sorensen:
+    post:
+      tags: [similaridade]
+      summary: Distância de Sørensen-Dice (JSON)
+      description: |
+        Calcula a matriz de distância de Sørensen-Dice baseada em presença/ausência.
+        Implementada como dissimilaridade de Bray-Curtis binarizada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Matriz de distância de Sørensen-Dice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizDistancia'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/sorensen_grafico:
+    post:
+      tags: [similaridade]
+      summary: Distância de Sørensen-Dice (heatmap HTML)
+      description: Retorna heatmap interativo da matriz de distância de Sørensen-Dice.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostraPA'
+      responses:
+        '200':
+          description: Heatmap HTML da distância de Sørensen-Dice
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/bray_curtis:
+    post:
+      tags: [similaridade]
+      summary: Dissimilaridade de Bray-Curtis (JSON)
+      description: |
+        Calcula a matriz de dissimilaridade de Bray-Curtis baseada em abundâncias.
+        Sensível às abundâncias relativas — indica diferenças na composição quantitativa.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Matriz de dissimilaridade de Bray-Curtis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizDistancia'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/bray_curtis_grafico:
+    post:
+      tags: [similaridade]
+      summary: Dissimilaridade de Bray-Curtis (heatmap HTML)
+      description: Retorna heatmap interativo da matriz de Bray-Curtis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Heatmap HTML da dissimilaridade de Bray-Curtis
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/morisita:
+    post:
+      tags: [similaridade]
+      summary: Dissimilaridade de Morisita-Horn (JSON)
+      description: |
+        Calcula a matriz de dissimilaridade de Morisita-Horn baseada em abundâncias.
+        Pouco influenciada pela riqueza de espécies e pelo tamanho amostral.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Matriz de dissimilaridade de Morisita-Horn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizDistancia'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/morisita_grafico:
+    post:
+      tags: [similaridade]
+      summary: Dissimilaridade de Morisita-Horn (heatmap HTML)
+      description: Retorna heatmap interativo da matriz de Morisita-Horn.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Heatmap HTML da dissimilaridade de Morisita-Horn
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/rda:
+    post:
+      tags: [multivariada]
+      summary: RDA — Análise de Redundância (gráfico HTML)
+      description: |
+        Realiza a Análise de Redundância (RDA) relacionando a composição de espécies
+        às variáveis ambientais. Retorna biplot interativo com amostras (azul),
+        espécies (vermelho) e vetores das variáveis ambientais (verde).
+
+        **Restrição importante:** o número de amostras deve ser maior que o número
+        de variáveis ambientais para evitar overfitting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasComVariaveisAmbientais'
+      responses:
+        '200':
+          description: Biplot HTML interativo da RDA
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro (ex. overfitting — mais variáveis do que amostras)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/cca:
+    post:
+      tags: [multivariada]
+      summary: CCA — Análise de Correspondência Canônica (gráfico HTML)
+      description: |
+        Realiza a Análise de Correspondência Canônica (CCA), adequada para dados de
+        contagem com gradiente longo de espécies. Retorna biplot interativo com
+        amostras (roxo), espécies (laranja) e vetores ambientais (verde-azulado).
+
+        **Restrição:** número de amostras deve ser maior que o número de variáveis ambientais.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasComVariaveisAmbientais'
+      responses:
+        '200':
+          description: Biplot HTML interativo da CCA
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/nmds:
+    post:
+      tags: [multivariada]
+      summary: nMDS — Escalonamento Multidimensional Não-Métrico (gráfico HTML)
+      description: |
+        Ordena amostras em espaço bidimensional preservando as distâncias de Bray-Curtis
+        (via `metaMDS`, k=2, máx. 100 tentativas). Exibe stress e qualidade do ajuste.
+
+        - Stress < 0.05 → Excelente
+        - Stress < 0.10 → Bom
+        - Stress < 0.20 → Utilizável
+        - Stress ≥ 0.20 → Pobre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Gráfico nMDS HTML interativo
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/pca:
+    post:
+      tags: [multivariada]
+      summary: PCA — Análise de Componentes Principais (gráfico HTML)
+      description: |
+        Realiza PCA nos dados de abundância (escalonados e centrados).
+        Retorna biplot interativo com amostras e espécies no espaço das
+        duas primeiras componentes principais, exibindo a variância explicada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbundanciasPorAmostra'
+      responses:
+        '200':
+          description: Biplot PCA HTML interativo
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/pearson:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Pearson (JSON)
+      description: |
+        Calcula a correlação paramétrica de Pearson entre dois vetores numéricos.
+        Inclui intervalo de confiança de 95% e classificação da força da correlação.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Resultado da correlação de Pearson
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  correlacao:
+                    type: number
+                    description: Coeficiente r de Pearson (-1 a 1).
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  intervalo_confianca:
+                    type: array
+                    items:
+                      type: number
+                    minItems: 2
+                    maxItems: 2
+                  interpretacao:
+                    type: string
+                    example: "Correlação forte"
+                  direcao:
+                    type: string
+                    enum: [Positiva, Negativa]
+                  nome_x:
+                    type: string
+                  nome_y:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/pearson_grafico:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Pearson (gráfico HTML)
+      description: Scatter plot com reta de regressão e banda de confiança da correlação de Pearson.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML da correlação de Pearson
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/spearman:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Spearman (JSON)
+      description: |
+        Correlação não paramétrica de Spearman (ρ), baseada nos ranks.
+        Apropriada para dados não-normais, ordinais ou com outliers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Resultado da correlação de Spearman
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rho:
+                    type: number
+                    description: Coeficiente ρ de Spearman (-1 a 1).
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  estatistica_S:
+                    type: number
+                  interpretacao:
+                    type: string
+                  nome_x:
+                    type: string
+                  nome_y:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/spearman_grafico:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Spearman (gráfico HTML)
+      description: Scatter plot com curva LOESS suavizada da correlação de Spearman.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML da correlação de Spearman
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/kendall:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Kendall (JSON)
+      description: |
+        Correlação de concordância de Kendall (τ). Robusta a outliers e amostras pequenas.
+        Baseada na proporção de pares concordantes vs discordantes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Resultado da correlação de Kendall
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tau:
+                    type: number
+                    description: Coeficiente τ de Kendall (-1 a 1).
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  interpretacao:
+                    type: string
+                  nome_x:
+                    type: string
+                  nome_y:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/kendall_grafico:
+    post:
+      tags: [correlacao]
+      summary: Correlação de Kendall (gráfico HTML)
+      description: Scatter plot com curva LOESS suavizada da correlação de Kendall.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML da correlação de Kendall
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/regressao_linear:
+    post:
+      tags: [correlacao]
+      summary: Regressão Linear Simples (gráfico HTML)
+      description: |
+        Ajusta um modelo de regressão linear (lm) e retorna gráfico com pontos observados,
+        linha ajustada e banda de ±1 desvio padrão dos resíduos.
+        A equação da reta, R² e p-valor são exibidos no subtítulo do gráfico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML da regressão linear
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/teste_t:
+    post:
+      tags: [testes-estatisticos]
+      summary: Teste T de Student (Welch)
+      description: |
+        Compara as médias de dois grupos independentes. Usa o teste t de Welch
+        (variâncias desiguais assumidas por padrão no R).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisGrupos'
+      responses:
+        '200':
+          description: Resultado do Teste T
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estatistica_t:
+                    type: number
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  intervalo_confianca:
+                    type: array
+                    items:
+                      type: number
+                    minItems: 2
+                    maxItems: 2
+                    description: IC 95% para a diferença entre as médias.
+                  media_grupo1:
+                    type: number
+                  media_grupo2:
+                    type: number
+                  diferenca_medias:
+                    type: number
+                  nome_grupo1:
+                    type: string
+                  nome_grupo2:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/shapiro:
+    post:
+      tags: [testes-estatisticos]
+      summary: Teste de Shapiro-Wilk (normalidade)
+      description: |
+        Testa se os dados seguem distribuição normal. Funciona com 3 a 5000 observações.
+        **Atenção:** amostras grandes tendem a rejeitar normalidade mesmo com desvios pequenos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetorSimples'
+      responses:
+        '200':
+          description: Resultado do Teste de Shapiro-Wilk
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estatistica_w:
+                    type: number
+                    description: Estatística W (próxima de 1 = mais normal).
+                  p_valor:
+                    type: number
+                  normal:
+                    type: boolean
+                    description: true se p > 0.05 (não rejeita normalidade).
+                  interpretacao:
+                    type: string
+                  nome_variavel:
+                    type: string
+                  nota:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/kruskal:
+    post:
+      tags: [testes-estatisticos]
+      summary: Teste de Kruskal-Wallis
+      description: |
+        Alternativa não paramétrica à ANOVA de um fator. Compara as medianas
+        de três ou mais grupos independentes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiplosGrupos'
+      responses:
+        '200':
+          description: Resultado do Teste de Kruskal-Wallis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estatistica_h:
+                    type: number
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  gl:
+                    type: integer
+                    description: Graus de liberdade (número de grupos − 1).
+                  medianas_por_grupo:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: Mediana de cada grupo (chave = nome do grupo).
+                  nome_variavel:
+                    type: string
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/anova:
+    post:
+      tags: [testes-estatisticos]
+      summary: ANOVA de um fator
+      description: |
+        Análise de Variância paramétrica de um fator. Compara as médias de
+        três ou mais grupos. Pressupõe normalidade e homogeneidade de variâncias.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiplosGrupos'
+      responses:
+        '200':
+          description: Resultado da ANOVA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  f_valor:
+                    type: number
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  gl_tratamento:
+                    type: integer
+                  gl_residuo:
+                    type: integer
+                  medias_por_grupo:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: Média de cada grupo (chave = nome do grupo).
+                  nome_variavel:
+                    type: string
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/ks:
+    post:
+      tags: [testes-estatisticos]
+      summary: Teste de Kolmogorov-Smirnov
+      description: |
+        Dois modos de uso:
+
+        **Modo 1 — Duas amostras** (padrão): compara se `amostra1` e `amostra2`
+        vêm da mesma distribuição. Envie ambos os campos.
+
+        **Modo 2 — Uma amostra vs distribuição teórica**: envie apenas `amostra`
+        e `distribuicao` (ex. `"pnorm"`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KSTeste'
+      responses:
+        '200':
+          description: Resultado do Teste KS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estatistica_d:
+                    type: number
+                    description: Estatística D (distância máxima entre CDFs).
+                  p_valor:
+                    type: number
+                  significativo:
+                    type: boolean
+                  interpretacao:
+                    type: string
+                  nome_amostra1:
+                    type: string
+                  nome_amostra2:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_gaussiano:
+    post:
+      tags: [glm]
+      summary: GLM Gaussiano (Normal) — JSON
+      description: |
+        Ajusta um GLM com família Gaussiana (equivalente à regressão linear clássica).
+        Apropriado para variáveis resposta contínuas com distribuição normal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+            example:
+              y: [5, 12, 8, 15, 3, 18, 7, 20]
+              x: [10, 15, 12, 18, 8, 22, 11, 25]
+              nome_y: "Numero_de_Especies"
+              nome_x: "Area_ha"
+      responses:
+        '200':
+          description: Resultado do modelo Gaussiano
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aic:
+                    type: number
+                  deviance:
+                    type: number
+                  coeficientes:
+                    type: object
+                    properties:
+                      "(Intercept)":
+                        type: number
+                      x:
+                        type: number
+                  r_quadrado:
+                    type: number
+                  nome_resposta:
+                    type: string
+                  nome_preditor:
+                    type: string
+                  familia:
+                    type: string
+                    example: "Gaussiana (Normal)"
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_gaussiano_grafico:
+    post:
+      tags: [glm]
+      summary: GLM Gaussiano — gráfico HTML
+      description: |
+        Gráfico do modelo Gaussiano com pontos observados, linha ajustada
+        e banda de ±1 desvio padrão dos resíduos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML do modelo Gaussiano
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_gamma:
+    post:
+      tags: [glm]
+      summary: GLM Gamma — JSON
+      description: |
+        Ajusta um GLM com família Gamma e link logarítmico.
+        Apropriado para variáveis resposta **positivas contínuas** cuja variância
+        é proporcional ao quadrado da média (ex. biomassa, tempo entre eventos).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+            example:
+              y: [2.5, 5.2, 3.8, 6.5, 1.3, 8.8, 4.7, 10.2]
+              x: [10, 15, 12, 18, 8, 22, 11, 25]
+              nome_y: "Biomassa_kg"
+              nome_x: "Area_ha"
+      responses:
+        '200':
+          description: Resultado do modelo Gamma
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aic:
+                    type: number
+                  deviance:
+                    type: number
+                  coeficientes:
+                    type: object
+                    properties:
+                      "(Intercept)":
+                        type: number
+                      x:
+                        type: number
+                  nome_resposta:
+                    type: string
+                  nome_preditor:
+                    type: string
+                  familia:
+                    type: string
+                    example: "Gamma"
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_gamma_grafico:
+    post:
+      tags: [glm]
+      summary: GLM Gamma — gráfico HTML
+      description: Gráfico do modelo Gamma com pontos observados e curva ajustada (link log).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML do modelo Gamma
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_poisson:
+    post:
+      tags: [glm]
+      summary: GLM Poisson — JSON
+      description: |
+        Ajusta um GLM com família Poisson e link logarítmico.
+        Apropriado para **dados de contagem** (inteiros ≥ 0).
+        Reporta a sobredispersão (deviance/gl residual) — se > 1.5, considere Binomial Negativa.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+            example:
+              y: [5, 12, 8, 15, 3, 18, 7, 20]
+              x: [10, 15, 12, 18, 8, 22, 11, 25]
+              nome_y: "Numero_de_Especies"
+              nome_x: "Area_ha"
+      responses:
+        '200':
+          description: Resultado do modelo Poisson
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aic:
+                    type: number
+                  deviance:
+                    type: number
+                  coeficientes:
+                    type: object
+                    properties:
+                      "(Intercept)":
+                        type: number
+                      x:
+                        type: number
+                  sobredispersao:
+                    type: number
+                    description: Deviance / GL residual. Valores > 1.5 indicam sobredispersão.
+                  nome_resposta:
+                    type: string
+                  nome_preditor:
+                    type: string
+                  familia:
+                    type: string
+                    example: "Poisson"
+                  interpretacao:
+                    type: string
+                  nota_sobredispersao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_poisson_grafico:
+    post:
+      tags: [glm]
+      summary: GLM Poisson — gráfico HTML
+      description: |
+        Gráfico do modelo Poisson com pontos observados e curva ajustada.
+        O subtítulo exibe AIC, sobredispersão e alerta quando sobredispersão > 1.5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML do modelo Poisson
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_binomial_negativa:
+    post:
+      tags: [glm]
+      summary: GLM Binomial Negativa — JSON
+      description: |
+        Ajusta um GLM de Binomial Negativa via `glm.nb` (MASS).
+        Apropriado para dados de contagem com **sobredispersão** (variância > média).
+        Reporta o parâmetro theta (dispersão).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Resultado do modelo Binomial Negativa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aic:
+                    type: number
+                  deviance:
+                    type: number
+                  coeficientes:
+                    type: object
+                    properties:
+                      "(Intercept)":
+                        type: number
+                      x:
+                        type: number
+                  theta:
+                    type: number
+                    description: Parâmetro de dispersão — valores baixos indicam maior sobredispersão.
+                  nome_resposta:
+                    type: string
+                  nome_preditor:
+                    type: string
+                  familia:
+                    type: string
+                    example: "Binomial Negativa"
+                  interpretacao:
+                    type: string
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /analise/modelo_binomial_grafico:
+    post:
+      tags: [glm]
+      summary: GLM Binomial Negativa — gráfico HTML
+      description: Gráfico do modelo Binomial Negativa com pontos e curva ajustada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoisVetores'
+      responses:
+        '200':
+          description: Gráfico HTML do modelo Binomial Negativa
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HTMLResponse'
+        '500':
+          description: Erro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'

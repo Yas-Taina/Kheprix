@@ -24,7 +24,8 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) iniciarScanQr()
-            else Toast.makeText(this, "Permissão de câmera necessária para QR", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, "Permissão de câmera necessária para QR", Toast.LENGTH_SHORT)
+                .show()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,10 +37,14 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
 
         binding.btnConfirmar.setOnClickListener {
             val codigo = binding.etCodigo.text.toString().trim()
-            val senha  = binding.etSenha.text.toString()
+            val senha = binding.etSenha.text.toString()
 
-            if (codigo.isEmpty()) { binding.etCodigo.error = "Informe o código"; return@setOnClickListener }
-            if (senha.isEmpty())  { binding.etSenha.error  = "Informe a senha";  return@setOnClickListener }
+            if (codigo.isEmpty()) {
+                binding.etCodigo.error = "Informe o código"; return@setOnClickListener
+            }
+            if (senha.isEmpty()) {
+                binding.etSenha.error = "Informe a senha"; return@setOnClickListener
+            }
 
             ingressarEstudo(codigo, senha)
         }
@@ -52,7 +57,8 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
 
     private fun verificarPermissaoCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED) {
+            == PackageManager.PERMISSION_GRANTED
+        ) {
             iniciarScanQr()
         } else {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -67,7 +73,11 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: android.content.Intent?
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
         val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
         if (result != null && result.contents != null) {
@@ -93,14 +103,31 @@ class AutocadastroEstudoActivity : BaseDrawerActivity() {
                     finish()
                 } else {
                     when (resp.code()) {
-                        401 -> Toast.makeText(this@AutocadastroEstudoActivity, "Código ou senha incorretos", Toast.LENGTH_SHORT).show()
-                        404 -> Toast.makeText(this@AutocadastroEstudoActivity, "Estudo não encontrado", Toast.LENGTH_SHORT).show()
-                        else -> Toast.makeText(this@AutocadastroEstudoActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                        401 -> Toast.makeText(
+                            this@AutocadastroEstudoActivity,
+                            "Código ou senha incorretos",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        404 -> Toast.makeText(
+                            this@AutocadastroEstudoActivity,
+                            "Estudo não encontrado",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        else -> Toast.makeText(
+                            this@AutocadastroEstudoActivity,
+                            "Erro: ${resp.code()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (_: Exception) {
-                Toast.makeText(this@AutocadastroEstudoActivity, "Sem conexão", Toast.LENGTH_SHORT).show()
-            } finally { setLoading(false) }
+                Toast.makeText(this@AutocadastroEstudoActivity, "Sem conexão", Toast.LENGTH_SHORT)
+                    .show()
+            } finally {
+                setLoading(false)
+            }
         }
     }
 

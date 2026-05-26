@@ -47,6 +47,7 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
         override fun onAvailable(network: Network) {
             runOnUiThread { atualizarBannerOffline(false) }
         }
+
         override fun onLost(network: Network) {
             runOnUiThread { atualizarBannerOffline(true) }
         }
@@ -57,13 +58,19 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
-        try { connectivityManager.registerNetworkCallback(request, networkCallback) } catch (_: Exception) {}
+        try {
+            connectivityManager.registerNetworkCallback(request, networkCallback)
+        } catch (_: Exception) {
+        }
         atualizarBannerOffline(!estaOnline())
     }
 
     override fun onStop() {
         super.onStop()
-        try { connectivityManager.unregisterNetworkCallback(networkCallback) } catch (_: Exception) {}
+        try {
+            connectivityManager.unregisterNetworkCallback(networkCallback)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onResume() {
@@ -171,7 +178,8 @@ abstract class BaseDrawerActivity : AppCompatActivity(),
         }
         drawer.addView(content, DrawerLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
 
-        val navCtx = android.view.ContextThemeWrapper(this, R.style.ThemeOverlay_Kheprix_NavigationView)
+        val navCtx =
+            android.view.ContextThemeWrapper(this, R.style.ThemeOverlay_Kheprix_NavigationView)
         val nav = NavigationView(navCtx).apply {
             id = View.generateViewId()
             background = ColorDrawable(Color.parseColor("#EDE9DE"))

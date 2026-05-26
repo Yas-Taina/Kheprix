@@ -11,21 +11,21 @@ class DatabaseHelper(context: Context) :
         const val DB_NAME = "estudos_offline.db"
         const val DB_VERSION = 4
 
-        const val TABLE_ESTUDOS             = "estudos"
-        const val TABLE_VARIAVEIS           = "variaveis"
-        const val TABLE_ESPECIES            = "especies"
-        const val TABLE_CAMPANHAS           = "campanhas"
-        const val TABLE_VALORES_VARIAVEIS   = "valores_variaveis"
-        const val TABLE_UNIDADES            = "unidades_amostrais"
-        const val TABLE_EVENTOS             = "eventos_amostragem"
-        const val TABLE_REGISTROS           = "registros_ocorrencia"
-        const val TABLE_IMAGENS_CACHE       = "imagens_cache"
+        const val TABLE_ESTUDOS = "estudos"
+        const val TABLE_VARIAVEIS = "variaveis"
+        const val TABLE_ESPECIES = "especies"
+        const val TABLE_CAMPANHAS = "campanhas"
+        const val TABLE_VALORES_VARIAVEIS = "valores_variaveis"
+        const val TABLE_UNIDADES = "unidades_amostrais"
+        const val TABLE_EVENTOS = "eventos_amostragem"
+        const val TABLE_REGISTROS = "registros_ocorrencia"
+        const val TABLE_IMAGENS_CACHE = "imagens_cache"
 
-        const val COL_LOCAL_ID      = "local_id"
-        const val COL_REMOTE_ID     = "remote_id"
-        const val COL_SINCRONIZADO  = "sincronizado"  
-        const val COL_CREATED_AT    = "created_at"
-        const val COL_UPDATED_AT    = "updated_at"
+        const val COL_LOCAL_ID = "local_id"
+        const val COL_REMOTE_ID = "remote_id"
+        const val COL_SINCRONIZADO = "sincronizado"
+        const val COL_CREATED_AT = "created_at"
+        const val COL_UPDATED_AT = "updated_at"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -55,7 +55,8 @@ class DatabaseHelper(context: Context) :
     }
 
     private fun migrarValoresVariaveisV4(db: SQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE valores_variaveis_v4 (
                 local_id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 sincronizado      INTEGER NOT NULL DEFAULT 0,
@@ -67,26 +68,29 @@ class DatabaseHelper(context: Context) :
                 variavel_remote_id INTEGER,
                 valor             TEXT NOT NULL
             )
-        """.trimIndent())
-        db.execSQL("""
+        """.trimIndent()
+        )
+        db.execSQL(
+            """
             INSERT INTO valores_variaveis_v4
                 (local_id, sincronizado, campanha_local_id, variavel_local_id, variavel_remote_id, valor)
             SELECT local_id, sincronizado, campanha_local_id, variavel_local_id, variavel_remote_id, valor
             FROM valores_variaveis
-        """.trimIndent())
+        """.trimIndent()
+        )
         db.execSQL("DROP TABLE valores_variaveis")
         db.execSQL("ALTER TABLE valores_variaveis_v4 RENAME TO valores_variaveis")
     }
 
     private fun removerDuplicatasRemoteId(db: SQLiteDatabase) {
         val alvos = listOf(
-            TABLE_ESTUDOS    to null,
-            TABLE_VARIAVEIS  to "estudo_local_id",
-            TABLE_ESPECIES   to "estudo_local_id",
-            TABLE_CAMPANHAS  to "estudo_local_id",
-            TABLE_UNIDADES   to "campanha_local_id",
-            TABLE_EVENTOS    to "unidade_local_id",
-            TABLE_REGISTROS  to "evento_local_id"
+            TABLE_ESTUDOS to null,
+            TABLE_VARIAVEIS to "estudo_local_id",
+            TABLE_ESPECIES to "estudo_local_id",
+            TABLE_CAMPANHAS to "estudo_local_id",
+            TABLE_UNIDADES to "campanha_local_id",
+            TABLE_EVENTOS to "unidade_local_id",
+            TABLE_REGISTROS to "evento_local_id"
         )
         alvos.forEach { (tabela, parentCol) ->
             val grupo = if (parentCol != null) "$parentCol, $COL_REMOTE_ID" else COL_REMOTE_ID

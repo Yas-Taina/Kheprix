@@ -3,7 +3,7 @@
 >Abundância: Quantidade de indivíduos de uma espécie, no total
 - Exemplo: Se você contou 45 abelhas da espécie Apis mellifera em um registro, e 15 em outro, a abundância é 60
 
->Amostra/Unidade Amostral: Um local onde a coleta foi feita. Nosso modelo já cadastra Unidades Amostrais 
+>Amostra/Unidade Amostral: Um local onde a coleta foi feita. O modelo de dados do sistema Kheprix já cadastra Unidades Amostrais 
 
 >Presença: A espécie foi encontrada (mesmo que só 1 indivíduo)
 
@@ -259,7 +259,7 @@ Michaelis-Menten (curva de acumulação)
 - Traduzindo para o nosso contexto, o "Parque" seria uma unidade amostral e cada "Visita" seria um evento de amostragem
 
 **Filtros
-Para todos os tipos de dados, fornecer filtro por data
-Para tipos de dados que não utilizam unidade amostral, fornecer filtro por area (latitude e longitude minimas e maximas) e nivel de estudo (Campanha, Unidade, Evento)
-Para tipos de dados que usam unidades amostrais, fornecer a opção de selecionar todas as amostras do estudo ou somente amostras da campanha
+Para todos os tipos de dados, filtro por data
+Para tipos de dados que não utilizam unidade amostral, filtro por area (latitude e longitude minimas e maximas) e nivel de estudo (Campanha, Unidade)
+Para tipos de dados que usam unidades amostrais, opção de selecionar todas as amostras do estudo ou somente amostras da campanha
 

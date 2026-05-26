@@ -32,13 +32,13 @@ class EstudoAdapter(
 ) : RecyclerView.Adapter<EstudoAdapter.ViewHolder>() {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvNome: TextView         = view.findViewById(R.id.tvEstudoNome)
-        val tvData: TextView         = view.findViewById(R.id.tvEstudoData)
-        val ivDelete: ImageView      = view.findViewById(R.id.ivDeleteEstudo)
+        val tvNome: TextView = view.findViewById(R.id.tvEstudoNome)
+        val tvData: TextView = view.findViewById(R.id.tvEstudoData)
+        val ivDelete: ImageView = view.findViewById(R.id.ivDeleteEstudo)
         val ivColaboradores: ImageView = view.findViewById(R.id.ivColaboradores)
         val btnSalvarOffline: Button = view.findViewById(R.id.btnSalvarOffline)
-        val btnLimpar: Button        = view.findViewById(R.id.btnLimparArmazenamento)
-        val btnAtualizar: Button     = view.findViewById(R.id.btnAtualizarDados)
+        val btnLimpar: Button = view.findViewById(R.id.btnLimparArmazenamento)
+        val btnAtualizar: Button = view.findViewById(R.id.btnAtualizarDados)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -58,12 +58,12 @@ class EstudoAdapter(
 
         if (item.salvosOffline) {
             holder.btnSalvarOffline.visibility = View.GONE
-            holder.btnLimpar.visibility        = View.VISIBLE
-            holder.btnAtualizar.visibility     = View.VISIBLE
+            holder.btnLimpar.visibility = View.VISIBLE
+            holder.btnAtualizar.visibility = View.VISIBLE
         } else {
             holder.btnSalvarOffline.visibility = View.VISIBLE
-            holder.btnLimpar.visibility        = View.GONE
-            holder.btnAtualizar.visibility     = View.GONE
+            holder.btnLimpar.visibility = View.GONE
+            holder.btnAtualizar.visibility = View.GONE
         }
 
         holder.itemView.setOnClickListener { onItemClick(item) }

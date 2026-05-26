@@ -33,32 +33,32 @@ class PerfilActivity : BaseDrawerActivity() {
     }
 
     private fun exibirDadosUsuario() {
-        val nome  = SessionManager.getUserName()
+        val nome = SessionManager.getUserName()
         val email = SessionManager.getUserEmail()
 
-        binding.tvNomeUsuario.text  = nome  ?: "—"
+        binding.tvNomeUsuario.text = nome ?: "—"
         binding.tvEmailUsuario.text = email ?: "—"
     }
 
     private fun exibirResumoOffline() {
         lifecycleScope.launch {
             val manager = EstudoOfflineManager(this@PerfilActivity)
-            val dao     = EstudoDao(this@PerfilActivity)
+            val dao = EstudoDao(this@PerfilActivity)
 
             try {
-                val token    = SessionManager.getAuthHeader()
+                val token = SessionManager.getAuthHeader()
                 val response = RetrofitClient.apiService.getEstudos(token)
 
                 if (response.isSuccessful) {
-                    val apiEstudos  = response.body() ?: emptyList()
-                    val remoteIds   = apiEstudos.map { it.id }.toSet()
+                    val apiEstudos = response.body() ?: emptyList()
+                    val remoteIds = apiEstudos.map { it.id }.toSet()
                     val estudosOnline = apiEstudos.size
 
                     val locais = dao.listarTodos()
 
                     val estudosApenasLocal = locais.count { local ->
                         (local.remoteId == null || local.remoteId !in remoteIds) &&
-                            manager.isExplicitamenteSalvoOffline(local.localId)
+                                manager.isExplicitamenteSalvoOffline(local.localId)
                     }
 
                     // Registros offline de estudos online
@@ -79,12 +79,10 @@ class PerfilActivity : BaseDrawerActivity() {
                     mostrarResumo(online = true, estudosOnline, estudosApenasLocal, totalOffline)
                     return@launch
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
 
-            // Fallback: sem rede ou erro de API
-            // Não exibe contagem online — dados locais com remoteId são potencialmente stale.
-            // Mostra apenas estudos explicitamente salvos offline pelo usuário.
-            var totalOffline       = 0
+            var totalOffline = 0
             var estudosApenasLocal = 0
             dao.listarTodos().forEach { local ->
                 if (manager.isExplicitamenteSalvoOffline(local.localId)) {
@@ -96,16 +94,25 @@ class PerfilActivity : BaseDrawerActivity() {
         }
     }
 
-    private fun mostrarResumo(online: Boolean, estudosOnline: Int, estudosApenasLocal: Int, totalOffline: Int) {
+    private fun mostrarResumo(
+        online: Boolean,
+        estudosOnline: Int,
+        estudosApenasLocal: Int,
+        totalOffline: Int
+    ) {
         binding.tvEstudosLocais.text = when {
             !online && estudosApenasLocal > 0 ->
                 "$estudosApenasLocal estudo(s) salvo(s) localmente"
+
             !online ->
                 "sem conexão"
+
             estudosApenasLocal > 0 && estudosOnline > 0 ->
                 "$estudosOnline estudo(s) online · $estudosApenasLocal salvo(s) localmente"
+
             estudosApenasLocal > 0 ->
                 "$estudosApenasLocal estudo(s) salvo(s) localmente"
+
             else ->
                 "$estudosOnline estudo(s) online"
         }

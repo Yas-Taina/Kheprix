@@ -1,19 +1,11 @@
-# =============================================================================
 # Script de Teste para API de Análises do Sistema Kheprix
-# =============================================================================
 library(httr)
 library(jsonlite)
 
 base_url <- "http://localhost:8000"
 
-# =============================================================================
-# Contadores de resultado
-# =============================================================================
 resultados <- list(sucesso = 0, erro = 0, falha = c())
 
-# =============================================================================
-# Função auxiliar para testar endpoints
-# =============================================================================
 testar_endpoint <- function(endpoint, dados, nome_teste, mostrar_resultado = TRUE) {
   cat("\n====================================\n")
   cat("Testando:", nome_teste, "\n")
@@ -68,11 +60,6 @@ testar_endpoint <- function(endpoint, dados, nome_teste, mostrar_resultado = TRU
   })
 }
 
-# =============================================================================
-# DADOS DE TESTE
-# =============================================================================
-
-# --- Abundâncias simples (vetor) ---
 nomes_especies_exemplo <- c(
   "Apis mellifera", "Bombus terrestris", "Xylocopa violacea",
   "Megachile rotundata", "Osmia bicornis", "Lasioglossum malachurum",
@@ -85,7 +72,6 @@ abundancias_teste <- list(
   nomes_especies = nomes_especies_exemplo
 )
 
-# --- Presença/Ausência (para Chao2, ICE, Jaccard, Sørensen) ---
 dados_pa_teste <- list(
   abundancias_por_amostra = list(
     c(1, 0, 1, 0, 1),
@@ -98,7 +84,6 @@ dados_pa_teste <- list(
   nomes_amostras = c("Unidade_A1", "Unidade_A2", "Unidade_B1", "Unidade_B2")
 )
 
-# --- Abundâncias por amostra (para Bray-Curtis, Morisita-Horn, nMDS, PCA) ---
 dados_abundancia_teste <- list(
   abundancias_por_amostra = list(
     c(5, 2, 3, 1),
@@ -111,8 +96,6 @@ dados_abundancia_teste <- list(
   nomes_amostras = c("Local_Norte", "Local_Sul", "Local_Leste", "Local_Oeste")
 )
 
-# --- RDA/CCA com 3 variáveis (amostras > variáveis — sem colinearidade) ---
-# IMPORTANTE: usar mais amostras do que variáveis para evitar overfitting
 dados_rda_cca_teste <- list(
   abundancias_por_amostra = list(
     c(5, 2, 3),
@@ -135,7 +118,6 @@ dados_rda_cca_teste <- list(
   nomes_variaveis_ambientais  = c("Temperatura_C", "pH_Solo", "Umidade_pct")
 )
 
-# --- RDA/CCA com 5 variáveis (mais amostras para evitar overfitting) ---
 dados_rda_5vars_teste <- list(
   abundancias_por_amostra = list(
     c(5, 2, 3, 1),
@@ -165,7 +147,6 @@ dados_rda_5vars_teste <- list(
                                  "Altitude_m", "Cobertura_Vegetal_pct")
 )
 
-# --- Grupos (Teste T, Kruskal-Wallis, ANOVA) ---
 dados_grupos_teste <- list(
   grupo1      = c(12, 15, 14, 10, 13, 16),
   grupo2      = c(18, 20, 19, 22, 21, 17),
@@ -181,7 +162,6 @@ dados_anova_teste <- list(
   nome_variavel = "Riqueza_de_Especies"
 )
 
-# --- Correlação / Regressão ---
 dados_correlacao_teste <- list(
   x      = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
   y      = c(2.1, 4.3, 5.8, 7.9, 10.2, 12.1, 14.5, 16.3, 18.8, 20.5),
@@ -189,20 +169,17 @@ dados_correlacao_teste <- list(
   nome_y = "Riqueza_Especies"
 )
 
-# --- Normalidade (Shapiro-Wilk) ---
-set.seed(42)  # semente fixa para reprodutibilidade
+set.seed(42) 
 dados_normalidade_teste <- list(
   dados         = round(rnorm(50, mean = 100, sd = 15), 2),
   nome_variavel = "Abundancia_Total"
 )
 
-# --- McNaughton ---
 dados_mcnaughton_teste <- list(
   abundancias    = c(45, 23, 12, 8, 5, 3, 2, 2, 1, 1, 1),
   nomes_especies = nomes_especies_exemplo
 )
 
-# --- GLM (Gaussiano, Poisson, Binomial Negativa) ---
 dados_glm_teste <- list(
   y      = c(5, 12, 8, 15, 3, 18, 7, 20),
   x      = c(10, 15, 12, 18, 8, 22, 11, 25),
@@ -210,7 +187,6 @@ dados_glm_teste <- list(
   nome_x = "Area_ha"
 )
 
-# --- GLM Gamma (variável resposta positiva contínua) ---
 dados_glm_gamma_teste <- list(
   y      = c(2.5, 5.2, 3.8, 6.5, 1.3, 8.8, 4.7, 10.2),
   x      = c(10, 15, 12, 18, 8, 22, 11, 25),
@@ -218,7 +194,6 @@ dados_glm_gamma_teste <- list(
   nome_x = "Area_ha"
 )
 
-# --- Kolmogorov-Smirnov ---
 dados_ks_teste <- list(
   amostra1      = c(12, 15, 14, 10, 13, 16, 11, 14, 15, 12),
   amostra2      = c(18, 20, 19, 22, 21, 17, 19, 20, 18, 21),
@@ -226,7 +201,6 @@ dados_ks_teste <- list(
   nome_amostra2 = "Local_B"
 )
 
-# --- Michaelis-Menten (matriz de acumulação, amostras em linhas) ---
 matriz_acumulacao_teste <- list(
   matriz = matrix(c(
     5, 2, 3, 1, 0, 0,
@@ -236,16 +210,10 @@ matriz_acumulacao_teste <- list(
   ), nrow = 4, byrow = TRUE)
 )
 
-# =============================================================================
-# EXECUÇÃO DOS TESTES
-# =============================================================================
-
 cat("\n")
-cat("=============================================================================\n")
-cat("  Iniciando testes da API Kheprix\n")
-cat("=============================================================================\n")
 
-# --- Health Check ---
+cat("  Iniciando testes da API Kheprix\n")
+
 cat("\n[Health Check]\n")
 tryCatch({
   resposta <- GET(paste0(base_url, "/health"))
@@ -333,13 +301,8 @@ testar_endpoint("/analise/modelo_poisson_grafico",  dados_glm_teste,       "Mode
 testar_endpoint("/analise/modelo_binomial_negativa",dados_glm_teste,       "Modelo Binomial Negativa")
 testar_endpoint("/analise/modelo_binomial_grafico", dados_glm_teste,       "Modelo Binomial Negativa (Grafico)")
 
-# =============================================================================
-# RESUMO FINAL
-# =============================================================================
 cat("\n\n")
-cat("=============================================================================\n")
 cat("  RESUMO DOS TESTES\n")
-cat("=============================================================================\n")
 cat("  Sucesso : ", resultados$sucesso, "\n")
 cat("  Erro    : ", resultados$erro, "\n")
 total <- resultados$sucesso + resultados$erro
@@ -353,4 +316,3 @@ if (resultados$erro > 0) {
 } else {
   cat("\n  Todos os endpoints responderam com sucesso!\n")
 }
-cat("=============================================================================\n\n")

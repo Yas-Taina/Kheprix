@@ -108,7 +108,8 @@ class OfflineRepository(context: Context) {
                 put(COL_UPDATED_AT, nowIso())
             }
             db.update(TABLE_CAMPANHAS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
-            substituirValores(db, "campanha_local_id", localId,
+            substituirValores(
+                db, "campanha_local_id", localId,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
         }
     }
@@ -171,7 +172,8 @@ class OfflineRepository(context: Context) {
                 put(COL_CREATED_AT, now)
                 put(COL_UPDATED_AT, now)
             })
-            salvarValores(db, "unidade_local_id", id,
+            salvarValores(
+                db, "unidade_local_id", id,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
             id
         }
@@ -191,7 +193,8 @@ class OfflineRepository(context: Context) {
                 put(COL_UPDATED_AT, nowIso())
             }
             db.update(TABLE_UNIDADES, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
-            substituirValores(db, "unidade_local_id", localId,
+            substituirValores(
+                db, "unidade_local_id", localId,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
         }
     }
@@ -208,7 +211,8 @@ class OfflineRepository(context: Context) {
                 put("esforco_real", req.esforcoReal)
                 put(COL_CREATED_AT, nowIso())
             })
-            salvarValores(db, "evento_local_id", id,
+            salvarValores(
+                db, "evento_local_id", id,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
             id
         }
@@ -224,12 +228,17 @@ class OfflineRepository(context: Context) {
                 put(COL_SINCRONIZADO, 0)
             }
             db.update(TABLE_EVENTOS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
-            substituirValores(db, "evento_local_id", localId,
+            substituirValores(
+                db, "evento_local_id", localId,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
         }
     }
 
-    fun editarRegistroOffline(localId: Long, req: RegistroPatchRequest, especieLocalId: Long? = null) {
+    fun editarRegistroOffline(
+        localId: Long,
+        req: RegistroPatchRequest,
+        especieLocalId: Long? = null
+    ) {
         val db = dbHelper.writableDatabase
         db.transactionTo {
             val cv = ContentValues().apply {
@@ -245,14 +254,16 @@ class OfflineRepository(context: Context) {
                 put(COL_SINCRONIZADO, 0)
             }
             db.update(TABLE_REGISTROS, cv, "$COL_LOCAL_ID = ?", arrayOf(localId.toString()))
-            substituirValores(db, "registro_local_id", localId,
+            substituirValores(
+                db, "registro_local_id", localId,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
         }
     }
 
     fun cacheRegistro(eventoLocalId: Long, especieLocalId: Long, r: RegistroResponse): Long {
         val db = dbHelper.writableDatabase
-        val existing = findLocalIdByRemote(db, TABLE_REGISTROS, r.id, "evento_local_id", eventoLocalId)
+        val existing =
+            findLocalIdByRemote(db, TABLE_REGISTROS, r.id, "evento_local_id", eventoLocalId)
         val cv = ContentValues().apply {
             put(COL_REMOTE_ID, r.id)
             put(COL_SINCRONIZADO, 1)
@@ -275,8 +286,10 @@ class OfflineRepository(context: Context) {
             } else {
                 db.insertOrThrow(TABLE_REGISTROS, null, cv)
             }
-            substituirValores(db, "registro_local_id", localId,
-                r.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            substituirValores(
+                db, "registro_local_id", localId,
+                r.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1
+            )
             localId
         }
     }
@@ -304,7 +317,8 @@ class OfflineRepository(context: Context) {
                 put("ausencia_especie", req.ausenciaEspecie?.let { if (it) 1 else 0 })
                 put(COL_CREATED_AT, nowIso())
             })
-            salvarValores(db, "registro_local_id", id,
+            salvarValores(
+                db, "registro_local_id", id,
                 req.valoresVariaveis?.map { it.variavelId to it.valor })
             id
         }
@@ -386,7 +400,12 @@ class OfflineRepository(context: Context) {
                     put(COL_UPDATED_AT, v.updatedAt)
                 }
                 if (existing != null) {
-                    db.update(TABLE_VARIAVEIS, cv, "$COL_LOCAL_ID = ?", arrayOf(existing.toString()))
+                    db.update(
+                        TABLE_VARIAVEIS,
+                        cv,
+                        "$COL_LOCAL_ID = ?",
+                        arrayOf(existing.toString())
+                    )
                 } else {
                     db.insertOrThrow(TABLE_VARIAVEIS, null, cv)
                 }
@@ -396,7 +415,8 @@ class OfflineRepository(context: Context) {
 
     fun cacheCampanha(estudoLocalId: Long, c: CampanhaResponse): Long {
         val db = dbHelper.writableDatabase
-        val existing = findLocalIdByRemote(db, TABLE_CAMPANHAS, c.id, "estudo_local_id", estudoLocalId)
+        val existing =
+            findLocalIdByRemote(db, TABLE_CAMPANHAS, c.id, "estudo_local_id", estudoLocalId)
         val cv = ContentValues().apply {
             put(COL_REMOTE_ID, c.id)
             put(COL_SINCRONIZADO, 1)
@@ -416,8 +436,10 @@ class OfflineRepository(context: Context) {
                 db.insertOrThrow(TABLE_CAMPANHAS, null, cv)
             }
             if (!c.valoresVariaveis.isNullOrEmpty()) {
-                substituirValores(db, "campanha_local_id", localId,
-                    c.valoresVariaveis.map { it.variavelId to it.valor }, sincronizado = 1)
+                substituirValores(
+                    db, "campanha_local_id", localId,
+                    c.valoresVariaveis.map { it.variavelId to it.valor }, sincronizado = 1
+                )
             }
             localId
         }
@@ -425,7 +447,8 @@ class OfflineRepository(context: Context) {
 
     fun cacheUnidade(campanhaLocalId: Long, u: UnidadeResponse): Long {
         val db = dbHelper.writableDatabase
-        val existing = findLocalIdByRemote(db, TABLE_UNIDADES, u.id, "campanha_local_id", campanhaLocalId)
+        val existing =
+            findLocalIdByRemote(db, TABLE_UNIDADES, u.id, "campanha_local_id", campanhaLocalId)
         val cv = ContentValues().apply {
             put(COL_REMOTE_ID, u.id)
             put(COL_SINCRONIZADO, 1)
@@ -446,15 +469,18 @@ class OfflineRepository(context: Context) {
             } else {
                 db.insertOrThrow(TABLE_UNIDADES, null, cv)
             }
-            substituirValores(db, "unidade_local_id", localId,
-                u.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            substituirValores(
+                db, "unidade_local_id", localId,
+                u.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1
+            )
             localId
         }
     }
 
     fun cacheEvento(unidadeLocalId: Long, e: EventoResponse): Long {
         val db = dbHelper.writableDatabase
-        val existing = findLocalIdByRemote(db, TABLE_EVENTOS, e.id, "unidade_local_id", unidadeLocalId)
+        val existing =
+            findLocalIdByRemote(db, TABLE_EVENTOS, e.id, "unidade_local_id", unidadeLocalId)
         val cv = ContentValues().apply {
             put(COL_REMOTE_ID, e.id)
             put(COL_SINCRONIZADO, 1)
@@ -471,15 +497,18 @@ class OfflineRepository(context: Context) {
             } else {
                 db.insertOrThrow(TABLE_EVENTOS, null, cv)
             }
-            substituirValores(db, "evento_local_id", localId,
-                e.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1)
+            substituirValores(
+                db, "evento_local_id", localId,
+                e.valoresVariaveis?.map { it.variavelId to it.valor }, sincronizado = 1
+            )
             localId
         }
     }
 
     fun cacheEspecie(estudoLocalId: Long, e: EspecieResponse): Long {
         val db = dbHelper.writableDatabase
-        val existing = findLocalIdByRemote(db, TABLE_ESPECIES, e.id, "estudo_local_id", estudoLocalId)
+        val existing =
+            findLocalIdByRemote(db, TABLE_ESPECIES, e.id, "estudo_local_id", estudoLocalId)
         val cv = ContentValues().apply {
             put(COL_REMOTE_ID, e.id)
             put(COL_SINCRONIZADO, 1)
@@ -524,11 +553,13 @@ class OfflineRepository(context: Context) {
         ).use { c ->
             while (c.moveToNext()) {
                 val remoteId = if (c.isNull(0)) null else c.getInt(0)
-                val localId  = c.getLong(1)
-                list.add(ValorVariavelResponse(
-                    variavelId = remoteId ?: -localId.toInt(),
-                    valor = c.getString(2)
-                ))
+                val localId = c.getLong(1)
+                list.add(
+                    ValorVariavelResponse(
+                        variavelId = remoteId ?: -localId.toInt(),
+                        valor = c.getString(2)
+                    )
+                )
             }
         }
         return list
@@ -544,20 +575,22 @@ class OfflineRepository(context: Context) {
             while (c.moveToNext()) {
                 val localId = c.getLong(0)
                 val remoteId = if (c.isNull(1)) null else c.getInt(1)
-                list.add(EspecieResponse(
-                    id = remoteId ?: -localId.toInt(),
-                    estudoId = c.getLong(2).toInt(),
-                    foto = c.getString(3),
-                    classe = c.getString(4),
-                    ordem = c.getString(5),
-                    familia = c.getString(6),
-                    genero = c.getString(7),
-                    especie = c.getString(8),
-                    nomePopular = c.getString(9),
-                    statusConservacao = c.getString(10),
-                    endemismo = c.getInt(11) == 1,
-                    createdAt = c.getString(12) ?: ""
-                ))
+                list.add(
+                    EspecieResponse(
+                        id = remoteId ?: -localId.toInt(),
+                        estudoId = c.getLong(2).toInt(),
+                        foto = c.getString(3),
+                        classe = c.getString(4),
+                        ordem = c.getString(5),
+                        familia = c.getString(6),
+                        genero = c.getString(7),
+                        especie = c.getString(8),
+                        nomePopular = c.getString(9),
+                        statusConservacao = c.getString(10),
+                        endemismo = c.getInt(11) == 1,
+                        createdAt = c.getString(12) ?: ""
+                    )
+                )
             }
         }
         return list

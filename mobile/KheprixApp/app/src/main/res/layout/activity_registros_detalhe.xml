@@ -2,53 +2,83 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#EDE9DE">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#EDE9DE">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent" android:layout_height="96dp"
-        android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="#A8B89A"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-        <ImageView android:id="@+id/ivMenuLateral"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+        <ImageView
+            android:id="@+id/ivMenuLateral"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_menu"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
             app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <ImageView android:layout_width="120dp" android:layout_height="95dp"
-            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
-            android:contentDescription="Kheprix" android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle"
+            android:alpha="0.7"
+            android:contentDescription="Kheprix"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <ImageView android:id="@+id/ivPerfil"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+        <ImageView
+            android:id="@+id/ivPerfil"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_profile"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
             app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingBottom="40dp">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-            <TextView android:id="@+id/tvTitulo"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="40dp">
+
+            <TextView
+                android:id="@+id/tvTitulo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="Registro de Ocorrência"
-                android:textSize="26sp" android:textColor="#4A5240"
-                android:fontFamily="serif" android:gravity="center"
-                android:layout_marginTop="20dp"/>
+                android:textSize="26sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="20dp" />
 
             <ImageView
                 android:layout_width="match_parent"
@@ -64,105 +94,196 @@
                 app:tint="@color/kheprix_green" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent" android:layout_height="wrap_content">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                <ImageView android:id="@+id/ivFoto"
-                    android:layout_width="160dp" android:layout_height="160dp"
+                <ImageView
+                    android:id="@+id/ivFoto"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
                     android:src="@drawable/ic_placeholder_beetle"
                     android:scaleType="centerCrop"
                     android:contentDescription="Foto do registro"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
+                    app:layout_constraintTop_toTopOf="parent" />
 
-                <ImageView android:id="@+id/ivEditar"
-                    android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_pen" android:scaleType="fitCenter"
+                <ImageView
+                    android:id="@+id/ivEditar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_pen"
+                    android:scaleType="fitCenter"
                     android:contentDescription="Editar"
-                    android:clickable="true" android:focusable="true"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:layout_constraintStart_toEndOf="@id/ivFoto"
                     app:layout_constraintTop_toTopOf="@id/ivFoto"
                     android:layout_marginStart="8dp"
-                    app:tint="@color/kheprix_green"/>
+                    app:tint="@color/kheprix_green" />
 
-                <ImageView android:id="@+id/ivDeletar"
-                    android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_delete" android:scaleType="fitCenter"
+                <ImageView
+                    android:id="@+id/ivDeletar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_delete"
+                    android:scaleType="fitCenter"
                     android:contentDescription="Deletar"
-                    android:clickable="true" android:focusable="true"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:layout_constraintStart_toEndOf="@id/ivFoto"
                     app:layout_constraintTop_toBottomOf="@id/ivEditar"
-                    android:layout_marginStart="8dp" android:layout_marginTop="8dp"
-                    app:tint="@color/kheprix_red"/>
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    app:tint="@color/kheprix_red" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Nome Científico:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="16dp"/>
-            <TextView android:id="@+id/tvNomeCientifico"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nome Científico:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:id="@+id/tvNomeCientifico"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="—"
-                android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace" android:textStyle="italic"/>
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace"
+                android:textStyle="italic" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Nome Popular:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvNomePopular"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nome Popular:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Quantidade de indivíduos:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvQtde"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:id="@+id/tvNomePopular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Latitude:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvLatitude"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quantidade de indivíduos:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Longitude:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvLongitude"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:id="@+id/tvQtde"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Data:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvData"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Latitude:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Hora:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="10dp"/>
-            <TextView android:id="@+id/tvHora"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="15sp" android:textColor="#4A5240"
-                android:fontFamily="monospace"/>
+            <TextView
+                android:id="@+id/tvLatitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
 
-            <TextView android:id="@+id/tvVariaveisTitle"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Variáveis:" android:textSize="15sp" android:textColor="#6B7A5E"
-                android:fontFamily="monospace" android:layout_marginTop="14dp"
-                android:visibility="gone"/>
-            <LinearLayout android:id="@+id/layoutVariaveis"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:layout_marginTop="4dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Longitude:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
+
+            <TextView
+                android:id="@+id/tvLongitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Data:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
+
+            <TextView
+                android:id="@+id/tvData"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hora:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="10dp" />
+
+            <TextView
+                android:id="@+id/tvHora"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="15sp"
+                android:textColor="#4A5240"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tvVariaveisTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Variáveis:"
+                android:textSize="15sp"
+                android:textColor="#6B7A5E"
+                android:fontFamily="monospace"
+                android:layout_marginTop="14dp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/layoutVariaveis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp" />
 
         </LinearLayout>
     </ScrollView>
