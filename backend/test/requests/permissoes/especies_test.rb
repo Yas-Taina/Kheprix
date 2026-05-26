@@ -20,7 +20,6 @@ class PermissoesEspeciesTest < PermissoesBase
 
   PARAMS_EDITAR = { classe: "Reptilia" }.freeze
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar especies" do
     get "/estudos/#{@estudo.id}/especies", headers: auth(@token_prop)
     assert_response :ok
@@ -41,8 +40,6 @@ class PermissoesEspeciesTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
-  # Envia como JSON para que `endemismo: false` chegue como booleano (não string "false")
   test "proprietario pode criar especie" do
     post "/estudos/#{@estudo.id}/especies",
          params: PARAMS_CRIAR,
@@ -71,7 +68,6 @@ class PermissoesEspeciesTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode atualizar especie" do
     patch "/estudos/#{@estudo.id}/especies/#{@especie.id}",
           params: PARAMS_EDITAR,
@@ -98,7 +94,6 @@ class PermissoesEspeciesTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
   test "proprietario pode deletar especie" do
     delete "/estudos/#{@estudo.id}/especies/#{@especie.id}",
            headers: auth(@token_prop)

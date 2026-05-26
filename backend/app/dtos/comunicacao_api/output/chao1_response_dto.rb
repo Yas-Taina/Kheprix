@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/chao1
     class Chao1ResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_chao1, :singletons,
                   :doubletons, :especies_nao_detectadas_estimadas

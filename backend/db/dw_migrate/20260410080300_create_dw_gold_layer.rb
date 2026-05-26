@@ -1,14 +1,7 @@
 class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
   def change
-    # =========================================================================
-    # CAMADA GOLD: Modelo Dimensional (Kimball Star Schema)
-    # Responsabilidade: construir dimensões com JOINs e regras de negócio,
-    # e tabelas fato com métricas consolidadas.
-    # =========================================================================
-
-    # --- Dimensão Tempo ---
     create_table :dim_tempo, id: false do |t|
-      t.integer :id_data, primary_key: true  # surrogate key YYYYMMDD
+      t.integer :id_data, primary_key: true 
       t.date    :data_completa
       t.integer :dia
       t.integer :mes
@@ -17,7 +10,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.string  :estacao, limit: 50
     end
 
-    # --- Dimensão Espécie ---
     create_table :dim_especie, id: false do |t|
       t.integer :id_especie, primary_key: true
       t.string  :nome_cientifico,    limit: 255
@@ -30,7 +22,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.string  :status_conservacao, limit: 100
     end
 
-    # --- Dimensão Variável (Metadata EAV) ---
     create_table :dim_variavel, id: false do |t|
       t.integer   :id, primary_key: true
       t.string    :nome,            limit: 255
@@ -41,14 +32,12 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.timestamp :updated_at
     end
 
-    # --- Nível 4: Dimensão Estudo ---
     create_table :dim_estudo, id: false do |t|
       t.integer :id_estudo, primary_key: true
       t.string  :nome_estudo, limit: 255
       t.jsonb   :variaveis_customizadas, default: {}
     end
 
-    # --- Nível 3: Dimensão Campanha ---
     create_table :dim_campanha, id: false do |t|
       t.integer   :id_campanha, primary_key: true
       t.integer   :fk_estudo, null: false
@@ -60,7 +49,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
     end
     add_foreign_key :dim_campanha, :dim_estudo, column: :fk_estudo, primary_key: :id_estudo
 
-    # --- Nível 2: Dimensão Unidade Amostral ---
     create_table :dim_unidade_amostral, id: false do |t|
       t.integer :id_unidade, primary_key: true
       t.integer :fk_campanha, null: false
@@ -74,7 +62,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
     end
     add_foreign_key :dim_unidade_amostral, :dim_campanha, column: :fk_campanha, primary_key: :id_campanha
 
-    # --- Nível 1: Dimensão Evento Amostragem ---
     create_table :dim_evento_amostragem, id: false do |t|
       t.integer   :id_evento, primary_key: true
       t.integer   :fk_unidade_amostral, null: false
@@ -85,7 +72,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
     end
     add_foreign_key :dim_evento_amostragem, :dim_unidade_amostral, column: :fk_unidade_amostral, primary_key: :id_unidade
 
-    # --- Dimensão Registro de Ocorrência ---
     create_table :dim_registro_ocorrencia, id: false do |t|
       t.integer   :id_registro, primary_key: true
       t.integer   :especie_id
@@ -94,14 +80,9 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.decimal   :latitude,  precision: 10, scale: 8
       t.decimal   :longitude, precision: 11, scale: 8
       t.timestamp :data_atualizacao
-      t.integer   :quantidade_apurada  # regra de negócio: 0 se ausencia_especie
+      t.integer   :quantidade_apurada 
     end
 
-    # =========================================================================
-    # CAMADA GOLD: TABELAS FATO
-    # =========================================================================
-
-    # --- Fato: Medição Entomológica (Abundância) ---
     create_table :fato_medicao_entomologica, id: false do |t|
       t.integer :id_registro,        primary_key: true
       t.integer :fk_data,            null: false
@@ -115,7 +96,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.integer :quantidade, null: false
     end
 
-    # --- Fato: Variáveis Unificadas (EAV Gold) ---
     create_table :fato_variaveis_unificadas, id: false do |t|
       t.integer   :id_registro,       null: false
       t.integer   :id_variavel,       null: false
@@ -127,7 +107,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.timestamp :updated_at
     end
 
-    # --- FKs: Medição Entomológica → Dimensões ---
     add_foreign_key :fato_medicao_entomologica, :dim_tempo,           column: :fk_data,             primary_key: :id_data
     add_foreign_key :fato_medicao_entomologica, :dim_especie,         column: :fk_especie,          primary_key: :id_especie
     add_foreign_key :fato_medicao_entomologica, :dim_estudo,          column: :fk_estudo,           primary_key: :id_estudo
@@ -135,18 +114,13 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
     add_foreign_key :fato_medicao_entomologica, :dim_unidade_amostral, column: :fk_unidade_amostral, primary_key: :id_unidade
     add_foreign_key :fato_medicao_entomologica, :dim_evento_amostragem, column: :fk_evento,         primary_key: :id_evento
 
-    # --- FKs: Variáveis Unificadas ---
     add_foreign_key :fato_variaveis_unificadas, :dim_registro_ocorrencia, column: :id_registro, primary_key: :id_registro
     add_foreign_key :fato_variaveis_unificadas, :dim_variavel,              column: :id_variavel, primary_key: :id
 
-    # --- Índices ---
     add_index :fato_variaveis_unificadas,    [:id_registro, :id_variavel], unique: true, name: 'idx_fato_vars_unique'
     add_index :fato_medicao_entomologica,    [:fk_data, :fk_especie, :fk_estudo], name: 'idx_fato_entomo_busca'
     add_index :fato_variaveis_unificadas,    :id_variavel
 
-    # =========================================================================
-    # LOG DE EXECUÇÃO DO ETL
-    # =========================================================================
     create_table :log_execucao_etl do |t|
       t.string    :dag_id,                null: false
       t.string    :run_id
@@ -156,7 +130,6 @@ class CreateDwGoldLayer < ActiveRecord::Migration[8.0]
       t.integer   :registros_processados
       t.text      :detalhes
     end
-    # Constraint necessária para ON CONFLICT (dag_id, run_id) funcionar corretamente no log ETL
     add_index :log_execucao_etl, [:dag_id, :run_id], unique: true, name: 'idx_log_etl_dag_run'
   end
 end

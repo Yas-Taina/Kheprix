@@ -1,13 +1,6 @@
 # frozen_string_literal: true
 
 class ServicoAnalise
-  # Requisitos estatisticos da variavel resposta (y) por familia GLM. A API R
-  # faz as.integer(y) silencioso pra Poisson/Binomial Negativa — sem este
-  # pre-check, o usuario poderia mandar uma variavel continua (pH, temperatura)
-  # como y e receber um modelo ajustado em valores truncados, estatisticamente
-  # incorreto, sem nenhum aviso. Pra Gamma a R fala "non-positive values not
-  # allowed" mas em ingles e abaixo da camada de servico — pre-check aqui devolve
-  # mensagem em PT antes de chegar nela.
   GLM_REQUISITOS_Y = {
     "modelo_poisson"           => :contagens,
     "modelo_binomial_negativa" => :contagens,
@@ -183,8 +176,6 @@ class ServicoAnalise
     end
   end
 
-  # A API R usa nomes de campos diferentes para algumas análises.
-  # Ex: KS espera amostra1/amostra2 em vez de grupo1/grupo2.
   def adaptar_campos(chave, dados)
     case chave
     when "ks"

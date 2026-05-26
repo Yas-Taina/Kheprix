@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/modelo_gamma
     class GlmGammaResponseDto
       attr_reader :aic, :deviance, :coeficientes,
                   :nome_resposta, :nome_preditor, :familia, :interpretacao

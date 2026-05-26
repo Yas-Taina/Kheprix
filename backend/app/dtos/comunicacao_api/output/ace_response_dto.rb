@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/ace
     class AceResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_ace,
                   :especies_nao_detectadas_estimadas

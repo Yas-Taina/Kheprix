@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: anova, kruskal
-    # valores e grupos devem ter o mesmo tamanho
     class MultiplosGruposInputDto
       include ActiveModel::API
 

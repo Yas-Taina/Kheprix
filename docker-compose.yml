@@ -123,7 +123,6 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY}
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
       CHATBOT_INTERNAL_KEY: ${CHATBOT_INTERNAL_KEY}
-      # Usuário read-only dedicado — só SELECT em indicadores_dashboard e analises_estatisticas
       POSTGRES_DW_HOST: db_dw
       POSTGRES_DW_PORT: 5432
       POSTGRES_DW_USER: ${POSTGRES_DW_CHATBOT_USER:-kheprix_chatbot_ro}

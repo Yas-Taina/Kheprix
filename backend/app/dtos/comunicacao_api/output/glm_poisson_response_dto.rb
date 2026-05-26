@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/modelo_poisson
     class GlmPoissonResponseDto
       attr_reader :aic, :deviance, :coeficientes, :sobredispersao,
                   :nome_resposta, :nome_preditor, :familia, :interpretacao, :nota_sobredispersao

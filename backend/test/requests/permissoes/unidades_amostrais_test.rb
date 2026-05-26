@@ -20,7 +20,6 @@ class PermissoesUnidadesAmostraisTest < PermissoesBase
   PARAMS_CRIAR = { nome: "UA Nova", latitude: -16.0, longitude: -48.0 }.freeze
   PARAMS_EDITAR = { nome: "UA Editada", latitude: -16.5, longitude: -48.5 }.freeze
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar unidades amostrais" do
     get base_url, headers: auth(@token_prop)
     assert_response :ok
@@ -41,7 +40,6 @@ class PermissoesUnidadesAmostraisTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode criar unidade amostral" do
     post base_url, params: PARAMS_CRIAR, headers: auth(@token_prop)
     assert_response :created
@@ -62,7 +60,6 @@ class PermissoesUnidadesAmostraisTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode atualizar unidade amostral" do
     patch "#{base_url}/#{@unidade.id}", params: PARAMS_EDITAR, headers: auth(@token_prop)
     assert_response :ok
@@ -83,7 +80,6 @@ class PermissoesUnidadesAmostraisTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
   test "proprietario pode deletar unidade amostral" do
     delete "#{base_url}/#{@unidade.id}", headers: auth(@token_prop)
     assert_response :no_content

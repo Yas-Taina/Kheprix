@@ -2,10 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: ks (Kolmogorov-Smirnov)
-    # Suporta dois modos:
-    # - Duas amostras: amostra1 + amostra2 + labels opcionais
-    # - Uma amostra vs distribuição teórica: amostra + distribuicao (ex: "pnorm")
     class KsInputDto
       include ActiveModel::API
 

@@ -5,7 +5,6 @@ class RegistroOcorrencia < ApplicationRecord
 
   include SoftDeletavel
 
-  # 1. Associações
   belongs_to :evento_amostragem
   belongs_to :especie
   has_many :valores_variaveis,
@@ -13,7 +12,6 @@ class RegistroOcorrencia < ApplicationRecord
     foreign_key: :id_nivel_aplicacao,
     dependent: :destroy
 
-  # 2. Validações
   validates :evento_amostragem_id, presence: true
   validates :especie_id, presence: true
   validates :data, presence: true
@@ -21,15 +19,12 @@ class RegistroOcorrencia < ApplicationRecord
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
-  # 2.1 Callbacks
   before_validation :zerar_qtde_individuos_se_ausencia
 
-  # 3. Scopes
   scope :do_evento, ->(evento_id) { where(evento_amostragem_id: evento_id) }
   scope :por_data, -> { order(data: :desc, hora: :desc) }
   scope :por_especie, ->(especie_id) { where(especie_id: especie_id) }
 
-  # 4. Serialização
   def as_json(options = {})
     super(
       only: %i[

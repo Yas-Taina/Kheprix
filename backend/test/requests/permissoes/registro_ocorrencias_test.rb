@@ -55,7 +55,6 @@ class PermissoesRegistroOcorrenciasTest < PermissoesBase
     }
   end
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar registros de ocorrencia" do
     get base_url, headers: auth(@token_prop)
     assert_response :ok
@@ -76,7 +75,6 @@ class PermissoesRegistroOcorrenciasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode criar registro de ocorrencia" do
     post base_url, params: params_criar, headers: auth(@token_prop)
     assert_response :created
@@ -97,7 +95,6 @@ class PermissoesRegistroOcorrenciasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode atualizar registro de ocorrencia" do
     patch "#{base_url}/#{@registro.id}", params: params_editar, headers: auth(@token_prop)
     assert_response :ok
@@ -118,8 +115,6 @@ class PermissoesRegistroOcorrenciasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
-  # ATENCAO: sem guard de proprietario - qualquer membro do estudo pode deletar
   test "proprietario pode deletar registro de ocorrencia" do
     delete "#{base_url}/#{@registro.id}", headers: auth(@token_prop)
     assert_response :no_content

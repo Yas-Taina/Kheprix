@@ -25,7 +25,7 @@ class ColaboradoresController < ApplicationController
     if @colaborador.usuario_id == usuario_atual.id &&
        dto.perfil == "colaborador" &&
        Colaborador.where(estudo_id: @estudo.id, perfil: :proprietario).count == 1
-      render json: { erro: "Não é possível rebaixar a si mesmo sendo o único proprietário do estudo" },
+      render json: { erro: "Não é possível rebaixar o próprio acesso sendo o único proprietário do estudo" },
              status: :unprocessable_entity
       return
     end

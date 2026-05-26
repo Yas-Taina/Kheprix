@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: chao2, ice, jaccard, jaccard_grafico, sorensen, sorensen_grafico,
-    # bray_curtis, bray_curtis_grafico, morisita, morisita_grafico, nmds, pca
     class AbundanciasPorAmostraInputDto
       include ActiveModel::API
 

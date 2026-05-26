@@ -2,9 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: lognormal, logserie, geometrica, vara_quebrada, jackknife1, jackknife2,
-    # chao1, bootstrap, ace, shannon, simpson, margalef, pielou, berger_parker,
-    # brillouin, macintosh, hurlbert, mcnaughton
     class AbundanciasInputDto
       include ActiveModel::API
 

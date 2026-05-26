@@ -1,0 +1,2878 @@
+openapi: 3.0.3
+info:
+  title: API Backend
+  version: "1.0"
+  description: >
+    Documentação completa dos endpoints do backend.
+    Endpoints marcados com `BearerAuth` exigem header `Authorization: Bearer <token>`.
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtido via POST /autenticacao/login. Expira em 24h."
+
+  schemas:
+    ErroSimples:
+      type: object
+      properties:
+        erro:
+          type: string
+
+    ErrosArray:
+      type: object
+      properties:
+        erros:
+          type: array
+          items:
+            type: string
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+
+    Mensagem:
+      type: object
+      properties:
+        mensagem:
+          type: string
+
+    ValorVariavel:
+      type: object
+      properties:
+        id:
+          type: integer
+        variavel_id:
+          type: integer
+        valor:
+          type: string
+
+    ValorVariavelInput:
+      type: object
+      required: [variavel_id, valor]
+      properties:
+        variavel_id:
+          type: integer
+        valor:
+          type: string
+
+    ValorVariavelSincronizarInput:
+      type: object
+      required: [valor]
+      properties:
+        id:
+          type: integer
+          description: "Presente para atualizar existente; ausente para criar novo"
+        variavel_id:
+          type: integer
+          description: "Obrigatório somente ao criar (sem id)"
+        valor:
+          type: string
+
+    Campanha:
+      type: object
+      properties:
+        id:
+          type: integer
+        estudo_id:
+          type: integer
+        nome:
+          type: string
+        data_inicio:
+          type: string
+          format: date
+        descricao:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        valores_variaveis:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValorVariavel'
+
+    UnidadeAmostral:
+      type: object
+      properties:
+        id:
+          type: integer
+        campanha_id:
+          type: integer
+        nome:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        raio:
+          type: number
+          format: double
+          nullable: true
+        metodo_coleta:
+          type: string
+          nullable: true
+        esforco_amostral:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        valores_variaveis:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValorVariavel'
+
+    EventoAmostragem:
+      type: object
+      properties:
+        id:
+          type: integer
+        unidade_amostral_id:
+          type: integer
+        horario_inicio:
+          type: string
+          format: date-time
+        esforco_real:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        valores_variaveis:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValorVariavel'
+
+    RegistroOcorrencia:
+      type: object
+      properties:
+        id:
+          type: integer
+        evento_amostragem_id:
+          type: integer
+        especie_id:
+          type: integer
+        data:
+          type: string
+          format: date
+        hora:
+          type: string
+          example: "14:30:00"
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        qtde_individuos:
+          type: integer
+          nullable: true
+        ausencia_especie:
+          type: boolean
+        foto:
+          type: string
+          nullable: true
+          description: "URL absoluta da foto ou null"
+        created_at:
+          type: string
+          format: date-time
+        valores_variaveis:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValorVariavel'
+
+    Especie:
+      type: object
+      properties:
+        id:
+          type: integer
+        estudo_id:
+          type: integer
+        classe:
+          type: string
+        ordem:
+          type: string
+        familia:
+          type: string
+        genero:
+          type: string
+        especie:
+          type: string
+        nome_popular:
+          type: string
+          nullable: true
+        status_conservacao:
+          type: string
+          nullable: true
+        endemismo:
+          type: boolean
+        foto:
+          type: string
+          nullable: true
+          description: "URL absoluta da foto ou null"
+        created_at:
+          type: string
+          format: date-time
+
+    Variavel:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        metrica:
+          type: string
+          nullable: true
+        nivel_aplicacao:
+          type: string
+          enum: [campanha, unidade, evento, registro]
+        tipo_dado:
+          type: string
+          enum: [string, number, date, boolean]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Colaborador:
+      type: object
+      properties:
+        id_usuario:
+          type: integer
+        nome:
+          type: string
+        email:
+          type: string
+        perfil:
+          type: string
+          enum: [colaborador, proprietario]
+
+    Convite:
+      type: object
+      properties:
+        id:
+          type: integer
+        email_convidado:
+          type: string
+        status:
+          type: string
+          enum: [pendente, aceito, recusado, expirado]
+        data_expiracao:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ConviteRecebido:
+      type: object
+      properties:
+        id:
+          type: integer
+        estudo_id:
+          type: integer
+        nome_estudo:
+          type: string
+        nome_remetente:
+          type: string
+        token:
+          type: string
+        status:
+          type: string
+          enum: [pendente, aceito, recusado, expirado]
+        data_expiracao:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ConvitePublico:
+      type: object
+      properties:
+        id:
+          type: integer
+        estudo_id:
+          type: integer
+        nome_estudo:
+          type: string
+        email_convidado:
+          type: string
+        status:
+          type: string
+          enum: [pendente, aceito, recusado, expirado]
+        data_expiracao:
+          type: string
+          format: date-time
+          nullable: true
+
+    CodigoAcesso:
+      type: object
+      properties:
+        codigo:
+          type: string
+        senha_autocadastro:
+          type: string
+          nullable: true
+
+    ResultadoAnalise:
+      type: object
+      properties:
+        analise:
+          type: string
+          description: "Chave da análise executada"
+        nome:
+          type: string
+          description: "Nome legível da análise"
+        valor:
+          type: object
+          nullable: true
+          description: "JSON retornado pela API R (estrutura variável por análise)"
+        grafico:
+          type: string
+          nullable: true
+          description: "HTML do gráfico retornado pela API R"
+        urlArquivo:
+          type: string
+          nullable: true
+          description: "URL absoluta do arquivo .zip com resultado.json, resultado.xml e resultado.html"
+
+    DashboardGlobal:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+        data_inicio:
+          type: string
+          format: date
+          nullable: true
+        total_registros:
+          type: integer
+        total_especies:
+          type: integer
+        especies_ameacadas:
+          type: integer
+        especies_nativas:
+          type: integer
+        especies_invasoras:
+          type: integer
+        total_individuos:
+          type: integer
+
+paths:
+
+  # ==================== AUTENTICAÇÃO ====================
+
+  /autenticacao/login:
+    post:
+      tags: [Autenticação]
+      summary: Login com e-mail e senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, senha]
+              properties:
+                email:
+                  type: string
+                  format: email
+                senha:
+                  type: string
+      responses:
+        '200':
+          description: Token JWT gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+              example:
+                erro: "Email ou senha inválidos"
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /autenticacao/solicitar_redefinicao:
+    post:
+      tags: [Autenticação]
+      summary: Solicitar e-mail de redefinição de senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: "Resposta sempre igual por segurança, independente de o email existir"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                mensagem: "Se o email existir, enviaremos instruções para redefinição de senha"
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /autenticacao/validar_token_redefinicao:
+    post:
+      tags: [Autenticação]
+      summary: Validar token de redefinição de senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token válido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valido:
+                    type: boolean
+                    example: true
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+              example:
+                erro: "Token inválido ou expirado"
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /autenticacao/redefinir_senha:
+    post:
+      tags: [Autenticação]
+      summary: Redefinir senha usando token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, nova_senha]
+              properties:
+                token:
+                  type: string
+                nova_senha:
+                  type: string
+      responses:
+        '200':
+          description: Senha redefinida com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                mensagem: "Senha redefinida com sucesso"
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /autenticacao/validar_token:
+    post:
+      tags: [Autenticação]
+      summary: Verificar se um token JWT ainda é válido
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Resultado da validação
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valido:
+                    type: boolean
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  # ==================== USUÁRIOS ====================
+
+  /usuarios/autocadastro:
+    post:
+      tags: [Usuários]
+      summary: Cadastro de novo usuário
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, email, senha]
+              properties:
+                nome:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                senha:
+                  type: string
+      responses:
+        '201':
+          description: Usuário criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  # ==================== DASHBOARD GLOBAL ====================
+
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Resumo do último estudo acessado pelo usuário
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Resumo do estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardGlobal'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Nenhum estudo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+              example:
+                erro: "Nenhum estudo encontrado"
+
+  # ==================== ESTUDOS ====================
+
+  /estudos:
+    get:
+      tags: [Estudos]
+      summary: Listar estudos do usuário autenticado
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nome
+          in: query
+          schema:
+            type: string
+        - name: criado_a_partir_de
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: criado_ate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: atualizado_a_partir_de
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: atualizado_ate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '501':
+          description: Lista de estudos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nome:
+                      type: string
+                    observacoes:
+                      type: string
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+                    perfil:
+                      type: string
+                      enum: [colaborador, proprietario]
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Filtros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+    post:
+      tags: [Estudos]
+      summary: Criar novo estudo com variáveis
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, variaveis]
+              properties:
+                nome:
+                  type: string
+                observacoes:
+                  type: string
+                  nullable: true
+                variaveis:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [nome, nivel_aplicacao, tipo_dado]
+                    properties:
+                      nome:
+                        type: string
+                      nivel_aplicacao:
+                        type: string
+                        enum: [campanha, unidade, evento, registro]
+                      tipo_dado:
+                        type: string
+                        enum: [string, number, date, boolean]
+                      metrica:
+                        type: string
+                        nullable: true
+      responses:
+        '201':
+          description: Estudo criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  nome:
+                    type: string
+                  observacoes:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/ingressar:
+    post:
+      tags: [Estudos]
+      summary: Ingressar em estudo via código de acesso
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, senha_autocadastro]
+              properties:
+                codigo:
+                  type: string
+                senha_autocadastro:
+                  type: string
+      responses:
+        '201':
+          description: Ingresso realizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estudo_id:
+                    type: integer
+                  nome_estudo:
+                    type: string
+                  perfil:
+                    type: string
+                    example: colaborador
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Código inválido / senha incorreta / já colaborador
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErroSimples'
+                  - $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/{id}:
+    delete:
+      tags: [Estudos]
+      summary: Sair ou excluir estudo
+      description: >
+        Proprietário único → exclui o estudo (soft delete em cascata). 
+        Co-proprietário ou colaborador → remove apenas sua participação.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Estudo excluído (proprietário único)
+        '200':
+          description: Usuário removido do estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                mensagem: "Você foi descadastrado do estudo"
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Estudo não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /estudos/{estudo_id}/dashboard:
+    get:
+      tags: [Estudos]
+      summary: Dashboard analítico de um estudo específico
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dados do dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estudo:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      nome:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  resumo:
+                    type: object
+                    properties:
+                      total_registros: { type: integer }
+                      total_especies: { type: integer }
+                      especies_ameacadas: { type: integer }
+                      especies_nativas: { type: integer }
+                      especies_invasoras: { type: integer }
+                      total_individuos: { type: integer }
+                      data_inicio: { type: string, format: date, nullable: true }
+                  registros_por_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        data: { type: string, format: date }
+                        total: { type: integer }
+                  ocorrencias_por_especie:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nome_cientifico: { type: string }
+                        nome_popular: { type: string, nullable: true }
+                        total: { type: integer }
+                  pontos_mapa:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        latitude: { type: number }
+                        longitude: { type: number }
+                        nome_cientifico: { type: string }
+                        quantidade: { type: integer }
+                  registros_por_especie_tempo:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ano: { type: integer }
+                        mes: { type: integer }
+                        nome_cientifico: { type: string }
+                        is_endemica: { type: boolean }
+                        total: { type: integer }
+                  especies_distintas_por_mes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ano: { type: integer }
+                        mes: { type: integer }
+                        total: { type: integer }
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem acesso ao estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Estudo não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /estudos/{estudo_id}/exportar_dados:
+    get:
+      tags: [Estudos]
+      summary: Exportar dados do estudo em CSV ou XML
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: formato
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [csv, xml]
+        - name: agrupamento
+          in: query
+          required: false
+          description: "Obrigatório quando formato=csv"
+          schema:
+            type: string
+            enum: [registro_ocorrencia, evento_amostragem, unidade_amostral, campanha, especie]
+      responses:
+        '200':
+          description: Arquivo para download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem acesso ao estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrosArray'
+                  - $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== ANÁLISES ====================
+
+  /estudos/{estudo_id}/analises/executar:
+    post:
+      tags: [Análises]
+      summary: Executar análise estatística
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chave]
+              properties:
+                chave:
+                  type: string
+                  description: >
+                    Chave da análise. Valores válidos: lognormal, logserie, geometrica, vara_quebrada,
+                    rarefacao, jackknife1, jackknife2, chao1, chao2, bootstrap, ace, ice,
+                    shannon, simpson, margalef, pielou, berger_parker, brillouin, macintosh, hurlbert, mcnaughton,
+                    teste_t, ks, shapiro, anova, kruskal, pearson, spearman, kendall, regressao_linear,
+                    jaccard, bray_curtis, morisita, sorensen, rda, cca, nmds, pca,
+                    modelo_gaussiano, modelo_gamma, modelo_poisson, modelo_binomial_negativa, michaelis_menten
+                variavel_ids:
+                  type: array
+                  items: { type: integer }
+                  description: "Para RDA/CCA: IDs das variáveis ambientais"
+                variavel_x_id:
+                  type: integer
+                  description: "Para dois_vetores com fonte_x=variavel"
+                variavel_y_id:
+                  type: integer
+                  description: "Para dois_vetores com fonte_y=variavel"
+                variavel_id:
+                  type: integer
+                  description: "Para vetor_unico, dois_grupos, multiplos_grupos com fonte=variavel"
+                fonte:
+                  type: string
+                  enum: [variavel, abundancia, riqueza]
+                  description: "Para vetor_unico, dois_grupos, multiplos_grupos"
+                fonte_x:
+                  type: string
+                  enum: [variavel, abundancia, riqueza]
+                fonte_y:
+                  type: string
+                  enum: [variavel, abundancia, riqueza]
+                nivel_agregacao:
+                  type: string
+                  enum: [campanha, unidade_amostral, evento]
+                agrupar_por:
+                  type: string
+                  enum: [campanha, unidade_amostral, evento, mes, ano, estacao]
+                  description: "Para multiplos_grupos"
+                grupo1_ids:
+                  type: array
+                  items: { type: integer }
+                grupo2_ids:
+                  type: array
+                  items: { type: integer }
+                nome_grupo1:
+                  type: string
+                nome_grupo2:
+                  type: string
+                campanha_ids:
+                  type: array
+                  items: { type: integer }
+                unidade_ids:
+                  type: array
+                  items: { type: integer }
+                evento_ids:
+                  type: array
+                  items: { type: integer }
+                data_inicio:
+                  type: string
+                  format: date
+                data_fim:
+                  type: string
+                  format: date
+                latitude_min:
+                  type: number
+                  format: double
+                latitude_max:
+                  type: number
+                  format: double
+                longitude_min:
+                  type: number
+                  format: double
+                longitude_max:
+                  type: number
+                  format: double
+      responses:
+        '200':
+          description: Resultado da análise
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoAnalise'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem acesso ao estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Erro de validação ou execução
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErroSimples'
+                  - $ref: '#/components/schemas/ErrosArray'
+
+  # ==================== CAMPANHAS ====================
+
+  /estudos/{estudo_id}/campanhas:
+    get:
+      tags: [Campanhas]
+      summary: Listar campanhas do estudo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de campanhas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Campanha'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem acesso ao estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    post:
+      tags: [Campanhas]
+      summary: Criar campanha
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, data_inicio]
+              properties:
+                nome:
+                  type: string
+                data_inicio:
+                  type: string
+                  format: date
+                descricao:
+                  type: string
+                  nullable: true
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelInput'
+      responses:
+        '201':
+          description: Campanha criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campanha'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/{estudo_id}/campanhas/{id}:
+    get:
+      tags: [Campanhas]
+      summary: Buscar campanha por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Campanha encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campanha'
+        '404':
+          description: Campanha não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Campanhas]
+      summary: Atualizar campanha
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, data_inicio, descricao]
+              properties:
+                nome:
+                  type: string
+                data_inicio:
+                  type: string
+                  format: date
+                descricao:
+                  type: string
+                  nullable: true
+                  description: "Deve ser enviado mesmo se null (para sobrescrever)"
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelSincronizarInput'
+      responses:
+        '200':
+          description: Campanha atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campanha'
+        '404':
+          description: Campanha não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+    delete:
+      tags: [Campanhas]
+      summary: Excluir campanha (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Campanha excluída
+        '403':
+          description: Apenas proprietários podem realizar esta ação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Campanha não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== VARIÁVEIS ====================
+
+  /estudos/{estudo_id}/variaveis:
+    get:
+      tags: [Variáveis]
+      summary: Listar variáveis do estudo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: nivel_aplicacao
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [campanha, unidade, evento, registro]
+      responses:
+        '200':
+          description: Lista de variáveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Variavel'
+        '422':
+          description: Nível de aplicação inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== UNIDADES AMOSTRAIS ====================
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais:
+    get:
+      tags: [Unidades Amostrais]
+      summary: Listar unidades amostrais da campanha
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de unidades amostrais
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UnidadeAmostral'
+
+    post:
+      tags: [Unidades Amostrais]
+      summary: Criar unidade amostral
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, latitude, longitude]
+              properties:
+                nome: { type: string }
+                latitude:
+                  type: number
+                  format: double
+                  minimum: -90
+                  maximum: 90
+                longitude:
+                  type: number
+                  format: double
+                  minimum: -180
+                  maximum: 180
+                raio:
+                  type: number
+                  format: double
+                  nullable: true
+                  exclusiveMinimum: true
+                  minimum: 0
+                metodo_coleta: { type: string, nullable: true }
+                esforco_amostral: { type: string, nullable: true }
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelInput'
+      responses:
+        '201':
+          description: Unidade criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnidadeAmostral'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{id}:
+    get:
+      tags: [Unidades Amostrais]
+      summary: Buscar unidade amostral por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Unidade amostral
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnidadeAmostral'
+        '404':
+          description: Unidade amostral não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Unidades Amostrais]
+      summary: Atualizar unidade amostral
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, latitude, longitude]
+              properties:
+                nome: { type: string }
+                latitude: { type: number, format: double }
+                longitude: { type: number, format: double }
+                raio: { type: number, nullable: true }
+                metodo_coleta: { type: string, nullable: true }
+                esforco_amostral: { type: string, nullable: true }
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelSincronizarInput'
+      responses:
+        '200':
+          description: Unidade atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnidadeAmostral'
+        '404':
+          description: Não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+    delete:
+      tags: [Unidades Amostrais]
+      summary: Excluir unidade amostral (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Excluída com sucesso
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== EVENTOS DE AMOSTRAGEM ====================
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem:
+    get:
+      tags: [Eventos de Amostragem]
+      summary: Listar eventos de amostragem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de eventos (ordenado por horario_inicio DESC)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventoAmostragem'
+
+    post:
+      tags: [Eventos de Amostragem]
+      summary: Criar evento de amostragem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [horario_inicio, esforco_real]
+              properties:
+                horario_inicio: { type: string, format: date-time }
+                esforco_real: { type: string }
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelInput'
+      responses:
+        '201':
+          description: Evento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoAmostragem'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem/{id}:
+    get:
+      tags: [Eventos de Amostragem]
+      summary: Buscar evento de amostragem por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Evento de amostragem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoAmostragem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Eventos de Amostragem]
+      summary: Atualizar evento de amostragem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [horario_inicio, esforco_real]
+              properties:
+                horario_inicio: { type: string, format: date-time }
+                esforco_real: { type: string }
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelSincronizarInput'
+      responses:
+        '200':
+          description: Evento atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoAmostragem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+    delete:
+      tags: [Eventos de Amostragem]
+      summary: Excluir evento de amostragem (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Excluído
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== REGISTROS DE OCORRÊNCIA ====================
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem/{evento_amostragem_id}/registro_ocorrencias:
+    get:
+      tags: [Registros de Ocorrência]
+      summary: Listar registros de ocorrência
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: evento_amostragem_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de registros (ordenado por data/hora DESC)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistroOcorrencia'
+
+    post:
+      tags: [Registros de Ocorrência]
+      summary: Criar registro de ocorrência
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: evento_amostragem_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [especie_id, data, hora, latitude, longitude]
+              properties:
+                especie_id: { type: integer }
+                data: { type: string, format: date }
+                hora: { type: string, example: "14:30:00" }
+                latitude: { type: number, format: double, minimum: -90, maximum: 90 }
+                longitude: { type: number, format: double, minimum: -180, maximum: 180 }
+                qtde_individuos: { type: integer, nullable: true }
+                ausencia_especie:
+                  type: boolean
+                  description: "Se true, qtde_individuos é zerado automaticamente"
+                foto:
+                  type: string
+                  description: "Base64 ou data URI (max 20MB)"
+                  nullable: true
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelInput'
+      responses:
+        '201':
+          description: Registro criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroOcorrencia'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrosArray'
+                  - $ref: '#/components/schemas/ErroSimples'
+
+  /estudos/{estudo_id}/campanhas/{campanha_id}/unidades_amostrais/{unidade_amostral_id}/eventos_amostragem/{evento_amostragem_id}/registro_ocorrencias/{id}:
+    get:
+      tags: [Registros de Ocorrência]
+      summary: Buscar registro de ocorrência por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: evento_amostragem_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Registro de ocorrência
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroOcorrencia'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Registros de Ocorrência]
+      summary: Atualizar registro de ocorrência
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: evento_amostragem_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                especie_id: { type: integer }
+                data: { type: string, format: date }
+                hora: { type: string }
+                latitude: { type: number, format: double }
+                longitude: { type: number, format: double }
+                qtde_individuos: { type: integer, nullable: true }
+                ausencia_especie: { type: boolean }
+                foto:
+                  type: string
+                  nullable: true
+                  description: >
+                    Base64/data URI → substitui foto atual.
+                    String vazia → remove foto atual.
+                    Campo ausente → mantém foto atual.
+                valores_variaveis:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValorVariavelSincronizarInput'
+      responses:
+        '200':
+          description: Registro atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroOcorrencia'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrosArray'
+                  - $ref: '#/components/schemas/ErroSimples'
+
+    delete:
+      tags: [Registros de Ocorrência]
+      summary: Excluir registro de ocorrência
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: campanha_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: unidade_amostral_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: evento_amostragem_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Excluído
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== ESPÉCIES ====================
+
+  /estudos/{estudo_id}/especies:
+    get:
+      tags: [Espécies]
+      summary: Listar espécies do estudo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: nome_popular
+          in: query
+          required: false
+          schema: { type: string }
+          description: "Filtro parcial case-insensitive (ILIKE %valor%)"
+      responses:
+        '200':
+          description: Lista de espécies (ordenado por nome_popular)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Especie'
+
+    post:
+      tags: [Espécies]
+      summary: Criar espécie
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [classe, ordem, familia, genero, especie, endemismo]
+              properties:
+                classe: { type: string }
+                ordem: { type: string }
+                familia: { type: string }
+                genero: { type: string }
+                especie: { type: string }
+                nome_popular: { type: string, nullable: true }
+                status_conservacao: { type: string, nullable: true }
+                endemismo: { type: boolean }
+                foto:
+                  type: string
+                  nullable: true
+                  description: "Base64 ou data URI (max 20MB)"
+      responses:
+        '201':
+          description: Espécie criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Especie'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrosArray'
+                  - $ref: '#/components/schemas/ErroSimples'
+
+  /estudos/{estudo_id}/especies/{id}:
+    get:
+      tags: [Espécies]
+      summary: Buscar espécie por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Espécie encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Especie'
+        '404':
+          description: Espécie não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Espécies]
+      summary: Atualizar espécie (somente campos enviados são alterados)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                classe: { type: string }
+                ordem: { type: string }
+                familia: { type: string }
+                genero: { type: string }
+                especie: { type: string }
+                nome_popular: { type: string, nullable: true }
+                status_conservacao: { type: string, nullable: true }
+                endemismo: { type: boolean }
+                foto:
+                  type: string
+                  nullable: true
+                  description: "Base64/data URI → substitui. String vazia → remove. Campo ausente → mantém."
+      responses:
+        '200':
+          description: Espécie atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Especie'
+        '404':
+          description: Espécie não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrosArray'
+                  - $ref: '#/components/schemas/ErroSimples'
+
+    delete:
+      tags: [Espécies]
+      summary: Excluir espécie (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Excluída
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== COLABORADORES ====================
+
+  /estudos/{estudo_id}/colaboradores:
+    get:
+      tags: [Colaboradores]
+      summary: Listar colaboradores do estudo (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de colaboradores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Colaborador'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /estudos/{estudo_id}/colaboradores/{id}:
+    patch:
+      tags: [Colaboradores]
+      summary: Alterar perfil de colaborador (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          description: "usuario_id do colaborador"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [perfil]
+              properties:
+                perfil:
+                  type: string
+                  enum: [colaborador, proprietario]
+      responses:
+        '200':
+          description: Colaborador atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Colaborador'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Colaborador não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Regra de negócio violada
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErroSimples'
+                  - $ref: '#/components/schemas/ErrosArray'
+
+    delete:
+      tags: [Colaboradores]
+      summary: Remover colaborador do estudo (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Removido
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Colaborador não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Não é possível remover a si mesmo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== CONVITES (PROPRIETÁRIO) ====================
+
+  /estudos/{estudo_id}/convites:
+    get:
+      tags: [Convites]
+      summary: Listar convites enviados para o estudo (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pendente, aceito, recusado, expirado]
+      responses:
+        '200':
+          description: Lista de convites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Convite'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    post:
+      tags: [Convites]
+      summary: Enviar convite para colaborar no estudo (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email_convidado]
+              properties:
+                email_convidado:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          description: Convite criado e e-mail enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Convite'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Regra de negócio violada
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErroSimples'
+                  - $ref: '#/components/schemas/ErrosArray'
+
+  /estudos/{estudo_id}/convites/{id}:
+    delete:
+      tags: [Convites]
+      summary: Cancelar convite pendente (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Convite cancelado
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Convite não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Apenas convites pendentes podem ser cancelados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== CONVITES (CONVIDADO) ====================
+
+  /convites:
+    get:
+      tags: [Convites]
+      summary: Listar convites recebidos pelo usuário autenticado
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de convites recebidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConviteRecebido'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /convites/{token}:
+    get:
+      tags: [Convites]
+      summary: Consultar convite por token (sem autenticação)
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Dados públicos do convite
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvitePublico'
+        '404':
+          description: Convite não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /convites/{token}/aceitar:
+    post:
+      tags: [Convites]
+      summary: Aceitar convite
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Convite aceito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                mensagem: "Convite aceito com sucesso"
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Convite não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Convite expirado ou já processado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /convites/{token}/recusar:
+    post:
+      tags: [Convites]
+      summary: Recusar convite
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Convite recusado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                mensagem: "Convite recusado"
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Convite não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Convite expirado ou já processado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  # ==================== CÓDIGO DE ACESSO ====================
+
+  /estudos/{estudo_id}/codigo_acesso:
+    get:
+      tags: [Código de Acesso]
+      summary: Consultar código de acesso do estudo (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Código e senha de acesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodigoAcesso'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+    patch:
+      tags: [Código de Acesso]
+      summary: Alterar senha do código de acesso (somente proprietário)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [senha_autocadastro]
+              properties:
+                senha_autocadastro: { type: string }
+      responses:
+        '200':
+          description: Senha atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodigoAcesso'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrosArray'
+
+  # ==================== FOTOS ====================
+
+  /fotos/estudos/{estudo_id}/{tipo}/{arquivo}:
+    get:
+      tags: [Fotos]
+      summary: Servir foto (sem autenticação)
+      security: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: tipo
+          in: path
+          required: true
+          schema: { type: string }
+          description: "Tipo de entidade: especies | registro_ocorrencias"
+        - name: arquivo
+          in: path
+          required: true
+          schema: { type: string }
+          description: "Nome do arquivo com extensão"
+      responses:
+        '200':
+          description: Arquivo de imagem (inline)
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Foto não encontrada
+
+  # ==================== RESULTADOS DE ANÁLISE ====================
+
+  /analises/estudos/{estudo_id}/{chave}/{arquivo}:
+    get:
+      tags: [Análises]
+      summary: Download de arquivo ZIP com resultado de análise
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: estudo_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: chave
+          in: path
+          required: true
+          schema: { type: string }
+        - name: arquivo
+          in: path
+          required: true
+          schema: { type: string }
+          description: "Nome do arquivo .zip"
+      responses:
+        '200':
+          description: >
+            Arquivo ZIP contendo resultado.json, resultado.xml e (opcionalmente) resultado.html
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '403':
+          description: Sem acesso ao estudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '404':
+          description: Arquivo não encontrado
+
+  # ==================== CHATBOT ====================
+
+  /chatbot/query:
+    post:
+      tags: [Chatbot]
+      summary: Consulta livre ao serviço de IA (Text-to-SQL)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pergunta, estudo_ids]
+              properties:
+                pergunta: { type: string }
+                estudo_ids:
+                  type: array
+                  items: { type: integer }
+                  description: "Filtrado silenciosamente para apenas estudos do usuário autenticado"
+      responses:
+        '200':
+          description: Resposta do serviço de IA (estrutura variável)
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '502':
+          description: Erro ao comunicar com o serviço de IA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '504':
+          description: Timeout no serviço de IA (60s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+
+  /chatbot/insights:
+    post:
+      tags: [Chatbot]
+      summary: Gerar insights analíticos via IA
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estudo_ids]
+              properties:
+                estudo_ids:
+                  type: array
+                  items: { type: integer }
+      responses:
+        '200':
+          description: Resposta do serviço de IA (estrutura variável)
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '422':
+          description: Nenhum estudo válido fornecido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '502':
+          description: Erro ao comunicar com o serviço de IA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'
+        '504':
+          description: Timeout no serviço de IA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroSimples'

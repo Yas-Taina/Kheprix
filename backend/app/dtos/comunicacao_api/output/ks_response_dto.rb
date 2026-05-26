@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/ks (Kolmogorov-Smirnov)
-    # Suporta duas amostras (nome_amostra1, nome_amostra2) ou uma amostra vs distribuição teórica
     class KsResponseDto
       attr_reader :estatistica_d, :p_valor, :significativo, :interpretacao,
                   :nome_amostra1, :nome_amostra2

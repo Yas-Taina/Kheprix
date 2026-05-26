@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/macintosh
     class MacintoshResponseDto
       attr_reader :indice_macintosh, :distancia_u, :total_individuos, :interpretacao
 

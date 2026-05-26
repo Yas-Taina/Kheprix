@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/berger_parker
     class BergerParkerResponseDto
       attr_reader :indice_berger_parker, :abundancia_maxima, :total_individuos,
                   :proporcao_especie_dominante, :interpretacao

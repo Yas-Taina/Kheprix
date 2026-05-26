@@ -2,10 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: pearson, pearson_grafico, spearman, spearman_grafico, kendall, kendall_grafico,
-    # regressao_linear, modelo_gaussiano, modelo_gaussiano_grafico, modelo_gamma,
-    # modelo_gamma_grafico, modelo_poisson, modelo_poisson_grafico,
-    # modelo_binomial_negativa, modelo_binomial_grafico
     class CorrelacaoInputDto
       include ActiveModel::API
 

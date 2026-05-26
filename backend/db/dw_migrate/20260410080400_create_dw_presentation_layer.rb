@@ -1,11 +1,5 @@
 class CreateDwPresentationLayer < ActiveRecord::Migration[8.0]
   def change
-    # =========================================================================
-    # CAMADA GOLD: PRESENTATION LAYER
-    # Tabelas desnormalizadas pré-computadas para consumo direto pela API.
-    # Alternativa às views: elimina re-execução de JOINs a cada requisição,
-    # essencial para volumetria grande. Atualizadas via UPSERT a cada pipeline.
-    # =========================================================================
 
     create_table :indicadores_dashboard, id: false do |t|
       t.integer   :id_registro,        primary_key: true
@@ -33,7 +27,7 @@ class CreateDwPresentationLayer < ActiveRecord::Migration[8.0]
 
     create_table :analises_estatisticas, id: false do |t|
       t.integer   :id_registro,          null: false
-      t.integer   :id_variavel,          null: false, default: 0  # 0 = registro sem variável
+      t.integer   :id_variavel,          null: false, default: 0  
       t.integer   :id_estudo,            null: false
       t.string    :nome_estudo,          limit: 255
       t.integer   :fk_campanha

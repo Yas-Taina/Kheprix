@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/teste_t
     class TesteTResponseDto
       attr_reader :estatistica_t, :p_valor, :significativo, :intervalo_confianca,
                   :media_grupo1, :media_grupo2, :diferenca_medias,

@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: shapiro (Shapiro-Wilk)
-    # Aceita no máximo 5000 observações
     class DadosSimplesInputDto
       include ActiveModel::API
 

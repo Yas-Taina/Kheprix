@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/spearman
     class SpearmanResponseDto
       attr_reader :rho, :p_valor, :significativo, :estatistica_s,
                   :interpretacao, :nome_x, :nome_y

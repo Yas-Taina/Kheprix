@@ -3,7 +3,6 @@
 require "test_helper"
 
 class PermissoesColaboradoresTest < PermissoesBase
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar colaboradores" do
     get "/estudos/#{@estudo.id}/colaboradores", headers: auth(@token_prop)
     assert_response :ok
@@ -24,7 +23,6 @@ class PermissoesColaboradoresTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE (alterar perfil) ─────────────────────────────────────────────────
   test "proprietario pode promover colaborador a proprietario" do
     patch "/estudos/#{@estudo.id}/colaboradores/#{@colaborador_user.id}",
           params: { perfil: "proprietario" },
@@ -52,7 +50,6 @@ class PermissoesColaboradoresTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DESTROY (remover membro) ────────────────────────────────────────────────
   test "proprietario pode remover colaborador do estudo" do
     delete "/estudos/#{@estudo.id}/colaboradores/#{@colaborador_user.id}",
            headers: auth(@token_prop)

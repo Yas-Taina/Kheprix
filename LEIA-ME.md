@@ -1,65 +1,18 @@
-# Kheprix 🐝
+# Kheprix
 
-Sistema completo para **monitoramento, análise estatística e registro de biodiversidade em estudos entomológicos**.
-
-Pesquisadores cadastram estudos, definem variáveis customizadas, registram observações em campo (web ou mobile, com fotos e GPS), e rodam análises estatísticas (Shannon, Pearson, ANOVA, RDA, e mais 30+ métodos) com gráficos interativos e exportação em CSV/XML.
-
-Sistema desenvolvido como Trabalho de Conclusão do curso de **Análise e Desenvolvimento de Sistemas** da **Universidade Federal do Paraná**.
-
----
+Sistema para análise de bioindicadores, biomonitoramento e estudo de biodiversidade na entomofauna.
 
 ## Sumário
 
-1. [Visão Geral](#visão-geral)
-2. [Pré-requisitos](#pré-requisitos)
-3. [Setup Rápido](#setup-rápido)
-4. [URLs e Portas](#urls-e-portas)
-5. [Estrutura do Repositório](#estrutura-do-repositório)
-6. [Como Usar](#como-usar)
-7. [Módulos](#módulos)
-8. [Comandos Úteis](#comandos-úteis)
-9. [Troubleshooting](#troubleshooting)
-10. [Equipe](#equipe)
-
----
-
-## Visão Geral
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          USUÁRIO                                │
-│                                                                 │
-│   Frontend (Angular)              Mobile (Android nativo)       │
-│   localhost:4200                  (build local)                 │
-│        │                                  │                     │
-│        └────────────┬─────────────────────┘                     │
-│                     │                                           │
-│                     ▼                                           │
-│            Backend Rails API                                    │
-│            localhost:3000                                       │
-│                     │                                           │
-│        ┌────────────┼────────────────┬──────────────────┐       │
-│        ▼            ▼                ▼                  ▼       │
-│   PostgreSQL    API R (R-Plumber)  Chatbot IA      Storage      │
-│   OLTP (5410)   localhost:8000     localhost:8001  (fotos)      │
-│        │                                  ▲                     │
-│        │  Airflow ETL (5 min)             │                     │
-│        ▼                                  │                     │
-│   PostgreSQL DW                           │                     │
-│   (5433) — Star Schema ─────read-only─────┘                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Tecnologias principais:**
-- **Backend**: Ruby on Rails 8 (API-only), PostgreSQL, JWT
-- **Frontend**: Angular 21 (standalone components, Chart.js, Plotly)
-- **Análises estatísticas**: R + Plumber (vegan, ggplot2, plotly)
-- **ETL**: Apache Airflow (modelagem Kimball Star Schema)
-- **Chatbot IA**: Python FastAPI + Groq (Llama 3.3 70B) — text-to-SQL
-- **Mobile**: Android nativo (Kotlin)
-- **Infra**: Docker Compose
-
----
+1. [Pré-requisitos](#pré-requisitos)
+2. [Setup Rápido](#setup-rápido)
+3. [URLs e Portas](#urls-e-portas)
+4. [Estrutura do Repositório](#estrutura-do-repositório)
+5. [Como Usar](#como-usar)
+6. [Módulos](#módulos)
+7. [Comandos Úteis](#comandos-úteis)
+8. [Troubleshooting](#troubleshooting)
+9. [Equipe](#equipe)
 
 ## Pré-requisitos
 
@@ -90,7 +43,7 @@ cp .env.example .env
 # 3. Suba toda a stack
 docker compose up -d --build
 
-# 4. Aguarde tudo ficar healthy (~2-3 min na primeira vez)
+# 4. Aguarde tudo ficar healthy (pode demorar um pouco na primeira vez)
 docker ps
 # Procure status "(healthy)" nos containers críticos:
 # kheprix_web_container, kheprix_oltp_database_container,
@@ -214,12 +167,7 @@ O chatbot consulta o DW e responde com base nos dados reais (read-only — não 
 
 ### Backend (`backend/`)
 
-Rails 8 API-only. Endpoints REST sob `/`, autenticação JWT, validações em DTOs, soft-delete em entidades, mensagens de erro em português amigável.
-
-- **Rodar testes**: scripts bash em `backend/.claude/testes/` (suite principal: `analises.sh` com 186 cenários cobrindo análises, validações e autorização)
-- **Documentação de endpoints**: `backend/endpoints.md`
-- **Lint**: `./bin/rubocop` (RuboCop Omakase)
-- **Security scan**: `./bin/brakeman`
+Rails 8 API-only. Endpoints REST com autenticação JWT
 
 ### Frontend (`frontend/Kheprix/`)
 
