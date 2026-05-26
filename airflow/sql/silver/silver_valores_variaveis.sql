@@ -1,4 +1,3 @@
--- CAST protegido por regex: valor malformado retorna NULL em vez de derrubar a task.
 SELECT
   vv.id,
   vv.variavel_id,

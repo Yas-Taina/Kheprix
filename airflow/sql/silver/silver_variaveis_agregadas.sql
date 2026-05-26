@@ -1,6 +1,3 @@
--- Silver: Variáveis Agregadas por Entidade e Nível
--- DISTINCT ON interno garante unicidade por (id_nivel_aplicacao, variavel_id) antes do
--- jsonb_object_agg — sem isso, a mesma chave duas vezes colapsaria silenciosamente.
 SELECT
   sv.id_nivel_aplicacao,
   v.nivel_aplicacao,

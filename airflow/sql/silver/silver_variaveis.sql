@@ -1,4 +1,3 @@
--- nivel_aplicacao e tipo_dado são enums inteiros no OLTP; convertidos para strings aqui.
 SELECT
   id,
   nome,

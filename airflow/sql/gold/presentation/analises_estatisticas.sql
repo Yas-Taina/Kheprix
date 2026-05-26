@@ -1,4 +1,3 @@
--- id_variavel = 0 para registros sem variável associada (LEFT JOIN null row)
 SELECT
   f.id_registro,
   COALESCE(var.id_variavel, 0) AS id_variavel,

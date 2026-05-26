@@ -27,7 +27,6 @@ TABLES_TO_EXTRACT = {
     'valores_variaveis': 'incremental'
 }
 
-# colaboradores excluída: join table sem updated_at rastreável no OLTP
 TABELAS_MONITORADAS_OLTP = [
     'estudos', 'campanhas', 'especies', 'unidades_amostrais',
     'eventos_amostragem', 'registro_ocorrencias', 'variaveis', 'valores_variaveis',
@@ -88,7 +87,6 @@ def extract_and_load_table(table_name, load_strategy, **kwargs):
             max_updated_at = res_max[0] if res_max and res_max[0] else None
 
             if max_updated_at:
-                # Overlap de 10 min protege contra late-arriving data; o UPSERT garante idempotência.
                 hwm_com_overlap = max_updated_at - timedelta(minutes=10)
                 sql_export = f"COPY (SELECT * FROM {table_name} WHERE updated_at >= '{hwm_com_overlap.isoformat()}') TO STDOUT WITH CSV HEADER;"
                 logging.info(f"{table_name}: HWM={max_updated_at}, capturando a partir de {hwm_com_overlap}")
@@ -115,7 +113,6 @@ def extract_and_load_table(table_name, load_strategy, **kwargs):
             dest_hook.run(f"TRUNCATE TABLE staging.{table_name} CASCADE;")
             dest_hook.copy_expert(f"COPY staging.{table_name} {cols_sql} FROM STDIN WITH CSV HEADER;", tmp_file.name)
         else:
-            # TEMP TABLE na mesma conexão: escopo da sessão, sem conflito com runs paralelos
             temp_table = f"tmp_{table_name}"
             conn = dest_hook.get_conn()
             try:
@@ -168,7 +165,7 @@ with DAG(
         task_id='trigger_transform_star_schema',
         trigger_dag_id='transform_star_schema',
         wait_for_completion=False,
-        trigger_rule='all_done',  # dispara mesmo quando extrações foram skippadas
+        trigger_rule='all_done',  
     )
 
     task_verificar_novos >> list(extract_tasks.values())

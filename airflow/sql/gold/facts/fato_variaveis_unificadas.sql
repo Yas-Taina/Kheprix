@@ -1,5 +1,3 @@
--- Resolve a hierarquia polimórfica (id_nivel_aplicacao → id_registro) em 4 níveis (registro, evento, unidade, campanha)
-
 WITH all_variables AS (
   -- 1. Nível Registro (Direto)
   SELECT
@@ -70,7 +68,7 @@ WITH all_variables AS (
   JOIN public.dim_registro_ocorrencia r ON r.evento_amostragem_id = ev.id_evento
   WHERE v.nivel_aplicacao = 'campanha'
 )
--- DISTINCT ON: garante unicidade por (id_registro, id_variavel) com o valor mais recente
+
 SELECT DISTINCT ON (id_registro, id_variavel)
   id_registro,
   id_variavel,
