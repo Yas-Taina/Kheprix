@@ -1,4 +1,3 @@
-# rate limiter em memória — suficiente para processo único; em produção substituir por Redis
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from threading import Lock

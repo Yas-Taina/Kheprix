@@ -41,7 +41,6 @@ def verificar_sql_output(sql: str) -> GuardResult:
         if re.search(funcao, sql, re.IGNORECASE):
             return GuardResult(passou=False, motivo="SQL usa função de sistema não permitida.")
 
-    # remove strings literais antes de checar ponto-e-vírgula
     sql_sem_strings = re.sub(r"'[^']*'", "''", sql)
     if ";" in sql_sem_strings.rstrip(";"):
         return GuardResult(passou=False, motivo="SQL contém múltiplos comandos (ponto e vírgula interno).")
@@ -99,7 +98,6 @@ def verificar_alucinacao(
             )
         return GuardResult(passou=True)
 
-    # também aceita len(dados): dizer "X registros" quando X linhas foram retornadas é correto
     valores_reais: set[int] = set()
     if len(dados) > 1:
         valores_reais.add(len(dados))
@@ -116,12 +114,9 @@ def verificar_alucinacao(
                 valores_reais.add(int(valor))
                 tem_coluna_numerica = True
 
-    # resultado puramente textual: sem base numérica para verificar alucinação
     if not tem_coluna_numerica:
         return GuardResult(passou=True)
 
-    # aceita números mencionados em turnos anteriores — evita falso positivo multi-turn
-    # ex: "das 3 espécies registradas, 2 são ameaçadas" — o "3" vem do histórico, não é alucinação
     for turno in (historico or []):
         conteudo = turno.get("content", "")
         for n in re.findall(r"\b(\d+)\b", conteudo):
@@ -134,7 +129,6 @@ def verificar_alucinacao(
         if int(n) > 1
     }
 
-    # anos não indicam alucinação
     anos = {n for n in numeros_na_resposta if 1900 <= n <= 2100}
     numeros_a_verificar = numeros_na_resposta - anos
 

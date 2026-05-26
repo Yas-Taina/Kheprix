@@ -116,7 +116,7 @@ O chatbot é acessado por um botão flutuante fixo no canto inferior direito de 
 │  [qualquer página autenticada]              │
 │                                             │
 │                                             │
-│                                    [🤖]     │  ← FAB fixo
+│                                    [Botão]  │  ← FAB fixo
 └─────────────────────────────────────────────┘
 ```
 
@@ -128,10 +128,10 @@ Clicar no FAB navega para `/chatbot`, que exibe a interface completa de conversa
 ┌─────────────────────────────────────────────┐
 │  Kheprix Chatbot                            │
 │                                             │
-│  [📊 Gerar Insights]        ← botão fixo   │
+│  [Gerar Insights]        ← botão fixo   │
 │                                             │
 │  ─────────────────────────────────────────  │
-│  💬  [Qual espécie foi mais coletada?   ]   │
+│  [Qual espécie foi mais coletada?   ]   │
 │                                   [Enviar]  │
 └─────────────────────────────────────────────┘
 ```
@@ -148,7 +148,7 @@ Essa separação garante que o relatório analítico seja sempre gerado com as q
 Quando o usuário clica em "Gerar Insights", o sistema apresenta uma seleção dentro do próprio chat:
 
 ```
-Usuário clica [📊 Gerar Insights]
+Usuário clica [Gerar Insights]
         │
         ▼
 Angular busca estudos acessíveis ao usuário via Rails

@@ -1,4 +1,3 @@
-# sessões em memória, thread-safe, TTL 30 min — sem persistência entre reinicializações (intencional)
 import threading
 import time
 from dataclasses import dataclass, field
@@ -9,7 +8,6 @@ MAX_TURNS     = 4
 
 @dataclass
 class _Sessao:
-    # formato OpenAI: [{"role": "user"|"assistant", "content": str}]
     mensagens: list[dict] = field(default_factory=list)
     ultimo_acesso: float = field(default_factory=time.monotonic)
 
