@@ -1,21 +1,10 @@
 # frozen_string_literal: true
 
 class ServicoDadosAnalise
-  # Levantada quando dois_vetores recebe x e y em dimensões DW diferentes
-  # (ex.: variavel a nivel campanha + fonte=abundancia a nivel unidade). Sem essa
-  # validação, hash_x.keys & hash_y.keys faria interseção crua de Integer entre
-  # espaços de IDs incompatíveis e produziria correlações inventadas quando
-  # IDs colidissem por acaso entre campanha e unidade.
   class NivelIncompativel < StandardError; end
 
   class DadosDegenerados < StandardError; end
 
-  # Minimos por tipo_dado. Sao definidos pelos pressupostos estatisticos das
-  # analises que consomem cada tipo (Pearson/Spearman precisam de pelo menos
-  # 3 pares; Shapiro precisa de N>=3; similaridade compara >=2 amostras; etc.).
-  # Quando os filtros do usuario colapsam o dataset abaixo dessas linhas,
-  # devolvemos uma mensagem em PT explicando "encontrei X, precisa de Y" em vez
-  # de mandar pra API R e deixar ela falhar com erro criptico.
   MIN_PARES_DOIS_VETORES = 3
   MIN_GRUPO = 2
   MIN_VETOR_UNICO = 3
@@ -56,16 +45,11 @@ class ServicoDadosAnalise
 
   private
 
-  # ==================== Abundâncias ====================
-
   def montar_abundancias(estudo_id:)
     resultados = registros_unicos(estudo_id)
       .group(:especie)
       .sum(:abundancia)
 
-    # Totais agregados zeram/ficam negativos quando todos os registros de uma espécie
-    # são ausência/ruído — sem dado útil pra índice. Em análises por amostra/evento
-    # o zero é significativo (ausência) e não deve ser removido.
     resultados.reject! { |_k, v| v <= 0 }
     return nil if resultados.empty?
 
@@ -86,8 +70,6 @@ class ServicoDadosAnalise
 
     { abundancias: abundancias, nomes_especies: nomes_especies }
   end
-
-  # ==================== Abundâncias por Amostra ====================
 
   def montar_abundancias_por_amostra(estudo_id:)
     registros = registros_unicos(estudo_id)
@@ -121,8 +103,6 @@ class ServicoDadosAnalise
       nomes_amostras: nomes_amostras
     }
   end
-
-  # ==================== Abundâncias com Variáveis ====================
 
   def montar_abundancias_com_variaveis(estudo_id:, params:)
     dados_abundancia = montar_abundancias_por_amostra(estudo_id: estudo_id)
@@ -158,17 +138,11 @@ class ServicoDadosAnalise
     )
   end
 
-  # ==================== Dois Vetores ====================
-
   def montar_dois_vetores(estudo_id:, params:)
     fonte_x = (params[:fonte_x] || "variavel").to_s
     fonte_y = (params[:fonte_y] || "variavel").to_s
     nivel = params[:nivel_agregacao] || "unidade_amostral"
 
-    # Quando fonte é variavel, a variavel_id correspondente é obrigatória. Sem
-    # essa validação, dimensao_efetiva retorna nil pra essa perna, o cross-nivel
-    # check é pulado (col_x && col_y && ...), e o request cai em "dados
-    # insuficientes" genérico — UX ruim, esconde a causa real.
     if fonte_x == "variavel" && params[:variavel_x_id].blank?
       raise NivelIncompativel, "variavel_x_id é obrigatório quando fonte_x=variavel"
     end
@@ -245,8 +219,6 @@ class ServicoDadosAnalise
     valores.uniq.length == 1
   end
 
-  # ==================== Dois Grupos ====================
-
   def montar_dois_grupos(estudo_id:, params:)
     fonte = (params[:fonte] || "variavel").to_s
     grupo1_ids = params[:grupo1_ids]
@@ -269,13 +241,6 @@ class ServicoDadosAnalise
       )
       valores_g1 = grupo1_ids.filter_map { |id| por_dimensao[id]&.to_f }
       valores_g2 = grupo2_ids.filter_map { |id| por_dimensao[id]&.to_f }
-
-      # Detecta IDs que não retornaram dados pra dimensão escolhida. Sem detectar,
-      # tanto o caso "todos errados" quanto o caso "alguns errados (lookup parcial)"
-      # caíam em mensagens genéricas — pior, lookup parcial com IDs colidindo por
-      # acaso entre dimensões fazia o teste t rodar com vetores corrompidos sem
-      # aviso. Agora distinguimos: total = 0 ⇒ todos errados; total < esperado ⇒
-      # alguns errados (parcial). Mensagem diferente em cada caso.
       total_obtido = valores_g1.size + valores_g2.size
       total_esperado = grupo1_ids.size + grupo2_ids.size
       if por_dimensao.any? && total_obtido < total_esperado
@@ -309,8 +274,6 @@ class ServicoDadosAnalise
       nome_grupo2: params[:nome_grupo2] || "Grupo 2"
     }
   end
-
-  # ==================== Múltiplos Grupos ====================
 
   AGRUPAMENTOS_VALIDOS = %w[campanha unidade_amostral evento mes ano estacao].freeze
 
@@ -359,8 +322,6 @@ class ServicoDadosAnalise
     { valores: valores, grupos: grupos, nome_variavel: nome_variavel }
   end
 
-  # ==================== Vetor Único ====================
-
   def montar_vetor_unico(estudo_id:, params:)
     fonte = (params[:fonte] || "variavel").to_s
 
@@ -394,8 +355,6 @@ class ServicoDadosAnalise
 
     { dados: dados, nome_variavel: nome_variavel || "Variável" }
   end
-
-  # ==================== Matriz de Acumulação ====================
 
   def montar_matriz_acumulacao(estudo_id:)
     base = registros_unicos(estudo_id)
@@ -435,8 +394,6 @@ class ServicoDadosAnalise
     { matriz: matriz }
   end
 
-  # ==================== Helpers ====================
-
   def base_analises(estudo_id)
     escopo = Dw::AnaliseEstatistica.do_estudo(estudo_id)
     escopo = escopo.where(fk_campanha: @campanha_ids) if @campanha_ids.present?
@@ -452,9 +409,6 @@ class ServicoDadosAnalise
     escopo
   end
 
-  # Retorna IDs de unidades amostrais dentro do bounding box, ou nil se nenhum
-  # parâmetro geográfico foi passado (aí o filtro não se aplica). Consulta o DW
-  # (`dim_unidade_amostral`) porque `analises_estatisticas` não tem lat/long.
   def unidades_no_bounding_box
     return nil if @latitude_min.nil? && @latitude_max.nil? &&
                   @longitude_min.nil? && @longitude_max.nil?
@@ -491,18 +445,6 @@ class ServicoDadosAnalise
       .compact
   end
 
-  # Sempre 1 linha por unidade amostral, com o valor da variável replicado quando
-  # ela é a nível campanha (que tem 1 valor por campanha estendido a todas as unidades
-  # daquela campanha pelo DW). Usado por callers que precisam de matriz unit-keyed
-  # (RDA/CCA, dois_grupos com fonte=variavel) — sem isso, variável a nível campanha
-  # devolveria 1 unidade arbitrária por campanha e o resto cairia em 0.0.
-  #
-  # Limitação: pra variáveis a nível EVENTO ou REGISTRO, há
-  # múltiplos valores por unidade (cada evento/registro tem o seu). O DISTINCT ON
-  # devolve UM valor — agora determinístico por causa do tiebreaker `id_registro`,
-  # mas ainda é "1 valor arbitrário entre vários", não uma agregação. Pra esses
-  # níveis, considere usar fonte=abundancia/riqueza com nivel_agregacao apropriado,
-  # ou aceite que a matriz reflete o registro de menor id por unidade.
   def valores_por_unidade(estudo_id:, variavel_id:)
     base_analises(estudo_id)
       .where(id_variavel: variavel_id)
@@ -510,12 +452,6 @@ class ServicoDadosAnalise
       .order(:fk_unidade_amostral, :id_registro)
   end
 
-  # Escolhe a coluna do DISTINCT ON conforme o nivel_variavel da variável solicitada.
-  # Variáveis CAMPANHA/UNIDADE/EVENTO/REGISTRO precisam ser consultadas na dimensão
-  # nativa — normalizar tudo por fk_unidade_amostral perde dados de eventos/registros
-  # distintos na mesma unidade e replica valor por unidade no caso de campanha.
-  # O retorno é whitelist, então é seguro interpolar no SQL.
-  # Memoizado por instância pra evitar N+1 quando vários callers consultam a mesma variável.
   def coluna_do_nivel_variavel(estudo_id:, variavel_id:)
     @nivel_cache ||= {}
     @nivel_cache[variavel_id] ||= begin
@@ -534,12 +470,6 @@ class ServicoDadosAnalise
     end
   end
 
-  # ==================== Helpers de Fonte Derivada ====================
-
-  # Retorna hash {chave_dimensao => valor_float} para fonte abundancia/riqueza
-  # agrupado pela dimensão escolhida.
-  # - abundancia = SUM(abundancia)
-  # - riqueza    = COUNT(DISTINCT especie) (exclui ausências com abundancia <= 0)
   def dados_derivados(estudo_id:, fonte:, nivel_agregacao:)
     coluna = coluna_nivel_agregacao(nivel_agregacao)
     base = registros_unicos(estudo_id)
@@ -597,10 +527,6 @@ class ServicoDadosAnalise
     end
   end
 
-  # Devolve a coluna DW que vai chavear o hash de cada perna do dois_vetores.
-  # fonte=variavel usa o nivel_variavel da própria variável (via coluna_do_nivel_variavel),
-  # fonte derivada usa o nivel_agregacao do request. Retorna nil quando a perna ainda
-  # não tem variavel_id pra resolver — caso em que deixa o caller decidir como tratar.
   def dimensao_efetiva(estudo_id:, fonte:, variavel_id:, nivel:)
     return nil if fonte == "variavel" && variavel_id.blank?
 
@@ -611,12 +537,6 @@ class ServicoDadosAnalise
     end
   end
 
-  # Agrupar por mes/ano/estacao em multiplos_grupos com fonte=variavel só faz sentido
-  # quando a variável tem 1:1 com data: nivel=registro (cada registro tem sua data) ou
-  # nivel=evento (cada evento tem sua data, todos os registros do evento compartilham).
-  # Pra nivel=campanha ou nivel=unidade, o DISTINCT ON pega ano/mes do id_registro
-  # arbitrário escolhido pelo Postgres — ANOVA/Kruskal acabam com 1 observação por grupo.
-  # Rejeita explicitamente em vez de devolver resultado silenciosamente errado.
   def validar_compatibilidade_temporal!(estudo_id:, variavel_id:, agrupar_por:)
     return unless AGRUPAMENTOS_TEMPORAIS.include?(agrupar_por)
 
@@ -635,8 +555,6 @@ class ServicoDadosAnalise
           "#{nivel_legivel}, que não tem granularidade temporal — ANOVA/Kruskal " \
           "acabariam com 1 observação por grupo."
   end
-
-  # ==================== Helpers de Múltiplos Grupos ====================
 
   def rows_variavel_para_grupos(estudo_id:, variavel_id:)
     coluna = coluna_do_nivel_variavel(estudo_id: estudo_id, variavel_id: variavel_id)
@@ -711,8 +629,6 @@ class ServicoDadosAnalise
     end
   end
 
-  # Estações do hemisfério sul. O ano da estação é o ano calendário onde
-  # janeiro/fevereiro caem (ex.: dezembro/2024 + jan/fev/2025 => "Verão 2025").
   def estacao_label(mes:, ano:)
     return nil if mes.nil? || ano.nil?
 

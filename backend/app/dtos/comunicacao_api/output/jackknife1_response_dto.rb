@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/jackknife1
     class Jackknife1ResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_jack1,
                   :especies_unicas, :especies_nao_detectadas_estimadas

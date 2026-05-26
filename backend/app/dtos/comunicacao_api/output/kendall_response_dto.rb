@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/kendall
     class KendallResponseDto
       attr_reader :tau, :p_valor, :significativo, :estatistica_z,
                   :interpretacao, :nome_x, :nome_y

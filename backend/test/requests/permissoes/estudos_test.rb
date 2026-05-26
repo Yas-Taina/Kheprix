@@ -5,7 +5,6 @@ require "test_helper"
 class PermissoesEstudosTest < PermissoesBase
   VARIAVEIS_VALIDAS = [ { nome: "Var1", nivel_aplicacao: "campanha", tipo_dado: "string" } ].freeze
 
-  # ── CRIAR ──────────────────────────────────────────────────────────────────
   test "colaborador autenticado pode criar estudo" do
     post "/estudos",
          params: { nome: "Novo Estudo", variaveis: VARIAVEIS_VALIDAS },
@@ -25,7 +24,6 @@ class PermissoesEstudosTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETAR ────────────────────────────────────────────────────────────────
   test "proprietario unico deleta estudo e recebe 204" do
     delete "/estudos/#{@estudo.id}", headers: auth(@token_prop)
     assert_response :no_content

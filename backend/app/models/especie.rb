@@ -3,18 +3,14 @@
 class Especie < ApplicationRecord
   include SoftDeletavel
 
-  # 1. Associações
   belongs_to :estudo
   has_many :registro_ocorrencias
 
-  # 2. Validações (regras de negócio)
   validates :estudo_id, presence: true
-  # 3. Scopes
   scope :ordenadas, -> { order(:nome_popular) }
   scope :do_estudo, ->(estudo_id) { where(estudo_id: estudo_id) }
   scope :por_nome_popular, ->(nome) { where("nome_popular ILIKE ?", "%#{nome}%") }
 
-  # 4. Serialização
   def as_json(options = {})
     super(
       only: %i[

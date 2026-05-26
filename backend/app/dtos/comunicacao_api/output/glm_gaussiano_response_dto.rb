@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/modelo_gaussiano
     class GlmGaussianoResponseDto
       attr_reader :aic, :deviance, :coeficientes, :r_quadrado,
                   :nome_resposta, :nome_preditor, :familia, :interpretacao

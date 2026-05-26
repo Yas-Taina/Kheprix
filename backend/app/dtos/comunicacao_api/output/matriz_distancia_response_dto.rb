@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta genérica para os índices de similaridade/dissimilaridade
-    # Endpoints: jaccard, sorensen, bray_curtis, morisita
     class MatrizDistanciaResponseDto
       attr_reader :matriz_distancia, :nomes_amostras, :numero_amostras,
                   :numero_especies, :metodo, :interpretacao

@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/pielou
     class PielouResponseDto
       attr_reader :indice_pielou, :shannon, :riqueza, :interpretacao
 

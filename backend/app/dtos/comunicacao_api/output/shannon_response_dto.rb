@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/shannon
     class ShannonResponseDto
       attr_reader :indice_shannon, :shannon_maximo, :equitabilidade_relativa,
                   :riqueza, :interpretacao

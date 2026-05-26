@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/shapiro (Shapiro-Wilk)
     class ShapiroResponseDto
       attr_reader :estatistica_w, :p_valor, :normal, :interpretacao, :nome_variavel, :nota
 

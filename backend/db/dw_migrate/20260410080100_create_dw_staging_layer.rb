@@ -2,7 +2,6 @@ class CreateDwStagingLayer < ActiveRecord::Migration[8.0]
   def up
     execute "CREATE SCHEMA IF NOT EXISTS staging;"
 
-    # Tabelas espelho da aplicação para Staging Area
     create_table "staging.usuarios", id: :integer do |t|
       t.string :nome
       t.string :email

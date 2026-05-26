@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/hurlbert
     class HurlbertResponseDto
       attr_reader :hurlbert_pie, :total_individuos, :interpretacao
 

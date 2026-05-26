@@ -8,8 +8,6 @@ class ChatbotController < ApplicationController
   TIMEOUT_S = 60
   private_constant :TIMEOUT_S
 
-  # POST /chatbot/query
-  # Encaminha pergunta livre ao Python (Text-to-SQL).
   def query
     pergunta = params[:pergunta].to_s.strip
     if pergunta.blank?
@@ -27,8 +25,6 @@ class ChatbotController < ApplicationController
     encaminhar_ao_chatbot("/query", payload)
   end
 
-  # POST /chatbot/insights
-  # Encaminha solicitação de relatório analítico ao Python (SQL fixo + LLM).
   def insights
     estudo_ids = filtrar_estudo_ids(params[:estudo_ids])
     if estudo_ids.empty?
@@ -42,8 +38,6 @@ class ChatbotController < ApplicationController
 
   private
 
-  # Intersecta os IDs solicitados pelo frontend com os estudos reais do usuário.
-  # Garante que um usuário não consiga consultar dados de estudos alheios.
   def filtrar_estudo_ids(ids_requisitados)
     return [] if ids_requisitados.blank?
 

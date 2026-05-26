@@ -10,7 +10,6 @@ class PermissoesCampanhasTest < PermissoesBase
   PARAMS_CRIAR = { nome: "Nova Campanha", data_inicio: "2025-06-01" }.freeze
   PARAMS_EDITAR = { nome: "Campanha Editada", data_inicio: "2025-07-01", descricao: nil }.freeze
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar campanhas" do
     get "/estudos/#{@estudo.id}/campanhas", headers: auth(@token_prop)
     assert_response :ok
@@ -31,7 +30,6 @@ class PermissoesCampanhasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode criar campanha" do
     post "/estudos/#{@estudo.id}/campanhas",
          params: PARAMS_CRIAR,
@@ -58,7 +56,6 @@ class PermissoesCampanhasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode atualizar campanha" do
     patch "/estudos/#{@estudo.id}/campanhas/#{@campanha.id}",
           params: PARAMS_EDITAR,
@@ -85,7 +82,6 @@ class PermissoesCampanhasTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
   test "proprietario pode deletar campanha" do
     delete "/estudos/#{@estudo.id}/campanhas/#{@campanha.id}",
            headers: auth(@token_prop)

@@ -20,7 +20,6 @@ class PermissoesEventosAmostragemTest < PermissoesBase
   PARAMS_CRIAR  = { horario_inicio: "2025-03-01T10:00:00", esforco_real: "2 horas" }.freeze
   PARAMS_EDITAR = { horario_inicio: "2025-03-01T12:00:00", esforco_real: "3 horas" }.freeze
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar eventos de amostragem" do
     get base_url, headers: auth(@token_prop)
     assert_response :ok
@@ -41,7 +40,6 @@ class PermissoesEventosAmostragemTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode criar evento de amostragem" do
     post base_url, params: PARAMS_CRIAR, headers: auth(@token_prop)
     assert_response :created
@@ -62,7 +60,6 @@ class PermissoesEventosAmostragemTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── UPDATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode atualizar evento de amostragem" do
     patch "#{base_url}/#{@evento.id}", params: PARAMS_EDITAR, headers: auth(@token_prop)
     assert_response :ok
@@ -83,7 +80,6 @@ class PermissoesEventosAmostragemTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
   test "proprietario pode deletar evento de amostragem" do
     delete "#{base_url}/#{@evento.id}", headers: auth(@token_prop)
     assert_response :no_content

@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/pearson
     class PearsonResponseDto
       attr_reader :correlacao, :p_valor, :significativo, :intervalo_confianca,
                   :interpretacao, :direcao, :nome_x, :nome_y

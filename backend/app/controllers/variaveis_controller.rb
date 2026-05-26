@@ -7,7 +7,6 @@ class VariaveisController < ApplicationController
   before_action :definir_estudo
   before_action :autorizar_acesso_estudo!
 
-  # GET /estudos/:estudo_id/variaveis?nivel_aplicacao=campanha
   def index
     variaveis = @estudo.variaveis
 

@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/bootstrap
     class BootstrapResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_bootstrap,
                   :especies_nao_detectadas_estimadas

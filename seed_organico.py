@@ -48,9 +48,6 @@ OUTROS_USUARIOS = [
     {"nome": "Carlos Outro",       "email": "carlos.outro@example.com", "senha": "senha123"},
 ]
 
-
-# ── Imagens ───────────────────────────────────────────────────────────────────
-
 def _chunk(tag: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
 
@@ -121,26 +118,19 @@ _N_FOTOS_CAMPO = 20
 _URLS_CAMPO = [f"https://picsum.photos/seed/{300 + i}/480/360" for i in range(_N_FOTOS_CAMPO)]
 
 
-# ── Definicoes de campanhas e locais ─────────────────────────────────────────
-# Cada campanha: (nome, data_inicio, data_fim, responsavel,
-#                 datas_eventos[(yr,mo,dy)x3],
-#                 base_temp, base_precip, base_humid)
 CAMPANHAS_DEF = [
-    # ── 2024 ──────────────────────────────────────────────────────────────────
     ("Campanha Verao 2024",    "2024-01-10", "2024-03-31", "Joao",
      [(2024, 1, 10), (2024, 2,  8), (2024, 3,  4)], 29.0, 148.0, 80.0),
     ("Campanha Outono 2024",   "2024-04-02", "2024-06-28", "Maria",
      [(2024, 4,  3), (2024, 5,  8), (2024, 6,  6)], 23.5, 100.0, 70.0),
     ("Campanha Inverno 2024",  "2024-07-03", "2024-09-27", "Beatriz",
      [(2024, 7, 10), (2024, 8, 14), (2024, 9,  5)], 16.5,  58.0, 59.0),
-    # ── 2025 ──────────────────────────────────────────────────────────────────
     ("Campanha Verao 2025",    "2025-01-12", "2025-03-31", "Joao",
      [(2025, 1, 12), (2025, 2,  9), (2025, 3,  6)], 29.5, 152.0, 81.0),
     ("Campanha Outono 2025",   "2025-04-04", "2025-06-30", "Maria",
      [(2025, 4,  6), (2025, 5, 12), (2025, 6, 10)], 23.8, 102.0, 70.5),
     ("Campanha Inverno 2025",  "2025-07-05", "2025-09-29", "Beatriz",
      [(2025, 7,  7), (2025, 8, 11), (2025, 9,  2)], 16.8,  60.0, 60.0),
-    # ── 2026 ──────────────────────────────────────────────────────────────────
     ("Campanha Verao 2026",    "2026-01-15", "2026-03-31", "Joao",
      [(2026, 1, 15), (2026, 2, 10), (2026, 3,  5)], 30.0, 155.0, 82.0),
     ("Campanha Outono 2026",   "2026-04-01", "2026-06-30", "Maria",
@@ -149,7 +139,6 @@ CAMPANHAS_DEF = [
      [(2026, 7,  8), (2026, 8, 12), (2026, 9,  3)], 17.0,  62.0, 61.0),
 ]
 
-# Cada local: (nome, lat, lon, raio, metodo, esforco, solo, altitude_m, cobertura_pct)
 LOCAIS = [
     ("UA-01-Nascente",   -23.361, -44.830, 80.0, "Armadilha fotografica", "30 dias de exposicao",  "Argilo-arenoso", 120.0, 75.0),
     ("UA-02-Trilha",     -23.365, -44.825, 75.0, "Busca ativa",           "8h/dia por 5 dias",     "Latossolo",      200.0, 60.0),
@@ -160,9 +149,6 @@ LOCAIS = [
     ("UA-07-Cerrado",    -23.348, -44.845, 90.0, "Busca ativa",           "8h/dia por 7 dias",     "Latossolo",      310.0, 40.0),
     ("UA-08-Brejo",      -23.380, -44.810, 55.0, "Pitfall",               "15 armadilhas/30 dias", "Gleissolo",       20.0, 95.0),
 ]
-
-
-# ── HTTP helper ───────────────────────────────────────────────────────────────
 
 def http(method: str, path: str, token: str | None = None, body: dict | None = None) -> tuple[int, Any]:
     url = BASE_URL + path
@@ -225,14 +211,10 @@ def main(base_url: str) -> int:
     global BASE_URL
     BASE_URL = base_url.rstrip("/")
     print(f"== Kheprix seed organico em {BASE_URL} ==\n")
-
-    # ── [0] Download de imagens reais ────────────────────────────────────────
     print("[0] Baixando imagens reais ...")
     fotos_especies = [imagem_b64(url, fb) for url, fb in _ESPECIES_IMG]
     fotos_campo    = [imagem_b64(url) for url in _URLS_CAMPO]
     print(f"  {len(fotos_especies)} fotos de especies | {len(fotos_campo)} fotos de campo prontas\n")
-
-    # ── [1] Usuarios ──────────────────────────────────────────────────────────
     print("[1] Criando usuarios e fazendo login")
     tokens: dict[str, str] = {}
     tokens[DONO_PRINCIPAL["email"]] = criar_ou_logar(DONO_PRINCIPAL)
@@ -245,7 +227,6 @@ def main(base_url: str) -> int:
     beatriz = tokens["beatriz.cod@example.com"]
     carlos  = tokens["carlos.outro@example.com"]
 
-    # ── [2] Estudo 1 com variaveis em todos os niveis ─────────────────────────
     print("\n[2] Estudo 1 com variaveis em todos os niveis")
     code, est1 = http("POST", "/estudos", joao, {
         "nome": "Entomofauna - Mata Atlantica Nucleo Picinguaba",
@@ -276,7 +257,6 @@ def main(base_url: str) -> int:
     var_umidade      = vbn["Umidade"]
     var_comportamento = vbn["Comportamento"]
 
-    # ── [3] Especies (12 com foto) ────────────────────────────────────────────
     print("\n[3] Cadastrando 12 especies com foto")
     especies_payload = [
         {"classe": "Insecta", "ordem": "Hymenoptera",  "familia": "Formicidae",   "genero": "Atta",          "especie": "laevigata",  "nome_popular": "Sauva-cabeca-de-vidro",  "status_conservacao": "Pouco preocupante",   "endemismo": False},
@@ -288,10 +268,8 @@ def main(base_url: str) -> int:
         {"classe": "Insecta", "ordem": "Orthoptera",   "familia": "Gryllidae",    "genero": "Gryllus",       "especie": "assimilis",  "nome_popular": "Grilo-do-campo",         "status_conservacao": "Pouco preocupante",   "endemismo": False},
         {"classe": "Insecta", "ordem": "Lepidoptera",  "familia": "Saturniidae",  "genero": "Attacus",       "especie": "atlas",      "nome_popular": "Mariposa-atlas",         "status_conservacao": "Vulneravel",          "endemismo": False},
         {"classe": "Insecta", "ordem": "Hemiptera",    "familia": "Aphididae",    "genero": "Aphis",         "especie": "gossypii",   "nome_popular": "Pulgao-verde",           "status_conservacao": "Pouco preocupante",   "endemismo": False},
-        # Singletons Chao1 (total de 1 individuo em todo o estudo)
         {"classe": "Insecta", "ordem": "Diptera",      "familia": "Culicidae",    "genero": "Wyeomyia",      "especie": "mitchellii", "nome_popular": "Mosquito-bromelicula",   "status_conservacao": "Dados insuficientes", "endemismo": True},
         {"classe": "Insecta", "ordem": "Thysanoptera", "familia": "Thripidae",    "genero": "Frankliniella", "especie": "schultzei",  "nome_popular": "Tripes-das-flores",      "status_conservacao": "Pouco preocupante",   "endemismo": False},
-        # Doubleton Chao2 (aparece em 2 unidades distintas, 1 reg em cada)
         {"classe": "Insecta", "ordem": "Hemiptera",    "familia": "Cicadellidae", "genero": "Empoasca",      "especie": "kraemeri",   "nome_popular": "Cigarrinha-verde",       "status_conservacao": "Pouco preocupante",   "endemismo": False},
     ]
     especies_ids: list[int] = []
@@ -309,7 +287,6 @@ def main(base_url: str) -> int:
                    {"nome_popular": "Besouro-rola-bosta (Mata Atlantica)"})
     step("PATCH especie[1]", code, _)
 
-    # ── [4] Campanhas (3 sazonais) ────────────────────────────────────────────
     print("\n[4] Campanhas, unidades, eventos e registros")
     campanhas: list[dict] = []
     for camp_def in CAMPANHAS_DEF:
@@ -324,7 +301,6 @@ def main(base_url: str) -> int:
         step(f"POST campanha {camp_nome}", code, camp)
         campanhas.append(camp)
 
-    # PATCH campanha[0]
     vv0_id = ((campanhas[0].get("valores_variaveis") or [{}])[0]).get("id")
     code, _ = http("PATCH", f"/estudos/{estudo_id}/campanhas/{campanhas[0]['id']}", joao, {
         "nome":        campanhas[0]["nome"] + " (revisada)",
@@ -340,8 +316,6 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/estudos/{estudo_id}/campanhas/{campanhas[0]['id']}", joao)
     step("GET campanha :id", code, _)
 
-    # ── Unidades (5 por campanha = 15 total) ──────────────────────────────────
-    # unidade_map[(c_idx, u_idx)] = unidade dict
     unidade_map: dict[tuple[int, int], dict] = {}
     for c_idx, campanha in enumerate(campanhas):
         for u_idx, local in enumerate(LOCAIS):
@@ -365,7 +339,6 @@ def main(base_url: str) -> int:
             ua["_campanha_id"] = campanha["id"]
             unidade_map[(c_idx, u_idx)] = ua
 
-    # PATCH unidade[0][0]
     ua00 = unidade_map[(0, 0)]
     vvs_ua00 = {vv["variavel_id"]: vv["id"] for vv in (ua00.get("valores_variaveis") or [])}
     patch_ua_vv = []
@@ -387,8 +360,6 @@ def main(base_url: str) -> int:
         })
     step("PATCH unidade[0][0]", code, _)
 
-    # ── Eventos (3 por unidade = 45 total) ────────────────────────────────────
-    # evento_map[(c_idx, u_idx, e_idx)] = evento dict
     evento_map: dict[tuple[int, int, int], dict] = {}
     for c_idx, (campanha, camp_def) in enumerate(zip(campanhas, CAMPANHAS_DEF)):
         datas_ev   = camp_def[4]
@@ -420,7 +391,6 @@ def main(base_url: str) -> int:
                 ev["_unidade_id"]  = ua["id"]
                 evento_map[(c_idx, u_idx, e_idx)] = ev
 
-    # PATCH evento[0][0][0]
     ev000 = evento_map[(0, 0, 0)]
     vvs_ev000 = {vv["variavel_id"]: vv["id"] for vv in (ev000.get("valores_variaveis") or [])}
     patch_ev_vv = []
@@ -440,13 +410,6 @@ def main(base_url: str) -> int:
             "valores_variaveis": patch_ev_vv,
         })
     step("PATCH evento[0][0][0]", code, _)
-
-    # ── Registros ─────────────────────────────────────────────────────────────
-    # Matriz de abundancia deterministica:
-    #   sp 0-8 (comuns): presentes se hash(c,u,e,sp) % 3 != 0  (~67%)
-    #   sp 9  (singleton A): apenas c=0, u=0, e=0, qtde=1
-    #   sp 10 (singleton B): apenas c=0, u=1, e=0, qtde=1
-    #   sp 11 (Chao2 Q2):    c=0,u=0,e=2  E  c=0,u=2,e=0, qtde=1 cada
 
     registros: list[dict] = []
 
@@ -487,7 +450,6 @@ def main(base_url: str) -> int:
                         return r
                     return {}
 
-                # Especies comuns (0-8)
                 for sp_idx in range(9):
                     if (u_idx * 7 + e_idx * 3 + c_idx * 11 + sp_idx * 13) % 3 != 0:
                         qtde     = ((c_idx + u_idx * 2 + e_idx + sp_idx * 3) % 5) + 2
@@ -495,16 +457,14 @@ def main(base_url: str) -> int:
                         foto_idx = c_idx * 100 + u_idx * 10 + e_idx * 3 + sp_idx
                         post_reg(especies_ids[sp_idx], qtde, comp, foto_idx=foto_idx)
 
-                # Especies raras
                 if c_idx == 0 and u_idx == 0 and e_idx == 0:
-                    post_reg(especies_ids[9],  1, "true",  foto_idx=0)   # singleton A — Chao1 f1
+                    post_reg(especies_ids[9],  1, "true",  foto_idx=0) 
                 if c_idx == 0 and u_idx == 1 and e_idx == 0:
-                    post_reg(especies_ids[10], 1, "false", foto_idx=1)   # singleton B — Chao1 f1
+                    post_reg(especies_ids[10], 1, "false", foto_idx=1)   
                 if (c_idx == 0 and u_idx == 0 and e_idx == 2) or \
                    (c_idx == 0 and u_idx == 2 and e_idx == 0):
-                    post_reg(especies_ids[11], 1, "true",  foto_idx=2)   # Chao2 Q2 (2 unidades)
+                    post_reg(especies_ids[11], 1, "true",  foto_idx=2)  
 
-    # PATCH registro[0]
     if registros:
         reg0 = registros[0]
         vv_id0 = ((reg0.get("valores_variaveis") or [{}])[0]).get("id")
@@ -535,7 +495,6 @@ def main(base_url: str) -> int:
         joao)
     step("GET registros (lista)", code, _)
 
-    # ── [5] Convites ──────────────────────────────────────────────────────────
     print("\n[5] Convites com todos os status")
     code, conv_aceito = http("POST", f"/estudos/{estudo_id}/convites", joao,
                              {"email_convidado": "maria.colab@example.com"})
@@ -568,7 +527,6 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/convites/{conv_pendente['token']}")
     step("GET /convites/:token (publico)", code, _)
 
-    # ── [6] Colaboradores ─────────────────────────────────────────────────────
     print("\n[6] Colaboradores")
     code, colabs = http("GET", f"/estudos/{estudo_id}/colaboradores", joao)
     step("GET colaboradores", code, colabs)
@@ -581,7 +539,6 @@ def main(base_url: str) -> int:
                        {"perfil": "colaborador"})
         step("PATCH Maria -> colaborador (volta)", code, _)
 
-    # ── [7] Codigo de acesso ──────────────────────────────────────────────────
     print("\n[7] Codigo de acesso")
     code, codigo = http("GET", f"/estudos/{estudo_id}/codigo_acesso", joao)
     step("GET codigo acesso", code, codigo)
@@ -593,7 +550,6 @@ def main(base_url: str) -> int:
                    {"codigo": codigo["codigo"], "senha_autocadastro": nova_senha})
     step("POST /estudos/ingressar (Beatriz)", code, _)
 
-    # ── [8] Estudos secundarios ───────────────────────────────────────────────
     print("\n[8] Estudos secundarios")
     code, est2 = http("POST", "/estudos", carlos, {
         "nome": "Cerrado - Chapada dos Veadeiros",
@@ -627,7 +583,6 @@ def main(base_url: str) -> int:
     code, _ = http("GET", "/convites", joao)
     step("GET /convites recebidos (Joao)", code, _)
 
-    # ── [9] Listagens e filtros ───────────────────────────────────────────────
     print("\n[9] Listagens e filtros")
     code, _ = http("GET", "/estudos", joao)
     step("GET /estudos (Joao)", code, _)
@@ -637,14 +592,12 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/estudos?criado_a_partir_de=2026-01-01&criado_ate={hoje}", joao)
     step("GET /estudos com filtros de data", code, _)
 
-    # ── [10] Dashboard ────────────────────────────────────────────────────────
     print("\n[10] Dashboard")
     code, _ = http("GET", "/dashboard", joao)
     step("GET /dashboard (Joao)", code, _)
     code, _ = http("GET", "/dashboard", maria)
     step("GET /dashboard (Maria)", code, _)
 
-    # ── [11] Exportacao ───────────────────────────────────────────────────────
     print("\n[11] Exportacao")
     for agrup in ["registro_ocorrencia", "evento_amostragem", "unidade_amostral", "campanha", "especie"]:
         code, _ = http("GET", f"/estudos/{estudo_id}/exportar_dados?formato=csv&agrupamento={agrup}", joao)
@@ -652,12 +605,9 @@ def main(base_url: str) -> int:
     code, _ = http("GET", f"/estudos/{estudo_id}/exportar_dados?formato=xml", joao)
     step("exportar_dados xml", code, _)
 
-    # ── [12] Soft deletes ─────────────────────────────────────────────────────
     print("\n[12] Soft deletes")
-    # Deleta especie[4] (Abelha-urucu) — nao afeta singletons/doubletons
     code, _ = http("DELETE", f"/estudos/{estudo_id}/especies/{especies_ids[4]}", joao)
     step("DELETE especie[4] Abelha-urucu", code, _)
-    # Deleta ultimo evento (ultima campanha, ultima unidade, ultimo evento)
     last_c = len(campanhas) - 1
     last_u = len(LOCAIS) - 1
     ev_last = evento_map[(last_c, last_u, 2)]
@@ -665,14 +615,12 @@ def main(base_url: str) -> int:
         f"/estudos/{estudo_id}/campanhas/{ev_last['_campanha_id']}/unidades_amostrais/{ev_last['_unidade_id']}/eventos_amostragem/{ev_last['id']}",
         joao)
     step(f"DELETE evento[{last_c}][{last_u}][2]", code, _)
-    # Deleta ultima unidade (ultima campanha, ultima localizacao)
     ua_last = unidade_map[(last_c, last_u)]
     code, _ = http("DELETE",
         f"/estudos/{estudo_id}/campanhas/{ua_last['_campanha_id']}/unidades_amostrais/{ua_last['id']}",
         joao)
     step(f"DELETE unidade[{last_c}][{last_u}]", code, _)
 
-    # ── [13] Resumo ───────────────────────────────────────────────────────────
     print("\n[13] Resumo")
     code, _ = http("GET", "/dashboard", joao)
     step("GET /dashboard final", code, _)

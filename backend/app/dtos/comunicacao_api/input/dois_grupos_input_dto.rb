@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: teste_t
     class DoisGruposInputDto
       include ActiveModel::API
 

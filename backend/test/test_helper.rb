@@ -2,9 +2,6 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
-# Em Minitest 6.x o contrato de run mudou: run_suite faz o que run fazia em 5.x,
-# e run(klass, method_name, reporter) executa um único teste.
-# Rails 8 ainda patcha o antigo run(reporter, options) — isso quebra no 6.x.
 require "rails/test_unit/line_filtering"
 if Minitest::VERSION.to_i >= 6
   module Rails

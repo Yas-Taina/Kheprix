@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/margalef
     class MargalefResponseDto
       attr_reader :indice_margalef, :riqueza, :total_individuos, :interpretacao
 

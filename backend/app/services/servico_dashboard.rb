@@ -5,7 +5,6 @@ class ServicoDashboard
     estudo = estudo_alvo(usuario)
     return nil unless estudo
 
-    # DW: métricas da camada de apresentação
     indicadores = Dw::IndicadoresDashboard.do_estudo(estudo.id)
 
     {

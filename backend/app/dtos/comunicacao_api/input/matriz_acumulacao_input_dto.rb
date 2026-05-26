@@ -2,9 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: michaelis_menten
-    # matriz: linhas = eventos de coleta (amostras em ordem), colunas = espécies
-    # Os valores representam abundâncias acumuladas
     class MatrizAcumulacaoInputDto
       include ActiveModel::API
 

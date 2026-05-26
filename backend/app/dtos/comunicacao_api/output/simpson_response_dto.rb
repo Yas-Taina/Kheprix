@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/simpson
     class SimpsonResponseDto
       attr_reader :indice_simpson, :diversidade_simpson, :inverso_simpson, :interpretacao
 

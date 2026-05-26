@@ -12,7 +12,6 @@ class PermissoesConvitesTest < PermissoesBase
     )
   end
 
-  # ── INDEX ──────────────────────────────────────────────────────────────────
   test "proprietario pode listar convites" do
     get "/estudos/#{@estudo.id}/convites", headers: auth(@token_prop)
     assert_response :ok
@@ -33,7 +32,6 @@ class PermissoesConvitesTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── CREATE ─────────────────────────────────────────────────────────────────
   test "proprietario pode criar convite" do
     novo_email = "novo_#{SecureRandom.hex(4)}@teste.com"
     post "/estudos/#{@estudo.id}/convites",
@@ -61,7 +59,6 @@ class PermissoesConvitesTest < PermissoesBase
     assert_response :unauthorized
   end
 
-  # ── DELETE ─────────────────────────────────────────────────────────────────
   test "proprietario pode cancelar convite" do
     delete "/estudos/#{@estudo.id}/convites/#{@convite.id}",
            headers: auth(@token_prop)

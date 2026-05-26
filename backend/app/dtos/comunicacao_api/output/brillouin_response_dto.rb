@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/brillouin
     class BrillouinResponseDto
       attr_reader :indice_brillouin, :total_individuos, :interpretacao
 

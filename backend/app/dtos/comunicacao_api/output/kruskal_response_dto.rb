@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/kruskal (Kruskal-Wallis)
     class KruskalResponseDto
       attr_reader :estatistica_h, :p_valor, :significativo, :gl,
                   :medianas_por_grupo, :nome_variavel, :interpretacao

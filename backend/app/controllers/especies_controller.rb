@@ -9,19 +9,16 @@ class EspeciesController < ApplicationController
   before_action :autorizar_proprietario_estudo!, only: %i[destroy]
   before_action :carregar_especie, only: %i[show update destroy]
 
-  # GET /estudos/:estudo_id/especies
   def index
     dto = PesquisarEspecieDto.new(params)
     especies = servico.listar(estudo_id: @estudo.id, filtros: dto)
     render json: especies, status: :ok
   end
 
-  # GET /estudos/:estudo_id/especies/:id
   def show
     render json: @especie, status: :ok
   end
 
-  # POST /estudos/:estudo_id/especies
   def create
     dto = CriarEspecieDto.new(params)
 
@@ -39,7 +36,6 @@ class EspeciesController < ApplicationController
     end
   end
 
-  # PATCH /estudos/:estudo_id/especies/:id
   def update
     dto = AtualizarEspecieDto.new(params)
 
@@ -57,7 +53,6 @@ class EspeciesController < ApplicationController
     end
   end
 
-  # DELETE /estudos/:estudo_id/especies/:id
   def destroy
     servico.destruir(@especie)
     head :no_content

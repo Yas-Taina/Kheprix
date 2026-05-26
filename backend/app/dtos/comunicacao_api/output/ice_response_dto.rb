@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/ice
     class IceResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_ice,
                   :especies_nao_detectadas_estimadas

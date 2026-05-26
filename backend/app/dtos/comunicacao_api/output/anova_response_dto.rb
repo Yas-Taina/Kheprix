@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/anova
     class AnovaResponseDto
       attr_reader :f_valor, :p_valor, :significativo, :gl_tratamento,
                   :gl_residuo, :medias_por_grupo, :nome_variavel, :interpretacao

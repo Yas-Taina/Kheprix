@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/mcnaughton
     class McNaughtonResponseDto
       attr_reader :indice_mcnaughton, :proporcao_duas_especies_dominantes,
                   :especie_mais_abundante, :abundancia_primeira,

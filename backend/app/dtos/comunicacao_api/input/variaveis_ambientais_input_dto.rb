@@ -2,8 +2,6 @@
 
 module ComunicacaoApi
   module Input
-    # Usado por: rda, cca
-    # Requer mais amostras do que variáveis ambientais
     class VariaveisAmbientaisInputDto
       include ActiveModel::API
 

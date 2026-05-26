@@ -2,7 +2,6 @@
 
 module ComunicacaoApi
   module Output
-    # Resposta de: POST /analise/chao2
     class Chao2ResponseDto
       attr_reader :riqueza_observada, :riqueza_estimada_chao2, :especies_unicas,
                   :especies_duplicadas, :numero_amostras, :especies_nao_detectadas_estimadas
