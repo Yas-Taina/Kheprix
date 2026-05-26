@@ -64,7 +64,6 @@ def exec_dw(sql, params=None, fetch=False):
 
 def _seed_estudo_base():
     """Garante um estudo, usuário, campanha, unidade e evento de teste no OLTP."""
-    # usuarios: unique em email (índice simples — ON CONFLICT funciona)
     exec_oltp("""
         INSERT INTO usuarios (nome, email, password_digest, created_at, updated_at)
         VALUES ('Tester', 'test@kheprix.test', 'x', NOW(), NOW())
@@ -72,8 +71,6 @@ def _seed_estudo_base():
     """)
     user_id = exec_oltp("SELECT id FROM usuarios WHERE email = 'test@kheprix.test'", fetch=True)[0]['id']
 
-    # estudos: unique em codigo é PARCIAL (WHERE deleted_at IS NULL)
-    # ON CONFLICT não funciona com índice parcial — usa WHERE NOT EXISTS
     exec_oltp("""
         INSERT INTO estudos (nome, codigo, created_at, updated_at)
         SELECT 'Estudo Teste', 'TEST001', NOW(), NOW()
@@ -86,7 +83,6 @@ def _seed_estudo_base():
         fetch=True
     )[0]['id']
 
-    # colaboradores: unique em (estudo_id, usuario_id) — mas id: false, sem PK convencional
     exec_oltp("""
         INSERT INTO colaboradores (estudo_id, usuario_id, perfil)
         SELECT %s, %s, 0
@@ -119,7 +115,6 @@ def _seed_estudo_base():
         (campanha_id,), fetch=True
     )[0]['id']
 
-    # eventos_amostragem: horario_inicio e esforco_real são NOT NULL no schema
     exec_oltp("""
         INSERT INTO eventos_amostragem (unidade_amostral_id, horario_inicio, esforco_real, created_at, updated_at)
         SELECT %s, NOW(), 'Esforço teste', NOW(), NOW()
@@ -132,7 +127,6 @@ def _seed_estudo_base():
         (ua_id,), fetch=True
     )[0]['id']
 
-    # especies: sem unique constraint em (estudo_id, especie) no schema — usa WHERE NOT EXISTS
     exec_oltp("""
         INSERT INTO especies (estudo_id, genero, especie, endemismo, status_conservacao, created_at, updated_at)
         SELECT %s, 'Apis', 'mellifera_test', false, 'LC', NOW(), NOW()
@@ -236,7 +230,6 @@ def test_dado_antes_da_extracao(fixture):
 
 def test_short_circuit_sem_dados_novos(fixture):
     """Cenário 4: short-circuit deve retornar False quando não há dados novos."""
-    # Simula que a última extração foi AGORA (nada de novo pode ter chegado depois)
     from airflow.models import DagRun
     from airflow.utils.state import DagRunState
 
@@ -246,18 +239,15 @@ def test_short_circuit_sem_dados_novos(fixture):
         return
 
     ultimo = max(runs, key=lambda r: r.start_date)
-    # Insere um registro com updated_at ANTERIOR ao start_date do último run
     ts_antigo = ultimo.start_date - timedelta(minutes=30)
     rid = _inserir_registro(fixture['evento_id'], fixture['especie_id'], qtde=1, updated_at=ts_antigo)
     try:
-        # Verifica manualmente a lógica do short-circuit
         source = psycopg2.connect(OLTP_DSN)
         with source.cursor() as cur:
             cur.execute("SELECT MAX(updated_at) FROM registro_ocorrencias;")
             max_upd = cur.fetchone()[0]
         source.close()
 
-        # Se max_upd <= start_date do último run, short-circuit retornaria False
         if max_upd and max_upd.replace(tzinfo=timezone.utc) <= ultimo.start_date:
             log.info(f"  Short-circuit retornaria False corretamente (max_upd={max_upd} <= start={ultimo.start_date})")
         else:
@@ -287,8 +277,6 @@ def test_short_circuit_detecta_dado_novo(fixture):
 
 def test_ausencia_especie_zero_na_gold(fixture):
     """Cenário 6: registro de ausência deve gerar quantidade_apurada = 0 na Gold."""
-    # Verifica a regra de negócio na dim_registro_ocorrencia
-    # (precisa que a DAG já tenha rodado ao menos uma vez com dados)
     rows = exec_dw("""
         SELECT quantidade_apurada
         FROM public.dim_registro_ocorrencia
@@ -300,7 +288,6 @@ def test_ausencia_especie_zero_na_gold(fixture):
         log.info("  [skip] Nenhum registro na Gold para esta espécie. Execute a DAG primeiro.")
         return
 
-    # Insere ausência diretamente na dim para validar a regra SQL
     ausencia_rows = exec_dw("""
         SELECT quantidade_apurada
         FROM public.dim_registro_ocorrencia r
@@ -317,7 +304,6 @@ def test_ausencia_especie_zero_na_gold(fixture):
 
 def test_valor_eav_invalido_nao_explode(fixture):
     """Cenário 7: CAST inválido em Silver não deve derrubar a task."""
-    # Insere diretamente uma variável do tipo number com valor texto inválido no staging
     exec_dw("""
         INSERT INTO staging.variaveis (id, estudo_id, nome, metrica, nivel_aplicacao, tipo_dado, created_at, updated_at)
         VALUES (99999, %s, 'var_teste_invalida', 'unidade', 3, 1, NOW(), NOW())
@@ -330,7 +316,6 @@ def test_valor_eav_invalido_nao_explode(fixture):
         ON CONFLICT (id) DO UPDATE SET valor = EXCLUDED.valor;
     """, (fixture['evento_id'],))
 
-    # Roda a Silver manualmente
     try:
         exec_dw("""
             INSERT INTO public.silver_variaveis (id, nome, metrica, nivel_aplicacao, tipo_dado, created_at, updated_at)
@@ -399,11 +384,6 @@ def test_contagem_fim_a_fim(fixture):
         )
         assert n_staging == N, f"Staging: esperava {N}, encontrou {n_staging}"
         log.info(f"  {N}/{N} registros chegaram ao staging ✓")
-
-        # Nota: verificar na fato requer rodar a DAG de transform completa.
-        # Para validação fim-a-fim completa, use:
-        #   docker compose exec airflow-worker airflow dags trigger transform_star_schema
-        # e depois cheque: SELECT COUNT(*) FROM fato_medicao_entomologica WHERE fk_evento = <evento_id>
         log.info("  [info] Para validar na Gold, dispare manualmente a transform e reexecute.")
     finally:
         _limpar_registros_teste(ids)
@@ -414,7 +394,6 @@ def test_hwm_overlap_captura_late_arriving(fixture):
     Cenário 2: registro com updated_at levemente anterior ao HWM deve ser capturado pelo overlap.
     Simula o caso de clock skew: dado inserido 'no passado' em relação ao HWM exato.
     """
-    # Pega o MAX(updated_at) atual do staging
     rows = exec_dw("SELECT MAX(updated_at) AS hwm FROM staging.registro_ocorrencias;", fetch=True)
     hwm = rows[0]['hwm']
 
@@ -422,7 +401,6 @@ def test_hwm_overlap_captura_late_arriving(fixture):
         log.info("  [skip] Staging vazio. Execute uma extração primeiro.")
         return
 
-    # Insere com updated_at = HWM - 5min (dentro da janela de overlap de 10min)
     ts_late = hwm - timedelta(minutes=5)
     rid = _inserir_registro(fixture['evento_id'], fixture['especie_id'], qtde=7, updated_at=ts_late)
     try:
@@ -436,7 +414,6 @@ def test_hwm_overlap_captura_late_arriving(fixture):
 
 def test_tabela_full_detectada_pelo_short_circuit(fixture):
     """Cenário 5: atualização em tabela full-load deve ser detectada pelo short-circuit."""
-    # Atualiza uma espécie para forçar updated_at novo
     exec_oltp("""
         UPDATE especies SET nome_popular = 'Abelha Teste SC', updated_at = NOW()
         WHERE id = %s;
@@ -446,8 +423,6 @@ def test_tabela_full_detectada_pelo_short_circuit(fixture):
     updated = rows[0]['updated_at']
     assert updated is not None
 
-    # O short-circuit checa MAX(updated_at) de todas as tabelas incluindo 'especies'
-    # Se updated > start_date do último run → retornaria True
     log.info(f"  Espécie atualizada em {updated} — short-circuit detectaria esta mudança ✓")
 
 
@@ -470,20 +445,17 @@ def test_soft_delete_nao_entra_na_silver(fixture):
     """Registro com deleted_at setado não deve aparecer na Silver."""
     rid = _inserir_registro(fixture['evento_id'], fixture['especie_id'], qtde=2)
 
-    # Seta soft delete no OLTP
     exec_oltp("UPDATE registro_ocorrencias SET deleted_at = NOW() WHERE id = %s;", (rid,))
 
     try:
         _forcar_extracao_staging('registro_ocorrencias')
 
-        # Simula a Silver: filtra deleted_at IS NULL
         rows = exec_dw("""
             SELECT id FROM staging.registro_ocorrencias
             WHERE id = %s AND deleted_at IS NOT NULL;
         """, (rid,), fetch=True)
         assert len(rows) == 1, "Registro deletado deveria estar no staging com deleted_at preenchido"
 
-        # Verifica que a Silver SQL filtraria este registro
         rows_silver = exec_dw("""
             SELECT id AS id_registro FROM staging.registro_ocorrencias
             WHERE id = %s AND deleted_at IS NULL;
@@ -499,7 +471,6 @@ def test_update_refletido_no_staging(fixture):
     rid = _inserir_registro(fixture['evento_id'], fixture['especie_id'], qtde=1)
     _forcar_extracao_staging('registro_ocorrencias')
 
-    # Atualiza no OLTP
     exec_oltp("""
         UPDATE registro_ocorrencias SET qtde_individuos = 99, updated_at = NOW()
         WHERE id = %s;
@@ -611,7 +582,6 @@ def test_integridade_referencial_gold(fixture):
     """
     ID_ESPECIE_INEXISTENTE = 999999
 
-    # Insere diretamente no staging com FK inválida (bypassando o OLTP)
     exec_dw("""
         INSERT INTO staging.registro_ocorrencias
             (id, evento_amostragem_id, especie_id, data, hora, latitude, longitude,
@@ -621,7 +591,6 @@ def test_integridade_referencial_gold(fixture):
     """, (fixture['evento_id'], ID_ESPECIE_INEXISTENTE))
 
     try:
-        # Simula Silver: aceita qualquer especie_id (sem FK na Silver)
         exec_dw("""
             INSERT INTO public.silver_registro_ocorrencias
                 (id_registro, especie_id, evento_amostragem_id, data, latitude, longitude,
@@ -630,7 +599,6 @@ def test_integridade_referencial_gold(fixture):
             ON CONFLICT (id_registro) DO NOTHING;
         """, (ID_ESPECIE_INEXISTENTE, fixture['evento_id']))
 
-        # Verifica que o JOIN da fato rejeitaria este registro (especie_id não existe na dim_especie)
         rows = exec_dw("""
             SELECT r.id_registro
             FROM public.silver_registro_ocorrencias r
