@@ -24,10 +24,10 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityRegistroRapidoBinding
 
-    private val estudos     = mutableListOf<EstudoResponse>()
-    private val campanhas   = mutableListOf<CampanhaResponse>()
-    private val unidades    = mutableListOf<UnidadeResponse>()
-    private val eventos     = mutableListOf<EventoResponse>()
+    private val estudos = mutableListOf<EstudoResponse>()
+    private val campanhas = mutableListOf<CampanhaResponse>()
+    private val unidades = mutableListOf<UnidadeResponse>()
+    private val eventos = mutableListOf<EventoResponse>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,29 +52,44 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 val estudo = estudos.getOrNull(pos - 1) ?: return
                 carregarCampanhas(estudo.id)
             }
+
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        binding.spinnerCampanha.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                if (pos == 0) return
-                val campanha = campanhas.getOrNull(pos - 1) ?: return
-                val estudoId = estudoSelecionado()?.id ?: return
-                carregarUnidades(estudoId, campanha.id)
-            }
-            override fun onNothingSelected(p: AdapterView<*>?) {}
-        }
+        binding.spinnerCampanha.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    pos: Int,
+                    id: Long
+                ) {
+                    if (pos == 0) return
+                    val campanha = campanhas.getOrNull(pos - 1) ?: return
+                    val estudoId = estudoSelecionado()?.id ?: return
+                    carregarUnidades(estudoId, campanha.id)
+                }
 
-        binding.spinnerUnidade.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                if (pos == 0) return
-                val unidade = unidades.getOrNull(pos - 1) ?: return
-                val estudoId = estudoSelecionado()?.id ?: return
-                val campanhaId = campanhaSelecionada()?.id ?: return
-                carregarEventos(estudoId, campanhaId, unidade.id)
+                override fun onNothingSelected(p: AdapterView<*>?) {}
             }
-            override fun onNothingSelected(p: AdapterView<*>?) {}
-        }
+
+        binding.spinnerUnidade.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    pos: Int,
+                    id: Long
+                ) {
+                    if (pos == 0) return
+                    val unidade = unidades.getOrNull(pos - 1) ?: return
+                    val estudoId = estudoSelecionado()?.id ?: return
+                    val campanhaId = campanhaSelecionada()?.id ?: return
+                    carregarEventos(estudoId, campanhaId, unidade.id)
+                }
+
+                override fun onNothingSelected(p: AdapterView<*>?) {}
+            }
     }
 
     private fun carregarEstudos() {
@@ -83,7 +98,8 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
             try {
                 val resp = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
                 if (resp.isSuccessful) estudos.addAll(resp.body() ?: emptyList())
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
 
             val offlineMgr = EstudoOfflineManager(this@RegistroRapidoActivity)
             val offlineEstudos = EstudoDao(this@RegistroRapidoActivity).listarTodos()
@@ -93,14 +109,16 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
                 val isOfflineReal = offlineMgr.isExplicitamenteSalvoOffline(off.localId)
                 if (!isOfflineReal) return@forEach
                 if (off.remoteId != null && remoteIds.contains(off.remoteId)) return@forEach
-                estudos.add(EstudoResponse(
-                    id = off.remoteId ?: -off.localId.toInt(),
-                    nome = off.nome,
-                    observacoes = off.observacoes,
-                    perfil = off.perfil,
-                    createdAt = off.createdAt ?: "",
-                    updatedAt = off.updatedAt ?: ""
-                ))
+                estudos.add(
+                    EstudoResponse(
+                        id = off.remoteId ?: -off.localId.toInt(),
+                        nome = off.nome,
+                        observacoes = off.observacoes,
+                        perfil = off.perfil,
+                        createdAt = off.createdAt ?: "",
+                        updatedAt = off.updatedAt ?: ""
+                    )
+                )
             }
 
             popularSpinner(binding.spinnerEstudo, estudos.map { it.nome })
@@ -117,35 +135,41 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
 
         if (estudoId <= 0) {
             val localId = if (estudoId < 0) (-estudoId).toLong()
-                else estudoSelecionado()?.let { sel ->
-                    EstudoDao(this).listarTodos().firstOrNull { it.nome == sel.nome }?.localId
-                }
+            else estudoSelecionado()?.let { sel ->
+                EstudoDao(this).listarTodos().firstOrNull { it.nome == sel.nome }?.localId
+            }
             if (localId != null) carregarCampanhasOffline(localId)
             return
         }
 
         lifecycleScope.launch {
             try {
-                val resp = RetrofitClient.apiService.getCampanhas(SessionManager.getAuthHeader(), estudoId)
+                val resp =
+                    RetrofitClient.apiService.getCampanhas(SessionManager.getAuthHeader(), estudoId)
                 if (resp.isSuccessful) campanhas.addAll(resp.body() ?: emptyList())
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
 
-            val estudoLocalId = EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId
+            val estudoLocalId =
+                EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId
             if (estudoLocalId != null) {
-                val offline = CampanhaDao(this@RegistroRapidoActivity).listarPorEstudoLocal(estudoLocalId)
+                val offline =
+                    CampanhaDao(this@RegistroRapidoActivity).listarPorEstudoLocal(estudoLocalId)
                 val remoteIds = campanhas.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                        campanhas.add(CampanhaResponse(
-                            id = off.remoteId ?: -off.localId.toInt(),
-                            nome = off.nome,
-                            dataInicio = off.dataInicio,
-                            dataFim = off.dataFim,
-                            descricao = off.descricao,
-                            createdAt = off.createdAt ?: "",
-                            updatedAt = off.updatedAt ?: "",
-                            valoresVariaveis = null
-                        ))
+                        campanhas.add(
+                            CampanhaResponse(
+                                id = off.remoteId ?: -off.localId.toInt(),
+                                nome = off.nome,
+                                dataInicio = off.dataInicio,
+                                dataFim = off.dataFim,
+                                descricao = off.descricao,
+                                createdAt = off.createdAt ?: "",
+                                updatedAt = off.updatedAt ?: "",
+                                valoresVariaveis = null
+                            )
+                        )
                     }
                 }
             }
@@ -186,33 +210,44 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             if (estudoId > 0) {
                 try {
-                    val resp = RetrofitClient.apiService.getUnidades(SessionManager.getAuthHeader(), estudoId, campanhaId)
+                    val resp = RetrofitClient.apiService.getUnidades(
+                        SessionManager.getAuthHeader(),
+                        estudoId,
+                        campanhaId
+                    )
                     if (resp.isSuccessful) unidades.addAll(resp.body() ?: emptyList())
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             val estudoLocalId = if (estudoId > 0)
                 EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId else null
             val campanhaLocalId = estudoLocalId?.let {
-                CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
+                CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(
+                    campanhaId,
+                    it
+                )?.localId
             }
             if (campanhaLocalId != null) {
-                val offline = UnidadeDao(this@RegistroRapidoActivity).listarPorCampanhaLocal(campanhaLocalId)
+                val offline =
+                    UnidadeDao(this@RegistroRapidoActivity).listarPorCampanhaLocal(campanhaLocalId)
                 val remoteIds = unidades.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                        unidades.add(UnidadeResponse(
-                            id = off.remoteId ?: -off.localId.toInt(),
-                            campanhaId = off.campanhaLocalId.toInt(),
-                            nome = off.nome,
-                            latitude = off.latitude,
-                            longitude = off.longitude,
-                            raio = off.raio,
-                            metodoColeta = off.metodoColeta,
-                            esforcoAmostral = off.esforcoAmostral,
-                            createdAt = off.createdAt ?: "",
-                            updatedAt = off.updatedAt ?: ""
-                        ))
+                        unidades.add(
+                            UnidadeResponse(
+                                id = off.remoteId ?: -off.localId.toInt(),
+                                campanhaId = off.campanhaLocalId.toInt(),
+                                nome = off.nome,
+                                latitude = off.latitude,
+                                longitude = off.longitude,
+                                raio = off.raio,
+                                metodoColeta = off.metodoColeta,
+                                esforcoAmostral = off.esforcoAmostral,
+                                createdAt = off.createdAt ?: "",
+                                updatedAt = off.updatedAt ?: ""
+                            )
+                        )
                     }
                 }
             }
@@ -253,37 +288,54 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         lifecycleScope.launch {
             if (estudoId > 0 && campanhaId > 0) {
                 try {
-                    val resp = RetrofitClient.apiService.getEventos(SessionManager.getAuthHeader(), estudoId, campanhaId, unidadeId)
+                    val resp = RetrofitClient.apiService.getEventos(
+                        SessionManager.getAuthHeader(),
+                        estudoId,
+                        campanhaId,
+                        unidadeId
+                    )
                     if (resp.isSuccessful) eventos.addAll(resp.body() ?: emptyList())
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             val estudoLocalId = if (estudoId > 0)
                 EstudoDao(this@RegistroRapidoActivity).buscarPorRemoteId(estudoId)?.localId else null
             val campanhaLocalId = estudoLocalId?.let {
-                if (campanhaId > 0) CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(campanhaId, it)?.localId
+                if (campanhaId > 0) CampanhaDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(
+                    campanhaId,
+                    it
+                )?.localId
                 else null
             }
             val unidadeLocalId = campanhaLocalId?.let {
-                UnidadeDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(unidadeId, it)?.localId
+                UnidadeDao(this@RegistroRapidoActivity).buscarPorRemoteIdEscopo(
+                    unidadeId,
+                    it
+                )?.localId
             }
             if (unidadeLocalId != null) {
-                val offline = EventoDao(this@RegistroRapidoActivity).listarPorUnidadeLocal(unidadeLocalId)
+                val offline =
+                    EventoDao(this@RegistroRapidoActivity).listarPorUnidadeLocal(unidadeLocalId)
                 val remoteIds = eventos.mapNotNull { it.id }.toSet()
                 offline.forEach { off ->
                     if (off.remoteId == null || !remoteIds.contains(off.remoteId)) {
-                        eventos.add(EventoResponse(
-                            id = off.remoteId ?: -off.localId.toInt(),
-                            unidadeAmostralId = off.unidadeLocalId.toInt(),
-                            horarioInicio = off.horarioInicio,
-                            horarioFim = off.horarioFim,
-                            esforcoReal = off.esforcoReal,
-                            createdAt = off.createdAt ?: ""
-                        ))
+                        eventos.add(
+                            EventoResponse(
+                                id = off.remoteId ?: -off.localId.toInt(),
+                                unidadeAmostralId = off.unidadeLocalId.toInt(),
+                                horarioInicio = off.horarioInicio,
+                                horarioFim = off.horarioFim,
+                                esforcoReal = off.esforcoReal,
+                                createdAt = off.createdAt ?: ""
+                            )
+                        )
                     }
                 }
             }
-            popularSpinner(binding.spinnerEvento, eventos.map { formatarDataHora(it.horarioInicio) })
+            popularSpinner(
+                binding.spinnerEvento,
+                eventos.map { formatarDataHora(it.horarioInicio) })
         }
     }
 
@@ -310,7 +362,9 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         val h = if (partes.size > 1) partes[1].take(5) else ""
         val data = if (d.size == 3) "${d[2]}/${d[1]}/${d[0]}" else partes[0]
         if (h.isNotEmpty()) "$data, ${h}h" else data
-    } catch (_: Exception) { iso }
+    } catch (_: Exception) {
+        iso
+    }
 
     private fun popularSpinner(spinner: Spinner, itens: List<String>) {
         val lista = mutableListOf("Selecione...") + itens
@@ -320,10 +374,10 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
     }
 
     private fun prosseguir() {
-        val estudo   = estudoSelecionado()
+        val estudo = estudoSelecionado()
         val campanha = campanhaSelecionada()
-        val unidade  = unidadeSelecionada()
-        val evento   = eventoSelecionado()
+        val unidade = unidadeSelecionada()
+        val evento = eventoSelecionado()
 
         if (estudo == null || campanha == null || unidade == null || evento == null) {
             Toast.makeText(this, "Selecione todos os níveis", Toast.LENGTH_SHORT).show()
@@ -331,16 +385,25 @@ class RegistroRapidoActivity : BaseDrawerActivity() {
         }
 
         val estudoLocalId = if (estudo.id < 0) (-estudo.id).toLong()
-            else EstudoDao(this).buscarPorRemoteId(estudo.id)?.localId ?: -1L
+        else EstudoDao(this).buscarPorRemoteId(estudo.id)?.localId ?: -1L
         val campanhaLocalId = if (campanha.id < 0) (-campanha.id).toLong()
-            else if (estudoLocalId > 0) CampanhaDao(this).buscarPorRemoteIdEscopo(campanha.id, estudoLocalId)?.localId ?: -1L
-            else -1L
+        else if (estudoLocalId > 0) CampanhaDao(this).buscarPorRemoteIdEscopo(
+            campanha.id,
+            estudoLocalId
+        )?.localId ?: -1L
+        else -1L
         val unidadeLocalId = if (unidade.id < 0) (-unidade.id).toLong()
-            else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(unidade.id, campanhaLocalId)?.localId ?: -1L
-            else -1L
+        else if (campanhaLocalId > 0) UnidadeDao(this).buscarPorRemoteIdEscopo(
+            unidade.id,
+            campanhaLocalId
+        )?.localId ?: -1L
+        else -1L
         val eventoLocalId = if (evento.id < 0) (-evento.id).toLong()
-            else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(evento.id, unidadeLocalId)?.localId ?: -1L
-            else -1L
+        else if (unidadeLocalId > 0) EventoDao(this).buscarPorRemoteIdEscopo(
+            evento.id,
+            unidadeLocalId
+        )?.localId ?: -1L
+        else -1L
 
         val intent = Intent(this, NovoRegistroActivity::class.java).apply {
             putExtra("estudo_remote_id", estudo.id)

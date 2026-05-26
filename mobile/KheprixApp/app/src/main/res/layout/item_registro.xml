@@ -1,42 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
-    android:clickable="true" android:focusable="true"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:clickable="true"
+    android:focusable="true"
     android:background="?attr/selectableItemBackground">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent" android:layout_height="wrap_content">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <TextView android:id="@+id/tvRegistroId"
-            android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tvRegistroId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="Nome / Id do Registro"
-            android:textSize="19sp" android:textColor="#4A5240"
-            android:fontFamily="monospace" android:letterSpacing="0.05"
+            android:textSize="19sp"
+            android:textColor="#4A5240"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.05"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivRegistroFoto"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView android:id="@+id/tvRegistroData"
-            android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tvRegistroData"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="31/12/2026"
-            android:textSize="14sp" android:textColor="#7A9169"
-            android:fontFamily="monospace" android:layout_marginTop="2dp"
+            android:textSize="14sp"
+            android:textColor="#7A9169"
+            android:fontFamily="monospace"
+            android:layout_marginTop="2dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivRegistroFoto"
-            app:layout_constraintTop_toBottomOf="@id/tvRegistroId"/>
+            app:layout_constraintTop_toBottomOf="@id/tvRegistroId" />
 
-        <ImageView android:id="@+id/ivRegistroFoto"
-            android:layout_width="56dp" android:layout_height="56dp"
+        <ImageView
+            android:id="@+id/ivRegistroFoto"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:src="@drawable/ic_placeholder_beetle"
             android:scaleType="centerCrop"
             android:contentDescription="Foto do registro"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp"
-        android:background="#C8D4BE" android:layout_marginTop="10dp"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#C8D4BE"
+        android:layout_marginTop="10dp" />
 </LinearLayout>

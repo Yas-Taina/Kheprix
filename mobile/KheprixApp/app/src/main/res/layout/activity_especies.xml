@@ -2,60 +2,94 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#EDE9DE">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#EDE9DE">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent" android:layout_height="96dp"
-        android:background="#A8B89A" android:paddingStart="16dp" android:paddingEnd="16dp">
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="#A8B89A"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-        <ImageView android:id="@+id/ivMenuLateral"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_menu" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+        <ImageView
+            android:id="@+id/ivMenuLateral"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_menu"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Menu"
             app:tint="@color/kheprix_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <ImageView android:layout_width="120dp" android:layout_height="95dp"
-            android:src="@drawable/ic_header_beetle" android:alpha="0.7"
-            android:contentDescription="Kheprix" android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="95dp"
+            android:src="@drawable/ic_header_beetle"
+            android:alpha="0.7"
+            android:contentDescription="Kheprix"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <ImageView android:id="@+id/ivPerfil"
-            android:layout_width="52dp" android:layout_height="52dp"
-            android:src="@drawable/ic_profile" android:scaleType="fitCenter"
-            android:clickable="true" android:focusable="true"
+        <ImageView
+            android:id="@+id/ivPerfil"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_profile"
+            android:scaleType="fitCenter"
+            android:clickable="true"
+            android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Perfil"
             app:tint="@color/kheprix_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp"
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="32dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="32dp">
 
-            <TextView android:id="@+id/tvEstudoNome"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+            <TextView
+                android:id="@+id/tvEstudoNome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="Nome do Estudo"
-                android:textSize="18sp" android:textColor="#4A5240"
-                android:fontFamily="serif" android:gravity="center"
-                android:layout_marginTop="16dp"/>
+                android:textSize="18sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="Espécies"
-                android:textSize="30sp" android:textColor="#4A5240"
-                android:fontFamily="serif" android:gravity="center"
-                android:layout_marginTop="4dp"/>
+                android:textSize="30sp"
+                android:textColor="#4A5240"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:layout_marginTop="4dp" />
 
             <ImageView
                 android:layout_width="match_parent"
@@ -70,30 +104,42 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/kheprix_green" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:layout_marginBottom="12dp">
 
-                <Button android:id="@+id/btnAdicionarEspecie"
-                    android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp"
+                <Button
+                    android:id="@+id/btnAdicionarEspecie"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="48dp"
                     android:text="Adicionar Espécie  ⊕"
-                    android:textColor="#FFFFFF" android:fontFamily="serif"
-                    android:backgroundTint="#6B7A5E"/>
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="serif"
+                    android:backgroundTint="#6B7A5E" />
 
-                <ImageView android:id="@+id/btnFiltrar"
-                    android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_filter" android:scaleType="fitCenter"
+                <ImageView
+                    android:id="@+id/btnFiltrar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_filter"
+                    android:scaleType="fitCenter"
                     android:contentDescription="Filtrar"
-                    android:clickable="true" android:focusable="true"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:layout_marginStart="8dp"
-                    app:tint="@color/kheprix_green"/>
+                    app:tint="@color/kheprix_green" />
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvEspecies"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

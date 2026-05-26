@@ -41,7 +41,7 @@ class EspeciesActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspeciesBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
+    private var estudoLocalId = -1L
     private var estudoNome = ""
     private val especies = mutableListOf<EspecieResponse>()
     private val especiesExibidas = mutableListOf<EspecieResponse>()
@@ -53,13 +53,14 @@ class EspeciesActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        estudoNome     = intent.getStringExtra("estudo_nome") ?: ""
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        estudoNome = intent.getStringExtra("estudo_nome") ?: ""
 
         binding.tvEstudoNome.text = estudoNome
 
         binding.rvEspecies.layoutManager = LinearLayoutManager(this)
-        binding.rvEspecies.adapter = EspecieAdapter(especiesExibidas, lifecycleScope,
+        binding.rvEspecies.adapter = EspecieAdapter(
+            especiesExibidas, lifecycleScope,
             onItemClick = { especie ->
                 val i = Intent(this, EspecieDetalheActivity::class.java)
                 i.putExtra("estudo_remote_id", estudoRemoteId)
@@ -103,24 +104,31 @@ class EspeciesActivity : BaseDrawerActivity() {
                     if (resp.isSuccessful) {
                         especiesOnline.addAll(resp.body() ?: emptyList())
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             val repo = OfflineRepository(this@EspeciesActivity)
-            var estudoLocalId = if (this@EspeciesActivity.estudoLocalId > 0) this@EspeciesActivity.estudoLocalId
+            var estudoLocalId =
+                if (this@EspeciesActivity.estudoLocalId > 0) this@EspeciesActivity.estudoLocalId
                 else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
                 else null
             if (estudoLocalId == null && especiesOnline.isNotEmpty()) {
                 try {
-                    val estudo = RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
-                        .body()?.firstOrNull { it.id == estudoRemoteId }
+                    val estudo =
+                        RetrofitClient.apiService.getEstudos(SessionManager.getAuthHeader())
+                            .body()?.firstOrNull { it.id == estudoRemoteId }
                     if (estudo != null) estudoLocalId = repo.cacheEstudo(estudo)
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             estudoLocalId?.let { id ->
                 especiesOnline.forEach { e ->
-                    try { repo.cacheEspecie(id, e) } catch (_: Exception) { }
+                    try {
+                        repo.cacheEspecie(id, e)
+                    } catch (_: Exception) {
+                    }
                 }
             }
 
@@ -175,11 +183,11 @@ class EspeciesActivity : BaseDrawerActivity() {
             val q = filtro.lowercase()
             especiesExibidas.addAll(especies.filter { e ->
                 (e.nomePopular?.lowercase()?.contains(q) == true) ||
-                e.genero.lowercase().contains(q) ||
-                e.especie.lowercase().contains(q) ||
-                e.classe.lowercase().contains(q) ||
-                e.ordem.lowercase().contains(q) ||
-                e.familia.lowercase().contains(q)
+                        e.genero.lowercase().contains(q) ||
+                        e.especie.lowercase().contains(q) ||
+                        e.classe.lowercase().contains(q) ||
+                        e.ordem.lowercase().contains(q) ||
+                        e.familia.lowercase().contains(q)
             })
         }
         binding.rvEspecies.adapter?.notifyDataSetChanged()
@@ -194,8 +202,8 @@ class EspecieAdapter(
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val tvNomeCientifico: TextView = view.findViewById(R.id.tvNomeCientifico)
-        val tvNomePopular: TextView    = view.findViewById(R.id.tvNomePopular)
-        val ivFoto: ImageView          = view.findViewById(R.id.ivEspecieFoto)
+        val tvNomePopular: TextView = view.findViewById(R.id.tvNomePopular)
+        val ivFoto: ImageView = view.findViewById(R.id.ivEspecieFoto)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -204,7 +212,7 @@ class EspecieAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.tvNomeCientifico.text = "${item.genero} ${item.especie}"
-        holder.tvNomePopular.text    = item.nomePopular ?: "—"
+        holder.tvNomePopular.text = item.nomePopular ?: "—"
 
         ImagemLoader.load(
             scope = scope,
@@ -224,8 +232,8 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     private lateinit var binding: ActivityCadastroEspecieBinding
 
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var especieId      = -1
+    private var estudoLocalId = -1L
+    private var especieId = -1
     private var fotoBase64: String? = null
     private var cameraImageUri: Uri? = null
 
@@ -237,7 +245,7 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
     companion object {
         private const val REQ_GALERIA = 101
-        private const val REQ_CAMERA  = 102
+        private const val REQ_CAMERA = 102
 
         val STATUS_CONSERVACAO = listOf(
             "Não avaliada", "Dados insuficientes", "Menos preocupante",
@@ -252,8 +260,8 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        especieId      = intent.getIntExtra("especie_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        especieId = intent.getIntExtra("especie_id", -1)
 
         val modoEdicao = especieId != -1
         binding.tvTitulo.text = if (modoEdicao) "Editar Espécie" else "Cadastro de Espécies"
@@ -281,7 +289,8 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
         binding.ivAbrirCamera.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED) {
+                == PackageManager.PERMISSION_GRANTED
+            ) {
                 abrirCamera()
             } else {
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -289,12 +298,21 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
         }
 
         binding.ivRotarFoto.setOnClickListener {
-            val atual = (binding.ivPreviewFoto.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                ?: return@setOnClickListener
+            val atual =
+                (binding.ivPreviewFoto.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    ?: return@setOnClickListener
             lifecycleScope.launch {
                 val (bmpRotado, b64Rotado) = withContext(Dispatchers.IO) {
                     val matrix = android.graphics.Matrix().apply { postRotate(90f) }
-                    val bmp = android.graphics.Bitmap.createBitmap(atual, 0, 0, atual.width, atual.height, matrix, true)
+                    val bmp = android.graphics.Bitmap.createBitmap(
+                        atual,
+                        0,
+                        0,
+                        atual.width,
+                        atual.height,
+                        matrix,
+                        true
+                    )
                     bmp to "data:image/jpeg;base64,${com.kheprix.util.PhotoUtils.bitmapToBase64(bmp)}"
                 }
                 fotoBase64 = b64Rotado
@@ -319,13 +337,18 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
         val uri: Uri? = when (requestCode) {
             REQ_GALERIA -> data?.data
-            REQ_CAMERA  -> cameraImageUri
-            else        -> null
+            REQ_CAMERA -> cameraImageUri
+            else -> null
         }
 
         uri?.let { u ->
             lifecycleScope.launch {
-                val base64 = withContext(Dispatchers.IO) { PhotoUtils.uriToBase64(this@CadastroEspecieActivity, u) }
+                val base64 = withContext(Dispatchers.IO) {
+                    PhotoUtils.uriToBase64(
+                        this@CadastroEspecieActivity,
+                        u
+                    )
+                }
                 fotoBase64 = base64
                 binding.tvNomeFoto.text = u.lastPathSegment ?: "foto.jpg"
                 if (base64 != null) {
@@ -336,7 +359,11 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                         binding.ivRotarFoto.visibility = View.VISIBLE
                     }
                 } else {
-                    Toast.makeText(this@CadastroEspecieActivity, "Não foi possível carregar a foto", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@CadastroEspecieActivity,
+                        "Não foi possível carregar a foto",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -357,7 +384,9 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                     )
                     val e = resp.body()
                     if (e != null) preencherCampos(e) else preencherCamposOffline()
-                } catch (_: Exception) { preencherCamposOffline() }
+                } catch (_: Exception) {
+                    preencherCamposOffline()
+                }
             }
         } else {
             preencherCamposOffline()
@@ -367,8 +396,8 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     private fun preencherCamposOffline() {
         val repo = com.kheprix.db.OfflineRepository(this)
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-            else null
+        else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+        else null
         if (resolvedEstudoLocal == null) return
         val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
             .firstOrNull { it.id == especieId }
@@ -390,7 +419,12 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
             binding.tvNomeFoto.text = "foto_atual.jpg"
             binding.ivPreviewFoto.visibility = View.VISIBLE
             binding.ivRotarFoto.visibility = View.VISIBLE
-            ImagemLoader.load(lifecycleScope, binding.ivPreviewFoto, e.foto, R.drawable.ic_placeholder_beetle)
+            ImagemLoader.load(
+                lifecycleScope,
+                binding.ivPreviewFoto,
+                e.foto,
+                R.drawable.ic_placeholder_beetle
+            )
         }
 
         val idx = STATUS_CONSERVACAO.indexOfFirst {
@@ -418,14 +452,24 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, especieReq
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@CadastroEspecieActivity, "Espécie cadastrada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@CadastroEspecieActivity,
+                        "Espécie cadastrada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@CadastroEspecieActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@CadastroEspecieActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarEspecieOffline(especieReq)
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -480,14 +524,24 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
                     SessionManager.getAuthHeader(), estudoRemoteId, especieId, patchReq
                 )
                 if (resp.isSuccessful) {
-                    Toast.makeText(this@CadastroEspecieActivity, "Espécie atualizada!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@CadastroEspecieActivity,
+                        "Espécie atualizada!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     finish()
                 } else {
-                    Toast.makeText(this@CadastroEspecieActivity, "Erro: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@CadastroEspecieActivity,
+                        "Erro: ${resp.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (_: Exception) {
                 salvarEdicaoOffline(patchReq, "Sem conexão — alterações salvas offline.")
-            } finally { setLoading(false) }
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -495,13 +549,13 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
     private fun salvarEdicaoOffline(req: EspeciePatchRequest, msg: String) {
         val repo = OfflineRepository(this)
         val localId = if (especieId < 0) (-especieId).toLong()
-            else {
-                val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-                    else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-                    else null
-                if (resolvedEstudoLocal == null || especieId <= 0) null
-                else repo.especieLocalIdFromRemote(resolvedEstudoLocal, especieId)
-            }
+        else {
+            val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
+            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+            else null
+            if (resolvedEstudoLocal == null || especieId <= 0) null
+            else repo.especieLocalIdFromRemote(resolvedEstudoLocal, especieId)
+        }
         if (localId == null) {
             Toast.makeText(this, "Espécie não encontrada offline.", Toast.LENGTH_LONG).show()
             return
@@ -523,13 +577,14 @@ class CadastroEspecieActivity : BaseDrawerActivity() {
 
     private fun coletarFormulario(): FormData? {
         val classe = binding.etClasse.text.toString().trim()
-        val ordem  = binding.etOrdem.text.toString().trim()
+        val ordem = binding.etOrdem.text.toString().trim()
         val familia = binding.etFamilia.text.toString().trim()
         val genero = binding.etGenero.text.toString().trim()
         val especie = binding.etEspecie.text.toString().trim()
 
         if (classe.isEmpty() || ordem.isEmpty() || familia.isEmpty() ||
-            genero.isEmpty() || especie.isEmpty()) {
+            genero.isEmpty() || especie.isEmpty()
+        ) {
             Toast.makeText(this, "Preencha todos os campos obrigatórios", Toast.LENGTH_SHORT).show()
             return null
         }
@@ -554,8 +609,8 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
 
     private lateinit var binding: ActivityEspecieDetalheBinding
     private var estudoRemoteId = -1
-    private var estudoLocalId  = -1L
-    private var especieId      = -1
+    private var estudoLocalId = -1L
+    private var especieId = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -563,8 +618,8 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
         setContentView(binding.root)
 
         estudoRemoteId = intent.getIntExtra("estudo_remote_id", -1)
-        estudoLocalId  = intent.getLongExtra("estudo_local_id", -1L)
-        especieId      = intent.getIntExtra("especie_id", -1)
+        estudoLocalId = intent.getLongExtra("estudo_local_id", -1L)
+        especieId = intent.getIntExtra("especie_id", -1)
 
         carregarEspecie()
 
@@ -600,15 +655,17 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
                 )
                 val e = resp.body()
                 if (e != null) preencher(e) else carregarEspecieOffline()
-            } catch (_: Exception) { carregarEspecieOffline() }
+            } catch (_: Exception) {
+                carregarEspecieOffline()
+            }
         }
     }
 
     private fun carregarEspecieOffline() {
         val repo = com.kheprix.db.OfflineRepository(this)
         val resolvedEstudoLocal = if (estudoLocalId > 0) estudoLocalId
-            else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
-            else null
+        else if (estudoRemoteId > 0) repo.estudoLocalIdFromRemote(estudoRemoteId)
+        else null
         if (resolvedEstudoLocal == null) return
         val match = repo.listarEspeciesPorEstudoLocal(resolvedEstudoLocal)
             .firstOrNull { it.id == especieId }
@@ -621,7 +678,7 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
         binding.tvNomeCientifico.text = "${e.genero} ${e.especie}"
         binding.tvNomePopular.text = e.nomePopular ?: "—"
         binding.tvClasse.text = e.classe
-        binding.tvOrdem.text  = e.ordem
+        binding.tvOrdem.text = e.ordem
         binding.tvFamilia.text = e.familia
         binding.tvStatus.text = e.statusConservacao ?: "—"
         binding.tvEndemismo.text = if (e.endemismo) "A espécie é nativa da região do estudo" else ""
@@ -655,7 +712,8 @@ class EspecieDetalheActivity : BaseDrawerActivity() {
                             SessionManager.getAuthHeader(), estudoRemoteId, especieId
                         )
                         finish()
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
             }
             .setNegativeButton("Cancelar", null).show()

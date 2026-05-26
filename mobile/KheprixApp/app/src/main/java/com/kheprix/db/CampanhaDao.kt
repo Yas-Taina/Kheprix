@@ -31,18 +31,20 @@ class CampanhaDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<CampanhaOffline>()
             while (c.moveToNext()) {
-                list.add(CampanhaOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    estudoLocalId = c.getLong(2),
-                    nome = c.getString(3),
-                    dataInicio = c.getString(4),
-                    dataFim = c.getString(5),
-                    descricao = c.getString(6),
-                    sincronizado = c.getInt(7),
-                    createdAt = c.getString(8),
-                    updatedAt = c.getString(9)
-                ))
+                list.add(
+                    CampanhaOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        estudoLocalId = c.getLong(2),
+                        nome = c.getString(3),
+                        dataInicio = c.getString(4),
+                        dataFim = c.getString(5),
+                        descricao = c.getString(6),
+                        sincronizado = c.getInt(7),
+                        createdAt = c.getString(8),
+                        updatedAt = c.getString(9)
+                    )
+                )
             }
             list
         }
@@ -57,18 +59,20 @@ class CampanhaDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<CampanhaOffline>()
             while (c.moveToNext()) {
-                list.add(CampanhaOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    estudoLocalId = c.getLong(2),
-                    nome = c.getString(3),
-                    dataInicio = c.getString(4),
-                    dataFim = c.getString(5),
-                    descricao = c.getString(6),
-                    sincronizado = c.getInt(7),
-                    createdAt = c.getString(8),
-                    updatedAt = c.getString(9)
-                ))
+                list.add(
+                    CampanhaOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        estudoLocalId = c.getLong(2),
+                        nome = c.getString(3),
+                        dataInicio = c.getString(4),
+                        dataFim = c.getString(5),
+                        descricao = c.getString(6),
+                        sincronizado = c.getInt(7),
+                        createdAt = c.getString(8),
+                        updatedAt = c.getString(9)
+                    )
+                )
             }
             list
         }

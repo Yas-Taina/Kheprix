@@ -33,20 +33,22 @@ class UnidadeDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<UnidadeOffline>()
             while (c.moveToNext()) {
-                list.add(UnidadeOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    campanhaLocalId = c.getLong(2),
-                    nome = c.getString(3),
-                    latitude = c.getDouble(4),
-                    longitude = c.getDouble(5),
-                    raio = if (c.isNull(6)) null else c.getDouble(6),
-                    metodoColeta = c.getString(7),
-                    esforcoAmostral = c.getString(8),
-                    sincronizado = c.getInt(9),
-                    createdAt = c.getString(10),
-                    updatedAt = c.getString(11)
-                ))
+                list.add(
+                    UnidadeOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        campanhaLocalId = c.getLong(2),
+                        nome = c.getString(3),
+                        latitude = c.getDouble(4),
+                        longitude = c.getDouble(5),
+                        raio = if (c.isNull(6)) null else c.getDouble(6),
+                        metodoColeta = c.getString(7),
+                        esforcoAmostral = c.getString(8),
+                        sincronizado = c.getInt(9),
+                        createdAt = c.getString(10),
+                        updatedAt = c.getString(11)
+                    )
+                )
             }
             list
         }
@@ -61,20 +63,22 @@ class UnidadeDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<UnidadeOffline>()
             while (c.moveToNext()) {
-                list.add(UnidadeOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    campanhaLocalId = c.getLong(2),
-                    nome = c.getString(3),
-                    latitude = c.getDouble(4),
-                    longitude = c.getDouble(5),
-                    raio = if (c.isNull(6)) null else c.getDouble(6),
-                    metodoColeta = c.getString(7),
-                    esforcoAmostral = c.getString(8),
-                    sincronizado = c.getInt(9),
-                    createdAt = c.getString(10),
-                    updatedAt = c.getString(11)
-                ))
+                list.add(
+                    UnidadeOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        campanhaLocalId = c.getLong(2),
+                        nome = c.getString(3),
+                        latitude = c.getDouble(4),
+                        longitude = c.getDouble(5),
+                        raio = if (c.isNull(6)) null else c.getDouble(6),
+                        metodoColeta = c.getString(7),
+                        esforcoAmostral = c.getString(8),
+                        sincronizado = c.getInt(9),
+                        createdAt = c.getString(10),
+                        updatedAt = c.getString(11)
+                    )
+                )
             }
             list
         }

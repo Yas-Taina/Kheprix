@@ -110,11 +110,11 @@ class NovoEstudoActivity : BaseDrawerActivity() {
             }
             lista.add(
                 VariavelRequest(
-                nome = nome,
-                nivelAplicacao = nivelParaApi(nivel),
-                tipoDado = tipoParaApi(tipo),
-                metrica = metrica.ifEmpty { null }
-            ))
+                    nome = nome,
+                    nivelAplicacao = nivelParaApi(nivel),
+                    tipoDado = tipoParaApi(tipo),
+                    metrica = metrica.ifEmpty { null }
+                ))
         }
         return lista
     }

@@ -85,22 +85,24 @@ class RegistroDao(context: Context) {
         return cursor.use { c ->
             val list = mutableListOf<RegistroOffline>()
             while (c.moveToNext()) {
-                list.add(RegistroOffline(
-                    localId = c.getLong(0),
-                    remoteId = if (c.isNull(1)) null else c.getInt(1),
-                    eventoLocalId = c.getLong(2),
-                    especieLocalId = c.getLong(3),
-                    especieRemoteId = c.getInt(4),
-                    data = c.getString(5),
-                    hora = c.getString(6),
-                    latitude = c.getDouble(7),
-                    longitude = c.getDouble(8),
-                    qtdeIndividuos = if (c.isNull(9)) null else c.getInt(9),
-                    foto = c.getString(10),
-                    ausenciaEspecie = if (c.isNull(11)) null else c.getInt(11) == 1,
-                    sincronizado = c.getInt(12),
-                    createdAt = c.getString(13)
-                ))
+                list.add(
+                    RegistroOffline(
+                        localId = c.getLong(0),
+                        remoteId = if (c.isNull(1)) null else c.getInt(1),
+                        eventoLocalId = c.getLong(2),
+                        especieLocalId = c.getLong(3),
+                        especieRemoteId = c.getInt(4),
+                        data = c.getString(5),
+                        hora = c.getString(6),
+                        latitude = c.getDouble(7),
+                        longitude = c.getDouble(8),
+                        qtdeIndividuos = if (c.isNull(9)) null else c.getInt(9),
+                        foto = c.getString(10),
+                        ausenciaEspecie = if (c.isNull(11)) null else c.getInt(11) == 1,
+                        sincronizado = c.getInt(12),
+                        createdAt = c.getString(13)
+                    )
+                )
             }
             list
         }

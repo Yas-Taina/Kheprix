@@ -20,8 +20,8 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
     private var tokenValidado: String = ""
 
     companion object {
-        private const val STEP_EMAIL      = 0
-        private const val STEP_TOKEN      = 1
+        private const val STEP_EMAIL = 0
+        private const val STEP_TOKEN = 1
         private const val STEP_NOVA_SENHA = 2
     }
 
@@ -51,8 +51,8 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
         }
 
         binding.btnRedefinirSenha.setOnClickListener {
-            val novaSenha    = binding.etNovaSenha.text.toString()
-            val confirmacao  = binding.etConfirmarNovaSenha.text.toString()
+            val novaSenha = binding.etNovaSenha.text.toString()
+            val confirmacao = binding.etConfirmarNovaSenha.text.toString()
 
             if (novaSenha.isEmpty()) {
                 binding.etNovaSenha.error = "Informe a nova senha"
@@ -97,7 +97,8 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
         setLoading(true)
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.validarTokenRedefinicao(TokenRequest(token))
+                val response =
+                    RetrofitClient.apiService.validarTokenRedefinicao(TokenRequest(token))
                 if (response.isSuccessful && response.body()?.valido == true) {
                     tokenValidado = token
                     mostrarEtapa(STEP_NOVA_SENHA)
@@ -143,7 +144,7 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
     private fun mostrarEtapa(etapa: Int) {
 
         val showEtapa1 = etapa == STEP_EMAIL
-        binding.etEmail.visibility     = if (showEtapa1) View.VISIBLE else View.GONE
+        binding.etEmail.visibility = if (showEtapa1) View.VISIBLE else View.GONE
         binding.tvLabelEmail.visibility = if (showEtapa1) View.VISIBLE else View.GONE
         binding.btnEnviarToken.visibility = if (showEtapa1) View.VISIBLE else View.GONE
 
@@ -158,7 +159,7 @@ class RecuperacaoSenhaActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
-        binding.btnEnviarToken.isEnabled   = !loading
+        binding.btnEnviarToken.isEnabled = !loading
         binding.btnConfirmarToken.isEnabled = !loading
         binding.btnRedefinirSenha.isEnabled = !loading
     }

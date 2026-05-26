@@ -37,7 +37,7 @@ object ImagemLoader {
         target.setImageResource(placeholder)
 
         val ehBase64 = url.startsWith("data:") ||
-            (!url.startsWith("http://") && !url.startsWith("https://") && url.length > 500)
+                (!url.startsWith("http://") && !url.startsWith("https://") && url.length > 500)
         val ehUrl = !ehBase64
 
         if (!ehUrl) {
@@ -82,7 +82,15 @@ object ImagemLoader {
             val original = URI(url)
             if (original.host == "localhost" || original.host == "127.0.0.1") {
                 val b = URI(base)
-                URI(b.scheme, null, b.host, b.port, original.path, original.query, original.fragment).toString()
+                URI(
+                    b.scheme,
+                    null,
+                    b.host,
+                    b.port,
+                    original.path,
+                    original.query,
+                    original.fragment
+                ).toString()
             } else url
         } catch (_: Exception) {
             url
